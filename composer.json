@@ -1,0 +1,16 @@
+{
+    "name": "kss/seguros",
+    "description": "Sistema de assistências residenciais KSS Seguros",
+    "type": "project",
+    "require": {
+        "php": ">=8.2"
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "app/"
+        }
+    },
+    "config": {
+        "optimize-autoloader": true
+    }
+}
