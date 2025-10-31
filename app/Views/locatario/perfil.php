@@ -9,6 +9,13 @@ ob_start();
 
 <!-- Header -->
 <div class="mb-8">
+    <!-- Botão Voltar -->
+    <a href="<?= url($locatario['instancia'] . '/dashboard') ?>" 
+       class="inline-flex items-center text-gray-600 hover:text-gray-900 mb-4 transition-colors">
+        <i class="fas fa-arrow-left mr-2"></i>
+        <span class="text-sm font-medium">Voltar para Dashboard</span>
+    </a>
+    
     <h1 class="text-2xl font-bold text-gray-900">
         <i class="fas fa-user mr-2"></i>
         Meu Perfil
@@ -67,27 +74,21 @@ ob_start();
                             <div class="flex items-center">
                                 <i class="fab fa-whatsapp text-green-500 mr-3"></i>
                                 <div>
-                                    <p class="text-sm font-medium text-gray-900">(16) 99242-2354</p>
+                                    <p class="text-sm font-medium text-gray-900">
+                                        <?= !empty($locatario['whatsapp']) ? htmlspecialchars($locatario['whatsapp']) : 'Não cadastrado' ?>
+                                    </p>
                                     <p class="text-xs text-gray-500">WhatsApp</p>
                                 </div>
                             </div>
                             <div class="flex items-center">
                                 <i class="fas fa-envelope text-gray-400 mr-3"></i>
                                 <div>
-                                    <p class="text-sm font-medium text-gray-900">lucas@email.com</p>
+                                    <p class="text-sm font-medium text-gray-900">
+                                        <?= !empty($locatario['email']) ? htmlspecialchars($locatario['email']) : 'Não cadastrado' ?>
+                                    </p>
                                     <p class="text-xs text-gray-500">E-mail</p>
                                 </div>
                             </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="mt-6 p-4 bg-green-50 rounded-lg">
-                    <div class="flex items-start">
-                        <i class="fas fa-info-circle text-green-600 mr-2 mt-0.5"></i>
-                        <div>
-                            <p class="text-sm text-green-800 font-medium">WhatsApp</p>
-                            <p class="text-xs text-green-700">Usado para enviar notificações importantes sobre suas solicitações</p>
                         </div>
                     </div>
                 </div>
@@ -241,33 +242,46 @@ ob_start();
                 </button>
             </div>
             
+            <!-- Alert Message -->
+            <div id="alert-message" class="hidden mb-4 p-3 rounded-lg"></div>
+            
             <form id="edit-form" class="space-y-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700">Nome</label>
-                    <input type="text" name="nome" value="<?= htmlspecialchars($locatario['nome']) ?>" 
-                           class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                        Nome Completo <span class="text-red-500">*</span>
+                    </label>
+                    <input type="text" name="nome" id="edit-nome" value="<?= htmlspecialchars($locatario['nome']) ?>" 
+                           required
+                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
                 </div>
                 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700">WhatsApp</label>
-                    <input type="text" name="whatsapp" value="(16) 99242-2354" 
-                           class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                        WhatsApp <span class="text-red-500">*</span>
+                    </label>
+                    <input type="text" name="whatsapp" id="edit-whatsapp" value="<?= htmlspecialchars($locatario['whatsapp'] ?? '') ?>" 
+                           placeholder="(00) 00000-0000"
+                           required
+                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                    <p class="mt-1 text-xs text-gray-500">Usado para notificações importantes</p>
                 </div>
                 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700">E-mail</label>
-                    <input type="email" name="email" value="lucas@email.com" 
-                           class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">E-mail</label>
+                    <input type="email" name="email" id="edit-email" value="<?= htmlspecialchars($locatario['email'] ?? '') ?>" 
+                           placeholder="seu@email.com"
+                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
                 </div>
                 
-                <div class="flex justify-end space-x-3">
+                <div class="flex justify-end space-x-3 pt-4">
                     <button type="button" onclick="fecharModal()" 
-                            class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200">
+                            class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors">
                         Cancelar
                     </button>
-                    <button type="submit" 
-                            class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700">
-                        Salvar
+                    <button type="submit" id="submit-btn"
+                            class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors flex items-center">
+                        <i class="fas fa-save mr-2"></i>
+                        Salvar Alterações
                     </button>
                 </div>
             </form>
@@ -278,42 +292,157 @@ ob_start();
 <script>
 function editarDados() {
     document.getElementById('edit-modal').classList.remove('hidden');
+    // Limpar mensagens anteriores
+    hideAlert();
 }
 
 function fecharModal() {
     document.getElementById('edit-modal').classList.add('hidden');
+    hideAlert();
+}
+
+function showAlert(message, type = 'error') {
+    const alertDiv = document.getElementById('alert-message');
+    alertDiv.classList.remove('hidden', 'bg-red-50', 'text-red-800', 'border-red-200', 'bg-green-50', 'text-green-800', 'border-green-200');
+    
+    if (type === 'error') {
+        alertDiv.classList.add('bg-red-50', 'text-red-800', 'border-red-200', 'border');
+        alertDiv.innerHTML = '<i class="fas fa-exclamation-circle mr-2"></i>' + message;
+    } else if (type === 'success') {
+        alertDiv.classList.add('bg-green-50', 'text-green-800', 'border-green-200', 'border');
+        alertDiv.innerHTML = '<i class="fas fa-check-circle mr-2"></i>' + message;
+    }
+}
+
+function hideAlert() {
+    const alertDiv = document.getElementById('alert-message');
+    alertDiv.classList.add('hidden');
 }
 
 document.getElementById('edit-form').addEventListener('submit', function(e) {
     e.preventDefault();
     
-    // Implementar salvamento dos dados
-    const formData = new FormData(this);
+    const submitBtn = document.getElementById('submit-btn');
+    const originalBtnText = submitBtn.innerHTML;
     
-    fetch('<?= url($locatario['instancia'] . '/atualizar-perfil') ?>', {
+    // Validar campos obrigatórios
+    const nome = document.getElementById('edit-nome').value.trim();
+    const whatsapp = document.getElementById('edit-whatsapp').value.trim();
+    
+    if (!nome) {
+        showAlert('O nome é obrigatório', 'error');
+        return;
+    }
+    
+    if (!whatsapp) {
+        showAlert('O WhatsApp é obrigatório', 'error');
+        return;
+    }
+    
+    // Validar formato do WhatsApp
+    const whatsappLimpo = whatsapp.replace(/\D/g, '');
+    if (whatsappLimpo.length < 10 || whatsappLimpo.length > 11) {
+        showAlert('WhatsApp inválido. Use o formato (XX) XXXXX-XXXX', 'error');
+        return;
+    }
+    
+    // Desabilitar botão e mostrar loading
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Salvando...';
+    
+    const formData = new FormData(this);
+    const url = '<?= url($locatario['instancia'] . '/atualizar-perfil') ?>';
+    
+    console.log('Enviando requisição para:', url);
+    console.log('Dados:', {
+        nome: formData.get('nome'),
+        email: formData.get('email'),
+        whatsapp: formData.get('whatsapp')
+    });
+    
+    fetch(url, {
         method: 'POST',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        },
         body: formData
     })
-    .then(response => response.json())
+    .then(response => {
+        // Verificar se a resposta é OK
+        if (!response.ok) {
+            throw new Error('Erro HTTP: ' + response.status);
+        }
+        
+        // Verificar se é JSON
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            // Se não for JSON, ler como texto para debug
+            return response.text().then(text => {
+                console.error('Resposta não é JSON:', text);
+                throw new Error('Resposta inválida do servidor');
+            });
+        }
+        
+        return response.json();
+    })
     .then(data => {
         if (data.success) {
-            location.reload();
+            showAlert(data.message, 'success');
+            
+            // Atualizar os dados na tela
+            setTimeout(() => {
+                location.reload();
+            }, 1000);
         } else {
-            alert('Erro ao atualizar dados: ' + data.message);
+            // Se sessão expirou, redirecionar para login
+            if (data.redirect) {
+                showAlert(data.message, 'error');
+                setTimeout(() => {
+                    location.reload();
+                }, 2000);
+            } else {
+                showAlert(data.message || 'Erro ao atualizar dados', 'error');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalBtnText;
+            }
         }
     })
     .catch(error => {
-        console.error('Erro:', error);
-        alert('Erro ao atualizar dados');
+        console.error('Erro completo:', error);
+        showAlert('Erro ao conectar com o servidor. Tente novamente.', 'error');
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalBtnText;
     });
 });
 
-// Máscara para WhatsApp
-document.querySelector('input[name="whatsapp"]').addEventListener('input', function(e) {
+// Máscara para WhatsApp no modal
+document.getElementById('edit-whatsapp').addEventListener('input', function(e) {
     let value = e.target.value.replace(/\D/g, '');
-    value = value.replace(/(\d{2})(\d)/, '($1) $2');
-    value = value.replace(/(\d{5})(\d)/, '$1-$2');
+    
+    if (value.length <= 11) {
+        if (value.length > 10) {
+            // Formato: (XX) XXXXX-XXXX
+            value = value.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+        } else if (value.length > 6) {
+            // Formato: (XX) XXXX-XXXX
+            value = value.replace(/(\d{2})(\d{4})(\d{0,4})/, '($1) $2-$3');
+        } else if (value.length > 2) {
+            // Formato: (XX) XXXX
+            value = value.replace(/(\d{2})(\d{0,5})/, '($1) $2');
+        } else {
+            // Formato: (XX
+            value = value.replace(/(\d*)/, '($1');
+        }
+    }
+    
     e.target.value = value;
+});
+
+// Fechar modal ao clicar fora
+document.getElementById('edit-modal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        fecharModal();
+    }
 });
 </script>
 

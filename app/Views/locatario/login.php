@@ -109,8 +109,9 @@ ob_start();
                 </div>
 
                 <div class="text-center">
-                    <a href="#" class="text-sm text-blue-600 hover:text-blue-500">
-                        Não estou conseguindo acesso
+                    <a href="<?= url($instancia . '/solicitacao-manual') ?>" class="text-sm text-blue-600 hover:text-blue-500">
+                        <i class="fas fa-external-link-alt mr-1"></i>
+                        Não estou conseguindo acesso - Fazer solicitação manual
                     </a>
                 </div>
             </form>

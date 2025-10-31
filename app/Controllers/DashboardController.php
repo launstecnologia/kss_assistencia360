@@ -14,6 +14,7 @@ class DashboardController extends Controller
     private Imobiliaria $imobiliariaModel;
     private Usuario $usuarioModel;
     private Categoria $categoriaModel;
+    private \App\Models\Status $statusModel;
 
     public function __construct()
     {
@@ -22,6 +23,7 @@ class DashboardController extends Controller
         $this->imobiliariaModel = new Imobiliaria();
         $this->usuarioModel = new Usuario();
         $this->categoriaModel = new Categoria();
+        $this->statusModel = new \App\Models\Status();
     }
 
     public function index(): void
@@ -157,5 +159,89 @@ class DashboardController extends Controller
         $dados = \App\Core\Database::fetchAll($sql, [$periodo]);
         
         $this->json($dados);
+    }
+
+    public function kanban(): void
+    {
+        $user = $this->getUser();
+        $imobiliariaId = $this->input('imobiliaria_id');
+        
+        // Buscar status do Kanban
+        $statusKanban = $this->statusModel->getKanban();
+        
+        // Buscar solicitações organizadas por status
+        $solicitacoesPorStatus = [];
+        foreach ($statusKanban as $status) {
+            $sql = "
+                SELECT 
+                    s.*,
+                    c.nome as categoria_nome,
+                    sc.nome as subcategoria_nome,
+                    i.nome as imobiliaria_nome,
+                    st.nome as status_nome,
+                    st.cor as status_cor
+                FROM solicitacoes s
+                LEFT JOIN categorias c ON s.categoria_id = c.id
+                LEFT JOIN subcategorias sc ON s.subcategoria_id = sc.id
+                LEFT JOIN imobiliarias i ON s.imobiliaria_id = i.id
+                LEFT JOIN status st ON s.status_id = st.id
+                WHERE s.status_id = ?
+            ";
+            
+            $params = [$status['id']];
+            
+            if ($imobiliariaId) {
+                $sql .= " AND s.imobiliaria_id = ?";
+                $params[] = $imobiliariaId;
+            }
+            
+            $sql .= " ORDER BY s.created_at DESC LIMIT 50";
+            
+            $solicitacoesPorStatus[$status['id']] = \App\Core\Database::fetchAll($sql, $params);
+        }
+        
+        // Buscar imobiliárias para filtro
+        $imobiliarias = $this->imobiliariaModel->getAtivas();
+        
+        $this->view('kanban.index', [
+            'statusKanban' => $statusKanban,
+            'solicitacoesPorStatus' => $solicitacoesPorStatus,
+            'imobiliarias' => $imobiliarias,
+            'imobiliariaId' => $imobiliariaId,
+            'user' => $user
+        ]);
+    }
+
+    public function moverCard(): void
+    {
+        if (!$this->isPost()) {
+            $this->json(['error' => 'Método não permitido'], 405);
+            return;
+        }
+
+        // Ler JSON do body da requisição
+        $input = file_get_contents('php://input');
+        $data = json_decode($input, true);
+        
+        $solicitacaoId = $data['solicitacao_id'] ?? null;
+        $novoStatusId = $data['novo_status_id'] ?? null;
+        $user = $this->getUser();
+
+        if (!$solicitacaoId || !$novoStatusId) {
+            $this->json(['error' => 'Dados incompletos'], 400);
+            return;
+        }
+
+        try {
+            $success = $this->solicitacaoModel->updateStatus($solicitacaoId, $novoStatusId, $user['id']);
+            
+            if ($success) {
+                $this->json(['success' => true, 'message' => 'Status atualizado com sucesso']);
+            } else {
+                $this->json(['error' => 'Erro ao atualizar status'], 500);
+            }
+        } catch (\Exception $e) {
+            $this->json(['error' => 'Erro ao atualizar status: ' . $e->getMessage()], 500);
+        }
     }
 }

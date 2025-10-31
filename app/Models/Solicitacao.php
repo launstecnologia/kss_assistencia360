@@ -16,12 +16,14 @@ class Solicitacao extends Model
         'data_agendamento', 'horario_agendamento', 'prestador_nome', 'prestador_telefone',
         'valor_orcamento', 'numero_ncp', 'avaliacao_satisfacao',
         // Novos campos para fluxo operacional
-        'numero_solicitacao', 'tipo_atendimento', 'datas_opcoes', 'data_confirmada',
+        'numero_solicitacao', 'tipo_atendimento', 'datas_opcoes', 'horarios_opcoes', 'data_confirmada',
         'mawdy_id', 'mawdy_nome', 'mawdy_telefone', 'mawdy_email',
         'data_limite_cancelamento', 'data_limite_peca', 'data_ultimo_lembrete',
         'confirmacao_atendimento', 'avaliacao_imobiliaria', 'avaliacao_app',
         'avaliacao_prestador', 'comentarios_avaliacao', 'link_confirmacao',
         'token_confirmacao', 'whatsapp_enviado', 'lembretes_enviados',
+        // Campos de reembolso e protocolo
+        'precisa_reembolso', 'valor_reembolso', 'protocolo_seguradora',
         'created_at', 'updated_at'
     ];
     protected array $casts = [
@@ -120,12 +122,15 @@ class Solicitacao extends Model
                 sc.nome as subcategoria_nome,
                 sc.prazo_minimo,
                 i.nome as imobiliaria_nome,
-                i.url_base as imobiliaria_url
+                i.url_base as imobiliaria_url,
+                i.telefone as imobiliaria_telefone,
+                l.cpf as locatario_cpf
             FROM solicitacoes s
             LEFT JOIN status st ON s.status_id = st.id
             LEFT JOIN categorias c ON s.categoria_id = c.id
             LEFT JOIN subcategorias sc ON s.subcategoria_id = sc.id
             LEFT JOIN imobiliarias i ON s.imobiliaria_id = i.id
+            LEFT JOIN locatarios l ON (s.locatario_id = l.id OR s.locatario_id = l.ksi_cliente_id)
             WHERE s.id = ?
         ";
         
@@ -160,6 +165,15 @@ class Solicitacao extends Model
         Database::beginTransaction();
         
         try {
+            // Buscar status atual
+            $solicitacaoAtual = $this->find($id);
+            
+            // Se o status já é o mesmo, não fazer nada
+            if ($solicitacaoAtual && $solicitacaoAtual['status_id'] == $statusId) {
+                Database::rollback();
+                return true; // Retorna sucesso, mas sem fazer alterações
+            }
+            
             // Atualizar status da solicitação
             $this->update($id, ['status_id' => $statusId]);
             
@@ -200,6 +214,7 @@ class Solicitacao extends Model
                 COUNT(*) as total,
                 COUNT(CASE WHEN st.nome = 'Concluído' THEN 1 END) as concluidas,
                 COUNT(CASE WHEN st.nome = 'Nova Solicitação' THEN 1 END) as novas,
+                COUNT(CASE WHEN st.nome = 'Serviço Agendado' THEN 1 END) as agendados,
                 COUNT(CASE WHEN st.nome = 'Aguardando Peça' THEN 1 END) as aguardando_peca,
                 AVG(TIMESTAMPDIFF(HOUR, s.created_at, s.updated_at)) as tempo_medio_resolucao,
                 AVG(s.avaliacao_satisfacao) as satisfacao_media

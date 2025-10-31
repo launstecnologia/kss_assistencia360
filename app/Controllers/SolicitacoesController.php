@@ -80,8 +80,20 @@ class SolicitacoesController extends Controller
             return;
         }
 
-        $fotos = $this->solicitacaoModel->getFotos($id);
-        $historico = $this->solicitacaoModel->getHistoricoStatus($id);
+        // Buscar fotos (se tabela existir)
+        try {
+            $fotos = $this->solicitacaoModel->getFotos($id);
+        } catch (\Exception $e) {
+            $fotos = [];
+        }
+        
+        // Buscar histórico
+        try {
+            $historico = $this->solicitacaoModel->getHistoricoStatus($id);
+        } catch (\Exception $e) {
+            $historico = [];
+        }
+        
         $statusDisponiveis = $this->statusModel->getAtivos();
 
         $this->view('solicitacoes.show', [
@@ -89,6 +101,24 @@ class SolicitacoesController extends Controller
             'fotos' => $fotos,
             'historico' => $historico,
             'statusDisponiveis' => $statusDisponiveis
+        ]);
+    }
+
+    public function api(int $id): void
+    {
+        $solicitacao = $this->solicitacaoModel->getDetalhes($id);
+        
+        if (!$solicitacao) {
+            $this->json([
+                'success' => false,
+                'message' => 'Solicitação não encontrada'
+            ], 404);
+            return;
+        }
+
+        $this->json([
+            'success' => true,
+            'solicitacao' => $solicitacao
         ]);
     }
 
@@ -206,6 +236,15 @@ class SolicitacoesController extends Controller
             $success = $this->solicitacaoModel->updateStatus($id, $statusId, $user['id'], $observacoes);
             
             if ($success) {
+                // Buscar nome do status
+                $sql = "SELECT nome FROM status WHERE id = ?";
+                $status = \App\Core\Database::fetch($sql, [$statusId]);
+                
+                // Enviar notificação WhatsApp
+                $this->enviarNotificacaoWhatsApp($id, 'Atualização de Status', [
+                    'status_atual' => $status['nome'] ?? 'Atualizado'
+                ]);
+                
                 $this->json(['success' => true, 'message' => 'Status atualizado com sucesso']);
             } else {
                 $this->json(['error' => 'Erro ao atualizar status'], 500);
@@ -315,7 +354,7 @@ class SolicitacoesController extends Controller
             $solicitacaoId = $this->solicitacaoModel->create($data);
             
             // Enviar notificação WhatsApp
-            $this->enviarNotificacaoWhatsApp($solicitacaoId, 'nova_solicitacao');
+            $this->enviarNotificacaoWhatsApp($solicitacaoId, 'Nova Solicitação');
             
             $this->json([
                 'success' => true,
@@ -511,13 +550,18 @@ class SolicitacoesController extends Controller
         }
     }
 
-    private function enviarNotificacaoWhatsApp(int $solicitacaoId, string $tipo): void
+    private function enviarNotificacaoWhatsApp(int $solicitacaoId, string $tipo, array $extraData = []): void
     {
-        // Implementar integração com WhatsApp
-        // Por enquanto, apenas marcar como enviado
-        $this->solicitacaoModel->update($solicitacaoId, [
-            'whatsapp_enviado' => true
-        ]);
+        try {
+            $whatsappService = new \App\Services\WhatsAppService();
+            $result = $whatsappService->sendMessage($solicitacaoId, $tipo, $extraData);
+            
+            if (!$result['success']) {
+                error_log('Erro WhatsApp: ' . $result['message']);
+            }
+        } catch (\Exception $e) {
+            error_log('Erro ao enviar WhatsApp: ' . $e->getMessage());
+        }
     }
 
     private function getStatusId(string $statusNome): int
@@ -525,5 +569,395 @@ class SolicitacoesController extends Controller
         $sql = "SELECT id FROM status WHERE nome = ? LIMIT 1";
         $status = \App\Core\Database::fetch($sql, [$statusNome]);
         return $status['id'] ?? 1;
+    }
+
+    public function confirmarHorario(int $id): void
+    {
+        if (!$this->isPost()) {
+            $this->json(['error' => 'Método não permitido'], 405);
+            return;
+        }
+
+        $horario = $this->input('horario');
+        $user = $this->getUser();
+
+        if (!$horario) {
+            $this->json(['error' => 'Horário é obrigatório'], 400);
+            return;
+        }
+
+        try {
+            // Buscar status "Serviço Agendado"
+            $sql = "SELECT id FROM status WHERE nome = 'Serviço Agendado' LIMIT 1";
+            $statusAgendado = \App\Core\Database::fetch($sql);
+            
+            $this->solicitacaoModel->update($id, [
+                'data_agendamento' => date('Y-m-d', strtotime($horario)),
+                'horario_agendamento' => date('H:i:s', strtotime($horario)),
+                'status_id' => $statusAgendado['id'] ?? 3
+            ]);
+            
+            // Registrar histórico
+            $this->solicitacaoModel->updateStatus($id, $statusAgendado['id'] ?? 3, $user['id'], 
+                'Horário confirmado: ' . date('d/m/Y H:i', strtotime($horario)));
+            
+            // Enviar notificação WhatsApp
+            $this->enviarNotificacaoWhatsApp($id, 'Horário Confirmado', [
+                'data_agendamento' => date('d/m/Y', strtotime($horario)),
+                'horario_agendamento' => date('H:i', strtotime($horario))
+            ]);
+            
+            $this->json(['success' => true]);
+        } catch (\Exception $e) {
+            $this->json(['error' => $e->getMessage()], 500);
+        }
+    }
+    
+    public function desconfirmarHorario(int $id): void
+    {
+        if (!$this->isPost()) {
+            $this->json(['error' => 'Método não permitido'], 405);
+            return;
+        }
+
+        $user = $this->getUser();
+
+        try {
+            // Buscar status "Pendente"
+            $sql = "SELECT id FROM status WHERE nome = 'Pendente' LIMIT 1";
+            $statusPendente = \App\Core\Database::fetch($sql);
+            
+            // Limpar agendamento
+            $this->solicitacaoModel->update($id, [
+                'data_agendamento' => null,
+                'horario_agendamento' => null,
+                'status_id' => $statusPendente['id'] ?? null
+            ]);
+            
+            // Registrar histórico
+            if ($statusPendente) {
+                $this->solicitacaoModel->updateStatus($id, $statusPendente['id'], $user['id'], 
+                    'Horário desconfirmado pelo operador');
+            }
+            
+            $this->json(['success' => true]);
+        } catch (\Exception $e) {
+            $this->json(['error' => $e->getMessage()], 500);
+        }
+    }
+    
+    public function solicitarNovosHorarios(int $id): void
+    {
+        if (!$this->isPost()) {
+            $this->json(['error' => 'Método não permitido'], 405);
+            return;
+        }
+
+        $observacao = $this->input('observacao');
+        $user = $this->getUser();
+
+        try {
+            // Limpar horários atuais
+            $this->solicitacaoModel->update($id, [
+                'horarios_opcoes' => null
+            ]);
+            
+            // Registrar no histórico
+            $solicitacao = $this->solicitacaoModel->find($id);
+            $this->solicitacaoModel->updateStatus($id, 
+                $solicitacao['status_id'], 
+                $user['id'], 
+                'Horários indisponíveis. Motivo: ' . $observacao);
+            
+            // Enviar notificação WhatsApp solicitando novos horários
+            $this->enviarNotificacaoWhatsApp($id, 'Horário Sugerido', [
+                'data_agendamento' => 'A definir',
+                'horario_agendamento' => 'Aguardando novas opções'
+            ]);
+            
+            $this->json(['success' => true]);
+        } catch (\Exception $e) {
+            $this->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Confirma realização do serviço
+     */
+    public function confirmarServico(int $id): void
+    {
+        if (!$this->isPost()) {
+            $this->json(['error' => 'Método não permitido'], 405);
+            return;
+        }
+
+        $servicoRealizado = $this->input('servico_realizado');
+        $prestadorCompareceu = $this->input('prestador_compareceu');
+        $precisaComprarPecas = $this->input('precisa_comprar_pecas');
+        $observacoes = $this->input('observacoes');
+        $user = $this->getUser();
+
+        try {
+            $solicitacao = $this->solicitacaoModel->find($id);
+            
+            if (!$solicitacao) {
+                $this->json(['error' => 'Solicitação não encontrada'], 404);
+                return;
+            }
+
+            // Atualizar observações
+            if (!empty($observacoes)) {
+                $this->solicitacaoModel->update($id, [
+                    'observacoes' => $observacoes
+                ]);
+            }
+
+            // Montar mensagem de histórico
+            $historico = "Confirmação de serviço:\n";
+            $historico .= $servicoRealizado ? "✅ Serviço realizado\n" : "";
+            $historico .= !$prestadorCompareceu ? "🚫 Prestador não compareceu\n" : "";
+            $historico .= $precisaComprarPecas ? "🔧 Precisa comprar peças\n" : "";
+            $historico .= $observacoes ? "📝 Obs: $observacoes" : "";
+            
+            // Registrar histórico
+            $this->solicitacaoModel->updateStatus($id, $solicitacao['status_id'], $user['id'], $historico);
+
+            // Enviar notificação WhatsApp
+            $this->enviarNotificacaoWhatsApp($id, 'Confirmação de Serviço', [
+                'horario_servico' => date('d/m/Y H:i', strtotime($solicitacao['data_agendamento']))
+            ]);
+
+            $this->json(['success' => true, 'message' => 'Confirmação registrada com sucesso']);
+            
+        } catch (\Exception $e) {
+            $this->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    public function atualizarDetalhes(int $id): void
+    {
+        if (!$this->isPost()) {
+            $this->json(['error' => 'Método não permitido'], 405);
+            return;
+        }
+
+        $observacoes = $this->input('observacoes');
+        $precisaReembolso = $this->input('precisa_reembolso');
+        $valorReembolso = $this->input('valor_reembolso');
+        $protocoloSeguradora = $this->input('protocolo_seguradora');
+
+        try {
+            $dados = [
+                'observacoes' => $observacoes
+            ];
+
+            // Adicionar protocolo se fornecido
+            if ($protocoloSeguradora !== null && $protocoloSeguradora !== '') {
+                $dados['protocolo_seguradora'] = $protocoloSeguradora;
+            }
+
+            // Adicionar campos de reembolso
+            if ($precisaReembolso === true || $precisaReembolso === 'true' || $precisaReembolso === 1) {
+                $dados['precisa_reembolso'] = 1;
+                $valorConvertido = floatval($valorReembolso);
+                $dados['valor_reembolso'] = $valorConvertido > 0 ? $valorConvertido : null;
+            } else {
+                $dados['precisa_reembolso'] = 0;
+                $dados['valor_reembolso'] = null;
+            }
+
+            // Debug log
+            error_log('Dados recebidos: ' . json_encode([
+                'id' => $id,
+                'precisa_reembolso' => $precisaReembolso,
+                'valor_reembolso_raw' => $valorReembolso,
+                'valor_reembolso_convertido' => isset($dados['valor_reembolso']) ? $dados['valor_reembolso'] : 'null'
+            ]));
+
+            $resultado = $this->solicitacaoModel->update($id, $dados);
+            
+            if ($resultado) {
+                $this->json([
+                    'success' => true, 
+                    'message' => 'Alterações salvas com sucesso',
+                    'dados_salvos' => $dados
+                ]);
+            } else {
+                $this->json(['success' => false, 'error' => 'Falha ao atualizar no banco de dados'], 500);
+            }
+        } catch (\Exception $e) {
+            error_log('Erro ao salvar: ' . $e->getMessage());
+            $this->json(['error' => $e->getMessage()], 500);
+        }
+    }
+    
+    // ============================================================
+    // SOLICITAÇÕES MANUAIS
+    // ============================================================
+    
+    /**
+     * Listar todas as solicitações manuais
+     */
+    public function solicitacoesManuais(): void
+    {
+        $this->requireAuth();
+        
+        $solicitacaoManualModel = new \App\Models\SolicitacaoManual();
+        
+        // Filtros
+        $filtros = [
+            'imobiliaria_id' => $this->input('imobiliaria_id'),
+            'status_id' => $this->input('status_id'),
+            'migrada' => $this->input('migrada') !== null ? (bool)$this->input('migrada') : null,
+            'busca' => $this->input('busca')
+        ];
+        
+        // Remover filtros vazios
+        $filtros = array_filter($filtros, fn($value) => $value !== null && $value !== '');
+        
+        // Buscar solicitações
+        $solicitacoes = $solicitacaoManualModel->getAll($filtros);
+        
+        // Buscar imobiliárias e status para os filtros
+        $imobiliarias = $this->imobiliariaModel->getAll();
+        $statusList = $this->statusModel->getAll();
+        
+        // Estatísticas
+        $stats = [
+            'total' => count($solicitacoes),
+            'nao_migradas' => count(array_filter($solicitacoes, fn($s) => !$s['migrada'])),
+            'migradas' => count(array_filter($solicitacoes, fn($s) => $s['migrada']))
+        ];
+        
+        $this->view('solicitacoes.manuais', [
+            'solicitacoes' => $solicitacoes,
+            'imobiliarias' => $imobiliarias,
+            'statusList' => $statusList,
+            'stats' => $stats,
+            'filtros' => $filtros
+        ]);
+    }
+    
+    /**
+     * Ver detalhes de uma solicitação manual (JSON para modal)
+     */
+    public function verSolicitacaoManual(int $id): void
+    {
+        $this->requireAuth();
+        
+        try {
+            $solicitacaoManualModel = new \App\Models\SolicitacaoManual();
+            $solicitacao = $solicitacaoManualModel->getDetalhes($id);
+            
+            if (!$solicitacao) {
+                $this->json(['success' => false, 'message' => 'Solicitação não encontrada'], 404);
+                return;
+            }
+            
+            // Decodificar JSONs
+            if (!empty($solicitacao['horarios_preferenciais'])) {
+                $solicitacao['horarios_preferenciais'] = is_string($solicitacao['horarios_preferenciais']) 
+                    ? json_decode($solicitacao['horarios_preferenciais'], true) 
+                    : $solicitacao['horarios_preferenciais'];
+            }
+            
+            if (!empty($solicitacao['fotos'])) {
+                $solicitacao['fotos'] = is_string($solicitacao['fotos']) 
+                    ? json_decode($solicitacao['fotos'], true) 
+                    : $solicitacao['fotos'];
+            }
+            
+            // Buscar lista de status para o dropdown
+            $statusList = $this->statusModel->getAll();
+            
+            $this->json([
+                'success' => true,
+                'solicitacao' => $solicitacao,
+                'statusList' => $statusList
+            ]);
+        } catch (\Exception $e) {
+            error_log('Erro ao buscar solicitação manual: ' . $e->getMessage());
+            $this->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+    
+    /**
+     * Atualizar status de uma solicitação manual
+     */
+    public function atualizarStatusManual(int $id): void
+    {
+        $this->requireAuth();
+        
+        if (!$this->isPost()) {
+            $this->json(['success' => false, 'message' => 'Método não permitido'], 405);
+            return;
+        }
+        
+        try {
+            $statusId = $this->input('status_id');
+            
+            if (empty($statusId)) {
+                $this->json(['success' => false, 'message' => 'Status não informado'], 400);
+                return;
+            }
+            
+            $solicitacaoManualModel = new \App\Models\SolicitacaoManual();
+            $resultado = $solicitacaoManualModel->update($id, [
+                'status_id' => $statusId
+            ]);
+            
+            if ($resultado) {
+                $this->json([
+                    'success' => true,
+                    'message' => 'Status atualizado com sucesso'
+                ]);
+            } else {
+                $this->json(['success' => false, 'message' => 'Erro ao atualizar status'], 500);
+            }
+        } catch (\Exception $e) {
+            error_log('Erro ao atualizar status: ' . $e->getMessage());
+            $this->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+    
+    /**
+     * Migrar solicitação manual para o sistema principal
+     */
+    public function migrarParaSistema(int $id): void
+    {
+        $this->requireAuth();
+        
+        if (!$this->isPost()) {
+            $this->json(['success' => false, 'message' => 'Método não permitido'], 405);
+            return;
+        }
+        
+        try {
+            $usuarioId = $_SESSION['user_id'] ?? null;
+            
+            if (!$usuarioId) {
+                $this->json(['success' => false, 'message' => 'Usuário não autenticado'], 401);
+                return;
+            }
+            
+            $solicitacaoManualModel = new \App\Models\SolicitacaoManual();
+            $resultado = $solicitacaoManualModel->migrarParaSistema($id, $usuarioId);
+            
+            if ($resultado['success']) {
+                $this->json([
+                    'success' => true,
+                    'message' => $resultado['message'],
+                    'solicitacao_id' => $resultado['solicitacao_id']
+                ]);
+            } else {
+                $this->json([
+                    'success' => false,
+                    'message' => $resultado['message']
+                ], 400);
+            }
+        } catch (\Exception $e) {
+            error_log('Erro ao migrar solicitação: ' . $e->getMessage());
+            $this->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
     }
 }

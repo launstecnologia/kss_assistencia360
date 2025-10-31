@@ -22,9 +22,14 @@ class Imobiliaria extends Model
         'updated_at' => 'datetime'
     ];
 
+    public function getAll(): array
+    {
+        return $this->findAll([], 'nome ASC');
+    }
+
     public function getAtivas(): array
     {
-        return $this->findAll(['status' => 'ATIVA']);
+        return $this->findAll(['status' => 'ATIVA'], 'nome ASC');
     }
 
     public function findByToken(string $token): ?array

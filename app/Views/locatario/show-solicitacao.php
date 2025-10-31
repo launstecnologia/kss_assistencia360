@@ -9,6 +9,13 @@ ob_start();
 
 <!-- Header -->
 <div class="mb-8">
+    <!-- Botão Voltar -->
+    <a href="<?= url($locatario['instancia'] . '/dashboard') ?>" 
+       class="inline-flex items-center text-gray-600 hover:text-gray-900 mb-4 transition-colors">
+        <i class="fas fa-arrow-left mr-2"></i>
+        <span class="text-sm font-medium">Voltar para Dashboard</span>
+    </a>
+    
     <div class="flex items-center justify-between">
         <div>
             <h1 class="text-2xl font-bold text-gray-900">
@@ -19,11 +26,6 @@ ob_start();
                 Protocolo: <?= htmlspecialchars($solicitacao['numero_solicitacao'] ?? '#' . $solicitacao['id']) ?>
             </p>
         </div>
-        <a href="<?= url($locatario['instancia'] . '/solicitacoes') ?>" 
-           class="inline-flex items-center px-4 py-2 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors">
-            <i class="fas fa-arrow-left mr-2"></i>
-            Voltar
-        </a>
     </div>
 </div>
 

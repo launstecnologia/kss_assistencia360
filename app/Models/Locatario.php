@@ -93,7 +93,13 @@ class Locatario extends Model
     public function updateWhatsapp(int $locatarioId, string $whatsapp): bool
     {
         $sql = "UPDATE {$this->table} SET whatsapp = ?, updated_at = NOW() WHERE id = ?";
-        return Database::execute($sql, [$whatsapp, $locatarioId]);
+        try {
+            $stmt = Database::query($sql, [$whatsapp, $locatarioId]);
+            return $stmt->rowCount() > 0;
+        } catch (\Exception $e) {
+            error_log('Erro ao atualizar WhatsApp: ' . $e->getMessage());
+            return false;
+        }
     }
 
     /**
@@ -122,6 +128,12 @@ class Locatario extends Model
         $values[] = $locatarioId;
         $sql = "UPDATE {$this->table} SET " . implode(', ', $updateFields) . ", updated_at = NOW() WHERE id = ?";
         
-        return Database::execute($sql, $values);
+        try {
+            $stmt = Database::query($sql, $values);
+            return $stmt->rowCount() > 0;
+        } catch (\Exception $e) {
+            error_log('Erro ao atualizar dados pessoais: ' . $e->getMessage());
+            return false;
+        }
     }
 }

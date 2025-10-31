@@ -160,14 +160,30 @@ class InstanciaController extends Controller
 
         $this->checkAuth();
 
-        // Buscar dados do locatário no banco
-        $locatario = $this->locatarioModel->find($_SESSION['locatario_id']);
-        $imoveis = $this->locatarioModel->getImoveis($_SESSION['locatario_id']);
+        // IGUAL O PERFIL: Pegar direto da sessão
+        $locatario = $_SESSION['locatario'] ?? null;
+        
+        if (!$locatario) {
+            $this->redirect('/' . $this->imobiliaria['instancia']);
+            return;
+        }
+        
+        // Buscar WhatsApp do banco se estiver vazio
+        if (empty($locatario['whatsapp'])) {
+            $cpfLimpo = str_replace(['.', '-'], '', $locatario['cpf']);
+            $locatarioBanco = $this->locatarioModel->findByCpfAndImobiliaria($cpfLimpo, $this->imobiliaria['id']);
+            
+            if ($locatarioBanco) {
+                $locatario['whatsapp'] = $locatarioBanco['whatsapp'] ?? '';
+                $locatario['telefone'] = $locatarioBanco['telefone'] ?? '';
+                $locatario['email'] = $locatarioBanco['email'] ?? '';
+            }
+        }
 
         $this->view('instancia.dashboard', [
             'imobiliaria' => $this->imobiliaria,
             'locatario' => $locatario,
-            'imoveis' => $imoveis,
+            'imoveis' => $locatario['imoveis'] ?? [],
             'cliente' => $_SESSION['cliente_data'] ?? null
         ]);
     }
@@ -284,11 +300,22 @@ class InstanciaController extends Controller
 
     public function logout(string $instancia = null): void
     {
-        // Limpar sessão
-        session_destroy();
+        // Guardar instância antes de destruir a sessão
+        $instanciaAtual = $this->imobiliaria['instancia'] ?? $_SESSION['instancia'] ?? $instancia;
         
-        if ($this->imobiliaria) {
-            $this->redirect('/' . $this->imobiliaria['instancia'] . '/login');
+        // Limpar apenas dados do locatário
+        unset($_SESSION['user_id']);
+        unset($_SESSION['locatario_id']);
+        unset($_SESSION['user_name']);
+        unset($_SESSION['user_cpf']);
+        unset($_SESSION['instancia']);
+        unset($_SESSION['imobiliaria_id']);
+        unset($_SESSION['user_level']);
+        unset($_SESSION['cliente_data']);
+        
+        // Redirecionar para login da instância (SEM /login)
+        if ($instanciaAtual) {
+            $this->redirect('/' . $instanciaAtual);
         } else {
             $this->redirect('/');
         }

@@ -140,9 +140,9 @@
             }
         });
         
-        // Auto-hide alerts
+        // Auto-hide alerts (APENAS mensagens com classe .alert-message)
         setTimeout(function() {
-            const alerts = document.querySelectorAll('.bg-red-50, .bg-green-50, .bg-yellow-50, .bg-blue-50');
+            const alerts = document.querySelectorAll('.alert-message');
             alerts.forEach(function(alert) {
                 alert.style.transition = 'opacity 0.5s ease';
                 alert.style.opacity = '0';
