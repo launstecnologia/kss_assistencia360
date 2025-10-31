@@ -34,6 +34,46 @@
             opacity: 0.5;
             transform: rotate(5deg);
         }
+        
+        /* Status Badges */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        
+        .status-nova-solicitacao {
+            background-color: #DBEAFE;
+            color: #1E40AF;
+        }
+        
+        .status-buscando-prestador {
+            background-color: #FEF3C7;
+            color: #92400E;
+        }
+        
+        .status-servico-agendado {
+            background-color: #D1FAE5;
+            color: #065F46;
+        }
+        
+        .status-em-andamento {
+            background-color: #E0E7FF;
+            color: #3730A3;
+        }
+        
+        .status-concluido {
+            background-color: #D1FAE5;
+            color: #065F46;
+        }
+        
+        .status-cancelado {
+            background-color: #FEE2E2;
+            color: #991B1B;
+        }
     </style>
 </head>
 <body class="bg-gray-100">
@@ -50,9 +90,40 @@
                     Dashboard
                 </a>
                 
+                <a href="<?= url('admin/kanban') ?>" class="flex items-center px-4 py-2 text-gray-700 rounded-lg hover:bg-gray-100 <?= $currentPage === 'kanban' ? 'bg-blue-50 text-blue-700' : '' ?>">
+                    <i class="fas fa-columns mr-3"></i>
+                    Kanban
+                </a>
+                
                 <a href="<?= url('admin/solicitacoes') ?>" class="flex items-center px-4 py-2 text-gray-700 rounded-lg hover:bg-gray-100 <?= $currentPage === 'solicitacoes' ? 'bg-blue-50 text-blue-700' : '' ?>">
                     <i class="fas fa-clipboard-list mr-3"></i>
                     Solicitações
+                </a>
+                
+                <a href="<?= url('admin/templates-whatsapp') ?>" class="flex items-center px-4 py-2 text-gray-700 rounded-lg hover:bg-gray-100 <?= $currentPage === 'templates-whatsapp' ? 'bg-blue-50 text-blue-700' : '' ?>">
+                    <i class="fas fa-file-code mr-3"></i>
+                    Templates WhatsApp
+                </a>
+
+                <a href="<?= url('admin/solicitacoes-manuais') ?>" class="flex items-center px-4 py-2 text-gray-700 rounded-lg hover:bg-gray-100 <?= $currentPage === 'solicitacoes-manuais' ? 'bg-blue-50 text-blue-700' : '' ?>">
+                    <i class="fas fa-file-alt mr-3"></i>
+                    Solicitações Manuais
+                    <?php
+                    // Contador de solicitações manuais não migradas
+                    try {
+                        $solicitacaoManualModel = new \App\Models\SolicitacaoManual();
+                        $naoMigradas = count($solicitacaoManualModel->getNaoMigradas(999));
+                        if ($naoMigradas > 0):
+                    ?>
+                        <span class="ml-auto inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-yellow-800 bg-yellow-200 rounded-full">
+                            <?= $naoMigradas ?>
+                        </span>
+                    <?php 
+                        endif;
+                    } catch (\Exception $e) {
+                        // Silencioso se der erro
+                    }
+                    ?>
                 </a>
                 
                 <?php if ($user && $user['nivel_permissao'] === 'ADMINISTRADOR'): ?>
@@ -132,6 +203,34 @@
         
         <!-- Page Content -->
         <main class="p-6">
+            <?php 
+            // Mostrar mensagens flash
+            if (isset($_SESSION['flash_message'])): 
+                $flashType = $_SESSION['flash_type'] ?? 'info';
+                $bgColor = match($flashType) {
+                    'success' => 'bg-green-50 border-green-200 text-green-700',
+                    'error' => 'bg-red-50 border-red-200 text-red-700',
+                    'warning' => 'bg-yellow-50 border-yellow-200 text-yellow-700',
+                    default => 'bg-blue-50 border-blue-200 text-blue-700'
+                };
+                $icon = match($flashType) {
+                    'success' => 'fa-check-circle',
+                    'error' => 'fa-exclamation-circle',
+                    'warning' => 'fa-exclamation-triangle',
+                    default => 'fa-info-circle'
+                };
+            ?>
+            <div class="mb-6 <?= $bgColor ?> border px-4 py-3 rounded-lg alert-message">
+                <div class="flex">
+                    <i class="fas <?= $icon ?> mt-1 mr-3"></i>
+                    <div><?= htmlspecialchars($_SESSION['flash_message']) ?></div>
+                </div>
+            </div>
+            <?php 
+                unset($_SESSION['flash_message'], $_SESSION['flash_type']);
+            endif; 
+            ?>
+            
             <?php if (isset($error) && $error): ?>
             <div class="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
                 <div class="flex">
@@ -192,9 +291,9 @@
             overlay.classList.add('hidden');
         });
         
-        // Auto-hide alerts after 5 seconds
+        // Auto-hide alerts (APENAS mensagens com classe .alert-message)
         setTimeout(function() {
-            const alerts = document.querySelectorAll('.bg-red-50, .bg-green-50');
+            const alerts = document.querySelectorAll('.alert-message');
             alerts.forEach(function(alert) {
                 alert.style.transition = 'opacity 0.5s ease-out';
                 alert.style.opacity = '0';

@@ -101,8 +101,10 @@ return [
     
     'whatsapp' => [
         'enabled' => env('WHATSAPP_ENABLED', 'true') === 'true',
+        'api_url' => env('WHATSAPP_API_URL', ''),
         'instance' => env('WHATSAPP_INSTANCE', ''),
         'token' => env('WHATSAPP_TOKEN', ''),
+        'api_key' => env('WHATSAPP_API_KEY', ''),
     ],
     
     'ksi_api' => [

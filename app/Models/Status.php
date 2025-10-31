@@ -8,7 +8,7 @@ class Status extends Model
 {
     protected string $table = 'status';
     protected array $fillable = [
-        'nome', 'cor', 'icone', 'ordem', 'template_mensagem', 'notificar_automatico', 'status', 'created_at', 'updated_at'
+        'nome', 'cor', 'icone', 'ordem', 'visivel_kanban', 'template_mensagem', 'notificar_automatico', 'status', 'created_at', 'updated_at'
     ];
     protected array $casts = [
         'ordem' => 'int',
@@ -20,6 +20,12 @@ class Status extends Model
     public function getAtivos(): array
     {
         return $this->findAll(['status' => 'ATIVO'], 'ordem ASC');
+    }
+
+    public function getAll(): array
+    {
+        $sql = "SELECT * FROM {$this->table} ORDER BY ordem ASC, created_at DESC";
+        return Database::fetchAll($sql);
     }
 
     public function getKanban(): array
@@ -47,18 +53,41 @@ class Status extends Model
         $data['updated_at'] = date('Y-m-d H:i:s');
         
         // Se não foi definida ordem, usar a próxima disponível
-        if (!isset($data['ordem'])) {
-            $sql = "SELECT MAX(ordem) as max_ordem FROM {$this->table}";
-            $result = Database::fetch($sql);
-            $data['ordem'] = ($result['max_ordem'] ?? 0) + 1;
+        if (!isset($data['ordem']) || empty($data['ordem'])) {
+            $data['ordem'] = $this->getProximaOrdem();
+        }
+        
+        // Converter boolean para inteiro se necessário
+        if (isset($data['visivel_kanban'])) {
+            $data['visivel_kanban'] = $data['visivel_kanban'] ? 1 : 0;
         }
         
         return parent::create($data);
     }
 
+    public function getProximaOrdem(): int
+    {
+        $sql = "SELECT MAX(ordem) as max_ordem FROM {$this->table}";
+        $result = Database::fetch($sql);
+        return ($result['max_ordem'] ?? 0) + 1;
+    }
+
+    public function isUsado(int $statusId): bool
+    {
+        $sql = "SELECT COUNT(*) as total FROM solicitacoes WHERE status_id = ?";
+        $result = Database::fetch($sql, [$statusId]);
+        return ($result['total'] ?? 0) > 0;
+    }
+
     public function update(int $id, array $data): bool
     {
         $data['updated_at'] = date('Y-m-d H:i:s');
+        
+        // Converter boolean para inteiro se necessário
+        if (isset($data['visivel_kanban'])) {
+            $data['visivel_kanban'] = $data['visivel_kanban'] ? 1 : 0;
+        }
+        
         return parent::update($id, $data);
     }
 

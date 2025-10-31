@@ -5,14 +5,17 @@ namespace App\Controllers;
 use App\Core\Controller;
 use App\Services\KsiApiService;
 use App\Models\Solicitacao;
+use App\Models\Locatario;
 
 class LocatarioController extends Controller
 {
     private Solicitacao $solicitacaoModel;
+    private Locatario $locatarioModel;
     
     public function __construct()
     {
         $this->solicitacaoModel = new Solicitacao();
+        $this->locatarioModel = new Locatario();
     }
     
     /**
@@ -99,6 +102,9 @@ class LocatarioController extends Controller
                 'id' => $cliente['id_cliente'],
                 'nome' => $cliente['nome'],
                 'cpf' => $cpf,
+                'email' => $cliente['email'] ?? null,
+                'telefone' => $cliente['telefone'] ?? null,
+                'whatsapp' => $cliente['whatsapp'] ?? $cliente['telefone'] ?? null,
                 'imobiliaria_id' => $imobiliaria['id'],
                 'imobiliaria_nome' => $imobiliaria['nome'],
                 'instancia' => $instancia,
@@ -122,6 +128,23 @@ class LocatarioController extends Controller
         $this->requireLocatarioAuth();
         
         $locatario = $_SESSION['locatario'];
+        
+        // Buscar WhatsApp do banco se estiver vazio
+        if (empty($locatario['whatsapp'])) {
+            $cpfLimpo = str_replace(['.', '-'], '', $locatario['cpf']);
+            $locatarioBanco = $this->locatarioModel->findByCpfAndImobiliaria($cpfLimpo, $locatario['imobiliaria_id']);
+            
+            if ($locatarioBanco) {
+                $locatario['whatsapp'] = $locatarioBanco['whatsapp'] ?? '';
+                $locatario['telefone'] = $locatarioBanco['telefone'] ?? '';
+                $locatario['email'] = $locatarioBanco['email'] ?? '';
+                
+                // Atualizar sessão
+                $_SESSION['locatario']['whatsapp'] = $locatario['whatsapp'];
+                $_SESSION['locatario']['telefone'] = $locatario['telefone'];
+                $_SESSION['locatario']['email'] = $locatario['email'];
+            }
+        }
         
         // Buscar solicitações do locatário
         $solicitacoes = $this->solicitacaoModel->getByLocatario($locatario['id']);
@@ -165,6 +188,23 @@ class LocatarioController extends Controller
         
         $locatario = $_SESSION['locatario'];
         
+        // Buscar WhatsApp do banco se estiver vazio
+        if (empty($locatario['whatsapp'])) {
+            $cpfLimpo = str_replace(['.', '-'], '', $locatario['cpf']);
+            $locatarioBanco = $this->locatarioModel->findByCpfAndImobiliaria($cpfLimpo, $locatario['imobiliaria_id']);
+            
+            if ($locatarioBanco) {
+                $locatario['whatsapp'] = $locatarioBanco['whatsapp'] ?? '';
+                $locatario['telefone'] = $locatarioBanco['telefone'] ?? '';
+                $locatario['email'] = $locatarioBanco['email'] ?? '';
+                
+                // Atualizar sessão
+                $_SESSION['locatario']['whatsapp'] = $locatario['whatsapp'];
+                $_SESSION['locatario']['telefone'] = $locatario['telefone'];
+                $_SESSION['locatario']['email'] = $locatario['email'];
+            }
+        }
+        
         $this->view('locatario.perfil', [
             'locatario' => $locatario
         ]);
@@ -175,20 +215,58 @@ class LocatarioController extends Controller
      */
     public function novaSolicitacao(string $instancia = ''): void
     {
+        // LOG CRÍTICO: Verificar se método é chamado
+        file_put_contents('C:\xampp\htdocs\debug_kss.log', date('H:i:s') . " - novaSolicitacao() chamado - Method: " . $_SERVER['REQUEST_METHOD'] . "\n", FILE_APPEND);
+        
         $this->requireLocatarioAuth();
         
-        // Limpar dados da sessão para começar uma nova solicitação
-        unset($_SESSION['nova_solicitacao']);
+        file_put_contents('C:\xampp\htdocs\debug_kss.log', date('H:i:s') . " - Passou requireLocatarioAuth\n", FILE_APPEND);
         
         if ($this->isPost()) {
-            // Debug temporário
-            error_log("DEBUG: Processando POST na etapa 1");
-            error_log("DEBUG: POST data: " . print_r($_POST, true));
+            // Processar envio do formulário da etapa 1
+            file_put_contents('C:\xampp\htdocs\debug_kss.log', date('H:i:s') . " - É POST! Processando etapa 1\n", FILE_APPEND);
+            file_put_contents('C:\xampp\htdocs\debug_kss.log', date('H:i:s') . " - POST data: " . print_r($_POST, true) . "\n", FILE_APPEND);
+            
+            file_put_contents('C:\xampp\htdocs\debug_kss.log', date('H:i:s') . " - ANTES de chamar salvarDadosEtapa\n", FILE_APPEND);
+            error_log("CRÍTICO: ANTES de chamar salvarDadosEtapa");
+            
             $this->salvarDadosEtapa(1);
+            
+            file_put_contents('C:\xampp\htdocs\debug_kss.log', date('H:i:s') . " - DEPOIS de salvarDadosEtapa\n", FILE_APPEND);
+            error_log("CRÍTICO: DEPOIS de salvarDadosEtapa");
             return;
         }
         
+        // Limpar dados da sessão apenas quando é GET (começar nova solicitação)
+        unset($_SESSION['nova_solicitacao']);
+        
         $locatario = $_SESSION['locatario'];
+        
+        // IMPORTANTE: Recarregar imóveis da API se estiverem vazios
+        if (empty($locatario['imoveis'])) {
+            error_log("DEBUG: Imóveis vazios, recarregando da API...");
+            
+            // Buscar imobiliária
+            $imobiliaria = KsiApiService::getImobiliariaByInstancia($locatario['instancia']);
+            
+            if ($imobiliaria) {
+                // Criar serviço da API
+                $ksiApi = KsiApiService::fromImobiliaria($imobiliaria);
+                
+                // Buscar imóveis do locatário
+                $imovelResult = $ksiApi->buscarImovelLocatario($locatario['id']);
+                
+                if ($imovelResult['success']) {
+                    $locatario['imoveis'] = $imovelResult['imoveis'];
+                    $_SESSION['locatario']['imoveis'] = $imovelResult['imoveis'];
+                    error_log("DEBUG: Imóveis recarregados: " . count($imovelResult['imoveis']));
+                } else {
+                    error_log("DEBUG: Erro ao recarregar imóveis: " . $imovelResult['message']);
+                }
+            }
+        } else {
+            error_log("DEBUG: Imóveis já carregados na sessão: " . count($locatario['imoveis']));
+        }
         
         // Buscar categorias e subcategorias
         $categoriaModel = new \App\Models\Categoria();
@@ -197,16 +275,18 @@ class LocatarioController extends Controller
         $subcategorias = $subcategoriaModel->getAtivas();
         
         // Organizar subcategorias por categoria
-        foreach ($categorias as &$categoria) {
-            $categoria['subcategorias'] = array_filter($subcategorias, function($sub) use ($categoria) {
+        foreach ($categorias as $key => $categoria) {
+            $categorias[$key]['subcategorias'] = array_values(array_filter($subcategorias, function($sub) use ($categoria) {
                 return $sub['categoria_id'] == $categoria['id'];
-            });
+            }));
         }
         
         $this->view('locatario.nova-solicitacao', [
             'locatario' => $locatario,
             'categorias' => $categorias,
-            'subcategorias' => $subcategorias
+            'subcategorias' => $subcategorias,
+            'etapa' => 1, // Sempre começa na etapa 1
+            'nova_solicitacao' => $_SESSION['nova_solicitacao'] ?? []
         ]);
     }
     
@@ -228,13 +308,48 @@ class LocatarioController extends Controller
             return;
         }
         
-        // Redirecionar para próxima etapa
-        $proximaEtapa = $etapa + 1;
-        if ($proximaEtapa <= 5) {
-            $this->redirect(url($instancia . '/nova-solicitacao/etapa/' . $proximaEtapa));
-        } else {
-            $this->redirect(url($instancia . '/nova-solicitacao'));
+        // GET: Exibir a view da etapa correspondente
+        $locatario = $_SESSION['locatario'];
+        $novaSolicitacao = $_SESSION['nova_solicitacao'] ?? [];
+        
+        // Preparar dados específicos para cada etapa
+        $data = [
+            'locatario' => $locatario,
+            'etapa' => $etapa,
+            'nova_solicitacao' => $novaSolicitacao
+        ];
+        
+        // Adicionar dados extras conforme necessário para cada etapa
+        switch ($etapa) {
+            case 2:
+                // Buscar categorias e subcategorias
+                $categoriaModel = new \App\Models\Categoria();
+                $subcategoriaModel = new \App\Models\Subcategoria();
+                $categorias = $categoriaModel->getAtivas();
+                $subcategorias = $subcategoriaModel->getAtivas();
+                
+                // Organizar subcategorias por categoria
+                foreach ($categorias as $key => $categoria) {
+                    $categorias[$key]['subcategorias'] = array_values(array_filter($subcategorias, function($sub) use ($categoria) {
+                        return $sub['categoria_id'] == $categoria['id'];
+                    }));
+                }
+                
+                $data['categorias'] = $categorias;
+                $data['subcategorias'] = $subcategorias;
+                break;
+            case 3:
+                // Fotos já estão em $novaSolicitacao
+                break;
+            case 4:
+                // Horários
+                break;
+            case 5:
+                // Resumo final
+                break;
         }
+        
+        $this->view('locatario.nova-solicitacao', $data);
     }
     
     /**
@@ -242,8 +357,7 @@ class LocatarioController extends Controller
      */
     private function salvarDadosEtapa(int $etapa): void
     {
-        // Debug temporário
-        error_log("DEBUG: Salvando dados da etapa $etapa");
+        file_put_contents('C:\xampp\htdocs\debug_kss.log', date('H:i:s') . " - salvarDadosEtapa($etapa) iniciado\n", FILE_APPEND);
         
         // Inicializar sessão de nova solicitação se não existir
         if (!isset($_SESSION['nova_solicitacao'])) {
@@ -253,22 +367,30 @@ class LocatarioController extends Controller
         // Salvar dados da etapa atual
         switch ($etapa) {
             case 1:
+                file_put_contents('C:\xampp\htdocs\debug_kss.log', date('H:i:s') . " - Dentro do case 1\n", FILE_APPEND);
+                
                 // Validar campos obrigatórios da etapa 1
                 $enderecoSelecionado = $this->input('endereco_selecionado');
                 $finalidadeLocacao = $this->input('finalidade_locacao');
                 $tipoImovel = $this->input('tipo_imovel');
                 
-                if (empty($enderecoSelecionado) || empty($finalidadeLocacao) || empty($tipoImovel)) {
+                file_put_contents('C:\xampp\htdocs\debug_kss.log', date('H:i:s') . " - Valores: endereco=$enderecoSelecionado, finalidade=$finalidadeLocacao, tipo=$tipoImovel\n", FILE_APPEND);
+                
+                // Usar isset() e !== null ao invés de empty() porque "0" é um valor válido!
+                if ($enderecoSelecionado === null || $finalidadeLocacao === null || $tipoImovel === null) {
                     $instancia = $this->getInstanciaFromUrl();
-                    $this->redirect(url($instancia . '/nova-solicitacao'), [
-                        'error' => 'Todos os campos são obrigatórios'
-                    ]);
+                    file_put_contents('C:\xampp\htdocs\debug_kss.log', date('H:i:s') . " - ERRO: Campos faltando! Redirecionando...\n", FILE_APPEND);
+                    $this->redirect(url($instancia . '/nova-solicitacao?error=campos_obrigatorios'));
                     return;
                 }
+                
+                file_put_contents('C:\xampp\htdocs\debug_kss.log', date('H:i:s') . " - Salvando na sessão...\n", FILE_APPEND);
                 
                 $_SESSION['nova_solicitacao']['endereco_selecionado'] = $enderecoSelecionado;
                 $_SESSION['nova_solicitacao']['finalidade_locacao'] = $finalidadeLocacao;
                 $_SESSION['nova_solicitacao']['tipo_imovel'] = $tipoImovel;
+                
+                file_put_contents('C:\xampp\htdocs\debug_kss.log', date('H:i:s') . " - Salvo! Sessão: " . print_r($_SESSION['nova_solicitacao'], true) . "\n", FILE_APPEND);
                 break;
                 
             case 2:
@@ -287,7 +409,21 @@ class LocatarioController extends Controller
                 break;
                 
             case 4:
-                $_SESSION['nova_solicitacao']['horarios_preferenciais'] = $this->input('horarios_preferenciais', []);
+                // Receber horários enviados pelo JavaScript
+                $horariosRaw = $this->input('horarios_opcoes');
+                $horarios = [];
+                
+                if (!empty($horariosRaw)) {
+                    // Se for string JSON, decodificar
+                    $horarios = is_string($horariosRaw) ? json_decode($horariosRaw, true) : $horariosRaw;
+                }
+                
+                // Log para debug
+                file_put_contents('C:\xampp\htdocs\debug_kss.log', date('H:i:s') . " - Horários recebidos: " . print_r($horariosRaw, true) . "\n", FILE_APPEND);
+                file_put_contents('C:\xampp\htdocs\debug_kss.log', date('H:i:s') . " - Horários processados: " . print_r($horarios, true) . "\n", FILE_APPEND);
+                
+                // Salvar horários formatados na sessão
+                $_SESSION['nova_solicitacao']['horarios_preferenciais'] = $horarios;
                 break;
                 
             case 5:
@@ -296,10 +432,17 @@ class LocatarioController extends Controller
                 return;
         }
         
+        file_put_contents('C:\xampp\htdocs\debug_kss.log', date('H:i:s') . " - Salvou etapa $etapa, preparando redirect\n", FILE_APPEND);
+        
         $_SESSION['nova_solicitacao']['etapa'] = $etapa;
         
         $instancia = $this->getInstanciaFromUrl();
         $proximaEtapa = $etapa + 1;
+        
+        file_put_contents('C:\xampp\htdocs\debug_kss.log', date('H:i:s') . " - Instancia retornada: '$instancia'\n", FILE_APPEND);
+        file_put_contents('C:\xampp\htdocs\debug_kss.log', date('H:i:s') . " - REQUEST_URI: " . $_SERVER['REQUEST_URI'] . "\n", FILE_APPEND);
+        file_put_contents('C:\xampp\htdocs\debug_kss.log', date('H:i:s') . " - URL construída: " . ($instancia . '/nova-solicitacao/etapa/' . $proximaEtapa) . "\n", FILE_APPEND);
+        file_put_contents('C:\xampp\htdocs\debug_kss.log', date('H:i:s') . " - Redirecionando para etapa $proximaEtapa da instancia $instancia\n", FILE_APPEND);
         
         if ($proximaEtapa <= 5) {
             $this->redirect(url($instancia . '/nova-solicitacao/etapa/' . $proximaEtapa));
@@ -345,58 +488,78 @@ class LocatarioController extends Controller
         $dados = $_SESSION['nova_solicitacao'] ?? [];
         $locatario = $_SESSION['locatario'];
         
-        // Validar dados obrigatórios
+        // DEBUG: Ver o que tem na sessão
+        file_put_contents('C:\xampp\htdocs\debug_kss.log', date('H:i:s') . " - finalizarSolicitacao() iniciado\n", FILE_APPEND);
+        file_put_contents('C:\xampp\htdocs\debug_kss.log', date('H:i:s') . " - Dados na sessão: " . print_r($dados, true) . "\n", FILE_APPEND);
+        
+        // Validar dados obrigatórios (usar !isset para permitir valor "0")
         $required = ['endereco_selecionado', 'categoria_id', 'subcategoria_id', 'descricao_problema'];
         foreach ($required as $field) {
-            if (empty($dados[$field])) {
-                $instancia = $this->getInstanciaFromUrl();
-                $this->redirect($instancia . '/nova-solicitacao', [
-                    'error' => 'Dados obrigatórios não foram preenchidos'
-                ]);
+            if (!isset($dados[$field]) || $dados[$field] === '' || $dados[$field] === null) {
+                $instancia = $locatario['instancia'];
+                file_put_contents('C:\xampp\htdocs\debug_kss.log', date('H:i:s') . " - Campo faltando: $field (valor: " . var_export($dados[$field] ?? 'UNDEFINED', true) . ")\n", FILE_APPEND);
+                $this->redirect(url($instancia . '/nova-solicitacao?error=' . urlencode("Campo obrigatório faltando: $field")));
                 return;
             }
         }
         
+        file_put_contents('C:\xampp\htdocs\debug_kss.log', date('H:i:s') . " - Validação OK, criando solicitação...\n", FILE_APPEND);
+        
         // Preparar dados para criação da solicitação
         $imovel = $locatario['imoveis'][$dados['endereco_selecionado']];
         
+        // Buscar status inicial (geralmente "Nova Solicitação" ou similar)
+        $statusModel = new \App\Models\Status();
+        $statusInicial = $statusModel->findByNome('Nova Solicitação') 
+                      ?? $statusModel->findByNome('Nova') 
+                      ?? $statusModel->findByNome('NOVA')
+                      ?? ['id' => 1];
+        
+        // Preparar horários para salvar (converter array para JSON)
+        $horarios = $dados['horarios_preferenciais'] ?? [];
+        $horariosJson = !empty($horarios) ? json_encode($horarios) : null;
+        
         $data = [
-            'locatario_id' => $locatario['id'],
+            // IDs e relacionamentos
+            'locatario_id' => $locatario['codigo_locatario'] ?? $locatario['id'],
+            'locatario_nome' => $locatario['nome'],
+            'locatario_telefone' => $locatario['whatsapp'] ?? $locatario['telefone'] ?? '',
+            'locatario_email' => $locatario['email'] ?? '',
             'imobiliaria_id' => $locatario['imobiliaria_id'],
             'categoria_id' => $dados['categoria_id'],
             'subcategoria_id' => $dados['subcategoria_id'],
+            'status_id' => $statusInicial['id'],
+            
+            // Descrição
             'descricao_problema' => $dados['descricao_problema'],
-            'local_manutencao' => $dados['local_manutencao'] ?? '',
-            'tipo_atendimento' => $dados['finalidade_locacao'] ?? 'RESIDENCIAL',
-            'tipo_imovel' => $dados['tipo_imovel'] ?? 'CASA',
-            'endereco' => $imovel['endereco'],
-            'numero' => $imovel['numero'],
-            'complemento' => $imovel['complemento'] ?? '',
-            'bairro' => $imovel['bairro'],
-            'cidade' => $imovel['cidade'],
-            'uf' => $imovel['uf'],
-            'cep' => $imovel['cep'],
-            'datas_opcoes' => json_encode($dados['horarios_preferenciais'] ?? []),
-            'periodos_preferenciais' => json_encode($dados['horarios_preferenciais'] ?? []),
-            'fotos' => json_encode($dados['fotos'] ?? []),
-            'prioridade' => 'NORMAL'
+            'observacoes' => ($dados['local_manutencao'] ?? '') . "\nFinalidade: " . ($dados['finalidade_locacao'] ?? 'RESIDENCIAL') . "\nTipo: " . ($dados['tipo_imovel'] ?? 'CASA'),
+            'prioridade' => 'NORMAL',
+            
+            // Horários preferenciais
+            'horarios_opcoes' => $horariosJson,
+            
+            // Dados do imóvel (com prefixo imovel_)
+            'imovel_endereco' => $imovel['endereco'] ?? '',
+            'imovel_numero' => $imovel['numero'] ?? '',
+            'imovel_complemento' => $imovel['complemento'] ?? '',
+            'imovel_bairro' => $imovel['bairro'] ?? '',
+            'imovel_cidade' => $imovel['cidade'] ?? '',
+            'imovel_estado' => $imovel['uf'] ?? '',
+            'imovel_cep' => $imovel['cep'] ?? ''
         ];
         
         // Criar solicitação
         $solicitacaoId = $this->solicitacaoModel->create($data);
         
-        $instancia = $this->getInstanciaFromUrl();
+        $instancia = $locatario['instancia'];
         if ($solicitacaoId) {
             // Limpar dados da sessão
             unset($_SESSION['nova_solicitacao']);
             
-            $this->redirect(url($instancia . '/solicitacoes'), [
-                'success' => 'Solicitação criada com sucesso!'
-            ]);
+            // Redirecionar para o dashboard com mensagem de sucesso
+            $this->redirect(url($instancia . '/dashboard?success=' . urlencode('Solicitação criada com sucesso! ID: #' . $solicitacaoId)));
         } else {
-            $this->redirect($instancia . '/nova-solicitacao', [
-                'error' => 'Erro ao criar solicitação. Tente novamente.'
-            ]);
+            $this->redirect(url($instancia . '/nova-solicitacao?error=' . urlencode('Erro ao criar solicitação. Tente novamente.')));
         }
     }
     
@@ -432,6 +595,10 @@ class LocatarioController extends Controller
         
         $locatario = $_SESSION['locatario'];
         
+        // Processar horários
+        $horariosRaw = $this->input('horarios_opcoes', '[]');
+        $horarios = is_string($horariosRaw) ? $horariosRaw : json_encode($horariosRaw);
+        
         $data = [
             'imobiliaria_id' => $locatario['imobiliaria_id'],
             'categoria_id' => $this->input('categoria_id'),
@@ -449,7 +616,7 @@ class LocatarioController extends Controller
             'imovel_cep' => $this->input('cep'),
             'descricao_problema' => $this->input('descricao'),
             'tipo_atendimento' => $this->input('tipo_atendimento', 'RESIDENCIAL'),
-            'datas_opcoes' => json_decode($this->input('datas_opcoes', '[]'), true),
+            'horarios_opcoes' => $horarios,
             'prioridade' => $this->input('prioridade', 'NORMAL')
         ];
         
@@ -485,13 +652,105 @@ class LocatarioController extends Controller
      */
     public function atualizarPerfil(string $instancia = ''): void
     {
-        $this->requireLocatarioAuth();
-        
-        // Implementar atualização do perfil
-        $this->json([
-            'success' => true,
-            'message' => 'Perfil atualizado com sucesso'
-        ]);
+        try {
+            $this->requireLocatarioAuth();
+            
+            if (!$this->isPost()) {
+                $this->json([
+                    'success' => false,
+                    'message' => 'Método não permitido'
+                ]);
+                return;
+            }
+            
+            $locatario = $_SESSION['locatario'];
+            
+            // Receber dados do formulário
+            $nome = trim($this->input('nome'));
+            $email = trim($this->input('email'));
+            $whatsapp = trim($this->input('whatsapp'));
+            
+            // Validar dados
+            if (empty($nome)) {
+                $this->json([
+                    'success' => false,
+                    'message' => 'O nome é obrigatório'
+                ]);
+                return;
+            }
+            
+            // Validar email se fornecido
+            if (!empty($email) && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                $this->json([
+                    'success' => false,
+                    'message' => 'E-mail inválido'
+                ]);
+                return;
+            }
+            
+            // Validar WhatsApp se fornecido
+            if (!empty($whatsapp)) {
+                $whatsappLimpo = preg_replace('/\D/', '', $whatsapp);
+                if (strlen($whatsappLimpo) < 10 || strlen($whatsappLimpo) > 11) {
+                    $this->json([
+                        'success' => false,
+                        'message' => 'WhatsApp inválido. Use o formato (XX) XXXXX-XXXX'
+                    ]);
+                    return;
+                }
+            }
+            
+            // Buscar locatário no banco
+            $cpfLimpo = str_replace(['.', '-'], '', $locatario['cpf']);
+            $locatarioBanco = $this->locatarioModel->findByCpfAndImobiliaria($cpfLimpo, $locatario['imobiliaria_id']);
+            
+            // Preparar dados para atualização
+            $dados = [
+                'nome' => $nome,
+                'email' => $email,
+                'whatsapp' => $whatsapp,
+                'telefone' => $whatsapp // Usar whatsapp como telefone também
+            ];
+            
+            // Se o locatário existe no banco, atualizar
+            if ($locatarioBanco) {
+                $sucesso = $this->locatarioModel->updateDadosPessoais($locatarioBanco['id'], $dados);
+            } else {
+                // Se não existe, criar novo registro
+                $dados['cpf'] = $cpfLimpo;
+                $dados['imobiliaria_id'] = $locatario['imobiliaria_id'];
+                $dados['ksi_cliente_id'] = $locatario['id'];
+                $dados['status'] = 'ATIVO';
+                
+                $sucesso = $this->locatarioModel->create($dados);
+            }
+            
+            if ($sucesso) {
+                // Atualizar dados na sessão
+                $_SESSION['locatario']['nome'] = $nome;
+                $_SESSION['locatario']['email'] = $email;
+                $_SESSION['locatario']['whatsapp'] = $whatsapp;
+                $_SESSION['locatario']['telefone'] = $whatsapp;
+                
+                $this->json([
+                    'success' => true,
+                    'message' => 'Perfil atualizado com sucesso!'
+                ]);
+            } else {
+                $this->json([
+                    'success' => false,
+                    'message' => 'Erro ao atualizar perfil. Tente novamente.'
+                ]);
+            }
+        } catch (\Exception $e) {
+            error_log('Erro ao atualizar perfil: ' . $e->getMessage());
+            error_log('Stack trace: ' . $e->getTraceAsString());
+            
+            $this->json([
+                'success' => false,
+                'message' => 'Erro ao processar requisição: ' . $e->getMessage()
+            ]);
+        }
     }
     
     /**
@@ -503,7 +762,7 @@ class LocatarioController extends Controller
             $instancia = $this->getInstanciaFromUrl();
         }
         unset($_SESSION['locatario']);
-        $this->redirect(url($instancia));
+        $this->redirect('/' . $instancia);
     }
     
     /**
@@ -511,7 +770,18 @@ class LocatarioController extends Controller
      */
     private function requireLocatarioAuth(): void
     {
+        $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && 
+                  strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
+        
         if (!isset($_SESSION['locatario'])) {
+            if ($isAjax) {
+                $this->json([
+                    'success' => false,
+                    'message' => 'Sessão expirada. Por favor, faça login novamente.',
+                    'redirect' => true
+                ], 401);
+            }
+            
             $instancia = $this->getInstanciaFromUrl();
             $this->redirect(url($instancia));
         }
@@ -519,6 +789,15 @@ class LocatarioController extends Controller
         // Verificar se sessão não expirou (24 horas)
         if (time() - $_SESSION['locatario']['login_time'] > 86400) {
             unset($_SESSION['locatario']);
+            
+            if ($isAjax) {
+                $this->json([
+                    'success' => false,
+                    'message' => 'Sessão expirada. Por favor, faça login novamente.',
+                    'redirect' => true
+                ], 401);
+            }
+            
             $instancia = $this->getInstanciaFromUrl();
             $this->redirect(url($instancia));
         }
@@ -548,5 +827,313 @@ class LocatarioController extends Controller
         }
         
         return '';
+    }
+    
+    // ============================================================
+    // SOLICITAÇÃO MANUAL (SEM AUTENTICAÇÃO)
+    // ============================================================
+    
+    /**
+     * Solicitação Manual - Fluxo para usuários não logados
+     */
+    public function solicitacaoManual(string $instancia = ''): void
+    {
+        if ($this->isPost()) {
+            $this->processarSolicitacaoManual(1);
+            return;
+        }
+        
+        // Extrair instância da URL se não foi passada
+        if (empty($instancia)) {
+            $instancia = $this->getInstanciaFromUrl();
+        }
+        
+        // Buscar imobiliária
+        $imobiliaria = KsiApiService::getImobiliariaByInstancia($instancia);
+        
+        if (!$imobiliaria) {
+            $this->view('errors.404', [
+                'message' => 'Imobiliária não encontrada'
+            ]);
+            return;
+        }
+        
+        // Limpar dados da sessão ao começar nova solicitação
+        unset($_SESSION['solicitacao_manual']);
+        
+        // Buscar categorias para as próximas etapas
+        $categoriaModel = new \App\Models\Categoria();
+        $subcategoriaModel = new \App\Models\Subcategoria();
+        $categorias = $categoriaModel->getAtivas();
+        $subcategorias = $subcategoriaModel->getAtivas();
+        
+        // Organizar subcategorias por categoria
+        foreach ($categorias as $key => $categoria) {
+            $categorias[$key]['subcategorias'] = array_values(array_filter($subcategorias, function($sub) use ($categoria) {
+                return $sub['categoria_id'] == $categoria['id'];
+            }));
+        }
+        
+        $this->view('locatario.solicitacao-manual', [
+            'imobiliaria' => $imobiliaria,
+            'instancia' => $instancia,
+            'categorias' => $categorias,
+            'subcategorias' => $subcategorias,
+            'etapa' => 1,
+            'dados' => $_SESSION['solicitacao_manual'] ?? []
+        ]);
+    }
+    
+    /**
+     * Processar etapa específica da solicitação manual
+     */
+    public function solicitacaoManualEtapa(string $instancia, int $etapa): void
+    {
+        // GET: exibir a etapa
+        if (!$this->isPost()) {
+            // Se não há dados na sessão e não é etapa 1, redirecionar
+            if (!isset($_SESSION['solicitacao_manual']) && $etapa > 1) {
+                $this->redirect(url($instancia . '/solicitacao-manual'));
+                return;
+            }
+            
+            // Buscar imobiliária
+            $imobiliaria = KsiApiService::getImobiliariaByInstancia($instancia);
+            
+            if (!$imobiliaria) {
+                $this->view('errors.404', ['message' => 'Imobiliária não encontrada']);
+                return;
+            }
+            
+            // Buscar categorias e subcategorias
+            $categoriaModel = new \App\Models\Categoria();
+            $subcategoriaModel = new \App\Models\Subcategoria();
+            $categorias = $categoriaModel->getAtivas();
+            $subcategorias = $subcategoriaModel->getAtivas();
+            
+            // Organizar subcategorias por categoria
+            foreach ($categorias as $key => $categoria) {
+                $categorias[$key]['subcategorias'] = array_values(array_filter($subcategorias, function($sub) use ($categoria) {
+                    return $sub['categoria_id'] == $categoria['id'];
+                }));
+            }
+            
+            $this->view('locatario.solicitacao-manual', [
+                'imobiliaria' => $imobiliaria,
+                'instancia' => $instancia,
+                'categorias' => $categorias,
+                'subcategorias' => $subcategorias,
+                'etapa' => $etapa,
+                'dados' => $_SESSION['solicitacao_manual'] ?? []
+            ]);
+            return;
+        }
+        
+        // POST: processar dados da etapa
+        $this->processarSolicitacaoManual($etapa);
+    }
+    
+    /**
+     * Processar dados de cada etapa da solicitação manual
+     */
+    private function processarSolicitacaoManual(int $etapa): void
+    {
+        $instancia = $this->getInstanciaFromUrl();
+        
+        // Inicializar sessão se não existir
+        if (!isset($_SESSION['solicitacao_manual'])) {
+            $_SESSION['solicitacao_manual'] = [];
+        }
+        
+        switch ($etapa) {
+            case 1: // Dados Pessoais
+                $nome = trim($this->input('nome_completo'));
+                $cpf = trim($this->input('cpf'));
+                $whatsapp = trim($this->input('whatsapp'));
+                
+                // Validações
+                if (empty($nome) || empty($cpf) || empty($whatsapp)) {
+                    $this->redirect(url($instancia . '/solicitacao-manual?error=' . urlencode('Todos os campos são obrigatórios')));
+                    return;
+                }
+                
+                // Validar CPF
+                $solicitacaoManualModel = new \App\Models\SolicitacaoManual();
+                if (!$solicitacaoManualModel->validarCPF($cpf)) {
+                    $this->redirect(url($instancia . '/solicitacao-manual?error=' . urlencode('CPF inválido')));
+                    return;
+                }
+                
+                // Validar WhatsApp
+                $whatsappLimpo = preg_replace('/\D/', '', $whatsapp);
+                if (strlen($whatsappLimpo) < 10 || strlen($whatsappLimpo) > 11) {
+                    $this->redirect(url($instancia . '/solicitacao-manual?error=' . urlencode('WhatsApp inválido')));
+                    return;
+                }
+                
+                $_SESSION['solicitacao_manual']['nome_completo'] = $nome;
+                $_SESSION['solicitacao_manual']['cpf'] = $cpf;
+                $_SESSION['solicitacao_manual']['whatsapp'] = $whatsapp;
+                break;
+                
+            case 2: // Endereço
+                $tipoImovel = $this->input('tipo_imovel');
+                $subtipoImovel = $this->input('subtipo_imovel');
+                $cep = trim($this->input('cep'));
+                $endereco = trim($this->input('endereco'));
+                $numero = trim($this->input('numero'));
+                $complemento = trim($this->input('complemento'));
+                $bairro = trim($this->input('bairro'));
+                $cidade = trim($this->input('cidade'));
+                $estado = trim($this->input('estado'));
+                
+                // Validações
+                if (empty($tipoImovel) || empty($cep) || empty($endereco) || 
+                    empty($numero) || empty($bairro) || empty($cidade) || empty($estado)) {
+                    $this->redirect(url($instancia . '/solicitacao-manual/etapa/2?error=' . urlencode('Todos os campos obrigatórios devem ser preenchidos')));
+                    return;
+                }
+                
+                $_SESSION['solicitacao_manual']['tipo_imovel'] = $tipoImovel;
+                $_SESSION['solicitacao_manual']['subtipo_imovel'] = $subtipoImovel;
+                $_SESSION['solicitacao_manual']['cep'] = $cep;
+                $_SESSION['solicitacao_manual']['endereco'] = $endereco;
+                $_SESSION['solicitacao_manual']['numero'] = $numero;
+                $_SESSION['solicitacao_manual']['complemento'] = $complemento;
+                $_SESSION['solicitacao_manual']['bairro'] = $bairro;
+                $_SESSION['solicitacao_manual']['cidade'] = $cidade;
+                $_SESSION['solicitacao_manual']['estado'] = $estado;
+                break;
+                
+            case 3: // Serviço
+                $categoriaId = $this->input('categoria_id');
+                $subcategoriaId = $this->input('subcategoria_id');
+                $descricaoProblema = trim($this->input('descricao_problema'));
+                
+                // Validações
+                if (empty($categoriaId) || empty($subcategoriaId) || empty($descricaoProblema)) {
+                    $this->redirect(url($instancia . '/solicitacao-manual/etapa/3?error=' . urlencode('Todos os campos são obrigatórios')));
+                    return;
+                }
+                
+                $_SESSION['solicitacao_manual']['categoria_id'] = $categoriaId;
+                $_SESSION['solicitacao_manual']['subcategoria_id'] = $subcategoriaId;
+                $_SESSION['solicitacao_manual']['descricao_problema'] = $descricaoProblema;
+                break;
+                
+            case 4: // Fotos e Horários
+                // Processar upload de fotos
+                $fotos = [];
+                if (!empty($_FILES['fotos']['name'][0])) {
+                    $fotos = $this->processarUploadFotos();
+                }
+                
+                // Horários preferenciais
+                $horariosRaw = $this->input('horarios_opcoes');
+                $horarios = [];
+                
+                if (!empty($horariosRaw)) {
+                    $horarios = is_string($horariosRaw) ? json_decode($horariosRaw, true) : $horariosRaw;
+                }
+                
+                // Validar que pelo menos 1 horário foi selecionado
+                if (empty($horarios)) {
+                    $this->redirect(url($instancia . '/solicitacao-manual/etapa/4?error=' . urlencode('Selecione pelo menos um horário preferencial')));
+                    return;
+                }
+                
+                $_SESSION['solicitacao_manual']['fotos'] = $fotos;
+                $_SESSION['solicitacao_manual']['horarios_preferenciais'] = $horarios;
+                break;
+                
+            case 5: // Confirmação
+                $termosAceitos = $this->input('termo_aceite');
+                
+                if (!$termosAceitos) {
+                    $this->redirect(url($instancia . '/solicitacao-manual/etapa/5?error=' . urlencode('Você deve aceitar os termos para continuar')));
+                    return;
+                }
+                
+                $_SESSION['solicitacao_manual']['termos_aceitos'] = true;
+                
+                // Finalizar e salvar
+                $this->finalizarSolicitacaoManual();
+                return;
+        }
+        
+        // Salvar etapa atual
+        $_SESSION['solicitacao_manual']['etapa'] = $etapa;
+        
+        // Redirecionar para próxima etapa
+        $proximaEtapa = $etapa + 1;
+        if ($proximaEtapa <= 5) {
+            $this->redirect(url($instancia . '/solicitacao-manual/etapa/' . $proximaEtapa));
+        }
+    }
+    
+    /**
+     * Finalizar e salvar solicitação manual no banco de dados
+     */
+    private function finalizarSolicitacaoManual(): void
+    {
+        $instancia = $this->getInstanciaFromUrl();
+        $dados = $_SESSION['solicitacao_manual'] ?? [];
+        
+        // Validar que todos os dados necessários estão presentes
+        $camposObrigatorios = ['nome_completo', 'cpf', 'whatsapp', 'tipo_imovel', 'cep', 
+                               'endereco', 'numero', 'bairro', 'cidade', 'estado',
+                               'categoria_id', 'subcategoria_id', 'descricao_problema', 'termos_aceitos'];
+        
+        foreach ($camposObrigatorios as $campo) {
+            if (!isset($dados[$campo]) || $dados[$campo] === '' || $dados[$campo] === null) {
+                $this->redirect(url($instancia . '/solicitacao-manual?error=' . urlencode('Dados incompletos. Por favor, preencha todos os campos.')));
+                return;
+            }
+        }
+        
+        // Buscar imobiliária
+        $imobiliaria = KsiApiService::getImobiliariaByInstancia($instancia);
+        
+        if (!$imobiliaria) {
+            $this->redirect(url($instancia . '/solicitacao-manual?error=' . urlencode('Imobiliária não encontrada')));
+            return;
+        }
+        
+        // Preparar dados para salvar
+        $dadosParaSalvar = [
+            'imobiliaria_id' => $imobiliaria['id'],
+            'nome_completo' => $dados['nome_completo'],
+            'cpf' => $dados['cpf'],
+            'whatsapp' => $dados['whatsapp'],
+            'tipo_imovel' => $dados['tipo_imovel'],
+            'subtipo_imovel' => $dados['subtipo_imovel'] ?? null,
+            'cep' => $dados['cep'],
+            'endereco' => $dados['endereco'],
+            'numero' => $dados['numero'],
+            'complemento' => $dados['complemento'] ?? null,
+            'bairro' => $dados['bairro'],
+            'cidade' => $dados['cidade'],
+            'estado' => $dados['estado'],
+            'categoria_id' => $dados['categoria_id'],
+            'subcategoria_id' => $dados['subcategoria_id'],
+            'descricao_problema' => $dados['descricao_problema'],
+            'horarios_preferenciais' => $dados['horarios_preferenciais'] ?? [],
+            'fotos' => $dados['fotos'] ?? [],
+            'termos_aceitos' => $dados['termos_aceitos']
+        ];
+        
+        // Criar solicitação manual
+        $solicitacaoManualModel = new \App\Models\SolicitacaoManual();
+        $id = $solicitacaoManualModel->create($dadosParaSalvar);
+        
+        if ($id) {
+            // Limpar sessão
+            unset($_SESSION['solicitacao_manual']);
+            
+            // Redirecionar com mensagem de sucesso
+            $this->redirect(url($instancia . '?success=' . urlencode('Solicitação enviada com sucesso! Em breve entraremos em contato. ID: #' . $id)));
+        } else {
+            $this->redirect(url($instancia . '/solicitacao-manual/etapa/5?error=' . urlencode('Erro ao salvar solicitação. Tente novamente.')));
+        }
     }
 }

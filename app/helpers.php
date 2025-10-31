@@ -31,8 +31,12 @@ if (!function_exists('url')) {
 }
 
 if (!function_exists('redirect')) {
-    function redirect(string $url): void
+    function redirect(string $url, string $message = '', string $type = 'info'): void
     {
+        if (!empty($message)) {
+            $_SESSION['flash_message'] = $message;
+            $_SESSION['flash_type'] = $type;
+        }
         header("Location: $url");
         exit;
     }

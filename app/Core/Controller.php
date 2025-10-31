@@ -11,9 +11,9 @@ abstract class Controller
 
     protected function json(array $data, int $statusCode = 200): void
     {
-        // Limpar qualquer output anterior
-        if (ob_get_level()) {
-            ob_clean();
+        // Limpar todos os buffers de output
+        while (ob_get_level()) {
+            ob_end_clean();
         }
         
         http_response_code($statusCode);
@@ -39,6 +39,21 @@ abstract class Controller
 
     protected function input(string $key, mixed $default = null): mixed
     {
+        // Primeiro, verificar se há dados JSON no corpo da requisição
+        $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
+        
+        if (stripos($contentType, 'application/json') !== false) {
+            static $jsonData = null;
+            
+            if ($jsonData === null) {
+                $rawInput = file_get_contents('php://input');
+                $jsonData = json_decode($rawInput, true) ?? [];
+            }
+            
+            return $jsonData[$key] ?? $default;
+        }
+        
+        // Caso contrário, usar $_REQUEST (POST, GET, COOKIE)
         return $_REQUEST[$key] ?? $default;
     }
 

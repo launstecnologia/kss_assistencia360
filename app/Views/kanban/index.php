@@ -1,285 +1,153 @@
 <?php
-$title = 'Dashboard';
-$currentPage = 'dashboard';
-$pageTitle = 'Dashboard';
+$title = 'Kanban Board';
+$currentPage = 'kanban';
+$pageTitle = 'Kanban - Gerenciamento de Solicitações';
 ob_start();
 ?>
 
-<!-- Estatísticas Gerais -->
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-    <div class="bg-white p-6 rounded-lg shadow-sm">
-        <div class="flex items-center">
-            <div class="flex-shrink-0">
-                <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <i class="fas fa-clipboard-list text-blue-600"></i>
-                </div>
-            </div>
-            <div class="ml-4">
-                <p class="text-sm font-medium text-gray-500">Total Solicitações</p>
-                <p class="text-2xl font-semibold text-gray-900"><?= $estatisticas['total'] ?? 0 ?></p>
-            </div>
-        </div>
-    </div>
-    
-    <div class="bg-white p-6 rounded-lg shadow-sm">
-        <div class="flex items-center">
-            <div class="flex-shrink-0">
-                <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-                    <i class="fas fa-check-circle text-green-600"></i>
-                </div>
-            </div>
-            <div class="ml-4">
-                <p class="text-sm font-medium text-gray-500">Concluídas</p>
-                <p class="text-2xl font-semibold text-gray-900"><?= $estatisticas['concluidas'] ?? 0 ?></p>
-            </div>
-        </div>
-    </div>
-    
-    <div class="bg-white p-6 rounded-lg shadow-sm">
-        <div class="flex items-center">
-            <div class="flex-shrink-0">
-                <div class="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center">
-                    <i class="fas fa-clock text-yellow-600"></i>
-                </div>
-            </div>
-            <div class="ml-4">
-                <p class="text-sm font-medium text-gray-500">Tempo Médio</p>
-                <p class="text-2xl font-semibold text-gray-900"><?= round($estatisticas['tempo_medio_resolucao'] ?? 0) ?>h</p>
-            </div>
-        </div>
-    </div>
-    
-    <div class="bg-white p-6 rounded-lg shadow-sm">
-        <div class="flex items-center">
-            <div class="flex-shrink-0">
-                <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
-                    <i class="fas fa-star text-purple-600"></i>
-                </div>
-            </div>
-            <div class="ml-4">
-                <p class="text-sm font-medium text-gray-500">Satisfação</p>
-                <p class="text-2xl font-semibold text-gray-900"><?= round($estatisticas['satisfacao_media'] ?? 0, 1) ?>/5</p>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Card de Solicitações Manuais Pendentes -->
-<?php
-try {
-    $solicitacaoManualModel = new \App\Models\SolicitacaoManual();
-    $naoMigradas = count($solicitacaoManualModel->getNaoMigradas(999));
-    
-    if ($naoMigradas > 0):
-?>
-<div class="bg-gradient-to-r from-yellow-50 to-orange-50 border-l-4 border-yellow-500 rounded-lg shadow-sm p-6 mb-8">
+<!-- Filtros -->
+<div class="mb-6 bg-white rounded-lg shadow-sm p-4">
     <div class="flex items-center justify-between">
-        <div class="flex items-center">
-            <div class="flex-shrink-0">
-                <div class="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center">
-                    <i class="fas fa-file-alt text-yellow-600 text-xl"></i>
-                </div>
-            </div>
-            <div class="ml-4">
-                <h3 class="text-lg font-semibold text-gray-900">
-                    <i class="fas fa-exclamation-triangle text-yellow-500 mr-2"></i>
-                    Solicitações Manuais Aguardando Triagem
-                </h3>
-                <p class="text-sm text-gray-600 mt-1">
-                    Você tem <strong class="text-yellow-700"><?= $naoMigradas ?> solicitação<?= $naoMigradas > 1 ? 'ões' : '' ?></strong> 
-                    criada<?= $naoMigradas > 1 ? 's' : '' ?> por usuários não logados aguardando revisão e migração para o sistema.
-                </p>
-            </div>
-        </div>
-        <div class="flex-shrink-0">
-            <a href="<?= url('admin/solicitacoes-manuais') ?>" 
-               class="inline-flex items-center px-5 py-3 bg-yellow-500 text-white font-medium rounded-lg hover:bg-yellow-600 transition-colors shadow-sm">
-                <i class="fas fa-eye mr-2"></i>
-                Revisar Agora
-                <span class="ml-2 bg-white text-yellow-700 px-2 py-1 rounded-full text-xs font-bold">
-                    <?= $naoMigradas ?>
-                </span>
+        <h3 class="text-lg font-medium text-gray-900">Filtros</h3>
+        <form method="GET" action="<?= url('admin/kanban') ?>" class="flex gap-3">
+            <select name="imobiliaria_id" class="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent" onchange="this.form.submit()">
+                <option value="">Todas as Imobiliárias</option>
+                <?php foreach ($imobiliarias as $imob): ?>
+                <option value="<?= $imob['id'] ?>" <?= $imobiliariaId == $imob['id'] ? 'selected' : '' ?>>
+                    <?= htmlspecialchars($imob['nome']) ?>
+                </option>
+                <?php endforeach; ?>
+            </select>
+            
+            <?php if ($imobiliariaId): ?>
+            <a href="<?= url('admin/kanban') ?>" class="px-3 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200">
+                <i class="fas fa-times mr-1"></i> Limpar Filtros
             </a>
-        </div>
-    </div>
-</div>
-<?php 
-    endif;
-} catch (\Exception $e) {
-    // Silencioso se der erro
-}
-?>
-
-<!-- Filtros de Período -->
-<div class="bg-white p-6 rounded-lg shadow-sm mb-8">
-    <div class="flex items-center justify-between">
-        <h3 class="text-lg font-medium text-gray-900">Período de Análise</h3>
-        <div class="flex space-x-2">
-            <button onclick="updatePeriod('7')" class="px-3 py-1 text-sm rounded-md <?= $periodo === '7' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' ?>">7 dias</button>
-            <button onclick="updatePeriod('30')" class="px-3 py-1 text-sm rounded-md <?= $periodo === '30' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' ?>">30 dias</button>
-            <button onclick="updatePeriod('90')" class="px-3 py-1 text-sm rounded-md <?= $periodo === '90' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' ?>">90 dias</button>
-        </div>
+            <?php endif; ?>
+        </form>
     </div>
 </div>
 
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-    <!-- Gráfico de Solicitações por Status -->
-    <div class="bg-white p-6 rounded-lg shadow-sm">
-        <h3 class="text-lg font-medium text-gray-900 mb-4">Solicitações por Status</h3>
-        <div style="height: 300px; position: relative;">
-            <canvas id="statusChart"></canvas>
+<!-- Kanban Board -->
+<div class="flex gap-4 overflow-x-auto pb-4">
+    <?php foreach ($statusKanban as $status): ?>
+    <div class="kanban-column flex-shrink-0 w-80 bg-gray-50 rounded-lg p-4">
+        <!-- Header da Coluna -->
+        <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center">
+                <div class="w-3 h-3 rounded-full mr-2" style="background-color: <?= $status['cor'] ?>"></div>
+                <h3 class="font-medium text-gray-900"><?= htmlspecialchars($status['nome']) ?></h3>
+            </div>
+            <span class="bg-gray-200 text-gray-700 text-xs px-2 py-1 rounded-full">
+                <?= count($solicitacoesPorStatus[$status['id']] ?? []) ?>
+            </span>
         </div>
-    </div>
-    
-    <!-- Gráfico de Solicitações por Imobiliária -->
-    <div class="bg-white p-6 rounded-lg shadow-sm">
-        <h3 class="text-lg font-medium text-gray-900 mb-4">Solicitações por Imobiliária</h3>
-        <div style="height: 300px; position: relative;">
-            <canvas id="imobiliariaChart"></canvas>
-        </div>
-    </div>
-</div>
-
-<!-- Kanban de Solicitações -->
-<div class="bg-white rounded-lg shadow-sm">
-    <div class="px-6 py-4 border-b border-gray-200">
-        <h3 class="text-lg font-medium text-gray-900">Solicitações Recentes</h3>
-    </div>
-    
-    <div class="p-6">
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        
+        <!-- Cards da Coluna -->
+        <div class="kanban-cards space-y-3 min-h-32" data-status-id="<?= $status['id'] ?>">
             <?php 
-            // Agrupar solicitações por status
-            $statusUnicos = [];
-            $solicitacoesPorStatus = [];
-            
-            foreach ($kanbanData as $solicitacao) {
-                $statusId = $solicitacao['status_id'];
-                
-                // Adicionar status único
-                if (!isset($statusUnicos[$statusId])) {
-                    $statusUnicos[$statusId] = [
-                        'id' => $statusId,
-                        'nome' => $solicitacao['status_nome'],
-                        'cor' => $solicitacao['status_cor']
-                    ];
-                    $solicitacoesPorStatus[$statusId] = [];
-                }
-                
-                // Adicionar solicitação ao status
-                $solicitacoesPorStatus[$statusId][] = $solicitacao;
-            }
-            
-            // Exibir cada status único
-            foreach ($statusUnicos as $statusId => $status): 
+            $solicitacoes = $solicitacoesPorStatus[$status['id']] ?? [];
+            if (empty($solicitacoes)): 
             ?>
-            <div class="kanban-column">
-                <div class="flex items-center mb-4">
-                    <div class="w-3 h-3 rounded-full mr-2" style="background-color: <?= $status['cor'] ?>"></div>
-                    <h4 class="font-medium text-gray-900"><?= htmlspecialchars($status['nome']) ?></h4>
-                    <span class="ml-auto bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded-full">
-                        <?= count($solicitacoesPorStatus[$statusId]) ?>
-                    </span>
-                </div>
-                
-                <div class="space-y-3">
-                    <?php 
-                    // Mostrar até 5 solicitações por status
-                    foreach (array_slice($solicitacoesPorStatus[$statusId], 0, 5) as $solicitacao): 
-                    ?>
-                    <div class="drag-item bg-gray-50 p-4 rounded-lg border border-gray-200 cursor-pointer hover:shadow-md transition-shadow">
-                        <div class="flex items-start justify-between">
-                            <div class="flex-1">
-                                <h5 class="text-sm font-bold text-gray-900">#<?= $solicitacao['numero_solicitacao'] ?? ('KS' . $solicitacao['id']) ?></h5>
-                                <p class="text-xs text-gray-500 mt-1"><?= htmlspecialchars($solicitacao['categoria_nome']) ?></p>
-                                <p class="text-xs text-gray-400 mt-1"><?= date('d/m/Y', strtotime($solicitacao['created_at'])) ?></p>
-                            </div>
-                            <button onclick="abrirDetalhes(<?= $solicitacao['id'] ?>)" class="text-blue-600 hover:text-blue-800">
-                                <i class="fas fa-eye text-xs"></i>
-                            </button>
+            <div class="text-center py-8 text-gray-400 text-sm">
+                <i class="fas fa-inbox text-2xl mb-2 block"></i>
+                Nenhuma solicitação
+            </div>
+            <?php else: ?>
+                <?php foreach ($solicitacoes as $solicitacao): ?>
+                <div class="kanban-card bg-white rounded-lg shadow-sm p-4 cursor-move hover:shadow-md transition-shadow border-l-4" 
+                     style="border-color: <?= $status['cor'] ?>"
+                     data-solicitacao-id="<?= $solicitacao['id'] ?>"
+                     data-status-id="<?= $solicitacao['status_id'] ?>">
+                    
+                    <!-- Header do Card -->
+                    <div class="flex items-start justify-between mb-3">
+                        <div class="flex-1">
+                            <h4 class="font-semibold text-gray-900 text-sm">
+                                <?= htmlspecialchars($solicitacao['numero_solicitacao'] ?? 'KSI' . $solicitacao['id']) ?>
+                            </h4>
+                        </div>
+                        <button onclick="abrirDetalhes(<?= $solicitacao['id'] ?>)" 
+                                class="text-gray-400 hover:text-gray-600 text-sm">
+                            <i class="fas fa-ellipsis-v"></i>
+                        </button>
+                    </div>
+                    
+                    <!-- Informações do Card -->
+                    <div class="space-y-1 text-xs text-gray-600">
+                        <div class="flex items-center">
+                            <i class="fas fa-wrench w-4 mr-1 text-gray-400"></i>
+                            <span class="truncate"><?= htmlspecialchars($solicitacao['categoria_nome'] ?? 'Sem categoria') ?></span>
+                        </div>
+                        
+                        <?php if (!empty($solicitacao['subcategoria_nome'])): ?>
+                        <div class="flex items-center">
+                            <i class="fas fa-list w-4 mr-1 text-gray-400"></i>
+                            <span class="truncate"><?= htmlspecialchars($solicitacao['subcategoria_nome']) ?></span>
+                        </div>
+                        <?php endif; ?>
+                        
+                        <!-- Tag Residencial/Comercial -->
+                        <?php if (!empty($solicitacao['observacoes']) && strpos($solicitacao['observacoes'], 'Finalidade:') !== false): 
+                            preg_match('/Finalidade:\s*(RESIDENCIAL|COMERCIAL)/i', $solicitacao['observacoes'], $matches);
+                            if (!empty($matches[1])): ?>
+                        <div class="my-2">
+                            <span class="inline-block px-2 py-1 bg-gray-100 text-gray-700 rounded-md text-xs font-medium">
+                                <?= htmlspecialchars($matches[1]) ?>
+                            </span>
+                        </div>
+                        <?php endif; endif; ?>
+                        
+                        <div class="flex items-center">
+                            <i class="fas fa-user w-4 mr-1 text-gray-400"></i>
+                            <span class="truncate"><?= htmlspecialchars($solicitacao['locatario_nome'] ?? 'Não informado') ?></span>
+                        </div>
+                        
+                        <div class="flex items-center">
+                            <i class="fas fa-map-marker-alt w-4 mr-1 text-gray-400"></i>
+                            <span class="truncate">
+                                <?php 
+                                $endereco = '';
+                                if (!empty($solicitacao['imovel_endereco'])) {
+                                    $endereco = $solicitacao['imovel_endereco'];
+                                    if (!empty($solicitacao['imovel_numero'])) {
+                                        $endereco .= ', ' . $solicitacao['imovel_numero'];
+                                    }
+                                }
+                                echo htmlspecialchars($endereco ?: 'Endereço não informado');
+                                ?>
+                            </span>
+                        </div>
+                        
+                        <div class="flex items-center">
+                            <i class="fas fa-calendar w-4 mr-1 text-gray-400"></i>
+                            <span><?= date('d/m/Y', strtotime($solicitacao['created_at'])) ?></span>
                         </div>
                     </div>
-                    <?php endforeach; ?>
+                    
+                    <!-- Prioridade -->
+                    <?php if (isset($solicitacao['prioridade']) && $solicitacao['prioridade'] !== 'NORMAL'): ?>
+                    <div class="mt-3">
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium 
+                            <?= $solicitacao['prioridade'] === 'ALTA' ? 'bg-red-100 text-red-800' : 
+                                ($solicitacao['prioridade'] === 'MEDIA' ? 'bg-yellow-100 text-yellow-800' : 'bg-blue-100 text-blue-800') ?>">
+                            <i class="fas fa-exclamation-circle mr-1"></i>
+                            <?= htmlspecialchars($solicitacao['prioridade']) ?>
+                        </span>
+                    </div>
+                    <?php endif; ?>
                 </div>
-            </div>
-            <?php endforeach; ?>
+                <?php endforeach; ?>
+            <?php endif; ?>
         </div>
     </div>
+    <?php endforeach; ?>
 </div>
 
-<!-- Solicitações Pendentes -->
-<?php if (!empty($solicitacoesPendentes)): ?>
-<div class="mt-8 bg-yellow-50 border border-yellow-200 rounded-lg p-6">
-    <div class="flex items-center">
-        <i class="fas fa-exclamation-triangle text-yellow-600 mr-3"></i>
-        <h3 class="text-lg font-medium text-yellow-800">Solicitações Pendentes</h3>
-    </div>
-    <p class="mt-2 text-yellow-700">
-        <?= count($solicitacoesPendentes) ?> solicitações estão aguardando há mais de 10 dias e precisam de atenção.
-    </p>
-    <div class="mt-4">
-        <a href="<?= url('solicitacoes?status=pendente') ?>" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-yellow-800 bg-yellow-100 hover:bg-yellow-200">
-            Ver Solicitações Pendentes
-        </a>
-    </div>
-</div>
-<?php endif; ?>
-
-<!-- Dados Administrativos (apenas para admins) -->
-<?php if ($user['nivel_permissao'] === 'ADMINISTRADOR'): ?>
-<div class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
-    <div class="bg-white p-6 rounded-lg shadow-sm">
-        <div class="flex items-center">
-            <div class="flex-shrink-0">
-                <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <i class="fas fa-building text-blue-600"></i>
-                </div>
-            </div>
-            <div class="ml-4">
-                <p class="text-sm font-medium text-gray-500">Imobiliárias Ativas</p>
-                <p class="text-2xl font-semibold text-gray-900"><?= $total_imobiliarias ?? 0 ?></p>
-            </div>
-        </div>
-    </div>
-    
-    <div class="bg-white p-6 rounded-lg shadow-sm">
-        <div class="flex items-center">
-            <div class="flex-shrink-0">
-                <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-                    <i class="fas fa-users text-green-600"></i>
-                </div>
-            </div>
-            <div class="ml-4">
-                <p class="text-sm font-medium text-gray-500">Usuários Ativos</p>
-                <p class="text-2xl font-semibold text-gray-900"><?= $total_usuarios ?? 0 ?></p>
-            </div>
-        </div>
-    </div>
-    
-    <div class="bg-white p-6 rounded-lg shadow-sm">
-        <div class="flex items-center">
-            <div class="flex-shrink-0">
-                <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
-                    <i class="fas fa-tags text-purple-600"></i>
-                </div>
-            </div>
-            <div class="ml-4">
-                <p class="text-sm font-medium text-gray-500">Categorias Ativas</p>
-                <p class="text-2xl font-semibold text-gray-900"><?= $total_categorias ?? 0 ?></p>
-            </div>
-        </div>
-    </div>
-</div>
-<?php endif; ?>
-
-<!-- Offcanvas para Detalhes da Solicitação -->
+<!-- Offcanvas para Detalhes -->
 <div id="detalhesOffcanvas" class="fixed inset-0 z-50 hidden">
-    <!-- Overlay -->
     <div class="fixed inset-0 bg-gray-600 bg-opacity-50 transition-opacity" onclick="fecharDetalhes()"></div>
-    
-    <!-- Offcanvas Panel -->
     <div id="offcanvasPanel" class="fixed right-0 top-0 h-full w-full md:w-[90%] lg:w-[900px] bg-gray-50 shadow-xl transform translate-x-full transition-transform duration-300 ease-in-out overflow-y-auto">
-        <!-- Header -->
         <div class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 z-10">
             <div class="flex items-center justify-between">
                 <div class="flex items-center gap-3">
@@ -297,18 +165,13 @@ try {
                 </div>
             </div>
         </div>
-        
-        <!-- Content -->
         <div id="offcanvasContent" class="p-6">
-            <!-- Loading -->
             <div id="loadingContent" class="flex items-center justify-center py-12">
                 <div class="text-center">
                     <i class="fas fa-spinner fa-spin text-4xl text-blue-600 mb-4"></i>
                     <p class="text-gray-600">Carregando detalhes...</p>
                 </div>
             </div>
-            
-            <!-- Detalhes -->
             <div id="detalhesContent" class="hidden"></div>
         </div>
     </div>
@@ -319,35 +182,107 @@ $content = ob_get_clean();
 include 'app/Views/layouts/admin.php';
 ?>
 
-<!-- Chart.js -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!-- SortableJS -->
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 
 <script>
-function updatePeriod(periodo) {
-    window.location.href = '<?= url('dashboard') ?>?periodo=' + periodo;
+// Inicializar Sortable em todas as colunas do Kanban
+document.querySelectorAll('.kanban-cards').forEach(column => {
+    new Sortable(column, {
+        group: 'kanban',
+        animation: 150,
+        ghostClass: 'bg-blue-100',
+        dragClass: 'opacity-50',
+        handle: '.kanban-card',
+        onEnd: function(evt) {
+            const solicitacaoId = evt.item.getAttribute('data-solicitacao-id');
+            const novoStatusId = evt.to.getAttribute('data-status-id');
+            const antigoStatusId = evt.from.getAttribute('data-status-id');
+            
+            // Se moveu para a mesma coluna, não fazer nada
+            if (novoStatusId === antigoStatusId) {
+                return;
+            }
+            
+            // Atualizar no servidor
+            fetch('<?= url('admin/kanban/mover') ?>', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    solicitacao_id: solicitacaoId,
+                    novo_status_id: novoStatusId
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Atualizar o data-status-id do card
+                    evt.item.setAttribute('data-status-id', novoStatusId);
+                    
+                    // Atualizar contadores
+                    atualizarContadores();
+                    
+                    // Mostrar notificação
+                    mostrarNotificacao('Status atualizado com sucesso!', 'success');
+                } else {
+                    // Reverter a movimentação
+                    evt.from.insertBefore(evt.item, evt.from.children[evt.oldIndex]);
+                    mostrarNotificacao('Erro: ' + (data.error || 'Não foi possível atualizar o status'), 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Erro:', error);
+                // Reverter a movimentação
+                evt.from.insertBefore(evt.item, evt.from.children[evt.oldIndex]);
+                mostrarNotificacao('Erro ao atualizar status', 'error');
+            });
+        }
+    });
+});
+
+function atualizarContadores() {
+    document.querySelectorAll('.kanban-column').forEach(column => {
+        const cardsContainer = column.querySelector('.kanban-cards');
+        const contador = column.querySelector('.bg-gray-200');
+        const numCards = cardsContainer.querySelectorAll('.kanban-card').length;
+        contador.textContent = numCards;
+    });
 }
 
-// Funções do Offcanvas
+function mostrarNotificacao(mensagem, tipo = 'info') {
+    const cor = tipo === 'success' ? 'green' : tipo === 'error' ? 'red' : 'blue';
+    const notificacao = document.createElement('div');
+    notificacao.className = `fixed top-4 right-4 bg-${cor}-50 border border-${cor}-200 text-${cor}-700 px-4 py-3 rounded-lg shadow-lg z-50 transition-all`;
+    notificacao.innerHTML = `
+        <div class="flex items-center">
+            <i class="fas fa-${tipo === 'success' ? 'check-circle' : tipo === 'error' ? 'exclamation-circle' : 'info-circle'} mr-2"></i>
+            <span>${mensagem}</span>
+        </div>
+    `;
+    document.body.appendChild(notificacao);
+    
+    setTimeout(() => {
+        notificacao.style.opacity = '0';
+        setTimeout(() => notificacao.remove(), 300);
+    }, 3000);
+}
+
+// Funções do Offcanvas (reutilizadas do Dashboard)
 function abrirDetalhes(solicitacaoId) {
     const offcanvas = document.getElementById('detalhesOffcanvas');
     const panel = document.getElementById('offcanvasPanel');
     const loadingContent = document.getElementById('loadingContent');
     const detalhesContent = document.getElementById('detalhesContent');
     
-    // Mostrar offcanvas
     offcanvas.classList.remove('hidden');
+    setTimeout(() => panel.classList.remove('translate-x-full'), 10);
     
-    // Animar entrada
-    setTimeout(() => {
-        panel.classList.remove('translate-x-full');
-    }, 10);
-    
-    // Mostrar loading
     loadingContent.classList.remove('hidden');
     detalhesContent.classList.add('hidden');
     
-    // Carregar dados
-    fetch('<?= url('admin/solicitacoes/') ?>' + solicitacaoId + '/api')
+    fetch(`<?= url('admin/solicitacoes/') ?>${solicitacaoId}/api`)
         .then(response => response.json())
         .then(data => {
             if (data.success) {
@@ -380,20 +315,12 @@ function fecharDetalhes() {
     const offcanvas = document.getElementById('detalhesOffcanvas');
     const panel = document.getElementById('offcanvasPanel');
     
-    // Animar saída
     panel.classList.add('translate-x-full');
-    
-    // Esconder offcanvas após animação
-    setTimeout(() => {
-        offcanvas.classList.add('hidden');
-    }, 300);
+    setTimeout(() => offcanvas.classList.add('hidden'), 300);
 }
 
 function renderizarDetalhes(solicitacao) {
     const content = document.getElementById('detalhesContent');
-    
-    const statusClass = getStatusClass(solicitacao.status_nome);
-    const prioridadeClass = getPrioridadeClass(solicitacao.prioridade);
     
     // Parse horários se existirem
     let horariosOpcoes = [];
@@ -479,8 +406,8 @@ function renderizarDetalhes(solicitacao) {
                         ` : ''}
                         <div>
                             <p class="text-gray-500 mb-1">Prioridade:</p>
-                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${prioridadeClass}">
-                                ${solicitacao.prioridade}
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                ${solicitacao.prioridade || 'NORMAL'}
                             </span>
                         </div>
                     </div>
@@ -748,111 +675,17 @@ function salvarAlteracoes(solicitacaoId) {
     });
 }
 
-function getStatusClass(status) {
-    const statusMap = {
-        'Nova Solicitação': 'status-nova-solicitacao',
-        'Buscando Prestador': 'status-buscando-prestador',
-        'Serviço Agendado': 'status-servico-agendado',
-        'Em Andamento': 'status-em-andamento',
-        'Concluído': 'status-concluido',
-        'Cancelado': 'status-cancelado'
-    };
-    return statusMap[status] || 'bg-gray-100 text-gray-800';
-}
-
-function getPrioridadeClass(prioridade) {
-    const prioridadeMap = {
-        'ALTA': 'bg-red-100 text-red-800',
-        'MEDIA': 'bg-yellow-100 text-yellow-800',
-        'NORMAL': 'bg-green-100 text-green-800',
-        'BAIXA': 'bg-blue-100 text-blue-800'
-    };
-    return prioridadeMap[prioridade] || 'bg-gray-100 text-gray-800';
-}
-
 function formatarData(dateString) {
+    if (!dateString) return '-';
     const date = new Date(dateString);
     return date.toLocaleDateString('pt-BR');
 }
 
 function formatarDataHora(dateString) {
+    if (!dateString) return '-';
     const date = new Date(dateString);
     return date.toLocaleDateString('pt-BR') + ' às ' + date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 }
-
-// Aguardar o DOM estar pronto
-document.addEventListener('DOMContentLoaded', function() {
-    // Gráfico de Status
-    const statusCtx = document.getElementById('statusChart');
-    if (statusCtx) {
-        const statusChart = new Chart(statusCtx.getContext('2d'), {
-            type: 'doughnut',
-            data: {
-                labels: ['Concluídas', 'Novas', 'Agendados', 'Aguardando Peça', 'Outros'],
-                datasets: [{
-                    data: [
-                        <?= $estatisticas['concluidas'] ?? 0 ?>,
-                        <?= $estatisticas['novas'] ?? 0 ?>,
-                        <?= $estatisticas['agendados'] ?? 0 ?>,
-                        <?= $estatisticas['aguardando_peca'] ?? 0 ?>,
-                        <?= ($estatisticas['total'] ?? 0) - ($estatisticas['concluidas'] ?? 0) - ($estatisticas['novas'] ?? 0) - ($estatisticas['agendados'] ?? 0) - ($estatisticas['aguardando_peca'] ?? 0) ?>
-                    ],
-                    backgroundColor: [
-                        '#10B981',  // Verde - Concluídas
-                        '#3B82F6',  // Azul - Novas
-                        '#8B5CF6',  // Roxo - Agendados
-                        '#F59E0B',  // Laranja - Aguardando Peça
-                        '#6B7280'   // Cinza - Outros
-                    ]
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: true,
-                        position: 'bottom'
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                let label = context.label || '';
-                                let value = context.parsed || 0;
-                                let total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                let percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
-                                return label + ': ' + value + ' (' + percentage + '%)';
-                            }
-                        }
-                    }
-                }
-            }
-        });
-    }
-
-    // Gráfico de Imobiliárias
-    const imobiliariaCtx = document.getElementById('imobiliariaChart');
-    if (imobiliariaCtx) {
-        const imobiliariaChart = new Chart(imobiliariaCtx.getContext('2d'), {
-            type: 'bar',
-            data: {
-                labels: ['Imobiliária A', 'Imobiliária B', 'Imobiliária C'],
-                datasets: [{
-                    label: 'Solicitações',
-                    data: [12, 19, 8],
-                    backgroundColor: '#3B82F6'
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
-                }
-            }
-        });
-    }
-});
 </script>
+
+

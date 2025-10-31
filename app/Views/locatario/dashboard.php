@@ -32,6 +32,21 @@ ob_start();
     </div>
 </div>
 
+<!-- Messages -->
+<?php if (isset($_GET['error'])): ?>
+    <div class="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded alert-message">
+        <i class="fas fa-exclamation-circle mr-2"></i>
+        <?= htmlspecialchars($_GET['error']) ?>
+    </div>
+<?php endif; ?>
+
+<?php if (isset($_GET['success'])): ?>
+    <div class="mb-6 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded alert-message">
+        <i class="fas fa-check-circle mr-2"></i>
+        <?= htmlspecialchars($_GET['success']) ?>
+    </div>
+<?php endif; ?>
+
 <!-- Stats Cards -->
 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
     <div class="bg-white rounded-lg shadow-sm p-6 card-hover">
@@ -157,6 +172,46 @@ ob_start();
                 </div>
             <?php endif; ?>
         <?php endif; ?>
+    </div>
+</div>
+
+<!-- Seus Dados -->
+<div class="mt-8 bg-white rounded-lg shadow-sm p-6">
+    <div class="flex justify-between items-center mb-4">
+        <h2 class="text-lg font-semibold text-gray-900 flex items-center">
+            <i class="fas fa-user mr-2"></i>
+            Seus Dados
+        </h2>
+        <a href="<?= url($locatario['instancia'] . '/perfil') ?>" 
+           class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center">
+            <i class="fas fa-edit mr-2"></i>
+            Editar
+        </a>
+    </div>
+    
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Nome -->
+        <div>
+            <h3 class="text-sm font-medium text-gray-500 mb-2 flex items-center">
+                <i class="fas fa-user mr-2"></i>
+                Nome Completo
+            </h3>
+            <p class="text-gray-900 font-medium"><?= htmlspecialchars($locatario['nome']) ?></p>
+        </div>
+        
+        <!-- WhatsApp -->
+        <div>
+            <h3 class="text-sm font-medium text-gray-500 mb-2 flex items-center">
+                <i class="fab fa-whatsapp mr-2 text-green-500"></i>
+                WhatsApp
+            </h3>
+            <p class="text-gray-900 font-medium">
+                <?= !empty($locatario['whatsapp']) ? htmlspecialchars($locatario['whatsapp']) : 'Não cadastrado' ?>
+            </p>
+            <?php if (empty($locatario['whatsapp'])): ?>
+            <p class="text-xs text-gray-500 mt-1">Usado para enviar notificações importantes sobre suas solicitações</p>
+            <?php endif; ?>
+        </div>
     </div>
 </div>
 

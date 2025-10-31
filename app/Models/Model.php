@@ -58,14 +58,27 @@ abstract class Model
     public function update(int $id, array $data): bool
     {
         $fillableData = $this->filterFillable($data);
+        
+        // Se não há dados para atualizar, retorna true (não é erro)
+        if (empty($fillableData)) {
+            return true;
+        }
+        
         $fields = array_keys($fillableData);
         $setClause = array_map(fn($field) => "$field = ?", $fields);
         
         $sql = "UPDATE {$this->table} SET " . implode(', ', $setClause) . " WHERE {$this->primaryKey} = ?";
         $params = array_merge(array_values($fillableData), [$id]);
         
-        $stmt = Database::query($sql, $params);
-        return $stmt->rowCount() > 0;
+        try {
+            $stmt = Database::query($sql, $params);
+            // Retorna true se a query foi executada sem erros
+            // Não importa se linhas foram afetadas ou não
+            return true;
+        } catch (\PDOException $e) {
+            error_log("Erro no update: " . $e->getMessage());
+            return false;
+        }
     }
 
     public function delete(int $id): bool

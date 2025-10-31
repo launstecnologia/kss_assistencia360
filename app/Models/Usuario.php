@@ -8,7 +8,7 @@ class Usuario extends Model
 {
     protected string $table = 'usuarios';
     protected array $fillable = [
-        'nome', 'email', 'telefone', 'senha', 'nivel_permissao', 'status', 'created_at', 'updated_at'
+        'nome', 'email', 'telefone', 'cpf', 'senha', 'endereco', 'numero', 'complemento', 'bairro', 'cidade', 'uf', 'cep', 'nivel_permissao', 'status', 'created_at', 'updated_at'
     ];
     protected array $hidden = ['senha'];
     protected array $casts = [
@@ -18,19 +18,68 @@ class Usuario extends Model
 
     public function findByEmail(string $email): ?array
     {
-        $sql = "SELECT * FROM {$this->table} WHERE email = ? AND status = 'ATIVO'";
+        $sql = "SELECT * FROM {$this->table} WHERE email = ?";
         return Database::fetch($sql, [$email]);
+    }
+
+    public function findByCpf(string $cpf): ?array
+    {
+        $sql = "SELECT * FROM {$this->table} WHERE cpf = ?";
+        return Database::fetch($sql, [$cpf]);
     }
 
     public function authenticate(string $email, string $password): ?array
     {
-        $user = $this->findByEmail($email);
+        $sql = "SELECT * FROM {$this->table} WHERE email = ? AND status = 'ATIVO'";
+        $user = Database::fetch($sql, [$email]);
         
         if ($user && password_verify($password, $user['senha'])) {
             return $this->hide($user);
         }
         
         return null;
+    }
+
+    public function getAll(array $filtros = []): array
+    {
+        $sql = "SELECT * FROM {$this->table} WHERE 1=1";
+        $params = [];
+
+        if (isset($filtros['busca']) && !empty($filtros['busca'])) {
+            $sql .= " AND (nome LIKE ? OR email LIKE ? OR cpf LIKE ? OR id LIKE ?)";
+            $busca = "%{$filtros['busca']}%";
+            $params[] = $busca;
+            $params[] = $busca;
+            $params[] = $busca;
+            $params[] = $busca;
+        }
+
+        $sql .= " ORDER BY created_at DESC";
+
+        return Database::fetchAll($sql, $params);
+    }
+
+    public function count(array $where = []): int
+    {
+        $sql = "SELECT COUNT(*) as total FROM {$this->table}";
+        
+        if (!empty($where)) {
+            $conditions = [];
+            $params = [];
+            
+            foreach ($where as $key => $value) {
+                $conditions[] = "{$key} = ?";
+                $params[] = $value;
+            }
+            
+            $sql .= " WHERE " . implode(' AND ', $conditions);
+            
+            $result = Database::fetch($sql, $params);
+        } else {
+            $result = Database::fetch($sql);
+        }
+        
+        return (int) ($result['total'] ?? 0);
     }
 
     public function create(array $data): int
