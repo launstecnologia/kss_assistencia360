@@ -236,12 +236,35 @@ class DashboardController extends Controller
             $success = $this->solicitacaoModel->updateStatus($solicitacaoId, $novoStatusId, $user['id']);
             
             if ($success) {
+                // Buscar nome do status
+                $sql = "SELECT nome FROM status WHERE id = ?";
+                $status = \App\Core\Database::fetch($sql, [$novoStatusId]);
+                
+                // Enviar notificação WhatsApp
+                $this->enviarNotificacaoWhatsApp($solicitacaoId, 'Atualização de Status', [
+                    'status_atual' => $status['nome'] ?? 'Atualizado'
+                ]);
+                
                 $this->json(['success' => true, 'message' => 'Status atualizado com sucesso']);
             } else {
                 $this->json(['error' => 'Erro ao atualizar status'], 500);
             }
         } catch (\Exception $e) {
             $this->json(['error' => 'Erro ao atualizar status: ' . $e->getMessage()], 500);
+        }
+    }
+
+    private function enviarNotificacaoWhatsApp(int $solicitacaoId, string $tipo, array $extraData = []): void
+    {
+        try {
+            $whatsappService = new \App\Services\WhatsAppService();
+            $result = $whatsappService->sendMessage($solicitacaoId, $tipo, $extraData);
+            
+            if (!$result['success']) {
+                error_log('Erro WhatsApp [DashboardController]: ' . $result['message']);
+            }
+        } catch (\Exception $e) {
+            error_log('Erro ao enviar WhatsApp [DashboardController]: ' . $e->getMessage());
         }
     }
 }

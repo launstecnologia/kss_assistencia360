@@ -10,8 +10,9 @@ class Url
     public static function init(): void
     {
         $config = require __DIR__ . '/../Config/config.php';
-        self::$baseUrl = $config['app']['url'];
-        self::$basePath = $config['app']['base_path'];
+        // Limpar barras invertidas e normalizar
+        self::$baseUrl = str_replace('\\', '', $config['app']['url']);
+        self::$basePath = str_replace('\\', '/', trim($config['app']['base_path'], '/\\'));
     }
     
     public static function base(): string
@@ -29,8 +30,12 @@ class Url
             self::init();
         }
         
+        // Limpar e normalizar base path
+        $path = str_replace('\\', '/', self::$basePath);
+        $path = trim($path, '/');
+        
         // Retornar o base path sem a barra inicial
-        return self::$basePath === '/' ? '' : trim(self::$basePath, '/');
+        return $path === '/' || $path === '' ? '' : $path;
     }
     
     public static function to(string $path = ''): string

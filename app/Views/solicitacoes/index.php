@@ -17,6 +17,19 @@ ob_start();
 .request-card:hover {
     box-shadow: 0 4px 6px rgba(0,0,0,0.1);
 }
+/* Dark mode overrides */
+.dark .request-card {
+    background: #0a0f1a;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.7);
+    border-left-color: #3B82F6;
+}
+.dark .request-card:hover {
+    box-shadow: 0 10px 25px rgba(0,0,0,0.7);
+}
+.dark .bg-yellow-50 { background-color: #3b2e00 !important; }
+.dark .border-yellow-200 { border-color: #705b00 !important; }
+.dark .text-yellow-800 { color: #facc15 !important; }
+.dark .hover\:bg-yellow-100:hover { background-color: #4b3b00 !important; }
 </style>
 
 <!-- Header com Link para Solicitações Manuais -->
@@ -104,6 +117,11 @@ ob_start();
                       style="background-color: <?= $sol['status_cor'] ?? '#3B82F6' ?>20; color: <?= $sol['status_cor'] ?? '#3B82F6' ?>">
                     <?= htmlspecialchars($sol['status_nome'] ?? 'Sem status') ?>
                 </span>
+                <?php if (!empty($sol['horario_confirmado'])): ?>
+                <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 border border-green-200">
+                    <i class="fas fa-check mr-1"></i> Confirmado
+                </span>
+                <?php endif; ?>
                 <?php if (!empty($sol['horarios_opcoes'])): ?>
                     <?php $qtdHorarios = count(json_decode($sol['horarios_opcoes'], true) ?? []); ?>
                     <?php if ($qtdHorarios > 0): ?>
@@ -198,11 +216,12 @@ ob_start();
         </div>
 
         <!-- Descrição -->
-        <?php if (!empty($sol['descricao_problema'])): ?>
+        <?php $descricaoCard = $sol['descricao_card'] ?? $sol['descricao_problema'] ?? ''; ?>
+        <?php if (!empty($descricaoCard)): ?>
         <div class="mb-4 bg-gray-50 p-3 rounded-lg">
             <p class="text-sm text-gray-700">
-                <strong>Descrição:</strong> <?= htmlspecialchars(substr($sol['descricao_problema'], 0, 150)) ?>
-                <?= strlen($sol['descricao_problema']) > 150 ? '...' : '' ?>
+                <strong>Descrição:</strong> <?= htmlspecialchars(substr($descricaoCard, 0, 150)) ?>
+                <?= strlen($descricaoCard) > 150 ? '...' : '' ?>
             </p>
         </div>
         <?php endif; ?>

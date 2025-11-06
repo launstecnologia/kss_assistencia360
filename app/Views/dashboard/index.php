@@ -327,12 +327,104 @@ function updatePeriod(periodo) {
     window.location.href = '<?= url('dashboard') ?>?periodo=' + periodo;
 }
 
-// Funções do Offcanvas
+// Funções do Offcanvas (removidas - usando versão atualizada abaixo)
+
+function copiarInformacoes() {
+    // TODO: Implementar função de copiar informações
+    alert('Funcionalidade de copiar informações será implementada');
+}
+
+function toggleCampoReembolso() {
+    const checkbox = document.getElementById('checkboxReembolso');
+    const campo = document.getElementById('campoValorReembolso');
+    
+    if (checkbox.checked) {
+        campo.classList.remove('hidden');
+    } else {
+        campo.classList.add('hidden');
+        document.getElementById('valorReembolso').value = '';
+    }
+}
+
+function formatarMoeda(input) {
+    let valor = input.value.replace(/\D/g, '');
+    valor = (parseFloat(valor) / 100).toFixed(2);
+    
+    if (isNaN(valor) || valor === '0.00') {
+        input.value = '';
+        return;
+    }
+    
+    valor = valor.replace('.', ',');
+    valor = valor.replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.');
+    input.value = 'R$ ' + valor;
+}
+
+function formatarValorMoeda(valor) {
+    if (!valor || valor === 0) return '';
+    
+    let valorFormatado = parseFloat(valor).toFixed(2);
+    valorFormatado = valorFormatado.replace('.', ',');
+    valorFormatado = valorFormatado.replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.');
+    return 'R$ ' + valorFormatado;
+}
+
+// ✅ Variáveis globais para rastrear mudanças não salvas
+let hasUnsavedChanges = false;
+let offcanvasSolicitacaoId = null;
+
+// ✅ Função para monitorar mudanças nos campos
+function monitorarMudancas() {
+    // Monitorar textarea de observações
+    const textarea = document.querySelector('textarea[placeholder*="Descreva qualquer situação"]');
+    if (textarea) {
+        textarea.addEventListener('input', () => {
+            hasUnsavedChanges = true;
+        });
+        textarea.addEventListener('change', () => {
+            hasUnsavedChanges = true;
+        });
+    }
+    
+    // Monitorar inputs de texto
+    const inputs = document.querySelectorAll('#protocoloSeguradora, #valorReembolso');
+    inputs.forEach(input => {
+        if (input) {
+            input.addEventListener('input', () => {
+                hasUnsavedChanges = true;
+            });
+            input.addEventListener('change', () => {
+                hasUnsavedChanges = true;
+            });
+        }
+    });
+    
+    // Monitorar checkbox de reembolso
+    const checkboxReembolso = document.getElementById('checkboxReembolso');
+    if (checkboxReembolso) {
+        checkboxReembolso.addEventListener('change', () => {
+            hasUnsavedChanges = true;
+        });
+    }
+    
+    // Monitorar checkboxes de horários
+    const checkboxes = document.querySelectorAll('.horario-offcanvas');
+    checkboxes.forEach(chk => {
+        chk.addEventListener('change', () => {
+            hasUnsavedChanges = true;
+        });
+    });
+}
+
 function abrirDetalhes(solicitacaoId) {
     const offcanvas = document.getElementById('detalhesOffcanvas');
     const panel = document.getElementById('offcanvasPanel');
     const loadingContent = document.getElementById('loadingContent');
     const detalhesContent = document.getElementById('detalhesContent');
+    
+    // ✅ Resetar flag de mudanças não salvas
+    hasUnsavedChanges = false;
+    offcanvasSolicitacaoId = solicitacaoId;
     
     // Mostrar offcanvas
     offcanvas.classList.remove('hidden');
@@ -352,6 +444,10 @@ function abrirDetalhes(solicitacaoId) {
         .then(data => {
             if (data.success) {
                 renderizarDetalhes(data.solicitacao);
+                // ✅ Monitorar mudanças após renderizar
+                setTimeout(() => {
+                    monitorarMudancas();
+                }, 100);
             } else {
                 detalhesContent.innerHTML = `
                     <div class="text-center py-12">
@@ -377,6 +473,21 @@ function abrirDetalhes(solicitacaoId) {
 }
 
 function fecharDetalhes() {
+    // ✅ Verificar se há mudanças não salvas
+    if (hasUnsavedChanges) {
+        const confirm = window.confirm(
+            'Você tem alterações não salvas. Deseja realmente fechar?\n\n' +
+            'As alterações serão perdidas se você não salvar.'
+        );
+        if (!confirm) {
+            return;
+        }
+    }
+    
+    // Limpar flags
+    hasUnsavedChanges = false;
+    offcanvasSolicitacaoId = null;
+    
     const offcanvas = document.getElementById('detalhesOffcanvas');
     const panel = document.getElementById('offcanvasPanel');
     
@@ -389,8 +500,20 @@ function fecharDetalhes() {
     }, 300);
 }
 
+// ✅ Prevenir navegação se houver mudanças não salvas
+window.addEventListener('beforeunload', (e) => {
+    if (hasUnsavedChanges) {
+        e.preventDefault();
+        e.returnValue = 'Você tem alterações não salvas. Deseja realmente sair?';
+        return e.returnValue;
+    }
+});
+
 function renderizarDetalhes(solicitacao) {
     const content = document.getElementById('detalhesContent');
+    
+    // ✅ Resetar flag de mudanças ao renderizar
+    hasUnsavedChanges = false;
     
     const statusClass = getStatusClass(solicitacao.status_nome);
     const prioridadeClass = getPrioridadeClass(solicitacao.prioridade);
@@ -506,10 +629,119 @@ function renderizarDetalhes(solicitacao) {
                                 const hora = String(dt.getHours()).padStart(2, '0');
                                 const min = String(dt.getMinutes()).padStart(2, '0');
                                 const faixaHora = hora + ':00-' + (parseInt(hora) + 3) + ':00';
+                                const textoHorario = `${dia}/${mes}/${ano} - ${faixaHora}`;
+                                
+                                // ✅ Verificar se este horário está confirmado (igual ao Kanban)
+                                let isConfirmed = false;
+                                
+                                // 1. Verificar em confirmed_schedules (JSON) - PRIORIDADE
+                                if (solicitacao.confirmed_schedules) {
+                                    try {
+                                        const confirmed = typeof solicitacao.confirmed_schedules === 'string' 
+                                            ? JSON.parse(solicitacao.confirmed_schedules) 
+                                            : solicitacao.confirmed_schedules;
+                                        
+                                        if (Array.isArray(confirmed) && confirmed.length > 0) {
+                                            isConfirmed = confirmed.some(s => {
+                                                if (!s) return false;
+                                                
+                                                if (s.raw) {
+                                                    const sRaw = String(s.raw).trim().replace(/\s+/g, ' ');
+                                                    const textoNorm = textoHorario.trim().replace(/\s+/g, ' ');
+                                                    
+                                                    if (sRaw === textoNorm) return true;
+                                                    if (sRaw.includes(textoNorm) || textoNorm.includes(sRaw)) return true;
+                                                }
+                                                
+                                                if (s.date && s.time) {
+                                                    try {
+                                                        const sDate = new Date(s.date);
+                                                        const sTime = String(s.time).trim();
+                                                        const dtNorm = new Date(dt);
+                                                        
+                                                        if (sDate.getDate() === dtNorm.getDate() &&
+                                                            sDate.getMonth() === dtNorm.getMonth() &&
+                                                            sDate.getFullYear() === dtNorm.getFullYear()) {
+                                                            const hora = String(dt.getHours()).padStart(2, '0');
+                                                            const horaMatch = sTime.includes(hora) || hora.includes(sTime.substring(0, 2));
+                                                            if (horaMatch) return true;
+                                                        }
+                                                    } catch (e) {
+                                                        // Ignorar erro de data
+                                                    }
+                                                }
+                                                
+                                                return false;
+                                            });
+                                        }
+                                    } catch (e) {
+                                        console.error('Erro ao parsear confirmed_schedules:', e);
+                                    }
+                                }
+                                
+                                // 2. Verificar em horario_confirmado_raw (texto direto)
+                                if (!isConfirmed && solicitacao.horario_confirmado_raw) {
+                                    const horarioRaw = String(solicitacao.horario_confirmado_raw).trim();
+                                    const textoNorm = textoHorario.trim();
+                                    
+                                    if (horarioRaw === textoNorm) {
+                                        isConfirmed = true;
+                                    } else {
+                                        const rawNorm = horarioRaw.replace(/\s+/g, ' ').trim();
+                                        const textoNorm2 = textoNorm.replace(/\s+/g, ' ').trim();
+                                        
+                                        if (rawNorm === textoNorm2) {
+                                            isConfirmed = true;
+                                        } else if (horarioRaw.includes(textoNorm) || textoNorm.includes(horarioRaw)) {
+                                            isConfirmed = true;
+                                        } else {
+                                            const regex = /(\d{2}\/\d{2}\/\d{4})\s*-\s*(\d{2}:\d{2})/;
+                                            const matchRaw = horarioRaw.match(regex);
+                                            const matchTexto = textoNorm.match(regex);
+                                            
+                                            if (matchRaw && matchTexto) {
+                                                const [, dataRaw, horaIniRaw] = matchRaw;
+                                                const [, dataTexto, horaIniTexto] = matchTexto;
+                                                
+                                                if (dataRaw === dataTexto && horaIniRaw === horaIniTexto) {
+                                                    isConfirmed = true;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                                
+                                // 3. Verificar por data_agendamento + horario_agendamento (compatibilidade)
+                                if (!isConfirmed && solicitacao.data_agendamento && solicitacao.horario_agendamento) {
+                                    try {
+                                        const dataAg = new Date(solicitacao.data_agendamento);
+                                        const horaAg = String(solicitacao.horario_agendamento).trim();
+                                        
+                                        if (dataAg.getDate() === dt.getDate() &&
+                                            dataAg.getMonth() === dt.getMonth() &&
+                                            dataAg.getFullYear() === dt.getFullYear()) {
+                                            const hora = String(dt.getHours()).padStart(2, '0');
+                                            if (horaAg.includes(hora)) {
+                                                isConfirmed = true;
+                                            }
+                                        }
+                                    } catch (e) {
+                                        // Ignorar erro de data
+                                    }
+                                }
+                                
                                 return `
-                                <div class="flex items-center gap-3 py-2">
-                                    <input type="checkbox" class="w-4 h-4 text-blue-600 rounded" id="horario-${index}">
-                                    <label for="horario-${index}" class="text-sm text-gray-700">${dia}/${mes}/${ano} - ${faixaHora}</label>
+                                <div class="flex items-center gap-3 py-2 ${isConfirmed ? 'bg-green-50 rounded px-2' : ''}">
+                                    <input type="checkbox" 
+                                           class="w-4 h-4 text-blue-600 rounded horario-offcanvas" 
+                                           data-raw="${textoHorario}" 
+                                           id="horario-${index}"
+                                           ${isConfirmed ? 'checked' : ''}>
+                                    <label for="horario-${index}" class="text-sm text-gray-700 flex items-center gap-2">
+                                        ${isConfirmed ? '<i class="fas fa-check-circle text-green-600"></i>' : ''}
+                                        <span>${textoHorario}</span>
+                                        ${isConfirmed ? '<span class="text-xs text-green-700 font-semibold">(Confirmado)</span>' : ''}
+                                    </label>
                                 </div>
                                 `;
                             } catch (e) {
@@ -639,7 +871,7 @@ function renderizarDetalhes(solicitacao) {
         
         <!-- Botões de Ação -->
         <div class="mt-6 flex gap-3">
-            <button onclick="salvarAlteracoes(${solicitacao.id})" 
+            <button id="btnSalvarAlteracoes" onclick="salvarAlteracoes(${solicitacao.id})" 
                     class="flex-1 flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 rounded-lg font-medium transition-colors">
                 <i class="fas fa-save"></i>
                 Salvar Alterações
@@ -657,47 +889,39 @@ function renderizarDetalhes(solicitacao) {
     `;
 }
 
-function copiarInformacoes() {
-    // TODO: Implementar função de copiar informações
-    alert('Funcionalidade de copiar informações será implementada');
-}
-
-function toggleCampoReembolso() {
-    const checkbox = document.getElementById('checkboxReembolso');
-    const campo = document.getElementById('campoValorReembolso');
-    
-    if (checkbox.checked) {
-        campo.classList.remove('hidden');
-    } else {
-        campo.classList.add('hidden');
-        document.getElementById('valorReembolso').value = '';
+// ======== Horários (offcanvas) ========
+function parseScheduleRawOffcanvas(raw) {
+    const out = { date: null, time: null, raw };
+    if (!raw) return out;
+    const dBR = raw.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+    if (dBR) out.date = `${dBR[3]}-${dBR[2]}-${dBR[1]}`;
+    const range = raw.match(/(\d{2}:\d{2})\s?-\s?(\d{2}:\d{2})/);
+    if (range) out.time = `${range[1]}-${range[2]}`; else {
+        const single = raw.match(/\b(\d{2}:\d{2})\b/);
+        if (single) out.time = single[1];
     }
+    return out;
 }
 
-function formatarMoeda(input) {
-    let valor = input.value.replace(/\D/g, '');
-    valor = (parseFloat(valor) / 100).toFixed(2);
-    
-    if (isNaN(valor) || valor === '0.00') {
-        input.value = '';
-        return;
-    }
-    
-    valor = valor.replace('.', ',');
-    valor = valor.replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.');
-    input.value = 'R$ ' + valor;
-}
-
-function formatarValorMoeda(valor) {
-    if (!valor || valor === 0) return '';
-    
-    let valorFormatado = parseFloat(valor).toFixed(2);
-    valorFormatado = valorFormatado.replace('.', ',');
-    valorFormatado = valorFormatado.replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.');
-    return 'R$ ' + valorFormatado;
+function coletarSchedulesOffcanvas() {
+    return Array.from(document.querySelectorAll('.horario-offcanvas:checked'))
+        .map(chk => parseScheduleRawOffcanvas(chk.getAttribute('data-raw')))
+        .filter(s => s.date || s.time);
 }
 
 function salvarAlteracoes(solicitacaoId) {
+    // ✅ Loading state granular: Desabilitar botão e mostrar feedback
+    const btnSalvar = document.getElementById('btnSalvarAlteracoes');
+    const originalText = btnSalvar.innerHTML;
+    const originalDisabled = btnSalvar.disabled;
+    
+    btnSalvar.disabled = true;
+    btnSalvar.innerHTML = `
+        <i class="fas fa-spinner fa-spin mr-2"></i>
+        Salvando...
+    `;
+    btnSalvar.classList.remove('hover:bg-blue-700');
+    
     // Coletar dados do formulário
     const observacoes = document.querySelector('textarea[placeholder*="Descreva qualquer situação"]')?.value || '';
     const precisaReembolso = document.getElementById('checkboxReembolso')?.checked || false;
@@ -712,12 +936,16 @@ function salvarAlteracoes(solicitacaoId) {
     
     const protocoloSeguradora = document.getElementById('protocoloSeguradora')?.value || '';
     
+    // ✅ Coletar horários selecionados (sempre enviar, mesmo que vazio)
+    const schedules = coletarSchedulesOffcanvas();
+    
     // Criar objeto com os dados
     const dados = {
         observacoes: observacoes,
         precisa_reembolso: precisaReembolso,
         valor_reembolso: valorReembolso,
-        protocolo_seguradora: protocoloSeguradora
+        protocolo_seguradora: protocoloSeguradora,
+        schedules: schedules  // ✅ Sempre enviar (array vazio se nenhum marcado)
     };
     
     console.log('Dados a serem salvos:', dados); // Debug
@@ -730,20 +958,50 @@ function salvarAlteracoes(solicitacaoId) {
         },
         body: JSON.stringify(dados)
     })
-    .then(response => response.json())
+    .then(async response => {
+        // ✅ Verificar se a resposta é JSON válido antes de parsear
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            const text = await response.text();
+            console.error('Resposta não é JSON:', text);
+            throw new Error('Resposta do servidor não é JSON válido. ' + text.substring(0, 200));
+        }
+        return response.json();
+    })
     .then(data => {
         console.log('Resposta do servidor:', data); // Debug
         if (data.success) {
-            alert('Alterações salvas com sucesso!');
-            fecharDetalhes();
-            // Recarregar a página para atualizar os dados
-            window.location.reload();
+            // ✅ Feedback específico de sucesso
+            btnSalvar.innerHTML = `
+                <i class="fas fa-check mr-2"></i>
+                Salvo!
+            `;
+            btnSalvar.classList.remove('bg-blue-600');
+            btnSalvar.classList.add('bg-green-600');
+            
+            // Limpar flag de mudanças não salvas
+            hasUnsavedChanges = false;
+            
+            // Aguardar um momento antes de fechar para mostrar feedback
+            setTimeout(() => {
+                fecharDetalhes();
+                // Recarregar a página para atualizar os dados
+                window.location.reload();
+            }, 1000);
         } else {
+            // ✅ Restaurar botão em caso de erro
+            btnSalvar.innerHTML = originalText;
+            btnSalvar.disabled = originalDisabled;
+            btnSalvar.classList.add('hover:bg-blue-700');
             alert('Erro ao salvar: ' + (data.error || 'Erro desconhecido'));
         }
     })
     .catch(error => {
         console.error('Erro:', error);
+        // ✅ Restaurar botão em caso de erro
+        btnSalvar.innerHTML = originalText;
+        btnSalvar.disabled = originalDisabled;
+        btnSalvar.classList.add('hover:bg-blue-700');
         alert('Erro ao salvar alterações. Tente novamente.');
     });
 }

@@ -30,16 +30,27 @@ class WhatsAppService
      */
     public function __construct()
     {
-        $config = config('whatsapp');
+        // ✅ Usar função global config() ou ler do arquivo de configuração
+        $configFile = __DIR__ . '/../Config/config.php';
+        $config = file_exists($configFile) ? require $configFile : [];
+        $whatsappConfig = $config['whatsapp'] ?? [];
         
-        $this->enabled = $config['enabled'] ?? false;
-        $this->apiUrl = rtrim($config['api_url'] ?? '', '/');
-        $this->instance = $config['instance'] ?? '';
-        $this->apiKey = $config['api_key'] ?? '';
+        // ✅ Ler de variáveis de ambiente se config não tiver (usar função global)
+        $envEnabled = (function_exists('env') ? env('WHATSAPP_ENABLED', 'false') : (getenv('WHATSAPP_ENABLED') ?: 'false'));
+        $this->enabled = $whatsappConfig['enabled'] ?? ($envEnabled === 'true');
+        $envApiUrl = (function_exists('env') ? env('WHATSAPP_API_URL', '') : (getenv('WHATSAPP_API_URL') ?: ''));
+        $this->apiUrl = rtrim($whatsappConfig['api_url'] ?? $envApiUrl, '/');
+        $envInstance = (function_exists('env') ? env('WHATSAPP_INSTANCE', '') : (getenv('WHATSAPP_INSTANCE') ?: ''));
+        $this->instance = $whatsappConfig['instance'] ?? $envInstance;
+        $envApiKey = (function_exists('env') ? env('WHATSAPP_API_KEY', '') : (getenv('WHATSAPP_API_KEY') ?: ''));
+        $this->apiKey = $whatsappConfig['api_key'] ?? $envApiKey;
         
         // Validar configurações
         if ($this->enabled && (empty($this->apiUrl) || empty($this->instance) || empty($this->apiKey))) {
             error_log('WhatsApp: Configurações incompletas. Verifique WHATSAPP_API_URL, WHATSAPP_INSTANCE e WHATSAPP_API_KEY.');
+            error_log('WhatsApp: Configurações atuais - URL: ' . ($this->apiUrl ?: 'VAZIA') . ', Instância: ' . ($this->instance ?: 'VAZIA') . ', API Key: ' . (!empty($this->apiKey) ? 'CONFIGURADO' : 'VAZIA'));
+            // Desabilitar WhatsApp se configurações estiverem incompletas
+            $this->enabled = false;
         }
     }
     
@@ -53,10 +64,27 @@ class WhatsAppService
      */
     public function sendMessage(int $solicitacaoId, string $messageType, array $extraData = []): array
     {
+        $logData = [
+            'solicitacao_id' => $solicitacaoId,
+            'message_type' => $messageType,
+            'timestamp' => date('Y-m-d H:i:s'),
+            'status' => 'iniciado'
+        ];
+        
         if (!$this->enabled) {
+            $logData['status'] = 'erro';
+            $logData['erro'] = 'WhatsApp está desabilitado ou configurações incompletas';
+            $logData['configuracoes'] = [
+                'enabled' => $this->enabled,
+                'api_url' => $this->apiUrl ?: 'VAZIA',
+                'instance' => $this->instance ?: 'VAZIA',
+                'api_key' => !empty($this->apiKey) ? 'CONFIGURADO' : 'VAZIA'
+            ];
+            $this->writeLog($logData);
+            
             return [
                 'success' => false,
-                'message' => 'WhatsApp está desabilitado',
+                'message' => 'WhatsApp está desabilitado ou configurações incompletas. Verifique WHATSAPP_API_URL, WHATSAPP_INSTANCE e WHATSAPP_API_KEY.',
                 'data' => null
             ];
         }
@@ -66,15 +94,26 @@ class WhatsAppService
             $solicitacao = $this->getSolicitacaoDetalhes($solicitacaoId);
             
             if (!$solicitacao) {
+                $logData['status'] = 'erro';
+                $logData['erro'] = 'Solicitação não encontrada';
+                $this->writeLog($logData);
                 throw new \Exception('Solicitação não encontrada');
             }
+            
+            $logData['protocolo'] = $solicitacao['numero_solicitacao'] ?? ('KS' . $solicitacaoId);
+            $logData['cliente_nome'] = $solicitacao['cliente_nome'] ?? 'N/A';
             
             // Buscar template
             $template = $this->getTemplate($messageType);
             
             if (!$template) {
+                $logData['status'] = 'erro';
+                $logData['erro'] = "Template não encontrado para o tipo: {$messageType}";
+                $this->writeLog($logData);
                 throw new \Exception("Template não encontrado para o tipo: {$messageType}");
             }
+            
+            $logData['template_id'] = $template['id'] ?? null;
             
             // Criar token se necessário (para mensagens de confirmação/sugestão de horário)
             $token = $this->createTokenIfNeeded($solicitacaoId, $messageType, $solicitacao, $extraData);
@@ -86,19 +125,42 @@ class WhatsAppService
             $message = $this->replaceVariables($template['corpo'], $variables);
             
             // Formatar número WhatsApp
-            $whatsappNumber = $this->formatWhatsAppNumber($solicitacao['cliente_telefone']);
+            $telefone = $solicitacao['cliente_telefone'] ?? '';
+            
+            if (empty($telefone)) {
+                $logData['status'] = 'erro';
+                $logData['erro'] = 'Telefone do cliente não encontrado';
+                $this->writeLog($logData);
+                throw new \Exception('Telefone do cliente não encontrado');
+            }
+            
+            $whatsappNumber = $this->formatWhatsAppNumber($telefone);
+            $logData['telefone_original'] = $telefone;
+            $logData['telefone_formatado'] = $whatsappNumber;
+            $logData['mensagem_tamanho'] = strlen($message);
             
             // Enviar para Evolution API
-            $result = $this->sendToEvolutionAPI($whatsappNumber, $message);
+            $apiResponse = $this->sendToEvolutionAPI($whatsappNumber, $message, $logData);
+            
+            // Log de sucesso
+            $logData['status'] = 'sucesso';
+            $logData['api_response'] = $apiResponse;
+            $logData['http_code'] = $apiResponse['http_code'] ?? null;
+            $this->writeLog($logData);
             
             return [
                 'success' => true,
                 'message' => 'Mensagem enviada com sucesso',
-                'data' => $result
+                'data' => $apiResponse
             ];
             
         } catch (\Exception $e) {
-            error_log('WhatsApp Service Error: ' . $e->getMessage());
+            $logData['status'] = 'erro';
+            $logData['erro'] = $e->getMessage();
+            $logData['erro_tipo'] = get_class($e);
+            $logData['erro_arquivo'] = $e->getFile();
+            $logData['erro_linha'] = $e->getLine();
+            $this->writeLog($logData);
             
             return [
                 'success' => false,
@@ -161,17 +223,17 @@ class WhatsAppService
         $sql = "
             SELECT 
                 s.*,
-                l.nome as cliente_nome,
+                COALESCE(l.nome, s.locatario_nome) as cliente_nome,
                 l.cpf as cliente_cpf,
-                l.telefone as cliente_telefone,
-                l.email as cliente_email,
-                l.endereco as cliente_endereco,
-                l.numero as cliente_numero,
-                l.complemento as cliente_complemento,
-                l.bairro as cliente_bairro,
-                l.cidade as cliente_cidade,
-                l.estado as cliente_estado,
-                l.cep as cliente_cep,
+                COALESCE(l.telefone, s.locatario_telefone) as cliente_telefone,
+                COALESCE(l.email, s.locatario_email) as cliente_email,
+                s.imovel_endereco as cliente_endereco,
+                s.imovel_numero as cliente_numero,
+                s.imovel_complemento as cliente_complemento,
+                s.imovel_bairro as cliente_bairro,
+                s.imovel_cidade as cliente_cidade,
+                s.imovel_estado as cliente_estado,
+                s.imovel_cep as cliente_cep,
                 i.nome as imobiliaria_nome,
                 i.telefone as imobiliaria_telefone,
                 st.nome as status_nome,
@@ -268,7 +330,8 @@ class WhatsAppService
      */
     private function prepareVariables(array $solicitacao, array $extraData = [], ?string $token = null): array
     {
-        $baseUrl = rtrim(config('app.url'), '/');
+        // ✅ Usar URL base configurada especificamente para links WhatsApp
+        $baseUrl = $this->getLinksBaseUrl();
         
         $variables = [
             // Cliente
@@ -309,11 +372,11 @@ class WhatsAppService
             'prestador_nome' => $extraData['prestador_nome'] ?? '',
             'prestador_telefone' => $extraData['prestador_telefone'] ?? '',
             
-            // Links
-            'link_rastreamento' => $baseUrl . '/locatario/solicitacao/' . $solicitacao['id'],
-            'link_confirmacao' => $token ? $baseUrl . '/confirmacao-horario?token=' . $token : '',
-            'link_cancelamento' => $token ? $baseUrl . '/cancelamento-horario?token=' . $token : '',
-            'link_status' => $token ? $baseUrl . '/status-servico?token=' . $token : $baseUrl . '/locatario/solicitacao/' . $solicitacao['id'],
+            // Links (sempre absolutos, sem barras invertidas)
+            'link_rastreamento' => $this->cleanUrl($baseUrl . '/locatario/solicitacao/' . $solicitacao['id']),
+            'link_confirmacao' => $token ? $this->cleanUrl($baseUrl . '/confirmacao-horario?token=' . $token) : '',
+            'link_cancelamento' => $token ? $this->cleanUrl($baseUrl . '/cancelamento-horario?token=' . $token) : '',
+            'link_status' => $token ? $this->cleanUrl($baseUrl . '/status-servico?token=' . $token) : $this->cleanUrl($baseUrl . '/locatario/solicitacao/' . $solicitacao['id']),
         ];
         
         // Mesclar com dados extras (sobrescreve se existir)
@@ -333,15 +396,97 @@ class WhatsAppService
     {
         $text = $template;
         
+        // Primeiro, substituir variáveis de link removendo barras invertidas extras do template
         foreach ($variables as $key => $value) {
-            $placeholder = '{{' . $key . '}}';
-            $text = str_replace($placeholder, $value, $text);
+            if (strpos($key, 'link_') === 0 && !empty($value)) {
+                $placeholder = '{{' . $key . '}}';
+                
+                // Padrões com barras invertidas: \{{link_*}}, \\{{link_*}}, {{link_*}}\, {{link_*}}\\, etc.
+                $patterns = [
+                    // Remover barras invertidas antes e depois do placeholder
+                    '/\\\\+\\{\\{' . preg_quote($key, '/') . '\\}\\}\\\\*/' => $value,
+                    '/\\\\+\\{\\{' . preg_quote($key, '/') . '\\}\\}/' => $value,
+                    '/\\{\\{' . preg_quote($key, '/') . '\\}\\}\\\\*/' => $value,
+                    // Remover URL base duplicada se o template já tiver (ex: http://localhost/kss/{{link_*}})
+                    '/https?:\/\/[^\/\s]+(?:\/[^\/\s]*)?\/?\\{\\{' . preg_quote($key, '/') . '\\}\\}/' => $value,
+                    // Remover qualquer URL antes do placeholder seguida de URL completa
+                    '/https?:\/\/[^\s]+\\{\\{' . preg_quote($key, '/') . '\\}\\}/' => $value,
+                ];
+                
+                foreach ($patterns as $pattern => $replacement) {
+                    $text = preg_replace($pattern, $replacement, $text);
+                }
+                
+                // Substituir placeholder simples (caso não tenha sido substituído)
+                $text = str_replace($placeholder, $value, $text);
+            }
+        }
+        
+        // Depois, substituir outras variáveis normalmente
+        foreach ($variables as $key => $value) {
+            if (strpos($key, 'link_') !== 0) {
+                $placeholder = '{{' . $key . '}}';
+                $text = str_replace($placeholder, $value, $text);
+            }
         }
         
         // Remover variáveis não preenchidas
         $text = preg_replace('/\{\{[^}]+\}\}/', '', $text);
         
+        // Limpeza final: remover TODAS as barras invertidas antes de URLs
+        $text = preg_replace('/\\\\+(http[s]?:\/\/[^\s]+)/', '$1', $text);
+        // Remover barras invertidas antes de barras normais em URLs
+        $text = preg_replace('/\\\\+(\/)/', '$1', $text);
+        // Remover múltiplas barras invertidas consecutivas
+        $text = preg_replace('/\\\\{2,}/', '', $text);
+        
+        // Remover URLs duplicadas de forma mais agressiva
+        // Padrão especial: http://localhost/http:/localhost/... (URL malformada com : duplicado)
+        $text = preg_replace('/(https?:\/\/[^\/\s]+)\/(https?:\/\/?[^\s]+)/', '$2', $text);
+        // Padrão 1: http://localhost/http://localhost/kss/... (URL completa duplicada)
+        $text = preg_replace('/(https?:\/\/[^\/\s]+)(https?:\/\/[^\s]+)/', '$2', $text);
+        // Padrão 2: http://localhost/kss/http://localhost/kss/... (URL com path duplicada)
+        $text = preg_replace('/(https?:\/\/[^\/\s]+\/[^\/\s]*\/?)(https?:\/\/[^\s]+)/', '$2', $text);
+        // Padrão 3: http:/localhost/... (corrigir protocolo malformado sem //)
+        $text = preg_replace('/http:\/localhost/', 'http://localhost', $text);
+        $text = preg_replace('/https:\/localhost/', 'https://localhost', $text);
+        // Padrão 4: http:/... (protocolo malformado geral)
+        $text = preg_replace('/(https?:\/\/)(https?:\/\/)/', '$1', $text);
+        
         return $text;
+    }
+    
+    /**
+     * Limpa URL removendo barras invertidas e espaços
+     * 
+     * @param string $url URL a limpar
+     * @return string URL limpa
+     */
+    private function cleanUrl(string $url): string
+    {
+        // Remover todas as barras invertidas
+        $url = str_replace('\\', '', $url);
+        // Remover espaços
+        $url = trim($url);
+        
+        // Remover URLs duplicadas ANTES de processar barras
+        // Padrão especial: http://localhost/http:/localhost/... (URL malformada com : duplicado)
+        $url = preg_replace('/(https?:\/\/[^\/\s]+)\/(https?:\/\/?[^\s]+)/', '$2', $url);
+        // Padrão: http://localhost/http://localhost/... (URL completa duplicada)
+        $url = preg_replace('/(https?:\/\/[^\/\s]+)(https?:\/\/[^\s]+)/', '$2', $url);
+        // Padrão: http:/localhost/... (corrigir protocolo malformado sem //)
+        $url = preg_replace('/http:\/localhost/', 'http://localhost', $url);
+        $url = preg_replace('/https:\/localhost/', 'https://localhost', $url);
+        
+        // Garantir que não tem barras duplicadas
+        $url = preg_replace('/\/+/', '/', $url);
+        // Remover barra final
+        $url = rtrim($url, '/');
+        // Garantir que tem protocolo
+        if (!preg_match('/^https?:\/\//', $url)) {
+            $url = 'http://localhost' . ($url ? '/' . ltrim($url, '/') : '');
+        }
+        return $url;
     }
     
     /**
@@ -389,6 +534,47 @@ class WhatsAppService
     }
     
     /**
+     * Obtém a URL base para links enviados nas mensagens WhatsApp
+     * 
+     * @return string URL base (sem barra final)
+     */
+    private function getLinksBaseUrl(): string
+    {
+        $configFile = __DIR__ . '/../Config/config.php';
+        $config = file_exists($configFile) ? require $configFile : [];
+        
+        // Prioridade: WHATSAPP_LINKS_BASE_URL > app.url > APP_URL > localhost
+        $whatsappConfig = $config['whatsapp'] ?? [];
+        $linksBaseUrl = $whatsappConfig['links_base_url'] ?? null;
+        
+        if (!$linksBaseUrl) {
+            // Fallback para app.url
+            $linksBaseUrl = $config['app']['url'] ?? null;
+        }
+        
+        if (!$linksBaseUrl) {
+            // Fallback para variável de ambiente
+            $linksBaseUrl = (function_exists('env') ? env('APP_URL', 'http://localhost') : (getenv('APP_URL') ?: 'http://localhost'));
+        }
+        
+        // Limpar: remover barras invertidas, espaços, e barras finais
+        $linksBaseUrl = str_replace('\\', '', $linksBaseUrl); // Remover todas as barras invertidas
+        $linksBaseUrl = trim($linksBaseUrl); // Remover espaços
+        
+        // Remover URLs duplicadas se houver (caso raro mas possível)
+        $linksBaseUrl = preg_replace('/(https?:\/\/[^\/\s]+)(https?:\/\/[^\s]+)/', '$2', $linksBaseUrl);
+        
+        $linksBaseUrl = rtrim($linksBaseUrl, '/'); // Remover barra final
+        
+        // Garantir que não está vazio e tem protocolo
+        if (empty($linksBaseUrl) || !preg_match('/^https?:\/\//', $linksBaseUrl)) {
+            $linksBaseUrl = 'http://localhost';
+        }
+        
+        return $linksBaseUrl;
+    }
+    
+    /**
      * Formata número de telefone para formato WhatsApp
      * 
      * @param string $phone Número de telefone
@@ -413,10 +599,11 @@ class WhatsAppService
      * 
      * @param string $number Número formatado
      * @param string $message Texto da mensagem
+     * @param array &$logData Dados de log (referência para atualizar)
      * @return array Resposta da API
      * @throws \Exception Se falhar ao enviar
      */
-    private function sendToEvolutionAPI(string $number, string $message): array
+    private function sendToEvolutionAPI(string $number, string $message, array &$logData): array
     {
         $url = "{$this->apiUrl}/message/sendText/{$this->instance}";
         
@@ -424,6 +611,9 @@ class WhatsAppService
             'number' => $number,
             'text' => $message
         ];
+        
+        $logData['api_url'] = $url;
+        $logData['api_instance'] = $this->instance;
         
         $ch = curl_init($url);
         
@@ -434,7 +624,11 @@ class WhatsAppService
         ];
         
         // Adicionar token da instância se disponível
-        $token = config('whatsapp.token');
+        $configFile = __DIR__ . '/../Config/config.php';
+        $config = file_exists($configFile) ? require $configFile : [];
+        $whatsappConfig = $config['whatsapp'] ?? [];
+        $envToken = (function_exists('env') ? env('WHATSAPP_TOKEN', '') : (getenv('WHATSAPP_TOKEN') ?: ''));
+        $token = $whatsappConfig['token'] ?? $envToken;
         if (!empty($token)) {
             $headers[] = 'Authorization: Bearer ' . $token;
         }
@@ -448,20 +642,132 @@ class WhatsAppService
             CURLOPT_SSL_VERIFYPEER => false
         ]);
         
+        $startTime = microtime(true);
         $response = curl_exec($ch);
+        $endTime = microtime(true);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        $error = curl_error($ch);
+        $curlError = curl_error($ch);
+        $curlErrno = curl_errno($ch);
         curl_close($ch);
         
-        if ($error) {
-            throw new \Exception('Erro cURL: ' . $error);
+        $logData['tempo_resposta'] = round(($endTime - $startTime) * 1000, 2) . 'ms';
+        $logData['http_code'] = $httpCode;
+        $logData['curl_error'] = $curlError ?: null;
+        $logData['curl_errno'] = $curlErrno ?: null;
+        
+        if ($curlError) {
+            $logData['status'] = 'erro';
+            $logData['erro'] = 'Erro cURL: ' . $curlError;
+            $logData['api_response_raw'] = $response;
+            throw new \Exception('Erro cURL: ' . $curlError);
         }
         
+        $responseData = json_decode($response, true);
+        $logData['api_response_raw'] = $response;
+        
         if ($httpCode !== 200 && $httpCode !== 201) {
+            $logData['status'] = 'erro';
+            $logData['erro'] = "Evolution API retornou código {$httpCode}";
+            $logData['api_response'] = $responseData;
             throw new \Exception("Evolution API retornou código {$httpCode}: {$response}");
         }
         
-        return json_decode($response, true) ?? [];
+        $logData['api_response'] = $responseData;
+        
+        return array_merge($responseData ?? [], ['http_code' => $httpCode]);
+    }
+    
+    /**
+     * Escreve log em arquivo .log
+     * 
+     * @param array $data Dados do log
+     * @return void
+     */
+    private function writeLog(array $data): void
+    {
+        $logDir = __DIR__ . '/../../storage/logs';
+        
+        // Criar diretório se não existir
+        if (!is_dir($logDir)) {
+            mkdir($logDir, 0755, true);
+        }
+        
+        $logFile = $logDir . '/whatsapp_evolution_api.log';
+        
+        // Formatar linha de log
+        $timestamp = $data['timestamp'] ?? date('Y-m-d H:i:s');
+        $status = $data['status'] ?? 'unknown';
+        $solicitacaoId = $data['solicitacao_id'] ?? 'N/A';
+        $protocolo = $data['protocolo'] ?? 'N/A';
+        $messageType = $data['message_type'] ?? 'N/A';
+        
+        // Montar linha de log estruturada
+        $logLine = sprintf(
+            "[%s] [%s] ID:%s | Protocolo:%s | Tipo:%s",
+            $timestamp,
+            strtoupper($status),
+            $solicitacaoId,
+            $protocolo,
+            $messageType
+        );
+        
+        // Adicionar informações adicionais
+        if (isset($data['cliente_nome'])) {
+            $logLine .= " | Cliente:" . $data['cliente_nome'];
+        }
+        
+        if (isset($data['telefone_formatado'])) {
+            $logLine .= " | Telefone:" . $data['telefone_formatado'];
+        }
+        
+        if (isset($data['http_code'])) {
+            $logLine .= " | HTTP:" . $data['http_code'];
+        }
+        
+        if (isset($data['tempo_resposta'])) {
+            $logLine .= " | Tempo:" . $data['tempo_resposta'];
+        }
+        
+        if (isset($data['erro'])) {
+            $logLine .= " | ERRO:" . $data['erro'];
+        }
+        
+        if (isset($data['api_response']) && is_array($data['api_response'])) {
+            $responseSummary = [];
+            if (isset($data['api_response']['key']) && is_array($data['api_response']['key'])) {
+                $keyInfo = [];
+                if (isset($data['api_response']['key']['id'])) {
+                    $keyInfo[] = "id:" . substr($data['api_response']['key']['id'], 0, 20);
+                }
+                if (isset($data['api_response']['key']['remoteJid'])) {
+                    $keyInfo[] = "jid:" . $data['api_response']['key']['remoteJid'];
+                }
+                if (!empty($keyInfo)) {
+                    $responseSummary[] = "key:" . implode('|', $keyInfo);
+                }
+            }
+            if (isset($data['api_response']['status'])) {
+                $responseSummary[] = "status:" . $data['api_response']['status'];
+            }
+            if (isset($data['api_response']['message']) && is_array($data['api_response']['message'])) {
+                if (isset($data['api_response']['message']['conversation'])) {
+                    $msgPreview = substr($data['api_response']['message']['conversation'], 0, 50);
+                    $responseSummary[] = "msg:" . $msgPreview . "...";
+                }
+            }
+            if (!empty($responseSummary)) {
+                $logLine .= " | API:" . implode(', ', $responseSummary);
+            }
+        }
+        
+        $logLine .= PHP_EOL;
+        
+        // Adicionar detalhes completos em formato JSON (para debug)
+        $logLine .= "  DETALHES: " . json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . PHP_EOL;
+        $logLine .= str_repeat('-', 100) . PHP_EOL;
+        
+        // Escrever no arquivo
+        file_put_contents($logFile, $logLine, FILE_APPEND | LOCK_EX);
     }
 }
 

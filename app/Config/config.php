@@ -13,11 +13,22 @@ if (!function_exists('loadEnv')) {
         
         $content = file_get_contents($path);
         
-        // Remover BOM se presente
-        if (substr($content, 0, 3) === "\xEF\xBB\xBF") {
+        // Detectar e converter encoding UTF-16 para UTF-8
+        // UTF-16 LE BOM: FF FE
+        // UTF-16 BE BOM: FE FF
+        if (substr($content, 0, 2) === "\xFF\xFE") {
+            // UTF-16 Little Endian
+            $content = mb_convert_encoding($content, 'UTF-8', 'UTF-16LE');
+        } elseif (substr($content, 0, 2) === "\xFE\xFF") {
+            // UTF-16 Big Endian
+            $content = mb_convert_encoding($content, 'UTF-8', 'UTF-16BE');
+        } elseif (substr($content, 0, 3) === "\xEF\xBB\xBF") {
+            // UTF-8 BOM
             $content = substr($content, 3);
         }
         
+        // Normalizar quebras de linha (Windows \r\n, Unix \n, Mac \r)
+        $content = str_replace(["\r\n", "\r"], "\n", $content);
         $lines = explode("\n", $content);
         $env = [];
         
@@ -32,7 +43,16 @@ if (!function_exists('loadEnv')) {
             }
             
             list($name, $value) = explode('=', $line, 2);
-            $env[trim($name)] = trim($value);
+            $name = trim($name);
+            $value = trim($value);
+            
+            // Remover aspas se houver
+            if ((substr($value, 0, 1) === '"' && substr($value, -1) === '"') ||
+                (substr($value, 0, 1) === "'" && substr($value, -1) === "'")) {
+                $value = substr($value, 1, -1);
+            }
+            
+            $env[$name] = $value;
         }
         
         return $env;
@@ -58,8 +78,8 @@ return [
         'version' => '1.0.0',
         'environment' => defined('ENVIRONMENT') ? ENVIRONMENT : env('APP_ENVIRONMENT', 'development'),
         'debug' => defined('DEBUG') ? DEBUG : (env('APP_DEBUG', 'true') === 'true'),
-        'url' => defined('URL') ? URL : env('APP_URL', 'http://localhost' . env('APP_BASE_PATH', '/kss')),
-        'base_path' => defined('FOLDER') ? FOLDER : env('APP_BASE_PATH', '/kss'),
+        'url' => defined('URL') ? str_replace('\\', '', URL) : str_replace('\\', '', env('APP_URL', 'http://localhost' . env('APP_BASE_PATH', '/kss'))),
+        'base_path' => defined('FOLDER') ? str_replace('\\', '/', trim(FOLDER, '/\\')) : str_replace('\\', '/', trim(env('APP_BASE_PATH', '/kss'), '/\\')),
         'timezone' => env('APP_TIMEZONE', 'America/Sao_Paulo'),
     ],
     
@@ -105,6 +125,8 @@ return [
         'instance' => env('WHATSAPP_INSTANCE', ''),
         'token' => env('WHATSAPP_TOKEN', ''),
         'api_key' => env('WHATSAPP_API_KEY', ''),
+        // URL base para links enviados nas mensagens WhatsApp (links de token, confirmação, etc.)
+        'links_base_url' => env('WHATSAPP_LINKS_BASE_URL', env('APP_URL', 'http://localhost')),
     ],
     
     'ksi_api' => [

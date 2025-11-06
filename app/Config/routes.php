@@ -30,6 +30,13 @@ $router->get('/pwa', 'PwaController@index');
 $router->get('/pwa/login', 'PwaController@login');
 $router->post('/pwa/login', 'PwaController@authenticate');
 
+// Rotas públicas para tokens de confirmação/cancelamento (sem autenticação)
+$router->get('/confirmacao-horario', 'TokenController@confirmacaoHorario');
+$router->post('/confirmacao-horario', 'TokenController@confirmacaoHorario');
+$router->get('/cancelamento-horario', 'TokenController@cancelamentoHorario');
+$router->post('/cancelamento-horario', 'TokenController@cancelamentoHorario');
+$router->get('/status-servico', 'TokenController@statusServico');
+
 // Rotas do admin/operador
 $router->get('/admin', 'AuthController@showLogin'); // Admin vai para login de operador
 $router->get('/operador', 'AuthController@showLogin'); // Operador também vai para login
@@ -56,6 +63,7 @@ $router->get('/admin/solicitacoes/{id}', 'SolicitacoesController@show', ['auth']
 $router->post('/admin/solicitacoes/{id}/status', 'SolicitacoesController@updateStatus', ['auth']);
 $router->post('/admin/solicitacoes/{id}/confirmar-horario', 'SolicitacoesController@confirmarHorario', ['auth']);
 $router->post('/admin/solicitacoes/{id}/desconfirmar-horario', 'SolicitacoesController@desconfirmarHorario', ['auth']);
+$router->post('/admin/solicitacoes/{id}/horarios/bulk', 'SolicitacoesController@confirmarHorariosBulk', ['auth']);
 $router->post('/admin/solicitacoes/{id}/confirmar-servico', 'SolicitacoesController@confirmarServico', ['auth']);
 $router->post('/admin/solicitacoes/{id}/solicitar-novos-horarios', 'SolicitacoesController@solicitarNovosHorarios', ['auth']);
 $router->post('/admin/solicitacoes/{id}/atualizar', 'SolicitacoesController@atualizarDetalhes', ['auth']);
@@ -70,6 +78,12 @@ $router->post('/admin/solicitacoes/confirmar-atendimento', 'SolicitacoesControll
 $router->post('/admin/solicitacoes/informar-compra-peca', 'SolicitacoesController@informarCompraPeca', ['auth']);
 $router->post('/admin/solicitacoes/enviar-lembretes', 'SolicitacoesController@enviarLembretes', ['auth', 'admin']);
 $router->post('/admin/solicitacoes/expirar', 'SolicitacoesController@expirarSolicitacoes', ['auth', 'admin']);
+
+// Utilidades de manutenção (migrações rápidas)
+$router->get('/admin/migracoes', 'MaintenanceController@showMigrations', ['auth', 'admin']);
+$router->post('/admin/migracoes/run', 'MaintenanceController@runMigrations', ['auth', 'admin']);
+$router->post('/admin/migracoes/purge', 'MaintenanceController@purgeSolicitacoes', ['auth', 'admin']);
+$router->post('/admin/migracoes/limpar-disponibilidade', 'MaintenanceController@limparDisponibilidadeDescricoes', ['auth', 'admin']);
 
 // Rotas do Locatário (PWA) - Instância na raiz
 $router->get('/{instancia}', 'LocatarioController@login');

@@ -53,7 +53,6 @@ class ImobiliariasController extends Controller
             'endereco_cep' => $this->input('endereco_cep'),
             'telefone' => $this->input('telefone'),
             'email' => $this->input('email'),
-            'logo' => $this->input('logo'),
             'cor_primaria' => $this->input('cor_primaria', '#3B82F6'),
             'cor_secundaria' => $this->input('cor_secundaria', '#1E40AF'),
             'api_id' => $this->input('api_id'),
@@ -97,6 +96,12 @@ class ImobiliariasController extends Controller
                 'data' => $data
             ]);
             return;
+        }
+
+        // Processar upload de logo
+        $logoFileName = $this->processarUploadLogo();
+        if ($logoFileName) {
+            $data['logo'] = $logoFileName;
         }
 
         // Verificar se CNPJ já existe
@@ -184,7 +189,6 @@ class ImobiliariasController extends Controller
             'endereco_cep' => $this->input('endereco_cep'),
             'telefone' => $this->input('telefone'),
             'email' => $this->input('email'),
-            'logo' => $this->input('logo'),
             'cor_primaria' => $this->input('cor_primaria'),
             'cor_secundaria' => $this->input('cor_secundaria'),
             'api_id' => $this->input('api_id'),
@@ -252,6 +256,22 @@ class ImobiliariasController extends Controller
                 'data' => $data
             ]);
             return;
+        }
+
+        // Processar upload de logo
+        $logoFileName = $this->processarUploadLogo();
+        if ($logoFileName) {
+            // Remover logo antiga se existir
+            if (!empty($imobiliaria['logo'])) {
+                $oldLogoPath = __DIR__ . '/../../Public/uploads/logos/' . $imobiliaria['logo'];
+                if (file_exists($oldLogoPath)) {
+                    @unlink($oldLogoPath);
+                }
+            }
+            $data['logo'] = $logoFileName;
+        } else {
+            // Manter logo existente se não houver novo upload
+            $data['logo'] = $imobiliaria['logo'] ?? null;
         }
 
         try {
@@ -512,5 +532,74 @@ class ImobiliariasController extends Controller
     private function gerarInstancia(): string
     {
         return 'instancia_' . uniqid() . '_' . bin2hex(random_bytes(6));
+    }
+
+    /**
+     * Processar upload de logo
+     */
+    private function processarUploadLogo(): ?string
+    {
+        if (empty($_FILES['logo']['name']) || $_FILES['logo']['error'] !== UPLOAD_ERR_OK) {
+            return null;
+        }
+
+        $uploadDir = __DIR__ . '/../../Public/uploads/logos/';
+        
+        // Criar diretório se não existir
+        if (!is_dir($uploadDir)) {
+            if (!mkdir($uploadDir, 0755, true)) {
+                error_log('Erro ao criar diretório de upload: ' . $uploadDir);
+                return null;
+            }
+        }
+
+        $file = $_FILES['logo'];
+        $fileName = $file['name'];
+        $fileTmpName = $file['tmp_name'];
+        $fileSize = $file['size'];
+        $fileError = $file['error'];
+
+        // Validar erro de upload
+        if ($fileError !== UPLOAD_ERR_OK) {
+            error_log('Erro no upload da logo: ' . $fileError);
+            return null;
+        }
+
+        // Validar tamanho (máximo 2MB)
+        $maxSize = 2 * 1024 * 1024; // 2MB
+        if ($fileSize > $maxSize) {
+            error_log('Logo muito grande: ' . $fileSize . ' bytes');
+            return null;
+        }
+
+        // Validar tipo de arquivo
+        $allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+        $fileType = mime_content_type($fileTmpName);
+        
+        if (!in_array($fileType, $allowedTypes)) {
+            error_log('Tipo de arquivo não permitido: ' . $fileType);
+            return null;
+        }
+
+        // Validar extensão
+        $extension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+        $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif'];
+        
+        if (!in_array($extension, $allowedExtensions)) {
+            error_log('Extensão não permitida: ' . $extension);
+            return null;
+        }
+
+        // Gerar nome único para o arquivo
+        $newFileName = uniqid('logo_', true) . '_' . time() . '.' . $extension;
+        $filePath = $uploadDir . $newFileName;
+
+        // Mover arquivo
+        if (!move_uploaded_file($fileTmpName, $filePath)) {
+            error_log('Erro ao mover arquivo de logo: ' . $filePath);
+            return null;
+        }
+
+        return $newFileName;
     }
 }

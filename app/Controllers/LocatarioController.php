@@ -188,21 +188,32 @@ class LocatarioController extends Controller
         
         $locatario = $_SESSION['locatario'];
         
-        // Buscar WhatsApp do banco se estiver vazio
-        if (empty($locatario['whatsapp'])) {
+        // Sempre buscar dados atualizados do banco
+        $locatarioBanco = null;
+        
+        // Tentar buscar por CPF primeiro
+        if (!empty($locatario['cpf'])) {
             $cpfLimpo = str_replace(['.', '-'], '', $locatario['cpf']);
             $locatarioBanco = $this->locatarioModel->findByCpfAndImobiliaria($cpfLimpo, $locatario['imobiliaria_id']);
+        }
+        
+        // Se não encontrou por CPF, tentar por ksi_cliente_id
+        if (!$locatarioBanco && !empty($locatario['id']) && !empty($locatario['imobiliaria_id'])) {
+            $locatarioBanco = $this->locatarioModel->findByKsiIdAndImobiliaria($locatario['id'], $locatario['imobiliaria_id']);
+        }
+        
+        if ($locatarioBanco) {
+            // Atualizar dados do locatário com dados do banco
+            $locatario['whatsapp'] = $locatarioBanco['whatsapp'] ?? '';
+            $locatario['telefone'] = $locatarioBanco['telefone'] ?? '';
+            $locatario['email'] = $locatarioBanco['email'] ?? '';
+            $locatario['nome'] = $locatarioBanco['nome'] ?? $locatario['nome'];
             
-            if ($locatarioBanco) {
-                $locatario['whatsapp'] = $locatarioBanco['whatsapp'] ?? '';
-                $locatario['telefone'] = $locatarioBanco['telefone'] ?? '';
-                $locatario['email'] = $locatarioBanco['email'] ?? '';
-                
-                // Atualizar sessão
-                $_SESSION['locatario']['whatsapp'] = $locatario['whatsapp'];
-                $_SESSION['locatario']['telefone'] = $locatario['telefone'];
-                $_SESSION['locatario']['email'] = $locatario['email'];
-            }
+            // Atualizar sessão
+            $_SESSION['locatario']['whatsapp'] = $locatario['whatsapp'];
+            $_SESSION['locatario']['telefone'] = $locatario['telefone'];
+            $_SESSION['locatario']['email'] = $locatario['email'];
+            $_SESSION['locatario']['nome'] = $locatario['nome'];
         }
         
         $this->view('locatario.perfil', [
@@ -553,6 +564,14 @@ class LocatarioController extends Controller
         
         $instancia = $locatario['instancia'];
         if ($solicitacaoId) {
+            // Enviar notificação WhatsApp
+            try {
+                $this->enviarNotificacaoWhatsApp($solicitacaoId, 'Nova Solicitação');
+            } catch (\Exception $e) {
+                // Log do erro mas não bloquear o fluxo
+                error_log('Erro ao enviar WhatsApp no LocatarioController [ID:' . $solicitacaoId . ']: ' . $e->getMessage());
+            }
+            
             // Limpar dados da sessão
             unset($_SESSION['nova_solicitacao']);
             
@@ -1134,6 +1153,23 @@ class LocatarioController extends Controller
             $this->redirect(url($instancia . '?success=' . urlencode('Solicitação enviada com sucesso! Em breve entraremos em contato. ID: #' . $id)));
         } else {
             $this->redirect(url($instancia . '/solicitacao-manual/etapa/5?error=' . urlencode('Erro ao salvar solicitação. Tente novamente.')));
+        }
+    }
+    
+    /**
+     * Enviar notificação WhatsApp
+     */
+    private function enviarNotificacaoWhatsApp(int $solicitacaoId, string $tipo, array $extraData = []): void
+    {
+        try {
+            $whatsappService = new \App\Services\WhatsAppService();
+            $result = $whatsappService->sendMessage($solicitacaoId, $tipo, $extraData);
+            
+            if (!$result['success']) {
+                error_log('Erro WhatsApp [LocatarioController]: ' . $result['message']);
+            }
+        } catch (\Exception $e) {
+            error_log('Erro ao enviar WhatsApp [LocatarioController]: ' . $e->getMessage());
         }
     }
 }

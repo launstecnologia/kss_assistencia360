@@ -20,7 +20,10 @@
             <div class="flex justify-between items-center py-4">
                 <div class="flex items-center">
                     <?php if (!empty($imobiliaria['logo'])): ?>
-                        <img class="h-8 w-auto mr-3" src="<?= htmlspecialchars($imobiliaria['logo']) ?>" alt="<?= htmlspecialchars($imobiliaria['nome']) ?>">
+                        <img class="h-8 w-auto mr-3" src="<?= url('Public/uploads/logos/' . $imobiliaria['logo']) ?>" alt="<?= htmlspecialchars($imobiliaria['nome']) ?>" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <div class="h-8 w-8 bg-blue-600 rounded-full flex items-center justify-center mr-3" style="display: none;">
+                            <i class="fas fa-building text-white text-sm"></i>
+                        </div>
                     <?php else: ?>
                         <div class="h-8 w-8 bg-blue-600 rounded-full flex items-center justify-center mr-3">
                             <i class="fas fa-building text-white text-sm"></i>

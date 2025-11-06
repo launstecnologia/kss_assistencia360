@@ -12,8 +12,8 @@ class Solicitacao extends Model
         'locatario_id', 'locatario_nome', 'locatario_telefone', 'locatario_email',
         'imovel_endereco', 'imovel_numero', 'imovel_complemento', 'imovel_bairro',
         'imovel_cidade', 'imovel_estado', 'imovel_cep',
-        'descricao_problema', 'observacoes', 'prioridade',
-        'data_agendamento', 'horario_agendamento', 'prestador_nome', 'prestador_telefone',
+        'descricao_problema', 'descricao_card', 'observacoes', 'prioridade',
+        'data_agendamento', 'horario_agendamento', 'horario_confirmado', 'horario_confirmado_raw', 'confirmed_schedules', 'prestador_nome', 'prestador_telefone',
         'valor_orcamento', 'numero_ncp', 'avaliacao_satisfacao',
         // Novos campos para fluxo operacional
         'numero_solicitacao', 'tipo_atendimento', 'datas_opcoes', 'horarios_opcoes', 'data_confirmada',
@@ -24,6 +24,8 @@ class Solicitacao extends Model
         'token_confirmacao', 'whatsapp_enviado', 'lembretes_enviados',
         // Campos de reembolso e protocolo
         'precisa_reembolso', 'valor_reembolso', 'protocolo_seguradora',
+        // Campo de horários indisponíveis
+        'horarios_indisponiveis',
         'created_at', 'updated_at'
     ];
     protected array $casts = [
@@ -38,8 +40,11 @@ class Solicitacao extends Model
         'avaliacao_app' => 'int',
         'avaliacao_prestador' => 'int',
         'datas_opcoes' => 'json',
+        'confirmed_schedules' => 'json',
         'lembretes_enviados' => 'int',
+        'horario_confirmado' => 'boolean',
         'whatsapp_enviado' => 'boolean',
+        'horarios_indisponiveis' => 'boolean',
         'created_at' => 'datetime',
         'updated_at' => 'datetime'
     ];

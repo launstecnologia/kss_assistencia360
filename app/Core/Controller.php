@@ -11,6 +11,10 @@ abstract class Controller
 
     protected function json(array $data, int $statusCode = 200): void
     {
+        // ✅ Desabilitar exibição de erros para evitar HTML na resposta
+        $oldErrorReporting = error_reporting(E_ALL);
+        $oldDisplayErrors = ini_set('display_errors', '0');
+        
         // Limpar todos os buffers de output
         while (ob_get_level()) {
             ob_end_clean();
@@ -18,7 +22,27 @@ abstract class Controller
         
         http_response_code($statusCode);
         header('Content-Type: application/json; charset=utf-8');
-        echo json_encode($data, JSON_UNESCAPED_UNICODE);
+        
+        // ✅ Validar que os dados podem ser convertidos para JSON
+        $json = json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        if ($json === false) {
+            // Se falhar, criar um JSON de erro
+            $json = json_encode([
+                'success' => false,
+                'error' => 'Erro ao serializar resposta',
+                'message' => 'Dados não puderam ser convertidos para JSON'
+            ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            http_response_code(500);
+        }
+        
+        echo $json;
+        
+        // Restaurar configurações anteriores
+        error_reporting($oldErrorReporting);
+        if ($oldDisplayErrors !== false) {
+            ini_set('display_errors', $oldDisplayErrors);
+        }
+        
         exit;
     }
 

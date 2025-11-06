@@ -1,0 +1,153 @@
+<?php
+$title = $title ?? 'Migrações';
+$currentPage = 'dashboard';
+$pageTitle = 'Executar Migrações';
+ob_start();
+?>
+
+<div class="max-w-3xl mx-auto">
+    <?php if (!empty($error)): ?>
+        <div class="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+            <?= htmlspecialchars($error) ?>
+        </div>
+    <?php endif; ?>
+    <?php if (!empty($success)): ?>
+        <div class="mb-4 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg">
+            <?= htmlspecialchars($success) ?>
+        </div>
+    <?php endif; ?>
+
+    <div class="bg-white rounded-lg shadow p-6 mb-6">
+        <h2 class="text-xl font-semibold text-gray-900 mb-2">descricao_card + horario_confirmado</h2>
+        <p class="text-sm text-gray-600 mb-4">Adiciona as colunas e preenche valores iniciais.</p>
+        <ul class="text-sm mb-4">
+            <li class="mb-1">descricao_card: 
+                <?php if (!empty($hasDescricaoCard)): ?>
+                    <span class="text-green-700 font-semibold">Aplicada</span>
+                <?php else: ?>
+                    <span class="text-red-700 font-semibold">Pendente</span>
+                <?php endif; ?>
+            </li>
+            <li class="mb-1">horario_confirmado: 
+                <?php if (!empty($hasHorarioConfirmado)): ?>
+                    <span class="text-green-700 font-semibold">Aplicada</span>
+                <?php else: ?>
+                    <span class="text-red-700 font-semibold">Pendente</span>
+                <?php endif; ?>
+            </li>
+            <li>horario_confirmado_raw: 
+                <?php if (!empty($hasHorarioRaw)): ?>
+                    <span class="text-green-700 font-semibold">Aplicada</span>
+                <?php else: ?>
+                    <span class="text-red-700 font-semibold">Pendente</span>
+                <?php endif; ?>
+            </li>
+            <li class="mb-1">confirmed_schedules (JSON): 
+                <?php if (!empty($hasConfirmedSchedules)): ?>
+                    <span class="text-green-700 font-semibold">Aplicada</span>
+                <?php else: ?>
+                    <span class="text-red-700 font-semibold">Pendente</span>
+                <?php endif; ?>
+            </li>
+        </ul>
+        <form method="POST" action="/admin/migracoes/run">
+            <input type="hidden" name="csrf_token" value="<?= \App\Core\View::csrfToken() ?>">
+            <button class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700" <?= (!empty($hasDescricaoCard) && !empty($hasHorarioConfirmado) && !empty($hasHorarioRaw) && !empty($hasConfirmedSchedules)) ? 'disabled' : '' ?>>Executar migração</button>
+        </form>
+    </div>
+
+    <div class="bg-white rounded-lg shadow p-6 mb-6">
+        <h2 class="text-xl font-semibold text-gray-900 mb-2">Limpar "Disponibilidade:" das Descrições</h2>
+        <p class="text-sm text-gray-600 mb-4">Remove "Disponibilidade: ..." das descrições existentes que já foram adicionadas automaticamente.</p>
+        <form id="formLimparDisponibilidade" method="POST" action="/admin/migracoes/limpar-disponibilidade" class="space-y-3">
+            <input type="hidden" name="csrf_token" value="<?= \App\Core\View::csrfToken() ?>">
+            <button type="submit" class="px-4 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700">
+                <i class="fas fa-broom mr-2"></i>
+                Limpar Descrições
+            </button>
+        </form>
+        <div id="resultadoLimpar" class="mt-3 hidden"></div>
+    </div>
+
+    <div class="bg-white rounded-lg shadow p-6">
+        <h2 class="text-xl font-semibold text-gray-900 mb-2">Limpar todas as solicitações</h2>
+        <p class="text-sm text-gray-600 mb-4">Apaga solicitações, histórico e fotos. Ação irreversível.</p>
+        <form method="POST" action="/admin/migracoes/purge" class="space-y-3">
+            <input type="hidden" name="csrf_token" value="<?= \App\Core\View::csrfToken() ?>">
+            <label class="block text-sm text-gray-700">Digite <strong>LIMPAR</strong> para confirmar</label>
+            <input name="confirm_text" class="w-full border border-gray-300 rounded px-3 py-2" placeholder="LIMPAR">
+            <button class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">Apagar tudo</button>
+        </form>
+    </div>
+</div>
+
+<script>
+// Limpar disponibilidade das descrições via AJAX
+document.getElementById('formLimparDisponibilidade')?.addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const form = this;
+    const btn = form.querySelector('button[type="submit"]');
+    const resultado = document.getElementById('resultadoLimpar');
+    const originalText = btn.innerHTML;
+    
+    // Desabilitar botão e mostrar loading
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Limpando...';
+    resultado.classList.add('hidden');
+    
+    // Coletar dados do formulário
+    const formData = new FormData(form);
+    
+    // Fazer requisição
+    fetch('/admin/migracoes/limpar-disponibilidade', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            resultado.innerHTML = `
+                <div class="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg">
+                    <i class="fas fa-check-circle mr-2"></i>
+                    ${data.message}
+                    ${data.atualizadas > 0 ? `<br><strong>${data.atualizadas} registro(s) atualizado(s).</strong>` : ''}
+                    ${data.restantes > 0 ? `<br><small>Ainda há ${data.restantes} registro(s) com "Disponibilidade:" (pode ser formato diferente).</small>` : ''}
+                </div>
+            `;
+            resultado.classList.remove('hidden');
+        } else {
+            resultado.innerHTML = `
+                <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+                    <i class="fas fa-exclamation-circle mr-2"></i>
+                    ${data.error || 'Erro ao limpar descrições'}
+                </div>
+            `;
+            resultado.classList.remove('hidden');
+        }
+    })
+    .catch(error => {
+        console.error('Erro:', error);
+        resultado.innerHTML = `
+            <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+                <i class="fas fa-exclamation-circle mr-2"></i>
+                Erro ao processar requisição
+            </div>
+        `;
+        resultado.classList.remove('hidden');
+    })
+    .finally(() => {
+        // Restaurar botão
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+    });
+});
+</script>
+
+<?php
+$content = ob_get_clean();
+include 'app/Views/layouts/admin.php';
+?>
+
+
+

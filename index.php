@@ -72,6 +72,32 @@ try {
     $router->dispatch();
     
 } catch (Exception $e) {
+    // ✅ Limpar buffers
+    while (ob_get_level() > 0) {
+        ob_end_clean();
+    }
+    
+    // ✅ Verificar se é requisição JSON/API
+    $isJsonRequest = (
+        isset($_SERVER['HTTP_ACCEPT']) && 
+        strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false
+    ) || (
+        isset($_SERVER['CONTENT_TYPE']) && 
+        strpos($_SERVER['CONTENT_TYPE'], 'application/json') !== false
+    );
+    
+    if ($isJsonRequest) {
+        // Retornar JSON para requisições API
+        http_response_code(500);
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode([
+            'success' => false,
+            'error' => 'Erro interno: ' . $e->getMessage()
+        ], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+    
+    // Para requisições HTML, mostrar erro normalmente
     if (DEBUG) {
         echo '<h1>Erro na Aplicação</h1>';
         echo '<p><strong>Mensagem:</strong> ' . htmlspecialchars($e->getMessage()) . '</p>';

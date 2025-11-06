@@ -185,11 +185,158 @@ function safe($value, $default = 'Não informado') {
                 </div>
             </div>
             
-            <div class="space-y-3">
+            <div class="space-y-3" id="lista-horarios">
                 <?php foreach ($horariosOpcoes as $index => $horario): 
-                    // Verificar se este horário é o confirmado
+                    // ✅ Verificar se este horário é o confirmado (múltiplas fontes)
                     $horarioConfirmado = false;
-                    if (!empty($solicitacao['data_agendamento']) && !empty($solicitacao['horario_agendamento'])) {
+                    
+                    // Formatar horário atual para comparação (mesmo formato do offcanvas)
+                    // Formato esperado: "dd/mm/yyyy - HH:00-HH:00"
+                    $horarioFormatado = $horario;
+                    
+                    // DEBUG: Log para verificar formato original
+                    error_log("DEBUG show.php [ID:{$solicitacao['id']}] - Horário original do array: " . var_export($horario, true));
+                    error_log("DEBUG show.php [ID:{$solicitacao['id']}] - horario_confirmado_raw do banco: " . var_export($solicitacao['horario_confirmado_raw'] ?? null, true));
+                    error_log("DEBUG show.php [ID:{$solicitacao['id']}] - confirmed_schedules do banco: " . var_export($solicitacao['confirmed_schedules'] ?? null, true));
+                    
+                    // Tentar diferentes formatos de entrada
+                    $dt = null;
+                    if (is_string($horario) && is_numeric(strtotime($horario))) {
+                        // Formato ISO ou similar
+                        try {
+                            $dt = new \DateTime($horario);
+                        } catch (\Exception $e) {
+                            error_log("DEBUG show.php [ID:{$solicitacao['id']}] - Erro ao criar DateTime: " . $e->getMessage());
+                        }
+                    } elseif (is_string($horario) && preg_match('/(\d{4}-\d{2}-\d{2})[T ](\d{2}):(\d{2})/', $horario, $matches)) {
+                        // Formato ISO com T ou espaço
+                        try {
+                            $dt = new \DateTime($matches[1] . ' ' . $matches[2] . ':' . $matches[3]);
+                        } catch (\Exception $e) {
+                            error_log("DEBUG show.php [ID:{$solicitacao['id']}] - Erro ao criar DateTime ISO: " . $e->getMessage());
+                        }
+                    } elseif (is_string($horario) && preg_match('/(\d{2})\/(\d{2})\/(\d{4})[ -](\d{2}):(\d{2})/', $horario, $matches)) {
+                        // Formato dd/mm/yyyy HH:MM
+                        try {
+                            $dt = \DateTime::createFromFormat('d/m/Y H:i', $matches[1] . '/' . $matches[2] . '/' . $matches[3] . ' ' . $matches[4] . ':' . $matches[5]);
+                        } catch (\Exception $e) {
+                            error_log("DEBUG show.php [ID:{$solicitacao['id']}] - Erro ao criar DateTime dd/mm/yyyy: " . $e->getMessage());
+                        }
+                    }
+                    
+                    if ($dt && $dt !== false) {
+                        $dia = str_pad($dt->format('d'), 2, '0', STR_PAD_LEFT);
+                        $mes = str_pad($dt->format('m'), 2, '0', STR_PAD_LEFT);
+                        $ano = $dt->format('Y');
+                        $hora = str_pad($dt->format('H'), 2, '0', STR_PAD_LEFT);
+                        $horaFim = str_pad((int)$hora + 3, 2, '0', STR_PAD_LEFT);
+                        $horarioFormatado = "{$dia}/{$mes}/{$ano} - {$hora}:00-{$horaFim}:00";
+                    } else {
+                        // Se não conseguir formatar, usar o original
+                        $horarioFormatado = $horario;
+                    }
+                    
+                    // DEBUG: Log do formato final
+                    error_log("DEBUG show.php [ID:{$solicitacao['id']}] - Horário formatado FINAL: '{$horarioFormatado}'");
+                    
+                    // 1. Verificar em confirmed_schedules (JSON) - prioridade
+                    // ✅ confirmed_schedules já vem parseado do controller (pode ser array ou null)
+                    if (!empty($solicitacao['confirmed_schedules']) && is_array($solicitacao['confirmed_schedules'])) {
+                        foreach ($solicitacao['confirmed_schedules'] as $schedule) {
+                            if (!isset($schedule) || !is_array($schedule)) continue;
+                            
+                            // Comparar por raw (prioridade) - formato "dd/mm/yyyy - HH:00-HH:00"
+                            if (!empty($schedule['raw'])) {
+                                $scheduleRaw = trim((string)$schedule['raw']);
+                                $horarioAtual = trim((string)$horarioFormatado);
+                                
+                                // Normalizar espaços para comparação
+                                $scheduleRawNorm = preg_replace('/\s+/', ' ', $scheduleRaw);
+                                $horarioAtualNorm = preg_replace('/\s+/', ' ', $horarioAtual);
+                                
+                                // ✅ Comparação exata primeiro (mais precisa)
+                                if ($scheduleRawNorm === $horarioAtualNorm) {
+                                    $horarioConfirmado = true;
+                                    break; // ✅ Break imediato para evitar verificar outros
+                                }
+                                
+                                // ✅ Comparação por regex - extrair data e hora inicial E FINAL EXATAS
+                                // Isso evita matches parciais incorretos
+                                $regex = '/(\d{2}\/\d{2}\/\d{4})\s*-\s*(\d{2}:\d{2})-(\d{2}:\d{2})/';
+                                $matchRaw = preg_match($regex, $scheduleRawNorm, $mRaw);
+                                $matchAtual = preg_match($regex, $horarioAtualNorm, $mAtual);
+                                
+                                if ($matchRaw && $matchAtual) {
+                                    // ✅ Comparar data, hora inicial E hora final EXATAS (não apenas data e hora inicial)
+                                    // Isso garante que apenas horários EXATOS sejam marcados como confirmados
+                                    if ($mRaw[1] === $mAtual[1] && $mRaw[2] === $mAtual[2] && $mRaw[3] === $mAtual[3]) {
+                                        $horarioConfirmado = true;
+                                        break; // ✅ Break imediato para evitar verificar outros
+                                    }
+                                }
+                                
+                                // ❌ REMOVIDO: Comparação por substring (muito flexível, causava matches incorretos)
+                            }
+                            
+                            // Comparar por date + time se raw não funcionar (comparação EXATA)
+                            if (!$horarioConfirmado && !empty($schedule['date']) && !empty($schedule['time'])) {
+                                try {
+                                    $scheduleDate = new \DateTime($schedule['date']);
+                                    $scheduleTime = trim((string)$schedule['time']);
+                                    
+                                    // Comparar data
+                                    if ($dt && $scheduleDate->format('Y-m-d') === $dt->format('Y-m-d')) {
+                                        // ✅ Comparar hora inicial E FINAL EXATAS (não apenas hora inicial)
+                                        $horaAtual = $dt->format('H:i');
+                                        $horaFimAtual = date('H:i', strtotime('+3 hours', $dt->getTimestamp()));
+                                        $timeEsperado = $horaAtual . '-' . $horaFimAtual;
+                                        
+                                        // ✅ Comparação EXATA do time (deve ser exatamente igual)
+                                        if ($scheduleTime === $timeEsperado) {
+                                            $horarioConfirmado = true;
+                                            break;
+                                        }
+                                    }
+                                } catch (\Exception $e) {
+                                    // Ignorar erro de data
+                                }
+                            }
+                        }
+                    }
+                    
+                    // 2. Verificar em horario_confirmado_raw (se ainda não confirmado)
+                    if (!$horarioConfirmado && !empty($solicitacao['horario_confirmado_raw'])) {
+                        $horarioRaw = trim((string)$solicitacao['horario_confirmado_raw']);
+                        $horarioAtual = trim((string)$horarioFormatado);
+                        
+                        // Normalizar espaços para comparação
+                        $rawNorm = preg_replace('/\s+/', ' ', $horarioRaw);
+                        $atualNorm = preg_replace('/\s+/', ' ', $horarioAtual);
+                        
+                        // ✅ Comparação exata primeiro (mais precisa)
+                        if ($rawNorm === $atualNorm) {
+                            $horarioConfirmado = true;
+                        } else {
+                            // ✅ Comparação por regex - extrair data e hora inicial E FINAL EXATAS
+                            // Isso evita matches parciais incorretos (ex: "08:00" matchando com "08:00-11:00")
+                            $regex = '/(\d{2}\/\d{2}\/\d{4})\s*-\s*(\d{2}:\d{2})-(\d{2}:\d{2})/';
+                            $matchRaw = preg_match($regex, $rawNorm, $mRaw);
+                            $matchAtual = preg_match($regex, $atualNorm, $mAtual);
+                            
+                            if ($matchRaw && $matchAtual) {
+                                // ✅ Comparar data, hora inicial E hora final EXATAS (não apenas data e hora inicial)
+                                // Isso garante que apenas horários EXATOS sejam marcados como confirmados
+                                if ($mRaw[1] === $mAtual[1] && $mRaw[2] === $mAtual[2] && $mRaw[3] === $mAtual[3]) {
+                                    $horarioConfirmado = true;
+                                }
+                            }
+                            
+                            // ❌ REMOVIDO: Comparação por substring (muito flexível, causava matches incorretos)
+                        }
+                    }
+                    
+                    // 3. Verificar em data_agendamento + horario_agendamento (se ainda não confirmado)
+                    if (!$horarioConfirmado && !empty($solicitacao['data_agendamento']) && !empty($solicitacao['horario_agendamento'])) {
                         $dataHoraConfirmada = $solicitacao['data_agendamento'] . ' ' . $solicitacao['horario_agendamento'];
                         $dataHoraAtual = date('Y-m-d H:i:s', strtotime($horario));
                         $horarioConfirmado = (date('Y-m-d H:i', strtotime($dataHoraConfirmada)) === date('Y-m-d H:i', strtotime($dataHoraAtual)));
@@ -204,7 +351,7 @@ function safe($value, $default = 'Não informado') {
                         <?php endif; ?>
                         <div>
                             <span class="text-sm font-medium <?= $horarioConfirmado ? 'text-green-900' : '' ?>">
-                                <?= date('d/m/Y - H:i', strtotime($horario)) ?>
+                                <?= htmlspecialchars($horarioFormatado) ?>
                             </span>
                             <?php if ($horarioConfirmado): ?>
                                 <span class="block text-xs text-green-700 font-semibold mt-1">
@@ -213,21 +360,43 @@ function safe($value, $default = 'Não informado') {
                             <?php endif; ?>
                         </div>
                     </div>
-                    
-                    <?php if ($horarioConfirmado): ?>
-                        <button onclick="desconfirmarHorario(<?= $solicitacao['id'] ?>)"
-                                class="px-3 py-1.5 bg-red-600 text-white text-xs rounded hover:bg-red-700">
+                    <?php if ($horarioConfirmado): 
+                        // ✅ Preparar horário para desconfirmação (usar formato normalizado)
+                        $horarioParaDesconfirmar = $horarioFormatado;
+                        if ($dt && $dt !== false) {
+                            $dia = str_pad($dt->format('d'), 2, '0', STR_PAD_LEFT);
+                            $mes = str_pad($dt->format('m'), 2, '0', STR_PAD_LEFT);
+                            $ano = $dt->format('Y');
+                            $hora = str_pad($dt->format('H'), 2, '0', STR_PAD_LEFT);
+                            $horaFim = str_pad((int)$hora + 3, 2, '0', STR_PAD_LEFT);
+                            $horarioParaDesconfirmar = "{$dia}/{$mes}/{$ano} - {$hora}:00-{$horaFim}:00";
+                        }
+                        $horarioEscapadoDesconfirmar = htmlspecialchars($horarioParaDesconfirmar, ENT_QUOTES, 'UTF-8');
+                    ?>
+                        <button onclick="desconfirmarHorario(<?= $solicitacao['id'] ?>, '<?= $horarioEscapadoDesconfirmar ?>')" class="px-3 py-1.5 bg-red-600 text-white text-xs rounded hover:bg-red-700">
                             <i class="fas fa-times mr-1"></i>Desconfirmar
                         </button>
-                    <?php else: ?>
-                        <button onclick="confirmarHorario(<?= $solicitacao['id'] ?>, '<?= $horario ?>')"
-                                class="px-3 py-1.5 bg-green-600 text-white text-xs rounded hover:bg-green-700">
+                    <?php else: 
+                        // ✅ Preparar horário para JavaScript (converter para formato ISO se possível)
+                        $horarioParaJS = $horario;
+                        if ($dt && $dt !== false) {
+                            // Se temos um DateTime válido, usar formato ISO que strtotime() aceita
+                            $horarioParaJS = $dt->format('Y-m-d H:i:s');
+                        } elseif (is_string($horario) && preg_match('/(\d{2})\/(\d{2})\/(\d{4})[ -](\d{2}):(\d{2})/', $horario, $matches)) {
+                            // Converter formato dd/mm/yyyy HH:MM para Y-m-d H:i:s
+                            $horarioParaJS = sprintf('%s-%s-%s %s:%s:00', $matches[3], $matches[2], $matches[1], $matches[4], $matches[5]);
+                        }
+                        // Escapar para JavaScript (escapar aspas simples)
+                        $horarioEscapado = htmlspecialchars($horarioParaJS, ENT_QUOTES, 'UTF-8');
+                    ?>
+                        <button onclick="confirmarHorario(<?= $solicitacao['id'] ?>, '<?= $horarioEscapado ?>')" class="px-3 py-1.5 bg-green-600 text-white text-xs rounded hover:bg-green-700">
                             <i class="fas fa-check mr-1"></i>Confirmar horário
                         </button>
                     <?php endif; ?>
                 </div>
                 <?php endforeach; ?>
             </div>
+            
             
             <!-- Checkbox: Horários Indisponíveis -->
             <div class="mt-4 border-t pt-4">
@@ -518,26 +687,52 @@ function confirmarHorario(solicitacaoId, horario) {
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({ horario: horario })
     })
-    .then(r => r.json())
+    .then(async response => {
+        // ✅ Verificar se a resposta é JSON válido antes de parsear
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            const text = await response.text();
+            console.error('Resposta não é JSON:', text);
+            throw new Error('Resposta do servidor não é JSON válido. Verifique o console para mais detalhes.');
+        }
+        return response.json();
+    })
     .then(data => {
         if (data.success) {
+            alert('Horário confirmado com sucesso!');
             location.reload();
         } else {
             alert('Erro: ' + (data.error || 'Não foi possível confirmar'));
         }
+    })
+    .catch(error => {
+        console.error('Erro ao confirmar horário:', error);
+        alert('Erro ao confirmar horário: ' + error.message);
     });
 }
 
-function desconfirmarHorario(solicitacaoId) {
-    if (!confirm('Desconfirmar horário? O agendamento será removido.')) {
+// (interações extras removidas - confirmação/desconfirmação ocorre por botão de cada item ou via Kanban)
+
+function desconfirmarHorario(solicitacaoId, horario) {
+    if (!confirm('Desconfirmar este horário? O agendamento será removido.')) {
         return;
     }
     
     fetch(`<?= url('admin/solicitacoes/') ?>${solicitacaoId}/desconfirmar-horario`, {
         method: 'POST',
-        headers: {'Content-Type': 'application/json'}
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ horario: horario })
     })
-    .then(r => r.json())
+    .then(async response => {
+        // ✅ Verificar se a resposta é JSON válido antes de parsear
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            const text = await response.text();
+            console.error('Resposta não é JSON:', text);
+            throw new Error('Resposta do servidor não é JSON válido. Verifique o console para mais detalhes.');
+        }
+        return response.json();
+    })
     .then(data => {
         if (data.success) {
             alert('Horário desconfirmado com sucesso!');
@@ -545,6 +740,10 @@ function desconfirmarHorario(solicitacaoId) {
         } else {
             alert('Erro: ' + (data.error || 'Não foi possível desconfirmar'));
         }
+    })
+    .catch(error => {
+        console.error('Erro ao desconfirmar horário:', error);
+        alert('Erro ao desconfirmar horário: ' + error.message);
     });
 }
 
@@ -563,7 +762,16 @@ function toggleSolicitarNovosHorarios(solicitacaoId) {
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({ observacao: obs })
         })
-        .then(r => r.json())
+        .then(async response => {
+            // ✅ Verificar se a resposta é JSON válido antes de parsear
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                const text = await response.text();
+                console.error('Resposta não é JSON:', text);
+                throw new Error('Resposta do servidor não é JSON válido. Verifique o console para mais detalhes.');
+            }
+            return response.json();
+        })
         .then(data => {
             if (data.success) {
                 alert('Solicitação enviada! O locatário receberá notificação para informar novos horários.');
@@ -571,6 +779,10 @@ function toggleSolicitarNovosHorarios(solicitacaoId) {
             } else {
                 alert('Erro: ' + (data.error || 'Não foi possível solicitar'));
             }
+        })
+        .catch(error => {
+            console.error('Erro ao solicitar novos horários:', error);
+            alert('Erro ao solicitar novos horários: ' + error.message);
         });
     }
 }

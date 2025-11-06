@@ -47,7 +47,7 @@ ob_start();
                             <!-- Logo -->
                             <div class="flex-shrink-0">
                                 <?php if ($imobiliaria['logo']): ?>
-                                    <img src="<?= asset('uploads/logos/' . $imobiliaria['logo']) ?>" 
+                                    <img src="<?= url('Public/uploads/logos/' . $imobiliaria['logo']) ?>" 
                                          alt="Logo <?= htmlspecialchars($imobiliaria['nome_fantasia'] ?? 'Imobiliária') ?>"
                                          class="w-16 h-16 rounded-lg object-cover border border-gray-200">
                                 <?php else: ?>

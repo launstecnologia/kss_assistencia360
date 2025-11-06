@@ -12,9 +12,13 @@ ob_start();
         <!-- Logo da Imobiliária -->
         <div class="text-center mb-8">
             <?php if (!empty($imobiliaria['logo'])): ?>
-                <img src="<?= asset('uploads/' . $imobiliaria['logo']) ?>" 
+                <img src="<?= url('Public/uploads/logos/' . $imobiliaria['logo']) ?>" 
                      alt="<?= htmlspecialchars($imobiliaria['nome']) ?>" 
-                     class="mx-auto h-16 w-auto">
+                     class="mx-auto h-16 w-auto"
+                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                <div class="mx-auto h-16 w-16 bg-blue-600 rounded-lg flex items-center justify-center" style="display: none;">
+                    <i class="fas fa-building text-white text-2xl"></i>
+                </div>
             <?php else: ?>
                 <div class="mx-auto h-16 w-16 bg-blue-600 rounded-lg flex items-center justify-center">
                     <i class="fas fa-building text-white text-2xl"></i>

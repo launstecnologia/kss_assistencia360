@@ -210,9 +210,13 @@ ob_start();
             <div class="p-6">
                 <div class="text-center">
                     <?php if (!empty($locatario['imobiliaria_logo'])): ?>
-                        <img src="<?= asset('uploads/' . $locatario['imobiliaria_logo']) ?>" 
+                        <img src="<?= url('Public/uploads/logos/' . $locatario['imobiliaria_logo']) ?>" 
                              alt="<?= htmlspecialchars($locatario['imobiliaria_nome']) ?>" 
-                             class="mx-auto h-12 w-auto mb-3">
+                             class="mx-auto h-12 w-auto mb-3"
+                             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <div class="mx-auto h-12 w-12 bg-blue-600 rounded-lg flex items-center justify-center mb-3" style="display: none;">
+                            <i class="fas fa-building text-white"></i>
+                        </div>
                     <?php else: ?>
                         <div class="mx-auto h-12 w-12 bg-blue-600 rounded-lg flex items-center justify-center mb-3">
                             <i class="fas fa-building text-white"></i>

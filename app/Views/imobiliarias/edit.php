@@ -360,7 +360,7 @@ ob_start();
                     </label>
                     <div class="flex items-center space-x-4">
                         <?php if ($imobiliaria['logo']): ?>
-                            <img src="<?= asset('uploads/logos/' . $imobiliaria['logo']) ?>" 
+                            <img src="<?= url('Public/uploads/logos/' . $imobiliaria['logo']) ?>" 
                                  alt="Logo atual" 
                                  class="w-16 h-16 rounded-lg object-cover border border-gray-200">
                         <?php endif; ?>

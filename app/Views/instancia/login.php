@@ -17,7 +17,10 @@
     <div class="max-w-md w-full space-y-8">
         <div class="text-center">
             <?php if (!empty($imobiliaria['logo'])): ?>
-                <img class="mx-auto h-20 w-auto" src="<?= htmlspecialchars($imobiliaria['logo']) ?>" alt="<?= htmlspecialchars($imobiliaria['nome']) ?>">
+                <img class="mx-auto h-20 w-auto" src="<?= url('Public/uploads/logos/' . $imobiliaria['logo']) ?>" alt="<?= htmlspecialchars($imobiliaria['nome']) ?>" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                <div class="mx-auto h-20 w-20 bg-blue-600 rounded-full flex items-center justify-center" style="display: none;">
+                    <i class="fas fa-building text-white text-2xl"></i>
+                </div>
             <?php else: ?>
                 <div class="mx-auto h-20 w-20 bg-blue-600 rounded-full flex items-center justify-center">
                     <i class="fas fa-building text-white text-2xl"></i>

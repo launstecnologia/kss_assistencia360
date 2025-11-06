@@ -80,6 +80,16 @@ class SolicitacoesController extends Controller
             return;
         }
 
+        // ✅ Garantir que confirmed_schedules seja parseado corretamente
+        if (!empty($solicitacao['confirmed_schedules'])) {
+            if (is_string($solicitacao['confirmed_schedules'])) {
+                $parsed = json_decode($solicitacao['confirmed_schedules'], true);
+                $solicitacao['confirmed_schedules'] = is_array($parsed) ? $parsed : null;
+            }
+        } else {
+            $solicitacao['confirmed_schedules'] = null;
+        }
+
         // Buscar fotos (se tabela existir)
         try {
             $fotos = $this->solicitacaoModel->getFotos($id);
@@ -114,6 +124,17 @@ class SolicitacoesController extends Controller
                 'message' => 'Solicitação não encontrada'
             ], 404);
             return;
+        }
+
+        // ✅ Garantir que confirmed_schedules seja um array ou null (não string vazia)
+        if (!empty($solicitacao['confirmed_schedules'])) {
+            // Se for string, tentar parsear
+            if (is_string($solicitacao['confirmed_schedules'])) {
+                $parsed = json_decode($solicitacao['confirmed_schedules'], true);
+                $solicitacao['confirmed_schedules'] = is_array($parsed) ? $parsed : null;
+            }
+        } else {
+            $solicitacao['confirmed_schedules'] = null;
         }
 
         $this->json([
@@ -176,6 +197,9 @@ class SolicitacoesController extends Controller
             'numero_ncp' => $this->input('numero_ncp'),
             'avaliacao_satisfacao' => $this->input('avaliacao_satisfacao')
         ];
+
+        // ✅ REMOVIDO: Não adicionar disponibilidade na descrição do problema
+        // A descrição deve permanecer como o usuário escreveu, sem modificações automáticas
 
         $errors = $this->validate([
             'categoria_id' => 'required',
@@ -397,8 +421,14 @@ class SolicitacoesController extends Controller
 
             $this->solicitacaoModel->update($solicitacaoId, $data);
             
+            // Buscar dados da solicitação para enviar no WhatsApp
+            $solicitacao = $this->solicitacaoModel->find($solicitacaoId);
+            
             // Enviar notificação WhatsApp
-            $this->enviarNotificacaoWhatsApp($solicitacaoId, 'agendado');
+            $this->enviarNotificacaoWhatsApp($solicitacaoId, 'agendado', [
+                'data_agendamento' => $dataConfirmada ? date('d/m/Y', strtotime($dataConfirmada)) : '',
+                'horario_agendamento' => $solicitacao['horario_agendamento'] ?? 'A confirmar'
+            ]);
             
             $this->json(['success' => true, 'message' => 'Datas confirmadas com sucesso']);
             
@@ -573,40 +603,414 @@ class SolicitacoesController extends Controller
 
     public function confirmarHorario(int $id): void
     {
+        // ✅ Limpar TODOS os buffers ANTES de qualquer coisa
+        while (ob_get_level() > 0) {
+            ob_end_clean();
+        }
+        
+        // ✅ Desabilitar exibição de erros IMEDIATAMENTE
+        ini_set('display_errors', '0');
+        ini_set('log_errors', '1');
+        
+        // ✅ Função para SEMPRE retornar JSON válido
+        $retornarJson = function($success, $message = '', $error = '') {
+            // Limpar TODOS os buffers
+            while (ob_get_level() > 0) {
+                ob_end_clean();
+            }
+            
+            // Desabilitar exibição de erros
+            @ini_set('display_errors', '0');
+            
+            // Limpar qualquer output anterior
+            @ob_end_clean();
+            
+            // Retornar JSON válido
+            @http_response_code($success ? 200 : 500);
+            @header('Content-Type: application/json; charset=utf-8');
+            @header('Cache-Control: no-cache, must-revalidate');
+            
+            $response = ['success' => $success];
+            if ($success && !empty($message)) {
+                $response['message'] = $message;
+            }
+            if (!$success && !empty($error)) {
+                $response['error'] = $error;
+            }
+            
+            $json = @json_encode($response, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            if ($json === false) {
+                $json = json_encode(['success' => false, 'error' => 'Erro ao serializar resposta'], JSON_UNESCAPED_UNICODE);
+            }
+            
+            echo $json;
+            @flush();
+            @exit;
+        };
+        
+        // ✅ Registrar erro fatal handler
+        register_shutdown_function(function() use ($retornarJson) {
+            $error = error_get_last();
+            if ($error !== null && in_array($error['type'], [E_ERROR, E_CORE_ERROR, E_COMPILE_ERROR, E_PARSE])) {
+                error_log('Erro FATAL em confirmarHorario: ' . $error['message'] . ' em ' . $error['file'] . ':' . $error['line']);
+                $retornarJson(false, '', 'Erro fatal: ' . $error['message']);
+            }
+        });
+        
+        $horario = null;
+        $user = null;
+        $jaSalvou = false;
+        
+        try {
+            if (!$this->isPost()) {
+                $retornarJson(false, '', 'Método não permitido');
+                return;
+            }
+
+            // ✅ Ler JSON do body (caso seja enviado via fetch)
+            $raw = file_get_contents('php://input');
+            $json = json_decode($raw, true);
+            
+            // ✅ Aceitar horário do JSON ou do form
+            $horario = $json['horario'] ?? $this->input('horario');
+            $user = $this->getUser();
+
+            if (!$horario) {
+                $retornarJson(false, '', 'Horário é obrigatório');
+                return;
+            }
+
+            // Buscar status "Serviço Agendado"
+            $sql = "SELECT id FROM status WHERE nome = 'Serviço Agendado' LIMIT 1";
+            $statusAgendado = \App\Core\Database::fetch($sql);
+            
+            if (!$statusAgendado || !isset($statusAgendado['id'])) {
+                $retornarJson(false, '', 'Status "Serviço Agendado" não encontrado');
+                return;
+            }
+            
+            // Validar formato do horário
+            $timestamp = strtotime($horario);
+            if ($timestamp === false) {
+                // Tentar parsear formato ISO ou outros formatos
+                try {
+                    $dt = new \DateTime($horario);
+                    $timestamp = $dt->getTimestamp();
+                } catch (\Exception $e) {
+                    error_log('Erro ao parsear horário: ' . $horario . ' - ' . $e->getMessage());
+                    $retornarJson(false, '', 'Formato de horário inválido: ' . $horario);
+                    return;
+                }
+            }
+            
+            if ($timestamp === false) {
+                error_log('Erro: timestamp ainda é false após tentar parsear: ' . $horario);
+                $retornarJson(false, '', 'Formato de horário inválido: ' . $horario);
+                return;
+            }
+            
+            $dataAg = date('Y-m-d', $timestamp);
+            $horaAg = date('H:i:s', $timestamp);
+            
+            if ($dataAg === false || $horaAg === false) {
+                error_log('Erro ao formatar data/hora do timestamp: ' . $timestamp);
+                $retornarJson(false, '', 'Erro ao processar data/hora');
+                return;
+            }
+
+            // ✅ Processar horário e adicionar ao confirmed_schedules
+            $solicitacaoAtual = $this->solicitacaoModel->find($id);
+            if (!$solicitacaoAtual) {
+                $retornarJson(false, '', 'Solicitação não encontrada');
+                return;
+            }
+            
+            // Formatar horário para raw (mesmo formato do offcanvas)
+            $horarioFormatado = date('d/m/Y', $timestamp) . ' - ' . date('H:i', $timestamp) . '-' . date('H:i', strtotime('+3 hours', $timestamp));
+            
+            // Buscar confirmed_schedules existentes
+            $confirmedExistentes = [];
+            if (!empty($solicitacaoAtual['confirmed_schedules'])) {
+                try {
+                    // Se já for array, usar diretamente; se for string, parsear
+                    if (is_array($solicitacaoAtual['confirmed_schedules'])) {
+                        $confirmedExistentes = $solicitacaoAtual['confirmed_schedules'];
+                    } else {
+                        $confirmedExistentes = json_decode($solicitacaoAtual['confirmed_schedules'], true) ?? [];
+                    }
+                    if (!is_array($confirmedExistentes)) {
+                        $confirmedExistentes = [];
+                    }
+                } catch (\Exception $e) {
+                    error_log('Erro ao parsear confirmed_schedules: ' . $e->getMessage());
+                    $confirmedExistentes = [];
+                }
+            }
+            
+            // ✅ Função auxiliar para normalizar horários
+            $normalizarHorario = function($raw) {
+                $raw = trim((string)$raw);
+                $raw = preg_replace('/\s+/', ' ', $raw); // Normalizar espaços múltiplos
+                return $raw;
+            };
+            
+            // ✅ Função auxiliar para comparar horários de forma precisa (mesma lógica do atualizarDetalhes)
+            $compararHorarios = function($raw1, $raw2) {
+                $raw1Norm = preg_replace('/\s+/', ' ', trim((string)$raw1));
+                $raw2Norm = preg_replace('/\s+/', ' ', trim((string)$raw2));
+                
+                // Comparação exata primeiro (mais precisa)
+                if ($raw1Norm === $raw2Norm) {
+                    return true;
+                }
+                
+                // Comparação por regex - extrair data e hora inicial E FINAL EXATAS
+                // Formato esperado: "dd/mm/yyyy - HH:MM-HH:MM"
+                $regex = '/(\d{2}\/\d{2}\/\d{4})\s*-\s*(\d{2}:\d{2})-(\d{2}:\d{2})/';
+                $match1 = preg_match($regex, $raw1Norm, $m1);
+                $match2 = preg_match($regex, $raw2Norm, $m2);
+                
+                if ($match1 && $match2) {
+                    // ✅ Comparar data, hora inicial E hora final EXATAS (não apenas data e hora inicial)
+                    // Isso garante que apenas horários EXATOS sejam considerados iguais
+                    return ($m1[1] === $m2[1] && $m1[2] === $m2[2] && $m1[3] === $m2[3]);
+                }
+                
+                // Se não conseguir comparar por regex, retornar false (não é match)
+                return false;
+            };
+            
+            $horarioFormatadoNorm = $normalizarHorario($horarioFormatado);
+            
+            // ✅ Verificar se já existe este horário confirmado (usando comparação precisa)
+            $horarioJaConfirmado = false;
+            $horarioExistente = null;
+            foreach ($confirmedExistentes as $existente) {
+                if (!isset($existente['raw']) || empty($existente['raw'])) {
+                    continue;
+                }
+                $existenteRawNorm = $normalizarHorario($existente['raw']);
+                if ($compararHorarios($horarioFormatadoNorm, $existenteRawNorm)) {
+                    $horarioJaConfirmado = true;
+                    $horarioExistente = $existente;
+                    break;
+                }
+            }
+            
+            // Se não existe, adicionar aos confirmados
+            if (!$horarioJaConfirmado) {
+                $confirmedExistentes[] = [
+                    'date' => $dataAg,
+                    'time' => date('H:i', $timestamp) . '-' . date('H:i', strtotime('+3 hours', $timestamp)),
+                    'raw' => $horarioFormatadoNorm, // ✅ Usar formato normalizado
+                    'source' => 'operator',
+                    'confirmed_at' => date('c')
+                ];
+            } else {
+                // ✅ Se já existe, garantir que está usando o formato normalizado
+                $confirmedExistentes = array_map(function($item) use ($horarioFormatadoNorm, $normalizarHorario, $compararHorarios) {
+                    if (isset($item['raw']) && $compararHorarios($item['raw'], $horarioFormatadoNorm)) {
+                        $item['raw'] = $horarioFormatadoNorm; // ✅ Normalizar formato
+                    }
+                    return $item;
+                }, $confirmedExistentes);
+            }
+
+            // Atualizar solicitação
+            // ✅ Usar horarioFormatadoNorm em vez de horarioFormatado para consistência
+            $dadosUpdate = [
+                'data_agendamento' => $dataAg,
+                'horario_agendamento' => $horaAg,
+                'status_id' => $statusAgendado['id'],
+                'horario_confirmado' => 1,
+                'horario_confirmado_raw' => $horarioFormatadoNorm, // ✅ Usar formato normalizado
+                'confirmed_schedules' => json_encode($confirmedExistentes)
+            ];
+            
+            // ✅ DEBUG: Log antes de remover duplicatas
+            error_log("DEBUG confirmarHorario [ID:{$id}] - confirmedExistentes ANTES de remover duplicatas: " . json_encode($confirmedExistentes));
+            error_log("DEBUG confirmarHorario [ID:{$id}] - horarioFormatadoNorm: {$horarioFormatadoNorm}");
+            error_log("DEBUG confirmarHorario [ID:{$id}] - Total antes de remover duplicatas: " . count($confirmedExistentes));
+            
+            // ✅ Remover duplicatas finais (segurança extra) - ANTES de salvar
+            $confirmedFinalUnicos = [];
+            $rawsJaAdicionados = [];
+            foreach ($confirmedExistentes as $index => $item) {
+                if (!isset($item['raw']) || empty($item['raw'])) {
+                    error_log("DEBUG confirmarHorario [ID:{$id}] - Item {$index} sem raw, pulando");
+                    continue;
+                }
+                $rawNorm = $normalizarHorario($item['raw']);
+                
+                // Verificar se já foi adicionado
+                $jaAdicionado = false;
+                foreach ($rawsJaAdicionados as $idx => $rawJaAdd) {
+                    if ($compararHorarios($rawNorm, $rawJaAdd)) {
+                        $jaAdicionado = true;
+                        error_log("DEBUG confirmarHorario [ID:{$id}] - ⚠️ DUPLICATA DETECTADA! Item {$index} com raw '{$rawNorm}' já existe no índice {$idx} como '{$rawJaAdd}'");
+                        break;
+                    }
+                }
+                
+                if (!$jaAdicionado) {
+                    $confirmedFinalUnicos[] = $item;
+                    $rawsJaAdicionados[] = $rawNorm;
+                    error_log("DEBUG confirmarHorario [ID:{$id}] - ✅ Item {$index} adicionado: '{$rawNorm}'");
+                }
+            }
+            
+            // ✅ DEBUG: Log após remover duplicatas
+            error_log("DEBUG confirmarHorario [ID:{$id}] - confirmedFinalUnicos APÓS remover duplicatas: " . json_encode($confirmedFinalUnicos));
+            error_log("DEBUG confirmarHorario [ID:{$id}] - Total APÓS remover duplicatas: " . count($confirmedFinalUnicos));
+            
+            // Validar que confirmed_schedules é JSON válido
+            $confirmedJsonFinal = json_encode($confirmedFinalUnicos);
+            if ($confirmedJsonFinal === false) {
+                error_log('Erro ao serializar confirmed_schedules: ' . json_last_error_msg());
+                $retornarJson(false, '', 'Erro ao processar horários confirmados');
+                return;
+            }
+            $dadosUpdate['confirmed_schedules'] = $confirmedJsonFinal;
+            
+            // ✅ Verificar se já salvou (proteção contra duplicação)
+            if ($jaSalvou) {
+                error_log('AVISO: Tentativa de salvar confirmarHorario duas vezes para ID: ' . $id);
+                $retornarJson(false, '', 'Operação já foi processada');
+                return;
+            }
+            
+            try {
+                $this->solicitacaoModel->update($id, $dadosUpdate);
+                $jaSalvou = true; // ✅ Marcar como salvo
+            } catch (\Exception $e) {
+                error_log('Erro ao atualizar solicitação: ' . $e->getMessage());
+                error_log('Stack trace: ' . $e->getTraceAsString());
+                $retornarJson(false, '', 'Erro ao salvar solicitação: ' . $e->getMessage());
+                return;
+            }
+            
+            // Registrar histórico
+            if ($user && isset($user['id'])) {
+                try {
+                    $this->solicitacaoModel->updateStatus($id, $statusAgendado['id'], $user['id'], 
+                        'Horário confirmado: ' . $horarioFormatado);
+                } catch (\Exception $e) {
+                    // Log do erro mas não bloquear a resposta
+                    error_log('Erro ao atualizar status no histórico: ' . $e->getMessage());
+                }
+            }
+            
+            // ✅ Enviar notificação WhatsApp (em background, não bloquear)
+            try {
+                // Buscar dados atualizados da solicitação para garantir que temos o telefone correto
+                $solicitacaoAtual = $this->solicitacaoModel->find($id);
+                
+                // Verificar se tem telefone antes de enviar
+                $telefone = $solicitacaoAtual['locatario_telefone'] ?? null;
+                if (empty($telefone) && !empty($solicitacaoAtual['locatario_id'])) {
+                    // Buscar telefone do locatário
+                    $sqlLocatario = "SELECT telefone FROM locatarios WHERE id = ?";
+                    $locatario = \App\Core\Database::fetch($sqlLocatario, [$solicitacaoAtual['locatario_id']]);
+                    $telefone = $locatario['telefone'] ?? null;
+                }
+                
+                if (!empty($telefone)) {
+                    // Formatar horário completo para exibição
+                    $horarioCompleto = $horarioFormatadoNorm ?? date('d/m/Y', $timestamp) . ' - ' . date('H:i', $timestamp) . '-' . date('H:i', strtotime('+3 hours', $timestamp));
+                    
+                    $this->enviarNotificacaoWhatsApp($id, 'Horário Confirmado', [
+                        'data_agendamento' => date('d/m/Y', $timestamp),
+                        'horario_agendamento' => date('H:i', $timestamp) . '-' . date('H:i', strtotime('+3 hours', $timestamp)),
+                        'horario_servico' => $horarioCompleto,
+                        'horario_confirmado_raw' => $horarioFormatadoNorm ?? $horarioFormatado
+                    ]);
+                    
+                    error_log("DEBUG WhatsApp [ID:{$id}] - WhatsApp enviado para telefone: {$telefone}");
+                } else {
+                    error_log("DEBUG WhatsApp [ID:{$id}] - ⚠️ Telefone não encontrado, WhatsApp NÃO enviado");
+                }
+            } catch (\Exception $e) {
+                // Ignorar erro de WhatsApp, não bloquear a resposta
+                error_log('Erro ao enviar WhatsApp [ID:' . $id . ']: ' . $e->getMessage());
+                error_log('Stack trace: ' . $e->getTraceAsString());
+            }
+            
+            // ✅ Retornar sucesso
+            $retornarJson(true, 'Horário confirmado com sucesso');
+            
+        } catch (\Exception $e) {
+            error_log('Erro em confirmarHorario [ID:' . $id . ']: ' . $e->getMessage());
+            error_log('Stack trace: ' . $e->getTraceAsString());
+            error_log('Horário recebido: ' . var_export($horario, true));
+            
+            $retornarJson(false, '', 'Erro ao confirmar horário: ' . $e->getMessage());
+            
+        } catch (\Throwable $e) {
+            error_log('Erro fatal em confirmarHorario [ID:' . $id . ']: ' . $e->getMessage());
+            error_log('Stack trace: ' . $e->getTraceAsString());
+            error_log('Horário recebido: ' . var_export($horario ?? 'N/A', true));
+            
+            $retornarJson(false, '', 'Erro inesperado ao confirmar horário: ' . $e->getMessage());
+            
+        } catch (\Exception $e) {
+            error_log('Erro EXCEPCIONAL em confirmarHorario [ID:' . $id . ']: ' . $e->getMessage());
+            $retornarJson(false, '', 'Erro ao confirmar horário: ' . $e->getMessage());
+        } catch (\Throwable $e) {
+            error_log('Erro FATAL em confirmarHorario [ID:' . $id . ']: ' . $e->getMessage());
+            $retornarJson(false, '', 'Erro inesperado ao confirmar horário: ' . $e->getMessage());
+        }
+    }
+
+    public function confirmarHorariosBulk(int $id): void
+    {
         if (!$this->isPost()) {
             $this->json(['error' => 'Método não permitido'], 405);
             return;
         }
 
-        $horario = $this->input('horario');
-        $user = $this->getUser();
+        $payload = json_decode(file_get_contents('php://input'), true) ?? [];
+        $schedules = $payload['schedules'] ?? []; // [{date: 'YYYY-MM-DD', time: 'HH:MM'|'HH:MM-HH:MM', raw: '...'}]
 
-        if (!$horario) {
-            $this->json(['error' => 'Horário é obrigatório'], 400);
+        if (empty($schedules) || !is_array($schedules)) {
+            $this->json(['error' => 'Nenhum horário informado'], 400);
             return;
         }
 
         try {
-            // Buscar status "Serviço Agendado"
-            $sql = "SELECT id FROM status WHERE nome = 'Serviço Agendado' LIMIT 1";
-            $statusAgendado = \App\Core\Database::fetch($sql);
-            
+            // Normalizar confirmados para salvar como JSON
+            $confirmed = [];
+            foreach ($schedules as $s) {
+                $confirmed[] = [
+                    'date' => $s['date'] ?? null,
+                    'time' => $s['time'] ?? null,
+                    'raw'  => $s['raw'] ?? trim(($s['date'] ?? '') . ' ' . ($s['time'] ?? '')),
+                    'source' => 'operator',
+                    'confirmed_at' => date('c')
+                ];
+            }
+
+            // Último será o agendamento principal
+            $last = end($confirmed);
+            $dataAg = (!empty($last['date'])) ? date('Y-m-d', strtotime($last['date'])) : null;
+            // Se time for faixa, inclui apenas início
+            $horaRaw = $last['time'] ?? '';
+            $horaAg = preg_match('/^\d{2}:\d{2}/', $horaRaw, $m) ? ($m[0] . ':00') : (!empty($horaRaw) ? $horaRaw : null);
+
+            // Atualizar registro
             $this->solicitacaoModel->update($id, [
-                'data_agendamento' => date('Y-m-d', strtotime($horario)),
-                'horario_agendamento' => date('H:i:s', strtotime($horario)),
-                'status_id' => $statusAgendado['id'] ?? 3
+                'data_agendamento' => $dataAg,
+                'horario_agendamento' => $horaAg,
+                'horario_confirmado' => 1,
+                'horario_confirmado_raw' => $last['raw'],
+                'confirmed_schedules' => json_encode($confirmed)
             ]);
-            
-            // Registrar histórico
-            $this->solicitacaoModel->updateStatus($id, $statusAgendado['id'] ?? 3, $user['id'], 
-                'Horário confirmado: ' . date('d/m/Y H:i', strtotime($horario)));
-            
-            // Enviar notificação WhatsApp
+
+            // Enviar WhatsApp (opcional)
             $this->enviarNotificacaoWhatsApp($id, 'Horário Confirmado', [
-                'data_agendamento' => date('d/m/Y', strtotime($horario)),
-                'horario_agendamento' => date('H:i', strtotime($horario))
+                'data_agendamento' => (!empty($dataAg)) ? date('d/m/Y', strtotime($dataAg)) : '',
+                'horario_agendamento' => (is_string($horaRaw) ? $horaRaw : ((!empty($horaAg)) ? date('H:i', strtotime($horaAg)) : ''))
             ]);
-            
+
             $this->json(['success' => true]);
         } catch (\Exception $e) {
             $this->json(['error' => $e->getMessage()], 500);
@@ -615,48 +1019,251 @@ class SolicitacoesController extends Controller
     
     public function desconfirmarHorario(int $id): void
     {
-        if (!$this->isPost()) {
-            $this->json(['error' => 'Método não permitido'], 405);
-            return;
+        // ✅ Limpar TODOS os buffers ANTES de qualquer coisa
+        while (ob_get_level() > 0) {
+            ob_end_clean();
         }
-
-        $user = $this->getUser();
-
-        try {
-            // Buscar status "Pendente"
-            $sql = "SELECT id FROM status WHERE nome = 'Pendente' LIMIT 1";
-            $statusPendente = \App\Core\Database::fetch($sql);
-            
-            // Limpar agendamento
-            $this->solicitacaoModel->update($id, [
-                'data_agendamento' => null,
-                'horario_agendamento' => null,
-                'status_id' => $statusPendente['id'] ?? null
-            ]);
-            
-            // Registrar histórico
-            if ($statusPendente) {
-                $this->solicitacaoModel->updateStatus($id, $statusPendente['id'], $user['id'], 
-                    'Horário desconfirmado pelo operador');
+        
+        // ✅ Desabilitar exibição de erros IMEDIATAMENTE
+        ini_set('display_errors', '0');
+        ini_set('log_errors', '1');
+        
+        // ✅ Função para SEMPRE retornar JSON válido
+        $retornarJson = function($success, $message = '', $error = '') {
+            // Limpar TODOS os buffers
+            while (ob_get_level() > 0) {
+                ob_end_clean();
             }
             
-            $this->json(['success' => true]);
+            // Desabilitar exibição de erros
+            @ini_set('display_errors', '0');
+            
+            // Limpar qualquer output anterior
+            @ob_end_clean();
+            
+            // Retornar JSON válido
+            @http_response_code($success ? 200 : 500);
+            @header('Content-Type: application/json; charset=utf-8');
+            @header('Cache-Control: no-cache, must-revalidate');
+            
+            $response = ['success' => $success];
+            if ($success && !empty($message)) {
+                $response['message'] = $message;
+            }
+            if (!$success && !empty($error)) {
+                $response['error'] = $error;
+            }
+            
+            $json = @json_encode($response, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            if ($json === false) {
+                $json = json_encode(['success' => false, 'error' => 'Erro ao serializar resposta'], JSON_UNESCAPED_UNICODE);
+            }
+            
+            echo $json;
+            @flush();
+            @exit;
+        };
+        
+        $oldErrorReporting = error_reporting(E_ALL);
+        $oldDisplayErrors = ini_set('display_errors', '0');
+        
+        $horario = null;
+        $user = null;
+        
+        try {
+            if (!$this->isPost()) {
+                $retornarJson(false, '', 'Método não permitido');
+                return;
+            }
+
+            // ✅ Ler JSON do body (caso seja enviado via fetch)
+            $raw = file_get_contents('php://input');
+            $json = json_decode($raw, true);
+            
+            // ✅ Aceitar horário do JSON ou do form
+            $horario = $json['horario'] ?? $this->input('horario');
+            $user = $this->getUser();
+            
+            if (!$user || !isset($user['id'])) {
+                $retornarJson(false, '', 'Usuário não autenticado');
+                return;
+            }
+
+            // ✅ Buscar solicitação atual
+            $solicitacaoAtual = $this->solicitacaoModel->find($id);
+            if (!$solicitacaoAtual) {
+                $retornarJson(false, '', 'Solicitação não encontrada');
+                return;
+            }
+            
+            // ✅ Buscar confirmed_schedules existentes
+            $confirmedExistentes = [];
+            if (!empty($solicitacaoAtual['confirmed_schedules'])) {
+                try {
+                    if (is_array($solicitacaoAtual['confirmed_schedules'])) {
+                        $confirmedExistentes = $solicitacaoAtual['confirmed_schedules'];
+                    } else {
+                        $confirmedExistentes = json_decode($solicitacaoAtual['confirmed_schedules'], true) ?? [];
+                    }
+                    if (!is_array($confirmedExistentes)) {
+                        $confirmedExistentes = [];
+                    }
+                } catch (\Exception $e) {
+                    error_log('Erro ao parsear confirmed_schedules: ' . $e->getMessage());
+                    $confirmedExistentes = [];
+                }
+            }
+            
+            // ✅ Função auxiliar para normalizar horários
+            $normalizarHorario = function($raw) {
+                $raw = trim((string)$raw);
+                $raw = preg_replace('/\s+/', ' ', $raw);
+                return $raw;
+            };
+            
+            // ✅ Função auxiliar para comparar horários de forma precisa
+            $compararHorarios = function($raw1, $raw2) {
+                $raw1Norm = preg_replace('/\s+/', ' ', trim((string)$raw1));
+                $raw2Norm = preg_replace('/\s+/', ' ', trim((string)$raw2));
+                
+                // Comparação exata primeiro
+                if ($raw1Norm === $raw2Norm) {
+                    return true;
+                }
+                
+                // Comparação por regex - extrair data e hora inicial E FINAL EXATAS
+                $regex = '/(\d{2}\/\d{2}\/\d{4})\s*-\s*(\d{2}:\d{2})-(\d{2}:\d{2})/';
+                $match1 = preg_match($regex, $raw1Norm, $m1);
+                $match2 = preg_match($regex, $raw2Norm, $m2);
+                
+                if ($match1 && $match2) {
+                    // ✅ Comparar data, hora inicial E hora final EXATAS
+                    return ($m1[1] === $m2[1] && $m1[2] === $m2[2] && $m1[3] === $m2[3]);
+                }
+                
+                return false;
+            };
+            
+            // ✅ Se horário foi especificado, remover apenas esse horário
+            if (!empty($horario)) {
+                $horarioFormatadoNorm = $normalizarHorario($horario);
+                
+                // ✅ Remover apenas o horário específico do array
+                $confirmedFinal = [];
+                foreach ($confirmedExistentes as $item) {
+                    if (!isset($item['raw']) || empty($item['raw'])) {
+                        continue;
+                    }
+                    $itemRawNorm = $normalizarHorario($item['raw']);
+                    
+                    // ✅ Se for o horário a ser removido, não adicionar
+                    if ($compararHorarios($itemRawNorm, $horarioFormatadoNorm)) {
+                        error_log("DEBUG desconfirmarHorario [ID:{$id}] - Removendo horário: {$itemRawNorm}");
+                        continue; // Pular este item
+                    }
+                    
+                    // Adicionar os outros horários
+                    $confirmedFinal[] = $item;
+                }
+                
+                error_log("DEBUG desconfirmarHorario [ID:{$id}] - Total antes: " . count($confirmedExistentes));
+                error_log("DEBUG desconfirmarHorario [ID:{$id}] - Total depois: " . count($confirmedFinal));
+                
+                $confirmedExistentes = $confirmedFinal;
+            } else {
+                // ✅ Se não especificou horário, limpar todos (comportamento antigo)
+                $confirmedExistentes = [];
+            }
+            
+            // ✅ Buscar status "Nova Solicitação" ou "Pendente" se não há mais horários confirmados
+            $statusNova = null;
+            if (empty($confirmedExistentes)) {
+                $sqlStatus = "SELECT id FROM status WHERE nome IN ('Nova Solicitação', 'Pendente') LIMIT 1";
+                $statusNova = \App\Core\Database::fetch($sqlStatus);
+            }
+            
+            // ✅ Preparar dados de atualização
+            $dadosUpdate = [
+                'confirmed_schedules' => json_encode($confirmedExistentes)
+            ];
+            
+            // ✅ Se não há mais horários confirmados, limpar campos de agendamento
+            if (empty($confirmedExistentes)) {
+                $dadosUpdate['data_agendamento'] = null;
+                $dadosUpdate['horario_agendamento'] = null;
+                $dadosUpdate['horario_confirmado'] = 0;
+                $dadosUpdate['horario_confirmado_raw'] = null;
+                
+                if ($statusNova && isset($statusNova['id'])) {
+                    $dadosUpdate['status_id'] = $statusNova['id'];
+                }
+            } else {
+                // ✅ Se ainda há horários confirmados, atualizar com o último horário
+                $last = end($confirmedExistentes);
+                $dataAg = (!empty($last['date'])) ? date('Y-m-d', strtotime($last['date'])) : null;
+                $horaRaw = $last['time'] ?? '';
+                $horaAg = preg_match('/^\d{2}:\d{2}/', $horaRaw, $m) ? ($m[0] . ':00') : (!empty($horaRaw) ? $horaRaw : null);
+                
+                $dadosUpdate['data_agendamento'] = $dataAg;
+                $dadosUpdate['horario_agendamento'] = $horaAg;
+                $dadosUpdate['horario_confirmado'] = 1;
+                $dadosUpdate['horario_confirmado_raw'] = $last['raw'] ?? null;
+            }
+            
+            // ✅ Atualizar solicitação
+            $this->solicitacaoModel->update($id, $dadosUpdate);
+            
+            // ✅ Registrar histórico
+            if ($user && isset($user['id'])) {
+                $statusId = $statusNova && isset($statusNova['id']) ? $statusNova['id'] : $solicitacaoAtual['status_id'];
+                $mensagem = !empty($horario) ? "Horário desconfirmado: {$horario}" : 'Todos os horários foram desconfirmados';
+                $this->solicitacaoModel->updateStatus($id, $statusId, $user['id'], $mensagem);
+            }
+            
+            $retornarJson(true, 'Horário desconfirmado com sucesso');
+            
         } catch (\Exception $e) {
-            $this->json(['error' => $e->getMessage()], 500);
+            error_log('Erro em desconfirmarHorario [ID:' . $id . ']: ' . $e->getMessage());
+            error_log('Stack trace: ' . $e->getTraceAsString());
+            error_log('Horário recebido: ' . var_export($horario, true));
+            $retornarJson(false, '', 'Erro ao desconfirmar horário: ' . $e->getMessage());
+        } catch (\Throwable $e) {
+            error_log('Erro fatal em desconfirmarHorario [ID:' . $id . ']: ' . $e->getMessage());
+            $retornarJson(false, '', 'Erro inesperado ao desconfirmar horário: ' . $e->getMessage());
         }
     }
     
     public function solicitarNovosHorarios(int $id): void
     {
-        if (!$this->isPost()) {
-            $this->json(['error' => 'Método não permitido'], 405);
-            return;
+        // ✅ Iniciar output buffering ANTES de qualquer coisa (captura qualquer output indesejado)
+        while (ob_get_level()) {
+            ob_end_clean();
         }
-
-        $observacao = $this->input('observacao');
-        $user = $this->getUser();
-
+        ob_start();
+        
+        // ✅ Desabilitar exibição de erros para evitar HTML na resposta
+        $oldErrorReporting = error_reporting(E_ALL);
+        $oldDisplayErrors = ini_set('display_errors', '0');
+        
         try {
+            if (!$this->isPost()) {
+                $this->json(['success' => false, 'error' => 'Método não permitido'], 405);
+                return;
+            }
+
+            // ✅ Ler JSON do body (caso seja enviado via fetch)
+            $raw = file_get_contents('php://input');
+            $json = json_decode($raw, true);
+            
+            // ✅ Aceitar observação do JSON ou do form
+            $observacao = $json['observacao'] ?? $this->input('observacao');
+            $user = $this->getUser();
+            
+            if (!$user || !isset($user['id'])) {
+                $this->json(['success' => false, 'error' => 'Usuário não autenticado'], 401);
+                return;
+            }
+
             // Limpar horários atuais
             $this->solicitacaoModel->update($id, [
                 'horarios_opcoes' => null
@@ -664,20 +1271,47 @@ class SolicitacoesController extends Controller
             
             // Registrar no histórico
             $solicitacao = $this->solicitacaoModel->find($id);
+            if (!$solicitacao) {
+                $this->json(['success' => false, 'error' => 'Solicitação não encontrada'], 404);
+                return;
+            }
+            
             $this->solicitacaoModel->updateStatus($id, 
                 $solicitacao['status_id'], 
                 $user['id'], 
-                'Horários indisponíveis. Motivo: ' . $observacao);
+                'Horários indisponíveis. Motivo: ' . ($observacao ?? 'Não informado'));
             
-            // Enviar notificação WhatsApp solicitando novos horários
-            $this->enviarNotificacaoWhatsApp($id, 'Horário Sugerido', [
-                'data_agendamento' => 'A definir',
-                'horario_agendamento' => 'Aguardando novas opções'
-            ]);
+            // Enviar notificação WhatsApp solicitando novos horários (em background, não bloquear)
+            try {
+                $this->enviarNotificacaoWhatsApp($id, 'Horário Sugerido', [
+                    'data_agendamento' => 'A definir',
+                    'horario_agendamento' => 'Aguardando novas opções'
+                ]);
+            } catch (\Exception $e) {
+                // Ignorar erro de WhatsApp, não bloquear a resposta
+                error_log('Erro ao enviar WhatsApp: ' . $e->getMessage());
+            }
             
-            $this->json(['success' => true]);
+            $this->json(['success' => true, 'message' => 'Solicitação de novos horários enviada']);
+            
         } catch (\Exception $e) {
-            $this->json(['error' => $e->getMessage()], 500);
+            error_log('Erro em solicitarNovosHorarios: ' . $e->getMessage());
+            error_log('Stack trace: ' . $e->getTraceAsString());
+            $this->json(['success' => false, 'error' => 'Erro ao solicitar novos horários: ' . $e->getMessage()], 500);
+        } catch (\Throwable $e) {
+            error_log('Erro fatal em solicitarNovosHorarios: ' . $e->getMessage());
+            $this->json(['success' => false, 'error' => 'Erro inesperado ao solicitar novos horários'], 500);
+        } finally {
+            // ✅ Limpar qualquer output buffer antes de retornar JSON
+            while (ob_get_level()) {
+                ob_end_clean();
+            }
+            
+            // Restaurar configurações anteriores
+            error_reporting($oldErrorReporting);
+            if ($oldDisplayErrors !== false) {
+                ini_set('display_errors', $oldDisplayErrors);
+            }
         }
     }
 
@@ -745,6 +1379,36 @@ class SolicitacoesController extends Controller
         $precisaReembolso = $this->input('precisa_reembolso');
         $valorReembolso = $this->input('valor_reembolso');
         $protocoloSeguradora = $this->input('protocolo_seguradora');
+        $horariosIndisponiveis = $this->input('horarios_indisponiveis');
+
+        // Tentar ler JSON cru (caso o front envie via fetch JSON)
+        $raw = file_get_contents('php://input');
+        $json = json_decode($raw, true);
+        $schedulesFromJson = null; // null = não foi enviado, array = foi enviado (pode ser vazio)
+        $schedulesFoiEnviado = false;
+        
+        // Verificar se schedules foi enviado no JSON
+        if (is_array($json) && array_key_exists('schedules', $json)) {
+            $schedulesFromJson = is_array($json['schedules']) ? $json['schedules'] : [];
+            $schedulesFoiEnviado = true;
+        }
+        
+        // Também aceitar schedules por form (pode ser string JSON ou array já parseado)
+        $schedulesForm = $this->input('schedules');
+        if ($schedulesForm !== null && $schedulesForm !== '') {
+            // ✅ Se já for array (do JSON parseado pelo Controller), usar diretamente
+            if (is_array($schedulesForm)) {
+                $schedulesFromJson = $schedulesForm;
+                $schedulesFoiEnviado = true;
+            } elseif (is_string($schedulesForm)) {
+                // ✅ Se for string, tentar parsear
+                $tmp = json_decode($schedulesForm, true);
+                if (is_array($tmp)) {
+                    $schedulesFromJson = $tmp;
+                    $schedulesFoiEnviado = true;
+                }
+            }
+        }
 
         try {
             $dados = [
@@ -765,6 +1429,13 @@ class SolicitacoesController extends Controller
                 $dados['precisa_reembolso'] = 0;
                 $dados['valor_reembolso'] = null;
             }
+            
+            // Adicionar campo de horários indisponíveis
+            if ($horariosIndisponiveis === true || $horariosIndisponiveis === 'true' || $horariosIndisponiveis === 1) {
+                $dados['horarios_indisponiveis'] = 1;
+            } else {
+                $dados['horarios_indisponiveis'] = 0;
+            }
 
             // Debug log
             error_log('Dados recebidos: ' . json_encode([
@@ -773,6 +1444,291 @@ class SolicitacoesController extends Controller
                 'valor_reembolso_raw' => $valorReembolso,
                 'valor_reembolso_convertido' => isset($dados['valor_reembolso']) ? $dados['valor_reembolso'] : 'null'
             ]));
+
+            // ✅ Se schedules foi enviado (mesmo que vazio), processar confirmação
+            // IMPORTANTE: schedulesFromJson contém apenas os horários MARCADOS (checked)
+            // Se um horário estava confirmado e não está na lista, significa que foi DESMARCADO
+            if ($schedulesFoiEnviado) {
+                // ✅ Buscar solicitação atual e horários disponíveis
+                $solicitacaoAtual = $this->solicitacaoModel->find($id);
+                $confirmedExistentes = [];
+                
+                if (!empty($solicitacaoAtual['confirmed_schedules'])) {
+                    try {
+                        $confirmedExistentes = json_decode($solicitacaoAtual['confirmed_schedules'], true) ?? [];
+                        if (!is_array($confirmedExistentes)) {
+                            $confirmedExistentes = [];
+                        }
+                    } catch (\Exception $e) {
+                        $confirmedExistentes = [];
+                    }
+                }
+                
+                // ✅ Se schedulesFromJson está vazio (todos desmarcados), limpar todos os confirmados
+                if (is_array($schedulesFromJson) && empty($schedulesFromJson)) {
+                    // Usuário desmarcou todos - limpar confirmações
+                    $dados['horario_confirmado'] = 0;
+                    $dados['horario_confirmado_raw'] = null;
+                    $dados['data_agendamento'] = null;
+                    $dados['horario_agendamento'] = null;
+                    $dados['confirmed_schedules'] = json_encode([]);
+                    // Voltar status para "Nova Solicitação" se estava agendado
+                    try {
+                        $statusNova = $this->getStatusId('Nova Solicitação');
+                        if ($statusNova) {
+                            $dados['status_id'] = $statusNova;
+                        }
+                    } catch (\Exception $e) {
+                        // Ignorar erro de status, manter status atual
+                    }
+                } else if (!empty($schedulesFromJson)) {
+                    // ✅ Processar horários selecionados (MARCADOS)
+                    // IMPORTANTE: schedulesFromJson contém apenas os checkboxes MARCADOS
+                    
+                    // ✅ DEBUG: Log do que está sendo recebido
+                    error_log("DEBUG atualizarDetalhes [ID:{$id}] - schedulesFromJson recebido: " . json_encode($schedulesFromJson));
+                    error_log("DEBUG atualizarDetalhes [ID:{$id}] - confirmedExistentes: " . json_encode($confirmedExistentes));
+                    
+                    $confirmedFinal = [];
+                    $rawsSelecionados = [];
+                    
+                    // 1. Coletar raws dos horários selecionados (REMOVER DUPLICATAS JÁ AQUI)
+                    $rawsUnicos = [];
+                    foreach ($schedulesFromJson as $s) {
+                        $raw = trim($s['raw'] ?? trim(($s['date'] ?? '') . ' ' . ($s['time'] ?? '')));
+                        $rawNorm = preg_replace('/\s+/', ' ', trim((string)$raw));
+                        
+                        // ✅ Verificar se já está na lista de únicos (evitar duplicatas no input)
+                        $jaExiste = false;
+                        foreach ($rawsUnicos as $rawUnico) {
+                            if ($rawNorm === $rawUnico) {
+                                $jaExiste = true;
+                                break;
+                            }
+                        }
+                        
+                        if (!$jaExiste) {
+                            $rawsUnicos[] = $rawNorm;
+                            $rawsSelecionados[] = $rawNorm;
+                        }
+                    }
+                    
+                    error_log("DEBUG atualizarDetalhes [ID:{$id}] - rawsSelecionados (após remover duplicatas): " . json_encode($rawsSelecionados));
+                    
+                    // ✅ Função auxiliar para normalizar e comparar horários de forma precisa
+                    $normalizarHorario = function($raw) {
+                        // Normalizar: remover espaços extras, padronizar formato
+                        $raw = trim((string)$raw);
+                        $raw = preg_replace('/\s+/', ' ', $raw); // Normalizar espaços múltiplos
+                        return $raw;
+                    };
+                    
+                    // ✅ Função auxiliar para comparar horários de forma precisa
+                    $compararHorarios = function($raw1, $raw2) {
+                        $raw1Norm = preg_replace('/\s+/', ' ', trim((string)$raw1));
+                        $raw2Norm = preg_replace('/\s+/', ' ', trim((string)$raw2));
+                        
+                        // Comparação exata primeiro (mais precisa)
+                        if ($raw1Norm === $raw2Norm) {
+                            return true;
+                        }
+                        
+                        // Comparação por regex - extrair data e hora inicial E FINAL EXATAS
+                        // Formato esperado: "dd/mm/yyyy - HH:MM-HH:MM"
+                        $regex = '/(\d{2}\/\d{2}\/\d{4})\s*-\s*(\d{2}:\d{2})-(\d{2}:\d{2})/';
+                        $match1 = preg_match($regex, $raw1Norm, $m1);
+                        $match2 = preg_match($regex, $raw2Norm, $m2);
+                        
+                        if ($match1 && $match2) {
+                            // ✅ Comparar data, hora inicial E hora final EXATAS (não apenas data e hora inicial)
+                            // Isso garante que apenas horários EXATOS sejam considerados iguais
+                            return ($m1[1] === $m2[1] && $m1[2] === $m2[2] && $m1[3] === $m2[3]);
+                        }
+                        
+                        // Se não conseguir comparar por regex, retornar false (não é match)
+                        return false;
+                    };
+                    
+                    // 2. Para cada horário selecionado (usar rawsUnicos para evitar processar duplicatas)
+                    // ✅ Usar array temporário para evitar duplicatas
+                    $confirmedTemp = [];
+                    $rawsProcessados = []; // ✅ Rastrear quais raws já foram processados
+                    
+                    // ✅ Processar apenas os horários únicos selecionados
+                    foreach ($rawsSelecionados as $rawSelecionado) {
+                        $rawNorm = $normalizarHorario($rawSelecionado);
+                        
+                        // ✅ Verificar se já processamos este raw (segunda camada de proteção)
+                        if (in_array($rawNorm, $rawsProcessados, true)) {
+                            error_log("DEBUG atualizarDetalhes [ID:{$id}] - ⚠️ Raw já processado, pulando: {$rawNorm}");
+                            continue;
+                        }
+                        $rawsProcessados[] = $rawNorm;
+                        
+                        // ✅ Verificar se já existe nos confirmados existentes (comparação precisa)
+                        $horarioExistente = null;
+                        foreach ($confirmedExistentes as $existente) {
+                            $existenteRaw = trim($existente['raw'] ?? '');
+                            if ($compararHorarios($rawNorm, $existenteRaw)) {
+                                $horarioExistente = $existente;
+                                break;
+                            }
+                        }
+                        
+                        // ✅ Verificar se já está em confirmedTemp (evitar duplicatas no mesmo processamento)
+                        $jaExisteNoTemp = false;
+                        foreach ($confirmedTemp as $temp) {
+                            $tempRaw = trim($temp['raw'] ?? '');
+                            if ($compararHorarios($rawNorm, $tempRaw)) {
+                                $jaExisteNoTemp = true;
+                                break;
+                            }
+                        }
+                        
+                        // Se já existe no temp, pular (evitar duplicata)
+                        if ($jaExisteNoTemp) {
+                            error_log("DEBUG atualizarDetalhes [ID:{$id}] - ⚠️ Raw já existe no confirmedTemp, pulando: {$rawNorm}");
+                            continue;
+                        }
+                        
+                        // ✅ Buscar dados completos do scheduleFromJson para este raw
+                        $scheduleData = null;
+                        foreach ($schedulesFromJson as $s) {
+                            $sRaw = trim($s['raw'] ?? trim(($s['date'] ?? '') . ' ' . ($s['time'] ?? '')));
+                            $sRawNorm = $normalizarHorario($sRaw);
+                            if ($compararHorarios($rawNorm, $sRawNorm)) {
+                                $scheduleData = $s;
+                                break;
+                            }
+                        }
+                        
+                        // Se existe nos confirmados existentes, manter (preserva confirmed_at original)
+                        if ($horarioExistente) {
+                            $confirmedTemp[] = $horarioExistente;
+                            error_log("DEBUG atualizarDetalhes [ID:{$id}] - ✅ Horário existente preservado: {$rawNorm}");
+                        } else {
+                            // Se não existe, criar novo confirmado
+                            $confirmedTemp[] = [
+                                'date' => $scheduleData['date'] ?? null,
+                                'time' => $scheduleData['time'] ?? null,
+                                'raw'  => $rawNorm,
+                                'source' => 'operator',
+                                'confirmed_at' => date('c')
+                            ];
+                            error_log("DEBUG atualizarDetalhes [ID:{$id}] - ✅ Novo horário confirmado criado: {$rawNorm}");
+                        }
+                    }
+                    
+                    // ✅ Usar confirmedTemp como confirmedFinal (já sem duplicatas)
+                    $confirmedFinal = $confirmedFinalLimpo = $confirmedTemp;
+                    
+                    // ✅ DEBUG: Log final antes de salvar
+                    error_log("DEBUG atualizarDetalhes [ID:{$id}] - confirmedFinal (antes de salvar): " . json_encode($confirmedFinal));
+                    error_log("DEBUG atualizarDetalhes [ID:{$id}] - Total de horários confirmados: " . count($confirmedFinal));
+                    
+                    // ✅ Se não há mais nenhum confirmado, limpar agendamento
+                    if (empty($confirmedFinalLimpo)) {
+                        $dados['horario_confirmado'] = 0;
+                        $dados['horario_confirmado_raw'] = null;
+                        $dados['data_agendamento'] = null;
+                        $dados['horario_agendamento'] = null;
+                        $dados['confirmed_schedules'] = json_encode([]);
+                        // Voltar status para "Nova Solicitação"
+                        try {
+                            $statusNova = $this->getStatusId('Nova Solicitação');
+                            if ($statusNova) {
+                                $dados['status_id'] = $statusNova;
+                            }
+                        } catch (\Exception $e) {
+                            // Ignorar erro de status, manter status atual
+                        }
+                    } else {
+                        // ✅ Último horário vira o agendamento principal
+                        $last = end($confirmedFinalLimpo);
+                        $dataAg = (!empty($last['date'])) ? date('Y-m-d', strtotime($last['date'])) : null;
+                        $horaRaw = $last['time'] ?? '';
+                        $horaAg = preg_match('/^\d{2}:\d{2}/', $horaRaw, $m) ? ($m[0] . ':00') : (!empty($horaRaw) ? $horaRaw : null);
+
+                        $dados['data_agendamento'] = $dataAg;
+                        $dados['horario_agendamento'] = $horaAg;
+                        $dados['horario_confirmado'] = 1;
+                        $dados['horario_confirmado_raw'] = $last['raw'];
+                        $dados['confirmed_schedules'] = json_encode($confirmedFinalLimpo);
+                        
+                        // Mudar status para "Serviço Agendado"
+                        $dados['status_id'] = $this->getStatusId('Serviço Agendado');
+                        
+                        // ✅ Enviar notificação WhatsApp quando horários são confirmados
+                        try {
+                            // Buscar dados atualizados da solicitação para garantir que temos o telefone correto
+                            $solicitacaoAtual = $this->solicitacaoModel->find($id);
+                            
+                            // Verificar se tem telefone antes de enviar
+                            $telefone = $solicitacaoAtual['locatario_telefone'] ?? null;
+                            if (empty($telefone) && !empty($solicitacaoAtual['locatario_id'])) {
+                                // Buscar telefone do locatário
+                                $sqlLocatario = "SELECT telefone FROM locatarios WHERE id = ?";
+                                $locatario = \App\Core\Database::fetch($sqlLocatario, [$solicitacaoAtual['locatario_id']]);
+                                $telefone = $locatario['telefone'] ?? null;
+                            }
+                            
+                            if (!empty($telefone)) {
+                                // Formatar horário completo para exibição (usar o último horário confirmado)
+                                $horarioCompleto = $last['raw'] ?? '';
+                                
+                                // Enviar WhatsApp para cada horário NOVO confirmado (não os que já existiam)
+                                $horariosNovos = [];
+                                foreach ($confirmedFinalLimpo as $confirmado) {
+                                    $confirmadoRaw = $confirmado['raw'] ?? '';
+                                    $jaExistia = false;
+                                    
+                                    // Verificar se este horário já estava confirmado antes
+                                    foreach ($confirmedExistentes as $existente) {
+                                        $existenteRaw = $existente['raw'] ?? '';
+                                        if ($confirmadoRaw === $existenteRaw) {
+                                            $jaExistia = true;
+                                            break;
+                                        }
+                                    }
+                                    
+                                    if (!$jaExistia) {
+                                        $horariosNovos[] = $confirmado;
+                                    }
+                                }
+                                
+                                // Se há horários novos confirmados, enviar WhatsApp
+                                if (!empty($horariosNovos)) {
+                                    // Formatar lista de horários para a mensagem
+                                    $horariosLista = [];
+                                    foreach ($horariosNovos as $horarioNovo) {
+                                        $horariosLista[] = $horarioNovo['raw'] ?? '';
+                                    }
+                                    $horariosTexto = implode(', ', $horariosLista);
+                                    
+                                    $this->enviarNotificacaoWhatsApp($id, 'Horário Confirmado', [
+                                        'data_agendamento' => date('d/m/Y', strtotime($dataAg)),
+                                        'horario_agendamento' => $horaAg ? date('H:i', strtotime($horaAg)) : '',
+                                        'horario_servico' => $horarioCompleto,
+                                        'horario_confirmado_raw' => $horarioCompleto,
+                                        'horarios_confirmados' => $horariosTexto
+                                    ]);
+                                    
+                                    error_log("DEBUG atualizarDetalhes [ID:{$id}] - WhatsApp enviado para telefone: {$telefone}");
+                                    error_log("DEBUG atualizarDetalhes [ID:{$id}] - Horários novos confirmados: " . json_encode($horariosNovos));
+                                } else {
+                                    error_log("DEBUG atualizarDetalhes [ID:{$id}] - Nenhum horário novo confirmado, WhatsApp NÃO enviado");
+                                }
+                            } else {
+                                error_log("DEBUG atualizarDetalhes [ID:{$id}] - ⚠️ Telefone não encontrado, WhatsApp NÃO enviado");
+                            }
+                        } catch (\Exception $e) {
+                            // Ignorar erro de WhatsApp, não bloquear a resposta
+                            error_log('Erro ao enviar WhatsApp no atualizarDetalhes [ID:' . $id . ']: ' . $e->getMessage());
+                            error_log('Stack trace: ' . $e->getTraceAsString());
+                        }
+                    }
+                }
+            }
 
             $resultado = $this->solicitacaoModel->update($id, $dados);
             
@@ -787,7 +1743,22 @@ class SolicitacoesController extends Controller
             }
         } catch (\Exception $e) {
             error_log('Erro ao salvar: ' . $e->getMessage());
-            $this->json(['error' => $e->getMessage()], 500);
+            error_log('Stack trace: ' . $e->getTraceAsString());
+            // ✅ Garantir que sempre retorne JSON válido
+            $this->json([
+                'success' => false,
+                'error' => 'Erro ao salvar alterações: ' . $e->getMessage(),
+                'message' => 'Ocorreu um erro ao processar sua solicitação. Tente novamente.'
+            ], 500);
+        } catch (\Throwable $e) {
+            // ✅ Capturar qualquer erro PHP (fatal errors, etc.)
+            error_log('Erro fatal ao salvar: ' . $e->getMessage());
+            error_log('Stack trace: ' . $e->getTraceAsString());
+            $this->json([
+                'success' => false,
+                'error' => 'Erro inesperado',
+                'message' => 'Ocorreu um erro inesperado. Tente novamente.'
+            ], 500);
         }
     }
     
