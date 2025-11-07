@@ -286,13 +286,18 @@ class TokenController extends Controller
             // Marcar token como usado
             $this->tokenModel->markAsUsed($token, 'confirmed');
 
-            // Atualizar status da solicitação para "Serviço Agendado" se ainda não estiver
-            $statusModel = new \App\Models\Status();
-            $statusAgendado = $statusModel->findByNome('Serviço Agendado');
-
+            // CICLO DE AGENDAMENTO: Atualizar condição para "Data Aceita pelo Locatário"
+            // IMPORTANTE: Não atualizar status para "Serviço Agendado" aqui - isso só acontece na confirmação final pelo admin
+            $condicaoModel = new \App\Models\Condicao();
+            $condicaoAceita = $condicaoModel->findByNome('Data Aceita pelo Locatário');
+            
             $dadosUpdate = [
                 'horario_confirmado' => 1
             ];
+            
+            if ($condicaoAceita) {
+                $dadosUpdate['condicao_id'] = $condicaoAceita['id'];
+            }
             
             // Atualizar data e horário se foram selecionados
             if ($dataAgendamento) {
@@ -335,10 +340,8 @@ class TokenController extends Controller
                 $confirmedSchedules[] = $confirmedSchedule;
                 $dadosUpdate['confirmed_schedules'] = json_encode($confirmedSchedules);
             }
-
-            if ($statusAgendado && $solicitacao['status_id'] != $statusAgendado['id']) {
-                $dadosUpdate['status_id'] = $statusAgendado['id'];
-            }
+            
+            // NÃO atualizar status para "Serviço Agendado" aqui - aguardar confirmação final do admin
             
             $this->solicitacaoModel->update($solicitacao['id'], $dadosUpdate);
 
@@ -349,9 +352,9 @@ class TokenController extends Controller
             ";
             \App\Core\Database::query($sql, [
                 $solicitacao['id'],
-                $statusAgendado['id'] ?? $solicitacao['status_id'],
+                $solicitacao['status_id'], // Manter status atual (não mudar para "Serviço Agendado" ainda)
                 null, // Usuário sistema (null = cliente)
-                'Horário confirmado pelo cliente via link de confirmação'
+                'Horário aceito pelo locatário via link de confirmação. Aguardando confirmação final do admin.'
             ]);
 
             // Exibir página de sucesso

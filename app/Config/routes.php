@@ -98,6 +98,13 @@ $router->post('/admin/solicitacoes/{id}/edit', 'SolicitacoesController@update', 
 $router->post('/admin/solicitacoes/criar', 'SolicitacoesController@criarSolicitacao', ['auth']);
 $router->post('/admin/solicitacoes/confirmar-datas', 'SolicitacoesController@confirmarDatas', ['auth']);
 $router->post('/admin/solicitacoes/cancelar', 'SolicitacoesController@cancelarSolicitacao', ['auth']);
+
+// Rotas do ciclo de agendamento
+$router->post('/admin/solicitacoes/{id}/aceitar-data-prestador', 'SolicitacoesController@aceitarDataPrestador', ['auth']);
+$router->post('/admin/solicitacoes/{id}/recusar-propor-datas', 'SolicitacoesController@recusarProporDatas', ['auth']);
+$router->post('/admin/solicitacoes/{id}/aceitar-data-locatario', 'SolicitacoesController@aceitarDataLocatario', ['auth']);
+$router->post('/admin/solicitacoes/{id}/recusar-datas-locatario', 'SolicitacoesController@recusarDatasLocatario', ['auth']);
+$router->post('/admin/solicitacoes/{id}/confirmar-agendamento-final', 'SolicitacoesController@confirmarAgendamentoFinal', ['auth']);
 $router->post('/admin/solicitacoes/confirmar-atendimento', 'SolicitacoesController@confirmarAtendimento');
 $router->post('/admin/solicitacoes/informar-compra-peca', 'SolicitacoesController@informarCompraPeca', ['auth']);
 $router->post('/admin/solicitacoes/enviar-lembretes', 'SolicitacoesController@enviarLembretes', ['auth', 'admin']);

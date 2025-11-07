@@ -37,13 +37,17 @@ include __DIR__ . '/../../layouts/admin.php';
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Arquivo de Log</label>
                     <select name="file" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                        <?php foreach ($availableLogs as $log): ?>
-                            <option value="<?= htmlspecialchars($log['name']) ?>" 
-                                    <?= $logFile === $log['name'] ? 'selected' : '' ?>>
-                                <?= htmlspecialchars($log['label']) ?>
-                                (<?= number_format($log['size'] / 1024, 2) ?> KB)
-                            </option>
-                        <?php endforeach; ?>
+                        <?php if (empty($availableLogs)): ?>
+                            <option value="">Nenhum arquivo de log disponível</option>
+                        <?php else: ?>
+                            <?php foreach ($availableLogs as $log): ?>
+                                <option value="<?= htmlspecialchars($log['name']) ?>" 
+                                        <?= $logFile === $log['name'] ? 'selected' : '' ?>>
+                                    <?= htmlspecialchars($log['label']) ?> 
+                                    (<?= number_format($log['size'] / 1024, 2) ?> KB)
+                                </option>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
                     </select>
                 </div>
 
@@ -100,39 +104,64 @@ include __DIR__ . '/../../layouts/admin.php';
         <!-- Área de Logs -->
         <div class="bg-gray-900 rounded-lg p-4 overflow-x-auto" style="max-height: 70vh; overflow-y: auto;">
             <?php if (!empty($logs['error'])): ?>
-                <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
-                    <p class="text-red-800">
-                        <i class="fas fa-exclamation-triangle mr-2"></i>
-                        <?= htmlspecialchars($logs['error']) ?>
-                    </p>
+                <div class="bg-red-50 border-l-4 border-red-500 rounded-lg p-4 mb-4">
+                    <div class="flex items-start">
+                        <i class="fas fa-exclamation-triangle text-red-600 text-xl mr-3 mt-1"></i>
+                        <div>
+                            <h3 class="text-red-800 font-semibold mb-1">Erro ao carregar log</h3>
+                            <p class="text-red-700 text-sm">
+                                <?= htmlspecialchars($logs['error']) ?>
+                            </p>
+                            <?php if (strpos($logs['error'], 'não encontrado') !== false): ?>
+                                <p class="text-red-600 text-xs mt-2">
+                                    <i class="fas fa-info-circle mr-1"></i>
+                                    Verifique se o arquivo existe no caminho especificado.
+                                </p>
+                            <?php endif; ?>
+                        </div>
+                    </div>
                 </div>
             <?php elseif (empty($logs['content']) || count($logs['content']) === 0): ?>
-                <div class="text-center py-8 text-gray-400">
-                    <i class="fas fa-file-alt text-4xl mb-4 block"></i>
-                    <p>Nenhum log encontrado</p>
+                <div class="text-center py-12 text-gray-400">
+                    <i class="fas fa-file-alt text-5xl mb-4 block"></i>
+                    <p class="text-lg font-medium mb-2">Nenhum log encontrado</p>
                     <?php if (!empty($filter)): ?>
-                        <p class="text-sm mt-2">Tente remover o filtro ou verificar outro arquivo</p>
+                        <p class="text-sm">Nenhuma linha corresponde ao filtro: <strong class="text-gray-300"><?= htmlspecialchars($filter) ?></strong></p>
+                        <p class="text-sm mt-2">
+                            <a href="<?= url('admin/logs?file=' . urlencode($logFile) . '&lines=' . $lines) ?>" 
+                               class="text-blue-400 hover:text-blue-300 underline">
+                                Remover filtro e ver todos os logs
+                            </a>
+                        </p>
+                    <?php else: ?>
+                        <p class="text-sm">O arquivo de log está vazio ou não contém dados.</p>
                     <?php endif; ?>
                 </div>
             <?php else: ?>
                 <div class="font-mono text-sm">
-                    <?php foreach ($logs['content'] as $line): ?>
-                        <div class="mb-1 px-2 py-1 rounded hover:bg-gray-800 transition-colors <?= $line['highlight'] ? 'bg-gray-800 border-l-4 ' . ($line['type'] === 'error' ? 'border-red-500' : ($line['type'] === 'warning' ? 'border-yellow-500' : ($line['type'] === 'debug' ? 'border-blue-500' : 'border-green-500'))) : '' ?>">
-                            <div class="flex items-start">
-                                <span class="text-gray-500 mr-3 select-none" style="min-width: 60px;">
-                                    <?= $line['number'] ?>
-                                </span>
-                                <span class="flex-1 break-words <?= 
-                                    $line['type'] === 'error' ? 'text-red-400' : 
-                                    ($line['type'] === 'warning' ? 'text-yellow-400' : 
-                                    ($line['type'] === 'debug' ? 'text-blue-400' : 
-                                    ($line['type'] === 'success' ? 'text-green-400' : 'text-gray-300')))
-                                ?>">
-                                    <?= htmlspecialchars($line['content']) ?>
-                                </span>
+                    <?php if (count($logs['content']) > 0): ?>
+                        <?php foreach ($logs['content'] as $line): ?>
+                            <div class="mb-1 px-2 py-1 rounded hover:bg-gray-800 transition-colors <?= $line['highlight'] ? 'bg-gray-800 border-l-4 ' . ($line['type'] === 'error' ? 'border-red-500' : ($line['type'] === 'warning' ? 'border-yellow-500' : ($line['type'] === 'debug' ? 'border-blue-500' : 'border-green-500'))) : '' ?>">
+                                <div class="flex items-start gap-2">
+                                    <span class="text-gray-500 select-none flex-shrink-0" style="min-width: 70px; font-size: 0.85rem;">
+                                        <?= number_format($line['number']) ?>
+                                    </span>
+                                    <span class="flex-1 break-words whitespace-pre-wrap <?= 
+                                        $line['type'] === 'error' ? 'text-red-400' : 
+                                        ($line['type'] === 'warning' ? 'text-yellow-400' : 
+                                        ($line['type'] === 'debug' ? 'text-blue-400' : 
+                                        ($line['type'] === 'success' ? 'text-green-400' : 'text-gray-300')))
+                                    ?>">
+                                        <?= htmlspecialchars($line['content']) ?>
+                                    </span>
+                                </div>
                             </div>
+                        <?php endforeach; ?>
+                    <?php else: ?>
+                        <div class="text-center py-8 text-gray-400">
+                            <p>Nenhuma linha de log para exibir</p>
                         </div>
-                    <?php endforeach; ?>
+                    <?php endif; ?>
                 </div>
             <?php endif; ?>
         </div>

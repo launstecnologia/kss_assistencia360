@@ -704,9 +704,29 @@ class LocatarioController extends Controller
         
         $locatario = $_SESSION['locatario'];
         
-        // Processar horários
+        // Processar horários (máximo 3)
         $horariosRaw = $this->input('horarios_opcoes', '[]');
-        $horarios = is_string($horariosRaw) ? $horariosRaw : json_encode($horariosRaw);
+        $horariosArray = is_string($horariosRaw) ? json_decode($horariosRaw, true) : $horariosRaw;
+        
+        if (!is_array($horariosArray)) {
+            $horariosArray = [];
+        }
+        
+        // Limitar a 3 horários máximo
+        if (count($horariosArray) > 3) {
+            $horariosArray = array_slice($horariosArray, 0, 3);
+        }
+        
+        // Validar que há pelo menos 1 horário
+        if (empty($horariosArray)) {
+            $instancia = $this->getInstanciaFromUrl();
+            $this->redirect($instancia . '/nova-solicitacao', [
+                'error' => 'É necessário selecionar pelo menos 1 horário (máximo 3)'
+            ]);
+            return;
+        }
+        
+        $horarios = json_encode($horariosArray);
         
         $data = [
             'imobiliaria_id' => $locatario['imobiliaria_id'],
@@ -739,6 +759,23 @@ class LocatarioController extends Controller
                 ]);
                 return;
             }
+        }
+        
+        // Definir condição inicial: "Aguardando Resposta do Prestador"
+        $condicaoModel = new \App\Models\Condicao();
+        $condicaoAguardando = $condicaoModel->findByNome('Aguardando Resposta do Prestador');
+        if ($condicaoAguardando) {
+            $data['condicao_id'] = $condicaoAguardando['id'];
+        }
+        
+        // Definir status inicial: "Nova Solicitação" ou "Buscando Prestador"
+        $statusModel = new \App\Models\Status();
+        $statusNova = $statusModel->findByNome('Nova Solicitação');
+        if (!$statusNova) {
+            $statusNova = $statusModel->findByNome('Buscando Prestador');
+        }
+        if ($statusNova) {
+            $data['status_id'] = $statusNova['id'];
         }
         
         // Criar solicitação

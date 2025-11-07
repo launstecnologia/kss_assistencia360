@@ -165,16 +165,41 @@ class LogsController extends Controller
      */
     private function getLogPath(string $logFile): string
     {
+        // Detectar sistema operacional
+        $isWindows = strtoupper(substr(PHP_OS, 0, 3)) === 'WIN';
+        
         // Lista de arquivos de log permitidos
         $allowedLogs = [
-            'php_error_log' => 'C:/xampp/php/logs/php_error_log',
+            'php_error_log' => $isWindows 
+                ? 'C:/xampp/php/logs/php_error_log' 
+                : ini_get('error_log') ?: '/var/log/php_errors.log',
             'whatsapp_evolution_api.log' => __DIR__ . '/../../storage/logs/whatsapp_evolution_api.log',
             'error.log' => __DIR__ . '/../../storage/logs/error.log'
         ];
 
         // Se o arquivo está na lista permitida, usar o caminho definido
         if (isset($allowedLogs[$logFile])) {
-            return $allowedLogs[$logFile];
+            $path = $allowedLogs[$logFile];
+            
+            // Para php_error_log, tentar múltiplos caminhos se o primeiro não existir
+            if ($logFile === 'php_error_log' && !file_exists($path)) {
+                // Tentar caminhos alternativos
+                $alternativePaths = [
+                    ini_get('error_log'),
+                    '/var/log/php_errors.log',
+                    '/var/log/php-fpm/error.log',
+                    '/var/log/apache2/error.log',
+                    sys_get_temp_dir() . '/php_errors.log'
+                ];
+                
+                foreach ($alternativePaths as $altPath) {
+                    if ($altPath && file_exists($altPath)) {
+                        return $altPath;
+                    }
+                }
+            }
+            
+            return $path;
         }
 
         // Caso contrário, tentar construir o caminho relativo
@@ -197,9 +222,27 @@ class LogsController extends Controller
     {
         $logs = [];
 
-        // PHP Error Log
-        $phpLogPath = 'C:/xampp/php/logs/php_error_log';
-        if (file_exists($phpLogPath)) {
+        // PHP Error Log - tentar múltiplos caminhos
+        $isWindows = strtoupper(substr(PHP_OS, 0, 3)) === 'WIN';
+        $phpLogPaths = $isWindows 
+            ? ['C:/xampp/php/logs/php_error_log']
+            : [
+                ini_get('error_log'),
+                '/var/log/php_errors.log',
+                '/var/log/php-fpm/error.log',
+                '/var/log/apache2/error.log',
+                sys_get_temp_dir() . '/php_errors.log'
+            ];
+        
+        $phpLogPath = null;
+        foreach ($phpLogPaths as $path) {
+            if ($path && file_exists($path)) {
+                $phpLogPath = $path;
+                break;
+            }
+        }
+        
+        if ($phpLogPath) {
             $logs[] = [
                 'name' => 'php_error_log',
                 'label' => 'PHP Error Log',

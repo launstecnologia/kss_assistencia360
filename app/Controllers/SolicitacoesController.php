@@ -389,15 +389,66 @@ class SolicitacoesController extends Controller
         }
 
         try {
+            // Validar máximo de 3 horários
+            $horariosOpcoes = $data['datas_opcoes'] ?? [];
+            if (count($horariosOpcoes) > 3) {
+                $this->json(['error' => 'Máximo de 3 horários permitidos'], 400);
+                return;
+            }
+            
+            if (empty($horariosOpcoes)) {
+                $this->json(['error' => 'É necessário selecionar pelo menos 1 horário'], 400);
+                return;
+            }
+            
+            // Converter datas_opcoes para horarios_opcoes (formato esperado)
+            $horariosFormatados = [];
+            foreach ($horariosOpcoes as $dataOpcao) {
+                if (is_string($dataOpcao) && preg_match('/(\d{2})\/(\d{2})\/(\d{4})\s*-\s*(\d{2}:\d{2})-(\d{2}:\d{2})/', $dataOpcao, $matches)) {
+                    $horariosFormatados[] = $dataOpcao;
+                } else {
+                    // Tentar converter formato ISO para formato esperado
+                    try {
+                        $dt = new \DateTime($dataOpcao);
+                        $horariosFormatados[] = $dt->format('d/m/Y') . ' - 08:00-11:00'; // Formato padrão
+                    } catch (\Exception $e) {
+                        // Ignorar data inválida
+                    }
+                }
+            }
+            
+            $data['horarios_opcoes'] = json_encode($horariosFormatados);
+            
             // Gerar número da solicitação
             $data['numero_solicitacao'] = $this->solicitacaoModel->gerarNumeroSolicitacao();
             
             // Gerar token de confirmação
             $data['token_confirmacao'] = $this->solicitacaoModel->gerarTokenConfirmacao();
             
+            // Definir condição inicial: "Aguardando Resposta do Prestador"
+            $condicaoModel = new \App\Models\Condicao();
+            $condicaoAguardando = $condicaoModel->findByNome('Aguardando Resposta do Prestador');
+            if ($condicaoAguardando) {
+                $data['condicao_id'] = $condicaoAguardando['id'];
+            }
+            
+            // Definir status inicial: "Nova Solicitação" ou "Buscando Prestador"
+            $statusNova = $this->getStatusId('Nova Solicitação');
+            if (!$statusNova) {
+                $statusNova = $this->getStatusId('Buscando Prestador');
+            }
+            if ($statusNova) {
+                $data['status_id'] = $statusNova;
+            }
+            
             // Definir data limite para cancelamento (1 dia antes da primeira data)
-            $primeiraData = new \DateTime($data['datas_opcoes'][0]);
-            $data['data_limite_cancelamento'] = $primeiraData->modify('-1 day')->format('Y-m-d');
+            if (!empty($horariosFormatados)) {
+                $primeiraDataStr = $horariosFormatados[0];
+                if (preg_match('/(\d{2})\/(\d{2})\/(\d{4})/', $primeiraDataStr, $dateMatches)) {
+                    $primeiraData = new \DateTime($dateMatches[3] . '-' . $dateMatches[2] . '-' . $dateMatches[1]);
+                    $data['data_limite_cancelamento'] = $primeiraData->modify('-1 day')->format('Y-m-d');
+                }
+            }
             
             // Criar solicitação
             $solicitacaoId = $this->solicitacaoModel->create($data);
@@ -2775,6 +2826,431 @@ class SolicitacoesController extends Controller
         } catch (\Exception $e) {
             error_log('Erro ao migrar solicitação: ' . $e->getMessage());
             $this->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * CICLO DE AGENDAMENTO - Etapa 2: Prestador aceita uma data
+     * POST /admin/solicitacoes/{id}/aceitar-data-prestador
+     */
+    public function aceitarDataPrestador(int $id): void
+    {
+        if (!$this->isPost()) {
+            $this->json(['error' => 'Método não permitido'], 405);
+            return;
+        }
+
+        $raw = file_get_contents('php://input');
+        $json = json_decode($raw, true);
+        $horarioRaw = $json['horario_raw'] ?? $this->input('horario_raw');
+
+        if (empty($horarioRaw)) {
+            $this->json(['error' => 'Horário não informado'], 400);
+            return;
+        }
+
+        try {
+            $solicitacao = $this->solicitacaoModel->find($id);
+            if (!$solicitacao) {
+                $this->json(['error' => 'Solicitação não encontrada'], 404);
+                return;
+            }
+
+            // Verificar se está na condição correta
+            $condicaoModel = new \App\Models\Condicao();
+            $condicaoAtual = $condicaoModel->find($solicitacao['condicao_id']);
+            if (!$condicaoAtual || $condicaoAtual['nome'] !== 'Aguardando Resposta do Prestador') {
+                $this->json(['error' => 'Solicitação não está aguardando resposta do prestador'], 400);
+                return;
+            }
+
+            // Extrair data e horário do raw
+            $dataAgendamento = null;
+            $horarioAgendamento = null;
+            if (preg_match('/(\d{2})\/(\d{2})\/(\d{4})/', $horarioRaw, $dateMatches)) {
+                $dataAgendamento = $dateMatches[3] . '-' . $dateMatches[2] . '-' . $dateMatches[1];
+            }
+            if (preg_match('/(\d{2}:\d{2})-\d{2}:\d{2}/', $horarioRaw, $timeMatches)) {
+                $horarioAgendamento = $timeMatches[1] . ':00';
+            }
+
+            // Atualizar condição para "Data Aceita pelo Prestador"
+            $condicaoAceita = $condicaoModel->findByNome('Data Aceita pelo Prestador');
+            if (!$condicaoAceita) {
+                $this->json(['error' => 'Condição "Data Aceita pelo Prestador" não encontrada'], 500);
+                return;
+            }
+
+            // Salvar em confirmed_schedules
+            $confirmedSchedule = [
+                'date' => $dataAgendamento,
+                'time' => preg_match('/(\d{2}:\d{2})-(\d{2}:\d{2})/', $horarioRaw, $t) ? ($t[1] . '-' . $t[2]) : '',
+                'raw' => $horarioRaw,
+                'source' => 'prestador',
+                'confirmed_at' => date('c')
+            ];
+
+            $dadosUpdate = [
+                'condicao_id' => $condicaoAceita['id'],
+                'horario_confirmado_raw' => $horarioRaw,
+                'confirmed_schedules' => json_encode([$confirmedSchedule])
+            ];
+
+            if ($dataAgendamento) {
+                $dadosUpdate['data_agendamento'] = $dataAgendamento;
+            }
+            if ($horarioAgendamento) {
+                $dadosUpdate['horario_agendamento'] = $horarioAgendamento;
+            }
+
+            // Status: "Aguardando Confirmação do Locatário"
+            $statusAguardando = $this->getStatusId('Aguardando Confirmação do Locatário');
+            if (!$statusAguardando) {
+                $statusAguardando = $this->getStatusId('Buscando Prestador');
+            }
+            if ($statusAguardando) {
+                $dadosUpdate['status_id'] = $statusAguardando;
+            }
+
+            $this->solicitacaoModel->update($id, $dadosUpdate);
+
+            // Enviar notificação para locatário confirmar
+            $this->enviarNotificacaoWhatsApp($id, 'Horário Sugerido', [
+                'data_agendamento' => $dataAgendamento ? date('d/m/Y', strtotime($dataAgendamento)) : '',
+                'horario_agendamento' => $horarioRaw
+            ]);
+
+            $this->json(['success' => true, 'message' => 'Data aceita pelo prestador. Locatário será notificado para confirmar.']);
+        } catch (\Exception $e) {
+            error_log('Erro ao aceitar data pelo prestador: ' . $e->getMessage());
+            $this->json(['error' => 'Erro ao processar: ' . $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * CICLO DE AGENDAMENTO - Etapa 2: Prestador recusa e propõe novas datas
+     * POST /admin/solicitacoes/{id}/recusar-propor-datas
+     */
+    public function recusarProporDatas(int $id): void
+    {
+        if (!$this->isPost()) {
+            $this->json(['error' => 'Método não permitido'], 405);
+            return;
+        }
+
+        $raw = file_get_contents('php://input');
+        $json = json_decode($raw, true);
+        $novasDatas = $json['novas_datas'] ?? $this->input('novas_datas', []);
+
+        if (empty($novasDatas) || !is_array($novasDatas)) {
+            $this->json(['error' => 'É necessário informar pelo menos 1 nova data (máximo 3)'], 400);
+            return;
+        }
+
+        // Limitar a 3 horários máximo
+        if (count($novasDatas) > 3) {
+            $novasDatas = array_slice($novasDatas, 0, 3);
+        }
+
+        try {
+            $solicitacao = $this->solicitacaoModel->find($id);
+            if (!$solicitacao) {
+                $this->json(['error' => 'Solicitação não encontrada'], 404);
+                return;
+            }
+
+            // Verificar se está na condição correta
+            $condicaoModel = new \App\Models\Condicao();
+            $condicaoAtual = $condicaoModel->find($solicitacao['condicao_id']);
+            if (!$condicaoAtual || $condicaoAtual['nome'] !== 'Aguardando Resposta do Prestador') {
+                $this->json(['error' => 'Solicitação não está aguardando resposta do prestador'], 400);
+                return;
+            }
+
+            // Atualizar condição para "Prestador sem disponibilidade"
+            $condicaoSemDisponibilidade = $condicaoModel->findByNome('Prestador sem disponibilidade');
+            if (!$condicaoSemDisponibilidade) {
+                $this->json(['error' => 'Condição "Prestador sem disponibilidade" não encontrada'], 500);
+                return;
+            }
+
+            // Salvar novas datas em horarios_opcoes (SUBSTITUINDO as anteriores)
+            $dadosUpdate = [
+                'condicao_id' => $condicaoSemDisponibilidade['id'],
+                'horarios_opcoes' => json_encode($novasDatas),
+                'horarios_indisponiveis' => 1,
+                'confirmed_schedules' => null,
+                'horario_confirmado' => 0,
+                'horario_confirmado_raw' => null,
+                'data_agendamento' => null,
+                'horario_agendamento' => null
+            ];
+
+            // Status: "Aguardando Confirmação do Locatário"
+            $statusAguardando = $this->getStatusId('Aguardando Confirmação do Locatário');
+            if (!$statusAguardando) {
+                $statusAguardando = $this->getStatusId('Buscando Prestador');
+            }
+            if ($statusAguardando) {
+                $dadosUpdate['status_id'] = $statusAguardando;
+            }
+
+            $this->solicitacaoModel->update($id, $dadosUpdate);
+
+            // Enviar notificação para locatário com novas datas
+            $horariosTexto = [];
+            foreach ($novasDatas as $horario) {
+                if (preg_match('/(\d{2}\/\d{2}\/\d{4})\s*-\s*(\d{2}:\d{2})-(\d{2}:\d{2})/', $horario, $matches)) {
+                    $horariosTexto[] = $matches[1] . ' das ' . $matches[2] . ' às ' . $matches[3];
+                } else {
+                    $horariosTexto[] = $horario;
+                }
+            }
+
+            $this->enviarNotificacaoWhatsApp($id, 'Horário Sugerido', [
+                'horarios_sugeridos' => implode(', ', $horariosTexto)
+            ]);
+
+            $this->json(['success' => true, 'message' => 'Novas datas propostas. Locatário será notificado.']);
+        } catch (\Exception $e) {
+            error_log('Erro ao propor novas datas: ' . $e->getMessage());
+            $this->json(['error' => 'Erro ao processar: ' . $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * CICLO DE AGENDAMENTO - Etapa 3: Locatário aceita uma data
+     * POST /admin/solicitacoes/{id}/aceitar-data-locatario
+     */
+    public function aceitarDataLocatario(int $id): void
+    {
+        if (!$this->isPost()) {
+            $this->json(['error' => 'Método não permitido'], 405);
+            return;
+        }
+
+        $raw = file_get_contents('php://input');
+        $json = json_decode($raw, true);
+        $horarioRaw = $json['horario_raw'] ?? $this->input('horario_raw');
+
+        if (empty($horarioRaw)) {
+            $this->json(['error' => 'Horário não informado'], 400);
+            return;
+        }
+
+        try {
+            $solicitacao = $this->solicitacaoModel->find($id);
+            if (!$solicitacao) {
+                $this->json(['error' => 'Solicitação não encontrada'], 404);
+                return;
+            }
+
+            // Verificar se está na condição correta
+            $condicaoModel = new \App\Models\Condicao();
+            $condicaoAtual = $condicaoModel->find($solicitacao['condicao_id']);
+            $condicaoNome = $condicaoAtual['nome'] ?? '';
+            
+            if ($condicaoNome !== 'Aguardando Confirmação do Locatário' && 
+                $condicaoNome !== 'Prestador sem disponibilidade') {
+                $this->json(['error' => 'Solicitação não está aguardando confirmação do locatário'], 400);
+                return;
+            }
+
+            // Extrair data e horário do raw
+            $dataAgendamento = null;
+            $horarioAgendamento = null;
+            if (preg_match('/(\d{2})\/(\d{2})\/(\d{4})/', $horarioRaw, $dateMatches)) {
+                $dataAgendamento = $dateMatches[3] . '-' . $dateMatches[2] . '-' . $dateMatches[1];
+            }
+            if (preg_match('/(\d{2}:\d{2})-\d{2}:\d{2}/', $horarioRaw, $timeMatches)) {
+                $horarioAgendamento = $timeMatches[1] . ':00';
+            }
+
+            // Atualizar condição para "Data Aceita pelo Locatário"
+            $condicaoAceita = $condicaoModel->findByNome('Data Aceita pelo Locatário');
+            if (!$condicaoAceita) {
+                $this->json(['error' => 'Condição "Data Aceita pelo Locatário" não encontrada'], 500);
+                return;
+            }
+
+            // Salvar em confirmed_schedules
+            $confirmedSchedule = [
+                'date' => $dataAgendamento,
+                'time' => preg_match('/(\d{2}:\d{2})-(\d{2}:\d{2})/', $horarioRaw, $t) ? ($t[1] . '-' . $t[2]) : '',
+                'raw' => $horarioRaw,
+                'source' => 'tenant',
+                'confirmed_at' => date('c')
+            ];
+
+            $confirmedSchedules = [];
+            if (!empty($solicitacao['confirmed_schedules'])) {
+                $existing = json_decode($solicitacao['confirmed_schedules'], true);
+                if (is_array($existing)) {
+                    $confirmedSchedules = $existing;
+                }
+            }
+            $confirmedSchedules[] = $confirmedSchedule;
+
+            $dadosUpdate = [
+                'condicao_id' => $condicaoAceita['id'],
+                'horario_confirmado' => 1,
+                'horario_confirmado_raw' => $horarioRaw,
+                'confirmed_schedules' => json_encode($confirmedSchedules)
+            ];
+
+            if ($dataAgendamento) {
+                $dadosUpdate['data_agendamento'] = $dataAgendamento;
+            }
+            if ($horarioAgendamento) {
+                $dadosUpdate['horario_agendamento'] = $horarioAgendamento;
+            }
+
+            $this->solicitacaoModel->update($id, $dadosUpdate);
+
+            $this->json(['success' => true, 'message' => 'Data aceita pelo locatário. Aguardando confirmação final do admin.']);
+        } catch (\Exception $e) {
+            error_log('Erro ao aceitar data pelo locatário: ' . $e->getMessage());
+            $this->json(['error' => 'Erro ao processar: ' . $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * CICLO DE AGENDAMENTO - Etapa 3: Locatário recusa todas as datas
+     * POST /admin/solicitacoes/{id}/recusar-datas-locatario
+     */
+    public function recusarDatasLocatario(int $id): void
+    {
+        if (!$this->isPost()) {
+            $this->json(['error' => 'Método não permitido'], 405);
+            return;
+        }
+
+        try {
+            $solicitacao = $this->solicitacaoModel->find($id);
+            if (!$solicitacao) {
+                $this->json(['error' => 'Solicitação não encontrada'], 404);
+                return;
+            }
+
+            // Verificar se está na condição correta
+            $condicaoModel = new \App\Models\Condicao();
+            $condicaoAtual = $condicaoModel->find($solicitacao['condicao_id']);
+            $condicaoNome = $condicaoAtual['nome'] ?? '';
+            
+            if ($condicaoNome !== 'Aguardando Confirmação do Locatário' && 
+                $condicaoNome !== 'Prestador sem disponibilidade') {
+                $this->json(['error' => 'Solicitação não está aguardando confirmação do locatário'], 400);
+                return;
+            }
+
+            // Atualizar condição para "Datas Recusadas pelo Locatário"
+            $condicaoRecusada = $condicaoModel->findByNome('Datas Recusadas pelo Locatário');
+            if (!$condicaoRecusada) {
+                $this->json(['error' => 'Condição "Datas Recusadas pelo Locatário" não encontrada'], 500);
+                return;
+            }
+
+            $dadosUpdate = [
+                'condicao_id' => $condicaoRecusada['id'],
+                'horarios_indisponiveis' => 0,
+                'confirmed_schedules' => null,
+                'horario_confirmado' => 0,
+                'horario_confirmado_raw' => null,
+                'data_agendamento' => null,
+                'horario_agendamento' => null
+            ];
+
+            // Status: "Buscando Prestador" (ciclo reinicia)
+            $statusBuscando = $this->getStatusId('Buscando Prestador');
+            if ($statusBuscando) {
+                $dadosUpdate['status_id'] = $statusBuscando;
+            }
+
+            $this->solicitacaoModel->update($id, $dadosUpdate);
+
+            $this->json(['success' => true, 'message' => 'Datas recusadas. Prestador pode propor novas datas.']);
+        } catch (\Exception $e) {
+            error_log('Erro ao recusar datas pelo locatário: ' . $e->getMessage());
+            $this->json(['error' => 'Erro ao processar: ' . $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * CICLO DE AGENDAMENTO - Etapa 4: Confirmação final pelo admin/prestador
+     * POST /admin/solicitacoes/{id}/confirmar-agendamento-final
+     */
+    public function confirmarAgendamentoFinal(int $id): void
+    {
+        if (!$this->isPost()) {
+            $this->json(['error' => 'Método não permitido'], 405);
+            return;
+        }
+
+        try {
+            $solicitacao = $this->solicitacaoModel->find($id);
+            if (!$solicitacao) {
+                $this->json(['error' => 'Solicitação não encontrada'], 404);
+                return;
+            }
+
+            // Verificar se está na condição correta
+            $condicaoModel = new \App\Models\Condicao();
+            $condicaoAtual = $condicaoModel->find($solicitacao['condicao_id']);
+            $condicaoNome = $condicaoAtual['nome'] ?? '';
+            
+            if ($condicaoNome !== 'Data Aceita pelo Locatário') {
+                $this->json(['error' => 'Locatário ainda não aceitou uma data'], 400);
+                return;
+            }
+
+            if (empty($solicitacao['horario_confirmado_raw'])) {
+                $this->json(['error' => 'Nenhum horário foi aceito pelo locatário'], 400);
+                return;
+            }
+
+            // Atualizar condição para "Serviço Agendado / Data Confirmada"
+            $condicaoConfirmada = $condicaoModel->findByNome('Serviço Agendado / Data Confirmada');
+            if (!$condicaoConfirmada) {
+                // Tentar usar status "Serviço Agendado" como fallback
+                $statusAgendado = $this->getStatusId('Serviço Agendado');
+                if ($statusAgendado) {
+                    $dadosUpdate = [
+                        'status_id' => $statusAgendado,
+                        'horario_confirmado' => 1
+                    ];
+                    $this->solicitacaoModel->update($id, $dadosUpdate);
+                    $this->json(['success' => true, 'message' => 'Agendamento confirmado com sucesso!']);
+                    return;
+                }
+                $this->json(['error' => 'Condição "Serviço Agendado / Data Confirmada" não encontrada'], 500);
+                return;
+            }
+
+            // Status: "Serviço Agendado"
+            $statusAgendado = $this->getStatusId('Serviço Agendado');
+            if (!$statusAgendado) {
+                $this->json(['error' => 'Status "Serviço Agendado" não encontrado'], 500);
+                return;
+            }
+
+            $dadosUpdate = [
+                'condicao_id' => $condicaoConfirmada['id'],
+                'status_id' => $statusAgendado,
+                'horario_confirmado' => 1
+            ];
+
+            $this->solicitacaoModel->update($id, $dadosUpdate);
+
+            // Enviar notificação de confirmação
+            $this->enviarNotificacaoWhatsApp($id, 'Horário Confirmado', [
+                'data_agendamento' => $solicitacao['data_agendamento'] ? date('d/m/Y', strtotime($solicitacao['data_agendamento'])) : '',
+                'horario_agendamento' => $solicitacao['horario_confirmado_raw']
+            ]);
+
+            $this->json(['success' => true, 'message' => 'Agendamento confirmado com sucesso!']);
+        } catch (\Exception $e) {
+            error_log('Erro ao confirmar agendamento final: ' . $e->getMessage());
+            $this->json(['error' => 'Erro ao processar: ' . $e->getMessage()], 500);
         }
     }
 }
