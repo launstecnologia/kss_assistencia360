@@ -32,7 +32,7 @@ ob_start();
 
                 <div class="space-y-2 text-sm">
                     <div class="flex justify-between">
-                        <span class="text-gray-600">Protocolo:</span>
+                        <span class="text-gray-600">Nº de Atendimento:</span>
                         <span class="font-semibold text-gray-900"><?= htmlspecialchars($solicitacao['numero_solicitacao'] ?? 'N/A') ?></span>
                     </div>
                     <?php if ($solicitacao['data_agendamento']): ?>

@@ -20,33 +20,9 @@ ob_start();
                 <h3 class="font-semibold text-gray-900 mb-3">Informações do Agendamento</h3>
                 <div class="space-y-2 text-sm">
                     <div class="flex justify-between">
-                        <span class="text-gray-600">Protocolo:</span>
+                        <span class="text-gray-600">Nº de Atendimento:</span>
                         <span class="font-semibold text-gray-900"><?= htmlspecialchars($tokenData['protocol'] ?? $solicitacao['numero_solicitacao'] ?? 'N/A') ?></span>
                     </div>
-                    <?php if ($tokenData['scheduled_date']): ?>
-                    <div class="flex justify-between">
-                        <span class="text-gray-600">Data:</span>
-                        <span class="font-semibold text-gray-900"><?= date('d/m/Y', strtotime($tokenData['scheduled_date'])) ?></span>
-                    </div>
-                    <?php endif; ?>
-                    <?php if ($tokenData['scheduled_time']): ?>
-                    <div class="flex justify-between">
-                        <span class="text-gray-600">Horário:</span>
-                        <span class="font-semibold text-gray-900"><?= htmlspecialchars($tokenData['scheduled_time']) ?></span>
-                    </div>
-                    <?php endif; ?>
-                    <?php if ($solicitacao['data_agendamento']): ?>
-                    <div class="flex justify-between">
-                        <span class="text-gray-600">Data Agendada:</span>
-                        <span class="font-semibold text-gray-900"><?= date('d/m/Y', strtotime($solicitacao['data_agendamento'])) ?></span>
-                    </div>
-                    <?php endif; ?>
-                    <?php if ($solicitacao['horario_agendamento']): ?>
-                    <div class="flex justify-between">
-                        <span class="text-gray-600">Horário Agendado:</span>
-                        <span class="font-semibold text-gray-900"><?= htmlspecialchars($solicitacao['horario_agendamento']) ?></span>
-                    </div>
-                    <?php endif; ?>
                 </div>
             </div>
 
@@ -69,6 +45,44 @@ ob_start();
 
             <!-- Formulário de Confirmação -->
             <form method="POST" action="<?= url('confirmacao-horario?token=' . urlencode($token)) ?>" class="space-y-4">
+                <?php 
+                $horariosDisponiveis = $horariosDisponiveis ?? [];
+                if (!empty($horariosDisponiveis) && count($horariosDisponiveis) > 1): ?>
+                    <!-- Múltiplos horários - permitir seleção -->
+                    <div class="mb-6">
+                        <h3 class="font-semibold text-gray-900 mb-3">Selecione o horário desejado:</h3>
+                        <div class="space-y-3">
+                            <?php foreach ($horariosDisponiveis as $index => $horario): ?>
+                                <label class="flex items-center p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-green-500 hover:bg-green-50 transition-colors <?= $index === 0 ? 'border-green-500 bg-green-50' : '' ?>">
+                                    <input type="radio" 
+                                           name="horario_selecionado" 
+                                           value="<?= htmlspecialchars(json_encode($horario)) ?>"
+                                           class="mr-3 h-4 w-4 text-green-600 focus:ring-green-500"
+                                           <?= $index === 0 ? 'checked' : '' ?>
+                                           required>
+                                    <div class="flex-1">
+                                        <div class="flex items-center text-gray-900 font-medium">
+                                            <i class="fas fa-clock mr-2 text-green-600"></i>
+                                            <?= htmlspecialchars($horario['raw']) ?>
+                                        </div>
+                                    </div>
+                                </label>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+                <?php elseif (!empty($horariosDisponiveis) && count($horariosDisponiveis) === 1): ?>
+                    <!-- Um único horário - mostrar mas não permitir seleção -->
+                    <div class="mb-6">
+                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                            <div class="flex items-center text-gray-900 font-medium">
+                                <i class="fas fa-clock mr-2 text-blue-600"></i>
+                                <span><?= htmlspecialchars($horariosDisponiveis[0]['raw']) ?></span>
+                            </div>
+                        </div>
+                        <input type="hidden" name="horario_selecionado" value="<?= htmlspecialchars(json_encode($horariosDisponiveis[0])) ?>">
+                    </div>
+                <?php endif; ?>
+                
                 <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
                     <p class="text-sm text-blue-800">
                         <i class="fas fa-info-circle mr-2"></i>

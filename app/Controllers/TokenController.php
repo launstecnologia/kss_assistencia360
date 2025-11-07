@@ -78,11 +78,60 @@ class TokenController extends Controller
             return;
         }
 
+        // Buscar horários disponíveis para seleção
+        $horariosDisponiveis = [];
+        
+        // Se houver confirmed_schedules, usar eles
+        if (!empty($solicitacao['confirmed_schedules'])) {
+            $confirmedSchedules = json_decode($solicitacao['confirmed_schedules'], true);
+            if (is_array($confirmedSchedules) && !empty($confirmedSchedules)) {
+                foreach ($confirmedSchedules as $schedule) {
+                    if (!empty($schedule['raw'])) {
+                        $horariosDisponiveis[] = [
+                            'raw' => $schedule['raw'],
+                            'date' => $schedule['date'] ?? '',
+                            'time' => $schedule['time'] ?? ''
+                        ];
+                    }
+                }
+            }
+        }
+        
+        // Se não houver confirmed_schedules mas houver horarios_opcoes, usar eles
+        if (empty($horariosDisponiveis) && !empty($solicitacao['horarios_opcoes'])) {
+            $horariosOpcoes = json_decode($solicitacao['horarios_opcoes'], true);
+            if (is_array($horariosOpcoes) && !empty($horariosOpcoes)) {
+                foreach ($horariosOpcoes as $horario) {
+                    if (is_string($horario)) {
+                        // Formato: "dd/mm/yyyy - HH:MM-HH:MM"
+                        if (preg_match('/(\d{2}\/\d{2}\/\d{4})\s*-\s*(\d{2}:\d{2})-(\d{2}:\d{2})/', $horario, $matches)) {
+                            $horariosDisponiveis[] = [
+                                'raw' => $horario,
+                                'date' => date('Y-m-d', strtotime(str_replace('/', '-', $matches[1]))),
+                                'time' => $matches[2] . '-' . $matches[3]
+                            ];
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Se ainda não houver horários, usar o horário do token
+        if (empty($horariosDisponiveis) && !empty($tokenData['scheduled_date']) && !empty($tokenData['scheduled_time'])) {
+            $dataFormatada = date('d/m/Y', strtotime($tokenData['scheduled_date']));
+            $horariosDisponiveis[] = [
+                'raw' => $dataFormatada . ' - ' . $tokenData['scheduled_time'],
+                'date' => $tokenData['scheduled_date'],
+                'time' => $tokenData['scheduled_time']
+            ];
+        }
+
         // Exibir formulário de confirmação
         $this->view('token.confirmacao', [
             'token' => $token,
             'tokenData' => $tokenData,
             'solicitacao' => $solicitacao,
+            'horariosDisponiveis' => $horariosDisponiveis,
             'title' => 'Confirmar Horário de Atendimento'
         ]);
     }
@@ -93,6 +142,43 @@ class TokenController extends Controller
     private function processarConfirmacao(string $token, array $tokenData, array $solicitacao): void
     {
         try {
+            // Buscar horário selecionado pelo usuário
+            $horarioSelecionado = $this->input('horario_selecionado');
+            
+            // Se não foi selecionado, usar o primeiro disponível
+            $dataAgendamento = null;
+            $horarioAgendamento = null;
+            $horarioRaw = null;
+            
+            if ($horarioSelecionado) {
+                // Decodificar o horário selecionado (vem como JSON string)
+                $horarioData = json_decode($horarioSelecionado, true);
+                if ($horarioData && !empty($horarioData['raw'])) {
+                    $horarioRaw = $horarioData['raw'];
+                    
+                    // Extrair data do raw (formato: "dd/mm/yyyy - HH:MM-HH:MM")
+                    if (preg_match('/(\d{2})\/(\d{2})\/(\d{4})/', $horarioRaw, $dateMatches)) {
+                        $dataAgendamento = $dateMatches[3] . '-' . $dateMatches[2] . '-' . $dateMatches[1];
+                    } elseif (!empty($horarioData['date'])) {
+                        $dataAgendamento = date('Y-m-d', strtotime($horarioData['date']));
+                    }
+                    
+                    // Extrair apenas a hora inicial se for uma faixa (ex: "14:00-17:00")
+                    if (preg_match('/(\d{2}:\d{2})-\d{2}:\d{2}/', $horarioRaw, $timeMatches)) {
+                        $horarioAgendamento = $timeMatches[1];
+                    } elseif (!empty($horarioData['time'])) {
+                        $horarioAgendamento = preg_replace('/-.*$/', '', $horarioData['time']);
+                    }
+                }
+            }
+            
+            // Se não conseguiu extrair, usar dados do token
+            if (!$horarioRaw && !empty($tokenData['scheduled_date']) && !empty($tokenData['scheduled_time'])) {
+                $dataAgendamento = date('Y-m-d', strtotime($tokenData['scheduled_date']));
+                $horarioAgendamento = preg_replace('/-.*$/', '', $tokenData['scheduled_time']);
+                $horarioRaw = date('d/m/Y', strtotime($tokenData['scheduled_date'])) . ' - ' . $tokenData['scheduled_time'];
+            }
+
             // Marcar token como usado
             $this->tokenModel->markAsUsed($token, 'confirmed');
 
@@ -100,17 +186,26 @@ class TokenController extends Controller
             $statusModel = new \App\Models\Status();
             $statusAgendado = $statusModel->findByNome('Serviço Agendado');
 
-            if ($statusAgendado && $solicitacao['status_id'] != $statusAgendado['id']) {
-                $this->solicitacaoModel->update($solicitacao['id'], [
-                    'status_id' => $statusAgendado['id'],
-                    'horario_confirmado' => 1
-                ]);
-            } else {
-                // Apenas marcar como confirmado
-                $this->solicitacaoModel->update($solicitacao['id'], [
-                    'horario_confirmado' => 1
-                ]);
+            $dadosUpdate = [
+                'horario_confirmado' => 1
+            ];
+            
+            // Atualizar data e horário se foram selecionados
+            if ($dataAgendamento) {
+                $dadosUpdate['data_agendamento'] = $dataAgendamento;
             }
+            if ($horarioAgendamento) {
+                $dadosUpdate['horario_agendamento'] = $horarioAgendamento . ':00';
+            }
+            if ($horarioRaw) {
+                $dadosUpdate['horario_confirmado_raw'] = $horarioRaw;
+            }
+
+            if ($statusAgendado && $solicitacao['status_id'] != $statusAgendado['id']) {
+                $dadosUpdate['status_id'] = $statusAgendado['id'];
+            }
+            
+            $this->solicitacaoModel->update($solicitacao['id'], $dadosUpdate);
 
             // Registrar no histórico diretamente
             $sql = "
