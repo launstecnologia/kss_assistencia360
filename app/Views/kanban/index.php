@@ -490,18 +490,25 @@ function renderizarDetalhes(solicitacao) {
             horariosPrestador = solicitacao.horarios_opcoes ? JSON.parse(solicitacao.horarios_opcoes) : [];
         }
         
-        // Verificar se condição é "Data Aceita pelo Prestador" - mostrar apenas essa data
+        // Verificar se condição é "Data Aceita pelo Prestador" ou "Data Aceita pelo Locatário" - mostrar apenas essa data
         const condicaoAtual = todasCondicoes.find(c => c.id === solicitacao.condicao_id);
-        if (condicaoAtual && condicaoAtual.nome === 'Data Aceita pelo Prestador') {
-            // Quando prestador aceitou uma data, mostrar apenas essa data de confirmed_schedules
+        if (condicaoAtual && (condicaoAtual.nome === 'Data Aceita pelo Prestador' || condicaoAtual.nome === 'Data Aceita pelo Locatário')) {
+            // Quando prestador ou locatário aceitou uma data, mostrar apenas essa data de confirmed_schedules
             if (solicitacao.confirmed_schedules) {
                 try {
                     const confirmed = JSON.parse(solicitacao.confirmed_schedules);
                     if (Array.isArray(confirmed) && confirmed.length > 0) {
-                        // Buscar apenas horários com source='prestador'
-                        const horarioPrestador = confirmed.find(s => s && s.source === 'prestador' && s.raw);
-                        if (horarioPrestador && horarioPrestador.raw) {
-                            horariosOpcoes = [horarioPrestador.raw];
+                        // Buscar horário com source correspondente à condição
+                        const source = condicaoAtual.nome === 'Data Aceita pelo Prestador' ? 'prestador' : 'tenant';
+                        const horarioAceito = confirmed.find(s => s && s.source === source && s.raw);
+                        if (horarioAceito && horarioAceito.raw) {
+                            horariosOpcoes = [horarioAceito.raw];
+                        } else {
+                            // Se não encontrou pelo source, usar o último confirmado
+                            const ultimoConfirmado = confirmed[confirmed.length - 1];
+                            if (ultimoConfirmado && ultimoConfirmado.raw) {
+                                horariosOpcoes = [ultimoConfirmado.raw];
+                            }
                         }
                     }
                 } catch (e) {
@@ -511,6 +518,7 @@ function renderizarDetalhes(solicitacao) {
                     }
                 }
             } else if (solicitacao.horario_confirmado_raw) {
+                // Se não há confirmed_schedules mas há horario_confirmado_raw, usar ele
                 horariosOpcoes = [solicitacao.horario_confirmado_raw];
             }
         } else {
