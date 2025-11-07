@@ -47,10 +47,12 @@ ob_start();
             <form method="POST" action="<?= url('confirmacao-horario?token=' . urlencode($token)) ?>" class="space-y-4">
                 <?php 
                 $horariosDisponiveis = $horariosDisponiveis ?? [];
-                if (!empty($horariosDisponiveis) && count($horariosDisponiveis) > 1): ?>
-                    <!-- Múltiplos horários - permitir seleção -->
+                if (!empty($horariosDisponiveis)): ?>
+                    <!-- Sempre mostrar horários para seleção, mesmo que seja apenas um -->
                     <div class="mb-6">
-                        <h3 class="font-semibold text-gray-900 mb-3">Selecione o horário desejado:</h3>
+                        <h3 class="font-semibold text-gray-900 mb-3">
+                            <?= count($horariosDisponiveis) > 1 ? 'Selecione o horário desejado:' : 'Horário disponível:' ?>
+                        </h3>
                         <div class="space-y-3">
                             <?php foreach ($horariosDisponiveis as $index => $horario): ?>
                                 <label class="flex items-center p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-green-500 hover:bg-green-50 transition-colors <?= $index === 0 ? 'border-green-500 bg-green-50' : '' ?>">
@@ -63,23 +65,12 @@ ob_start();
                                     <div class="flex-1">
                                         <div class="flex items-center text-gray-900 font-medium">
                                             <i class="fas fa-clock mr-2 text-green-600"></i>
-                                            <?= htmlspecialchars($horario['raw']) ?>
+                                            <span><?= htmlspecialchars($horario['raw'] ?? '') ?></span>
                                         </div>
                                     </div>
                                 </label>
                             <?php endforeach; ?>
                         </div>
-                    </div>
-                <?php elseif (!empty($horariosDisponiveis) && count($horariosDisponiveis) === 1): ?>
-                    <!-- Um único horário - mostrar mas não permitir seleção -->
-                    <div class="mb-6">
-                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                            <div class="flex items-center text-gray-900 font-medium">
-                                <i class="fas fa-clock mr-2 text-blue-600"></i>
-                                <span><?= htmlspecialchars($horariosDisponiveis[0]['raw']) ?></span>
-                            </div>
-                        </div>
-                        <input type="hidden" name="horario_selecionado" value="<?= htmlspecialchars(json_encode($horariosDisponiveis[0])) ?>">
                     </div>
                 <?php endif; ?>
                 

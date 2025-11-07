@@ -81,12 +81,30 @@ class TokenController extends Controller
         // Buscar horários disponíveis para seleção
         $horariosDisponiveis = [];
         
+        // Debug: Log dos dados da solicitação
+        error_log("DEBUG confirmacaoHorario [ID:{$tokenData['solicitacao_id']}] - horarios_indisponiveis: " . var_export($solicitacao['horarios_indisponiveis'] ?? null, true));
+        error_log("DEBUG confirmacaoHorario [ID:{$tokenData['solicitacao_id']}] - horarios_opcoes: " . var_export($solicitacao['horarios_opcoes'] ?? null, true));
+        error_log("DEBUG confirmacaoHorario [ID:{$tokenData['solicitacao_id']}] - confirmed_schedules: " . var_export($solicitacao['confirmed_schedules'] ?? null, true));
+        
         // IMPORTANTE: Se horarios_indisponiveis = 1, horarios_opcoes contém os horários da seguradora
         // Esses são os horários que o locatário deve escolher
-        if (!empty($solicitacao['horarios_indisponiveis']) && !empty($solicitacao['horarios_opcoes'])) {
-            $horariosSeguradora = json_decode($solicitacao['horarios_opcoes'], true);
+        $horariosIndisponiveis = $solicitacao['horarios_indisponiveis'] ?? 0;
+        // Normalizar para inteiro (pode vir como string "1" ou "0")
+        $horariosIndisponiveis = (int)$horariosIndisponiveis;
+        $horariosOpcoesRaw = $solicitacao['horarios_opcoes'] ?? null;
+        
+        error_log("DEBUG confirmacaoHorario [ID:{$tokenData['solicitacao_id']}] - horariosIndisponiveis (original): " . var_export($solicitacao['horarios_indisponiveis'] ?? null, true));
+        error_log("DEBUG confirmacaoHorario [ID:{$tokenData['solicitacao_id']}] - horariosIndisponiveis (normalizado): " . var_export($horariosIndisponiveis, true));
+        error_log("DEBUG confirmacaoHorario [ID:{$tokenData['solicitacao_id']}] - horariosOpcoesRaw: " . var_export($horariosOpcoesRaw, true));
+        
+        if ($horariosIndisponiveis == 1 && !empty($horariosOpcoesRaw)) {
+            $horariosSeguradora = json_decode($horariosOpcoesRaw, true);
+            error_log("DEBUG confirmacaoHorario [ID:{$tokenData['solicitacao_id']}] - horariosSeguradora parseado: " . var_export($horariosSeguradora, true));
+            
             if (is_array($horariosSeguradora) && !empty($horariosSeguradora)) {
-                foreach ($horariosSeguradora as $horario) {
+                foreach ($horariosSeguradora as $index => $horario) {
+                    error_log("DEBUG confirmacaoHorario [ID:{$tokenData['solicitacao_id']}] - Processando horário [{$index}]: " . var_export($horario, true));
+                    
                     if (is_string($horario)) {
                         // Formato esperado: "dd/mm/yyyy - HH:MM:SS-HH:MM:SS" ou "dd/mm/yyyy - HH:MM-HH:MM"
                         // Exemplo: "11/11/2025 - 08:00:00-11:00:00" ou "11/11/2025 - 08:00-11:00"
@@ -107,6 +125,8 @@ class TokenController extends Controller
                                 'date' => $dataFormatada,
                                 'time' => $horaInicio . '-' . $horaFim
                             ];
+                            
+                            error_log("DEBUG confirmacaoHorario [ID:{$tokenData['solicitacao_id']}] - ✅ Horário adicionado: {$rawNormalizado}");
                         } elseif (preg_match('/(\d{4}-\d{2}-\d{2})\s+(\d{2}:\d{2}:\d{2})-(\d{2}:\d{2}:\d{2})/', $horario, $matches)) {
                             // Formato: "YYYY-MM-DD HH:MM:SS-HH:MM:SS"
                             $dataFormatada = $matches[1];
@@ -118,10 +138,20 @@ class TokenController extends Controller
                                 'date' => $dataFormatada,
                                 'time' => $horaInicio . '-' . $horaFim
                             ];
+                            
+                            error_log("DEBUG confirmacaoHorario [ID:{$tokenData['solicitacao_id']}] - ✅ Horário adicionado (formato ISO): {$rawFormatado}");
+                        } else {
+                            error_log("DEBUG confirmacaoHorario [ID:{$tokenData['solicitacao_id']}] - ⚠️ Horário não correspondeu a nenhum padrão: {$horario}");
                         }
+                    } else {
+                        error_log("DEBUG confirmacaoHorario [ID:{$tokenData['solicitacao_id']}] - ⚠️ Horário não é string: " . gettype($horario));
                     }
                 }
+            } else {
+                error_log("DEBUG confirmacaoHorario [ID:{$tokenData['solicitacao_id']}] - ⚠️ horariosSeguradora não é array ou está vazio");
             }
+        } else {
+            error_log("DEBUG confirmacaoHorario [ID:{$tokenData['solicitacao_id']}] - ⚠️ Condição não atendida: horariosIndisponiveis={$horariosIndisponiveis}, horariosOpcoesRaw=" . ($horariosOpcoesRaw ? 'tem valor' : 'vazio'));
         }
         
         // Se não houver horários da seguradora, verificar confirmed_schedules
@@ -169,6 +199,10 @@ class TokenController extends Controller
                 'time' => $tokenData['scheduled_time']
             ];
         }
+        
+        // Debug: Log final dos horários disponíveis
+        error_log("DEBUG confirmacaoHorario [ID:{$tokenData['solicitacao_id']}] - Total de horários disponíveis: " . count($horariosDisponiveis));
+        error_log("DEBUG confirmacaoHorario [ID:{$tokenData['solicitacao_id']}] - Horários: " . json_encode($horariosDisponiveis));
 
         // Exibir formulário de confirmação
         $this->view('token.confirmacao', [
