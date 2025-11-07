@@ -44,6 +44,8 @@ $router->post('/cancelar-solicitacao', 'TokenController@cancelarSolicitacao');
 $router->get('/reagendamento-horario', 'TokenController@reagendamentoHorario');
 $router->post('/reagendamento-horario', 'TokenController@reagendamentoHorario');
 $router->get('/status-servico', 'TokenController@statusServico');
+$router->get('/acoes-servico', 'TokenController@acoesServico');
+$router->post('/acoes-servico', 'TokenController@processarAcaoServico');
 
 // Rotas do admin/operador
 $router->get('/admin', 'AuthController@showLogin'); // Admin vai para login de operador
@@ -100,6 +102,17 @@ $router->post('/admin/solicitacoes/confirmar-atendimento', 'SolicitacoesControll
 $router->post('/admin/solicitacoes/informar-compra-peca', 'SolicitacoesController@informarCompraPeca', ['auth']);
 $router->post('/admin/solicitacoes/enviar-lembretes', 'SolicitacoesController@enviarLembretes', ['auth', 'admin']);
 $router->post('/admin/solicitacoes/expirar', 'SolicitacoesController@expirarSolicitacoes', ['auth', 'admin']);
+$router->post('/admin/solicitacoes/enviar-notificacoes-pre-servico', 'SolicitacoesController@enviarNotificacoesPreServico', ['auth', 'admin']);
+// Rota pública para cron job (com autenticação via token secreto)
+$router->get('/cron/notificacoes-pre-servico', 'SolicitacoesController@cronNotificacoesPreServico');
+
+// Gerenciamento de Cron Jobs
+$router->get('/admin/cron-jobs', 'CronJobsController@index', ['auth', 'admin']);
+$router->post('/admin/cron-jobs/{id}/executar', 'CronJobsController@executar', ['auth', 'admin']);
+$router->post('/admin/cron-jobs/{id}/toggle-ativo', 'CronJobsController@toggleAtivo', ['auth', 'admin']);
+$router->post('/admin/cron-jobs/{id}/atualizar-frequencia', 'CronJobsController@atualizarFrequencia', ['auth', 'admin']);
+$router->get('/admin/cron-jobs/{id}/historico', 'CronJobsController@historico', ['auth', 'admin']);
+$router->post('/admin/cron-jobs/executar-pendentes', 'CronJobsController@executarPendentes', ['auth', 'admin']);
 
 // Utilidades de manutenção (migrações rápidas)
 $router->get('/admin/migracoes', 'MaintenanceController@showMigrations', ['auth', 'admin']);

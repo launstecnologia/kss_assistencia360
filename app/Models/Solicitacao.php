@@ -338,13 +338,14 @@ class Solicitacao extends Model
             return false;
         }
         
-        // Se nunca enviou lembrete ou enviou há mais de 2 dias
+        // Se nunca enviou lembrete ou enviou há mais de 1 dia (lembretes diários)
         if (!$ultimoLembrete) {
             return true;
         }
         
+        // Verificar se passou pelo menos 1 dia desde o último lembrete
         $diferenca = $hoje->diff($ultimoLembrete)->days;
-        return $diferenca >= 2;
+        return $diferenca >= 1;
     }
 
     public function atualizarLembrete(int $solicitacaoId): void
@@ -460,13 +461,14 @@ class Solicitacao extends Model
     public function getSolicitacoesParaLembrete(): array
     {
         $sql = "
-            SELECT s.*, st.nome as status_nome
+            SELECT s.*, st.nome as status_nome, c.nome as condicao_nome
             FROM solicitacoes s
             LEFT JOIN status st ON s.status_id = st.id
-            WHERE st.nome = 'Aguardando Peça'
+            LEFT JOIN condicoes c ON s.condicao_id = c.id
+            WHERE (c.nome = 'Comprar peças' OR st.nome = 'Aguardando Peça' OR st.nome = 'Pendente')
             AND s.data_limite_peca IS NOT NULL
             AND s.data_limite_peca > NOW()
-            AND (s.data_ultimo_lembrete IS NULL OR s.data_ultimo_lembrete < DATE_SUB(NOW(), INTERVAL 2 DAY))
+            AND (s.data_ultimo_lembrete IS NULL OR s.data_ultimo_lembrete < DATE_SUB(NOW(), INTERVAL 1 DAY))
             ORDER BY s.created_at ASC
         ";
         

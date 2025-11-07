@@ -410,6 +410,8 @@ class WhatsAppService
             'link_status' => $this->getStatusPublicLink($baseUrl, $solicitacao),
             // Link de cancelamento de solicitação (permanente, não expira)
             'link_cancelamento_solicitacao' => $this->getCancelamentoSolicitacaoLink($baseUrl, $solicitacao),
+            // Link de ações do serviço (pré-serviço)
+            'link_acoes_servico' => $extraData['link_acoes_servico'] ?? '',
         ];
         
         // Mesclar com dados extras (sobrescreve se existir)

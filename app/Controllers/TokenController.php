@@ -1088,5 +1088,256 @@ class TokenController extends Controller
             'title' => 'Status do Serviço'
         ]);
     }
+
+    /**
+     * Exibe página com opções de ações do serviço
+     * GET /acoes-servico?token=xxx
+     */
+    public function acoesServico(): void
+    {
+        $token = $this->input('token');
+
+        if (!$token) {
+            $this->view('token.error', [
+                'title' => 'Token Inválido',
+                'message' => 'Token não fornecido. Por favor, use o link completo enviado no WhatsApp.',
+                'error_type' => 'missing_token'
+            ]);
+            return;
+        }
+
+        // Validar token
+        $tokenData = $this->tokenModel->validateToken($token);
+
+        if (!$tokenData) {
+            $this->view('token.error', [
+                'title' => 'Token Inválido ou Expirado',
+                'message' => 'Este link é inválido ou expirou. Por favor, entre em contato conosco.',
+                'error_type' => 'invalid_token'
+            ]);
+            return;
+        }
+
+        // Buscar dados da solicitação
+        $solicitacao = $this->solicitacaoModel->getDetalhes($tokenData['solicitacao_id']);
+
+        if (!$solicitacao) {
+            $this->view('token.error', [
+                'title' => 'Solicitação Não Encontrada',
+                'message' => 'A solicitação associada a este link não foi encontrada.',
+                'error_type' => 'solicitacao_not_found'
+            ]);
+            return;
+        }
+
+        $this->view('token.acoes_servico', [
+            'title' => 'Ações do Serviço',
+            'token' => $token,
+            'solicitacao' => $solicitacao
+        ]);
+    }
+
+    /**
+     * Processa a ação selecionada pelo usuário
+     * POST /acoes-servico
+     */
+    public function processarAcaoServico(): void
+    {
+        $token = $this->input('token');
+        $acao = $this->input('acao');
+        $descricao = $this->input('descricao');
+
+        if (!$token) {
+            $this->json(['success' => false, 'message' => 'Token não fornecido'], 400);
+            return;
+        }
+
+        // Validar token
+        $tokenData = $this->tokenModel->validateToken($token);
+
+        if (!$tokenData) {
+            $this->json(['success' => false, 'message' => 'Token inválido ou expirado'], 400);
+            return;
+        }
+
+        $solicitacaoId = $tokenData['solicitacao_id'];
+        $solicitacao = $this->solicitacaoModel->getDetalhes($solicitacaoId);
+
+        if (!$solicitacao) {
+            $this->json(['success' => false, 'message' => 'Solicitação não encontrada'], 404);
+            return;
+        }
+
+        try {
+            $condicaoModel = new \App\Models\Condicao();
+            $statusModel = new \App\Models\Status();
+
+            switch ($acao) {
+                case 'servico_realizado':
+                    // Redirecionar para avaliação (pode ser uma página de avaliação)
+                    $this->json([
+                        'success' => true,
+                        'message' => 'Obrigado! Redirecionando para avaliação...',
+                        'redirect' => '/avaliacao?token=' . $token
+                    ]);
+                    break;
+
+                case 'nao_compareceu':
+                    // Mensagem de desculpa, volta para nova solicitação, condição: "Prestador não compareceu"
+                    $condicao = $condicaoModel->findByNome('Prestador não compareceu');
+                    if (!$condicao) {
+                        // Criar condição se não existir
+                        $condicaoId = $condicaoModel->create([
+                            'nome' => 'Prestador não compareceu',
+                            'cor' => '#dc2626',
+                            'icone' => 'fa-times-circle',
+                            'status' => 'ATIVO'
+                        ]);
+                    } else {
+                        $condicaoId = $condicao['id'];
+                    }
+
+                    $statusNova = $statusModel->findByNome('Nova Solicitação');
+                    if ($statusNova) {
+                        $this->solicitacaoModel->update($solicitacaoId, [
+                            'status_id' => $statusNova['id'],
+                            'condicao_id' => $condicaoId,
+                            'observacoes' => ($solicitacao['observacoes'] ?? '') . "\n\nPrestador não compareceu no serviço agendado."
+                        ]);
+                    }
+
+                    // Marcar token como usado
+                    $this->tokenModel->markAsUsed($token);
+
+                    $this->json([
+                        'success' => true,
+                        'message' => 'Sentimos muito pelo inconveniente. Sua solicitação foi reaberta e entraremos em contato em breve.',
+                        'redirect' => false
+                    ]);
+                    break;
+
+                case 'precisa_pecas':
+                    // Condição: "Comprar peças", status: pendente, 10 dias para comprar
+                    $condicao = $condicaoModel->findByNome('Comprar peças');
+                    if (!$condicao) {
+                        $condicaoId = $condicaoModel->create([
+                            'nome' => 'Comprar peças',
+                            'cor' => '#f59e0b',
+                            'icone' => 'fa-shopping-cart',
+                            'status' => 'ATIVO'
+                        ]);
+                    } else {
+                        $condicaoId = $condicao['id'];
+                    }
+
+                    $statusPendente = $statusModel->findByNome('Pendente');
+                    if (!$statusPendente) {
+                        $statusPendente = $statusModel->findByNome('Aguardando');
+                    }
+
+                    $dataLimite = date('Y-m-d', strtotime('+10 days'));
+
+                    $this->solicitacaoModel->update($solicitacaoId, [
+                        'status_id' => $statusPendente['id'] ?? $solicitacao['status_id'],
+                        'condicao_id' => $condicaoId,
+                        'data_limite_peca' => $dataLimite,
+                        'data_ultimo_lembrete' => null,
+                        'lembretes_enviados' => 0,
+                        'observacoes' => ($solicitacao['observacoes'] ?? '') . "\n\nLocatário precisa comprar peças. Prazo: " . date('d/m/Y', strtotime($dataLimite))
+                    ]);
+
+                    // Marcar token como usado
+                    $this->tokenModel->markAsUsed($token);
+
+                    $this->json([
+                        'success' => true,
+                        'message' => 'Você tem até ' . date('d/m/Y', strtotime($dataLimite)) . ' para comprar as peças. Enviaremos lembretes diários.',
+                        'redirect' => false
+                    ]);
+                    break;
+
+                case 'ausente':
+                    // Condição: "Locatário se ausentou", volta para nova solicitação
+                    $condicao = $condicaoModel->findByNome('Locatário se ausentou');
+                    if (!$condicao) {
+                        $condicaoId = $condicaoModel->create([
+                            'nome' => 'Locatário se ausentou',
+                            'cor' => '#6366f1',
+                            'icone' => 'fa-user-times',
+                            'status' => 'ATIVO'
+                        ]);
+                    } else {
+                        $condicaoId = $condicao['id'];
+                    }
+
+                    $statusNova = $statusModel->findByNome('Nova Solicitação');
+                    if ($statusNova) {
+                        $this->solicitacaoModel->update($solicitacaoId, [
+                            'status_id' => $statusNova['id'],
+                            'condicao_id' => $condicaoId,
+                            'observacoes' => ($solicitacao['observacoes'] ?? '') . "\n\nLocatário se ausentou no horário agendado."
+                        ]);
+                    }
+
+                    // Marcar token como usado
+                    $this->tokenModel->markAsUsed($token);
+
+                    $this->json([
+                        'success' => true,
+                        'message' => 'Sua solicitação foi reaberta. Entre em contato quando estiver disponível.',
+                        'redirect' => false
+                    ]);
+                    break;
+
+                case 'outros':
+                    // Campo descrição, condição: "outros", status: pendente
+                    if (empty($descricao)) {
+                        $this->json(['success' => false, 'message' => 'Por favor, descreva o motivo'], 400);
+                        return;
+                    }
+
+                    $condicao = $condicaoModel->findByNome('outros');
+                    if (!$condicao) {
+                        $condicaoId = $condicaoModel->create([
+                            'nome' => 'outros',
+                            'cor' => '#6b7280',
+                            'icone' => 'fa-ellipsis-h',
+                            'status' => 'ATIVO'
+                        ]);
+                    } else {
+                        $condicaoId = $condicao['id'];
+                    }
+
+                    $statusPendente = $statusModel->findByNome('Pendente');
+                    if (!$statusPendente) {
+                        $statusPendente = $statusModel->findByNome('Aguardando');
+                    }
+
+                    $this->solicitacaoModel->update($solicitacaoId, [
+                        'status_id' => $statusPendente['id'] ?? $solicitacao['status_id'],
+                        'condicao_id' => $condicaoId,
+                        'observacoes' => ($solicitacao['observacoes'] ?? '') . "\n\nOutros: " . $descricao
+                    ]);
+
+                    // Marcar token como usado
+                    $this->tokenModel->markAsUsed($token);
+
+                    $this->json([
+                        'success' => true,
+                        'message' => 'Sua mensagem foi registrada. Entraremos em contato em breve.',
+                        'redirect' => false
+                    ]);
+                    break;
+
+                default:
+                    $this->json(['success' => false, 'message' => 'Ação inválida'], 400);
+                    return;
+            }
+
+        } catch (\Exception $e) {
+            error_log('Erro ao processar ação do serviço: ' . $e->getMessage());
+            $this->json(['success' => false, 'message' => 'Erro ao processar ação: ' . $e->getMessage()], 500);
+        }
+    }
 }
 

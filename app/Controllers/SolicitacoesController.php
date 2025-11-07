@@ -568,8 +568,31 @@ class SolicitacoesController extends Controller
             $solicitacoes = $this->solicitacaoModel->getSolicitacoesParaLembrete();
             
             foreach ($solicitacoes as $solicitacao) {
-                $this->enviarNotificacaoWhatsApp($solicitacao['id'], 'lembrete_peca');
-                $this->solicitacaoModel->atualizarLembrete($solicitacao['id']);
+                // Verificar se ainda está dentro do prazo de 10 dias
+                if (!empty($solicitacao['data_limite_peca'])) {
+                    $dataLimite = new \DateTime($solicitacao['data_limite_peca']);
+                    $agora = new \DateTime();
+                    
+                    if ($agora > $dataLimite) {
+                        // Prazo expirado, não enviar mais lembretes
+                        continue;
+                    }
+                    
+                    // Calcular dias restantes
+                    $diasRestantes = $agora->diff($dataLimite)->days;
+                    
+                    // Enviar notificação com informações do prazo
+                    $this->enviarNotificacaoWhatsApp($solicitacao['id'], 'lembrete_peca', [
+                        'dias_restantes' => $diasRestantes,
+                        'data_limite' => date('d/m/Y', strtotime($solicitacao['data_limite_peca']))
+                    ]);
+                    
+                    $this->solicitacaoModel->atualizarLembrete($solicitacao['id']);
+                } else {
+                    // Sem data limite, enviar lembrete normal
+                    $this->enviarNotificacaoWhatsApp($solicitacao['id'], 'lembrete_peca');
+                    $this->solicitacaoModel->atualizarLembrete($solicitacao['id']);
+                }
             }
 
             $this->json([
@@ -603,6 +626,151 @@ class SolicitacoesController extends Controller
         } catch (\Exception $e) {
             $this->json(['error' => 'Erro ao expirar solicitações: ' . $e->getMessage()], 500);
         }
+    }
+
+    /**
+     * Verifica e envia notificações 1 hora antes do prestador chegar
+     * Deve ser chamado via cron job periodicamente (ex: a cada 5 minutos)
+     * 
+     * Endpoint público com autenticação via token secreto
+     * GET /cron/notificacoes-pre-servico?token=SECRET_TOKEN
+     */
+    public function cronNotificacoesPreServico(): void
+    {
+        // Verificar token secreto (pode ser configurado no .env)
+        $tokenSecreto = $_ENV['CRON_SECRET_TOKEN'] ?? 'kss_cron_secret_2024';
+        $tokenRecebido = $this->input('token');
+        
+        if ($tokenRecebido !== $tokenSecreto) {
+            http_response_code(401);
+            echo json_encode(['error' => 'Token inválido']);
+            exit;
+        }
+        
+        $this->processarNotificacoesPreServico();
+    }
+
+    /**
+     * Processa as notificações pré-serviço
+     * Método interno que pode ser chamado por cron ou manualmente
+     */
+    private function processarNotificacoesPreServico(): void
+    {
+        try {
+            // Buscar solicitações com status "Serviço Agendado" que têm horário confirmado
+            $sql = "
+                SELECT s.*, st.nome as status_nome
+                FROM solicitacoes s
+                INNER JOIN status st ON s.status_id = st.id
+                WHERE st.nome = 'Serviço Agendado'
+                AND s.horario_confirmado = 1
+                AND s.horario_confirmado_raw IS NOT NULL
+                AND s.notificacao_pre_servico_enviada = 0
+                AND s.data_agendamento IS NOT NULL
+                AND s.horario_agendamento IS NOT NULL
+            ";
+            
+            $solicitacoes = \App\Core\Database::fetchAll($sql);
+            $enviadas = 0;
+            $erros = [];
+            
+            foreach ($solicitacoes as $solicitacao) {
+                try {
+                    // Calcular quando o prestador deve chegar (1 hora antes do horário agendado)
+                    $dataAgendamento = $solicitacao['data_agendamento'];
+                    $horarioAgendamento = $solicitacao['horario_agendamento'];
+                    
+                    // Parsear horário (formato pode ser "HH:MM:SS" ou "HH:MM")
+                    $horarioParts = explode(':', $horarioAgendamento);
+                    $hora = (int)($horarioParts[0] ?? 0);
+                    $minuto = (int)($horarioParts[1] ?? 0);
+                    
+                    // Criar DateTime para o horário de chegada (1 hora antes do agendamento)
+                    $dataHoraAgendamento = new \DateTime($dataAgendamento . ' ' . $hora . ':' . $minuto . ':00');
+                    $dataHoraChegada = clone $dataHoraAgendamento;
+                    $dataHoraChegada->modify('-1 hour');
+                    
+                    // Verificar se estamos dentro da janela de 1 hora antes (entre 1h e 0h antes)
+                    $agora = new \DateTime();
+                    $diferencaMinutos = ($dataHoraChegada->getTimestamp() - $agora->getTimestamp()) / 60;
+                    
+                    // Se está entre 0 e 60 minutos antes (janela de 1 hora)
+                    if ($diferencaMinutos >= 0 && $diferencaMinutos <= 60) {
+                        // Criar token para a página de ações
+                        $tokenModel = new \App\Models\ScheduleConfirmationToken();
+                        $protocol = $solicitacao['numero_solicitacao'] ?? ('KS' . $solicitacao['id']);
+                        $token = $tokenModel->createToken(
+                            $solicitacao['id'],
+                            $protocol,
+                            $dataAgendamento,
+                            $horarioAgendamento,
+                            'pre_servico'
+                        );
+                        
+                        // Enviar notificação WhatsApp
+                        $baseUrl = \App\Core\Url::base();
+                        $linkAcoes = $baseUrl . '/acoes-servico?token=' . $token;
+                        
+                        $this->enviarNotificacaoWhatsApp($solicitacao['id'], 'Lembrete Pré-Serviço', [
+                            'link_acoes_servico' => $linkAcoes,
+                            'data_agendamento' => date('d/m/Y', strtotime($dataAgendamento)),
+                            'horario_agendamento' => date('H:i', strtotime($horarioAgendamento))
+                        ]);
+                        
+                        // Marcar como enviada
+                        $this->solicitacaoModel->update($solicitacao['id'], [
+                            'notificacao_pre_servico_enviada' => 1
+                        ]);
+                        
+                        $enviadas++;
+                        error_log("✅ Notificação pré-serviço enviada para solicitação #{$solicitacao['id']}");
+                    }
+                } catch (\Exception $e) {
+                    $erros[] = "Solicitação #{$solicitacao['id']}: " . $e->getMessage();
+                    error_log("❌ Erro ao processar notificação pré-serviço para solicitação #{$solicitacao['id']}: " . $e->getMessage());
+                }
+            }
+            
+            $resultado = [
+                'success' => true,
+                'message' => 'Notificações pré-serviço processadas',
+                'enviadas' => $enviadas,
+                'total_verificadas' => count($solicitacoes),
+                'timestamp' => date('Y-m-d H:i:s')
+            ];
+            
+            if (!empty($erros)) {
+                $resultado['erros'] = $erros;
+            }
+            
+            // Se chamado via HTTP, retornar JSON
+            if (php_sapi_name() !== 'cli') {
+                $this->json($resultado);
+            } else {
+                // Se chamado via CLI, apenas logar
+                echo json_encode($resultado, JSON_PRETTY_PRINT) . "\n";
+            }
+            
+        } catch (\Exception $e) {
+            $erro = ['error' => 'Erro ao enviar notificações pré-serviço: ' . $e->getMessage()];
+            error_log('❌ Erro geral no processamento de notificações pré-serviço: ' . $e->getMessage());
+            
+            if (php_sapi_name() !== 'cli') {
+                $this->json($erro, 500);
+            } else {
+                echo json_encode($erro, JSON_PRETTY_PRINT) . "\n";
+            }
+        }
+    }
+
+    /**
+     * Verifica e envia notificações 1 hora antes do prestador chegar
+     * Endpoint para chamada manual (requer autenticação)
+     */
+    public function enviarNotificacoesPreServico(): void
+    {
+        $this->requireAuth();
+        $this->processarNotificacoesPreServico();
     }
 
     private function enviarNotificacaoWhatsApp(int $solicitacaoId, string $tipo, array $extraData = []): void
