@@ -230,6 +230,10 @@
                     <i class="fas fa-clock mr-3"></i>
                     Cron Jobs
                 </a>
+                <a href="<?= url('admin/logs') ?>" class="flex items-center px-4 py-2 text-gray-700 rounded-lg hover:bg-gray-100 <?= $currentPage === 'logs' ? 'bg-blue-50 text-blue-700' : '' ?>">
+                    <i class="fas fa-file-alt mr-3"></i>
+                    Visualizador de Logs
+                </a>
                 <?php endif; ?>
             </div>
         </nav>

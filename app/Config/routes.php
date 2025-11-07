@@ -116,6 +116,11 @@ $router->post('/admin/cron-jobs/{id}/atualizar-frequencia', 'CronJobsController@
 $router->get('/admin/cron-jobs/{id}/historico', 'CronJobsController@historico', ['auth', 'admin']);
 $router->post('/admin/cron-jobs/executar-pendentes', 'CronJobsController@executarPendentes', ['auth', 'admin']);
 
+// Visualizador de Logs
+$router->get('/admin/logs', 'LogsController@index', ['auth', 'admin']);
+$router->post('/admin/logs/limpar', 'LogsController@limpar', ['auth', 'admin']);
+$router->get('/admin/logs/download', 'LogsController@download', ['auth', 'admin']);
+
 // Utilidades de manutenção (migrações rápidas)
 $router->get('/admin/migracoes', 'MaintenanceController@showMigrations', ['auth', 'admin']);
 $router->post('/admin/migracoes/run', 'MaintenanceController@runMigrations', ['auth', 'admin']);

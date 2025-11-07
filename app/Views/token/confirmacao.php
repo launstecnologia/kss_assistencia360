@@ -46,7 +46,13 @@ ob_start();
             <!-- Formulário de Confirmação -->
             <form method="POST" action="<?= url('confirmacao-horario?token=' . urlencode($token)) ?>" class="space-y-4">
                 <?php 
+                // Garantir que horariosDisponiveis sempre seja um array
                 $horariosDisponiveis = $horariosDisponiveis ?? [];
+                
+                // Debug: Log na view para verificar se os horários estão chegando
+                error_log("DEBUG confirmacao.php - horariosDisponiveis count: " . count($horariosDisponiveis));
+                error_log("DEBUG confirmacao.php - horariosDisponiveis: " . json_encode($horariosDisponiveis));
+                
                 if (!empty($horariosDisponiveis)): ?>
                     <!-- Sempre mostrar horários para seleção, mesmo que seja apenas um -->
                     <div class="mb-6">
@@ -55,6 +61,10 @@ ob_start();
                         </h3>
                         <div class="space-y-3">
                             <?php foreach ($horariosDisponiveis as $index => $horario): ?>
+                                <?php 
+                                // Debug: Log de cada horário
+                                error_log("DEBUG confirmacao.php - Horário [{$index}]: " . json_encode($horario));
+                                ?>
                                 <label class="flex items-center p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-green-500 hover:bg-green-50 transition-colors <?= $index === 0 ? 'border-green-500 bg-green-50' : '' ?>">
                                     <input type="radio" 
                                            name="horario_selecionado" 
@@ -71,6 +81,14 @@ ob_start();
                                 </label>
                             <?php endforeach; ?>
                         </div>
+                    </div>
+                <?php else: ?>
+                    <!-- Mensagem quando não há horários disponíveis -->
+                    <div class="mb-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                        <p class="text-sm text-yellow-800">
+                            <i class="fas fa-exclamation-triangle mr-2"></i>
+                            Nenhum horário disponível para seleção. Por favor, entre em contato conosco.
+                        </p>
                     </div>
                 <?php endif; ?>
                 

@@ -72,6 +72,19 @@ class TokenController extends Controller
             return;
         }
 
+        // Debug: Log completo da solicitação ANTES de processar
+        error_log("DEBUG confirmacaoHorario [ID:{$tokenData['solicitacao_id']}] - Solicitação completa: " . json_encode([
+            'id' => $solicitacao['id'] ?? null,
+            'numero_solicitacao' => $solicitacao['numero_solicitacao'] ?? null,
+            'horarios_indisponiveis' => $solicitacao['horarios_indisponiveis'] ?? null,
+            'horarios_indisponiveis_type' => gettype($solicitacao['horarios_indisponiveis'] ?? null),
+            'horarios_opcoes' => $solicitacao['horarios_opcoes'] ?? null,
+            'horarios_opcoes_type' => gettype($solicitacao['horarios_opcoes'] ?? null),
+            'confirmed_schedules' => $solicitacao['confirmed_schedules'] ?? null,
+            'data_agendamento' => $solicitacao['data_agendamento'] ?? null,
+            'horario_agendamento' => $solicitacao['horario_agendamento'] ?? null
+        ]));
+
         // Se já foi processado (POST), processar confirmação
         if ($this->isPost()) {
             $this->processarConfirmacao($token, $tokenData, $solicitacao);
@@ -81,22 +94,23 @@ class TokenController extends Controller
         // Buscar horários disponíveis para seleção
         $horariosDisponiveis = [];
         
-        // Debug: Log dos dados da solicitação
-        error_log("DEBUG confirmacaoHorario [ID:{$tokenData['solicitacao_id']}] - horarios_indisponiveis: " . var_export($solicitacao['horarios_indisponiveis'] ?? null, true));
-        error_log("DEBUG confirmacaoHorario [ID:{$tokenData['solicitacao_id']}] - horarios_opcoes: " . var_export($solicitacao['horarios_opcoes'] ?? null, true));
-        error_log("DEBUG confirmacaoHorario [ID:{$tokenData['solicitacao_id']}] - confirmed_schedules: " . var_export($solicitacao['confirmed_schedules'] ?? null, true));
-        
         // IMPORTANTE: Se horarios_indisponiveis = 1, horarios_opcoes contém os horários da seguradora
         // Esses são os horários que o locatário deve escolher
         $horariosIndisponiveis = $solicitacao['horarios_indisponiveis'] ?? 0;
-        // Normalizar para inteiro (pode vir como string "1" ou "0")
-        $horariosIndisponiveis = (int)$horariosIndisponiveis;
+        // Normalizar para inteiro (pode vir como string "1" ou "0", boolean true/false, ou NULL)
+        if ($horariosIndisponiveis === true || $horariosIndisponiveis === 'true' || $horariosIndisponiveis === '1' || $horariosIndisponiveis === 1) {
+            $horariosIndisponiveis = 1;
+        } else {
+            $horariosIndisponiveis = 0;
+        }
         $horariosOpcoesRaw = $solicitacao['horarios_opcoes'] ?? null;
         
         error_log("DEBUG confirmacaoHorario [ID:{$tokenData['solicitacao_id']}] - horariosIndisponiveis (original): " . var_export($solicitacao['horarios_indisponiveis'] ?? null, true));
         error_log("DEBUG confirmacaoHorario [ID:{$tokenData['solicitacao_id']}] - horariosIndisponiveis (normalizado): " . var_export($horariosIndisponiveis, true));
         error_log("DEBUG confirmacaoHorario [ID:{$tokenData['solicitacao_id']}] - horariosOpcoesRaw: " . var_export($horariosOpcoesRaw, true));
+        error_log("DEBUG confirmacaoHorario [ID:{$tokenData['solicitacao_id']}] - horariosOpcoesRaw empty?: " . var_export(empty($horariosOpcoesRaw), true));
         
+        // PRIORIDADE 1: Se horarios_indisponiveis = 1, buscar horários da seguradora em horarios_opcoes
         if ($horariosIndisponiveis == 1 && !empty($horariosOpcoesRaw)) {
             $horariosSeguradora = json_decode($horariosOpcoesRaw, true);
             error_log("DEBUG confirmacaoHorario [ID:{$tokenData['solicitacao_id']}] - horariosSeguradora parseado: " . var_export($horariosSeguradora, true));
@@ -203,6 +217,18 @@ class TokenController extends Controller
         // Debug: Log final dos horários disponíveis
         error_log("DEBUG confirmacaoHorario [ID:{$tokenData['solicitacao_id']}] - Total de horários disponíveis: " . count($horariosDisponiveis));
         error_log("DEBUG confirmacaoHorario [ID:{$tokenData['solicitacao_id']}] - Horários: " . json_encode($horariosDisponiveis));
+        
+        // Se ainda não houver horários e houver data_agendamento e horario_agendamento, criar um horário a partir deles
+        if (empty($horariosDisponiveis) && !empty($solicitacao['data_agendamento']) && !empty($solicitacao['horario_agendamento'])) {
+            $dataFormatada = date('d/m/Y', strtotime($solicitacao['data_agendamento']));
+            $horarioFormatado = date('H:i', strtotime($solicitacao['horario_agendamento']));
+            $horariosDisponiveis[] = [
+                'raw' => $dataFormatada . ' - ' . $horarioFormatado,
+                'date' => $solicitacao['data_agendamento'],
+                'time' => $horarioFormatado
+            ];
+            error_log("DEBUG confirmacaoHorario [ID:{$tokenData['solicitacao_id']}] - Criado horário a partir de data_agendamento e horario_agendamento");
+        }
 
         // Exibir formulário de confirmação
         $this->view('token.confirmacao', [
