@@ -685,17 +685,34 @@ class SolicitacoesController extends Controller
                     $hora = (int)($horarioParts[0] ?? 0);
                     $minuto = (int)($horarioParts[1] ?? 0);
                     
-                    // Criar DateTime para o horário de chegada (1 hora antes do agendamento)
-                    $dataHoraAgendamento = new \DateTime($dataAgendamento . ' ' . $hora . ':' . $minuto . ':00');
-                    $dataHoraChegada = clone $dataHoraAgendamento;
-                    $dataHoraChegada->modify('-1 hour');
+                    // Log dos dados brutos
+                    error_log("DEBUG Cron Pré-Serviço [ID:{$solicitacao['id']}] - Dados brutos:");
+                    error_log("  - data_agendamento: " . $dataAgendamento);
+                    error_log("  - horario_agendamento: " . $horarioAgendamento);
+                    error_log("  - hora parseada: " . $hora);
+                    error_log("  - minuto parseado: " . $minuto);
                     
-                    // Verificar se estamos dentro da janela de 1 hora antes (entre 1h e 0h antes)
+                    // Criar DateTime para o horário agendado
+                    $dataHoraAgendamento = new \DateTime($dataAgendamento . ' ' . sprintf('%02d:%02d:00', $hora, $minuto));
+                    
+                    // Calcular janela de notificação: 1 hora antes do agendamento até o horário agendado
+                    $dataHoraInicioJanela = clone $dataHoraAgendamento;
+                    $dataHoraInicioJanela->modify('-1 hour');
+                    
+                    // Verificar se estamos dentro da janela (entre 1h antes e o horário agendado)
                     $agora = new \DateTime();
-                    $diferencaMinutos = ($dataHoraChegada->getTimestamp() - $agora->getTimestamp()) / 60;
                     
-                    // Se está entre 0 e 60 minutos antes (janela de 1 hora)
-                    if ($diferencaMinutos >= 0 && $diferencaMinutos <= 60) {
+                    // Verificar se agora está entre o início da janela (1h antes) e o horário agendado
+                    $estaNaJanela = ($agora >= $dataHoraInicioJanela && $agora <= $dataHoraAgendamento);
+                    
+                    // Log para debug
+                    error_log("DEBUG Cron Pré-Serviço [ID:{$solicitacao['id']}] - Agora: " . $agora->format('Y-m-d H:i:s'));
+                    error_log("DEBUG Cron Pré-Serviço [ID:{$solicitacao['id']}] - Início janela (1h antes): " . $dataHoraInicioJanela->format('Y-m-d H:i:s'));
+                    error_log("DEBUG Cron Pré-Serviço [ID:{$solicitacao['id']}] - Horário agendado: " . $dataHoraAgendamento->format('Y-m-d H:i:s'));
+                    error_log("DEBUG Cron Pré-Serviço [ID:{$solicitacao['id']}] - Está na janela: " . ($estaNaJanela ? 'SIM' : 'NÃO'));
+                    
+                    // Se está dentro da janela de 1 hora antes
+                    if ($estaNaJanela) {
                         // Criar token para a página de ações
                         $tokenModel = new \App\Models\ScheduleConfirmationToken();
                         $protocol = $solicitacao['numero_solicitacao'] ?? ('KS' . $solicitacao['id']);
