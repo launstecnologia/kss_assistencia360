@@ -576,6 +576,40 @@ function renderizarDetalhes(solicitacao) {
                     </div>
                 </div>
                 
+                <!-- Data Selecionada pelo Locatário -->
+                ${solicitacao.horario_confirmado && solicitacao.horario_confirmado_raw ? `
+                <div class="bg-white rounded-lg p-5 border-2 border-green-500">
+                    <div class="flex items-center gap-2 mb-3">
+                        <i class="fas fa-calendar-check text-green-600"></i>
+                        <div>
+                            <h3 class="font-semibold text-gray-900">Data Selecionada</h3>
+                            <p class="text-xs text-gray-500">Horário confirmado pelo locatário</p>
+                        </div>
+                    </div>
+                    <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <i class="fas fa-check-circle text-green-600 text-xl"></i>
+                                <div>
+                                    <p class="text-lg font-bold text-green-900">${solicitacao.horario_confirmado_raw}</p>
+                                    ${solicitacao.data_agendamento ? `
+                                        <p class="text-xs text-green-700 mt-1">
+                                            <i class="fas fa-calendar mr-1"></i>
+                                            ${new Date(solicitacao.data_agendamento).toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                                        </p>
+                                    ` : ''}
+                                </div>
+                            </div>
+                            <button onclick="confirmarHorarioSelecionado(${solicitacao.id})" 
+                                    class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-medium transition-colors">
+                                <i class="fas fa-check mr-2"></i>
+                                Confirmar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                ` : ''}
+                
                 <!-- Disponibilidade Informada -->
                 ${horariosOpcoes.length > 0 ? `
                 <div class="bg-white rounded-lg p-5">
@@ -1662,6 +1696,67 @@ function atualizarHorariosIndisponiveisKanban(solicitacaoId, indisponivel) {
     // Apenas marcar que houve mudança, não salvar automaticamente
     hasUnsavedChanges = true;
     console.log('Horários indisponíveis alterados (será salvo ao clicar em "Salvar Alterações")');
+}
+
+// Confirmar horário selecionado pelo locatário
+function confirmarHorarioSelecionado(solicitacaoId) {
+    // Buscar o horário confirmado raw da solicitação atual
+    const solicitacaoAtual = solicitacoesGlobal.find(s => s.id === solicitacaoId);
+    if (!solicitacaoAtual || !solicitacaoAtual.horario_confirmado_raw) {
+        mostrarNotificacao('Horário não encontrado', 'error');
+        return;
+    }
+    
+    const horarioRaw = solicitacaoAtual.horario_confirmado_raw;
+    
+    // Extrair data e horário do raw (formato: "dd/mm/yyyy - HH:MM-HH:MM")
+    const match = horarioRaw.match(/(\d{2})\/(\d{2})\/(\d{4})\s*-\s*(\d{2}:\d{2})-(\d{2}:\d{2})/);
+    if (!match) {
+        mostrarNotificacao('Formato de horário inválido', 'error');
+        return;
+    }
+    
+    const dataFormatada = `${match[3]}-${match[2]}-${match[1]}`;
+    const horarioFormatado = `${match[4]}-${match[5]}`;
+    
+    // Criar objeto schedule no formato esperado
+    const schedule = {
+        date: dataFormatada,
+        time: horarioFormatado,
+        raw: horarioRaw
+    };
+    
+    // Enviar para o servidor
+    fetch(`<?= url('admin/solicitacoes/') ?>${solicitacaoId}/atualizar`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            schedules: [schedule]
+        })
+    })
+    .then(async response => {
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            const text = await response.text();
+            throw new Error('Resposta do servidor não é JSON válido');
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            mostrarNotificacao('Horário confirmado com sucesso!', 'success');
+            // Recarregar os detalhes da solicitação
+            abrirDetalhes(solicitacaoId);
+        } else {
+            mostrarNotificacao(data.error || 'Erro ao confirmar horário', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Erro ao confirmar horário:', error);
+        mostrarNotificacao('Erro ao confirmar horário. Tente novamente.', 'error');
+    });
 }
 
 // Adicionar horário da seguradora (Kanban) - APENAS VISUAL, não salva no banco

@@ -303,6 +303,37 @@ class TokenController extends Controller
             }
             if ($horarioRaw) {
                 $dadosUpdate['horario_confirmado_raw'] = $horarioRaw;
+                
+                // IMPORTANTE: Salvar também em confirmed_schedules para que o admin possa ver e confirmar
+                // Extrair horário completo do raw (formato: "dd/mm/yyyy - HH:MM-HH:MM")
+                $horarioCompleto = $horarioRaw;
+                if (preg_match('/(\d{2}:\d{2})-(\d{2}:\d{2})/', $horarioRaw, $timeMatches)) {
+                    $horarioCompleto = $timeMatches[1] . '-' . $timeMatches[2];
+                } elseif ($horarioAgendamento) {
+                    // Se não encontrou faixa, usar apenas o horário inicial
+                    $horarioCompleto = $horarioAgendamento;
+                }
+                
+                $confirmedSchedule = [
+                    'date' => $dataAgendamento,
+                    'time' => $horarioCompleto,
+                    'raw' => $horarioRaw,
+                    'source' => 'tenant',
+                    'confirmed_at' => date('c')
+                ];
+                
+                // Buscar confirmed_schedules existentes e adicionar o novo
+                $confirmedSchedules = [];
+                if (!empty($solicitacao['confirmed_schedules'])) {
+                    $existing = json_decode($solicitacao['confirmed_schedules'], true);
+                    if (is_array($existing)) {
+                        $confirmedSchedules = $existing;
+                    }
+                }
+                
+                // Adicionar o novo horário confirmado pelo locatário
+                $confirmedSchedules[] = $confirmedSchedule;
+                $dadosUpdate['confirmed_schedules'] = json_encode($confirmedSchedules);
             }
 
             if ($statusAgendado && $solicitacao['status_id'] != $statusAgendado['id']) {

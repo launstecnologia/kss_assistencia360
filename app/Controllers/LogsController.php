@@ -3,16 +3,13 @@
 namespace App\Controllers;
 
 use App\Core\Controller;
-use App\Core\Auth;
 
 class LogsController extends Controller
 {
     public function __construct()
     {
-        // Verificar autenticação
-        if (!Auth::check()) {
-            redirect('login');
-        }
+        // Verificar autenticação e permissão de admin
+        $this->requireAdmin();
     }
 
     /**
@@ -36,6 +33,8 @@ class LogsController extends Controller
 
         $this->view('admin.logs.index', [
             'title' => 'Visualizador de Logs',
+            'pageTitle' => 'Visualizador de Logs',
+            'currentPage' => 'logs',
             'logs' => $logs,
             'logFile' => $logFile,
             'filter' => $filter,
