@@ -141,6 +141,10 @@ class SolicitacoesController extends Controller
         $fotos = $this->solicitacaoModel->getFotos($id);
         $solicitacao['fotos'] = $fotos;
         
+        // Buscar histórico de WhatsApp
+        $whatsappHistorico = $this->getWhatsAppHistorico($id);
+        $solicitacao['whatsapp_historico'] = $whatsappHistorico;
+        
         // Debug: Log das fotos encontradas
         error_log("📸 API Solicitação #{$id} - Fotos encontradas: " . count($fotos));
         if (!empty($fotos)) {
@@ -1584,6 +1588,11 @@ class SolicitacoesController extends Controller
         $raw = file_get_contents('php://input');
         $json = json_decode($raw, true);
         $horariosSeguradora = $json['horarios_seguradora'] ?? null;
+        
+        // ✅ Ler status_id e condicao_id do JSON ou do input
+        $statusId = $json['status_id'] ?? $this->input('status_id');
+        $condicaoId = $json['condicao_id'] ?? $this->input('condicao_id');
+        
         $schedulesFromJson = null; // null = não foi enviado, array = foi enviado (pode ser vazio)
         $schedulesFoiEnviado = false;
         
@@ -1618,9 +1627,36 @@ class SolicitacoesController extends Controller
                 return;
             }
             
+            // ✅ Validação: Verificar se está tentando mudar para "Serviço Agendado" sem protocolo
+            if ($statusId) {
+                $sql = "SELECT nome FROM status WHERE id = ?";
+                $status = \App\Core\Database::fetch($sql, [$statusId]);
+                
+                if ($status && $status['nome'] === 'Serviço Agendado') {
+                    if (empty($protocoloSeguradora) || trim($protocoloSeguradora) === '') {
+                        $this->json([
+                            'success' => false,
+                            'error' => 'É obrigatório preencher o protocolo da seguradora para mudar para "Serviço Agendado"',
+                            'requires_protocol' => true
+                        ], 400);
+                        return;
+                    }
+                }
+            }
+            
             $dados = [
                 'observacoes' => $observacoes
             ];
+            
+            // ✅ Adicionar status_id se foi alterado
+            if ($statusId) {
+                $dados['status_id'] = $statusId;
+            }
+            
+            // ✅ Adicionar condicao_id se foi alterado
+            if ($condicaoId !== null && $condicaoId !== '') {
+                $dados['condicao_id'] = $condicaoId ?: null;
+            }
 
             // Adicionar protocolo se fornecido
             if ($protocoloSeguradora !== null && $protocoloSeguradora !== '') {
@@ -1913,8 +1949,18 @@ class SolicitacoesController extends Controller
                         $dados['horario_confirmado_raw'] = $last['raw'];
                         $dados['confirmed_schedules'] = json_encode($confirmedFinalLimpo);
                         
-                        // Mudar status para "Serviço Agendado"
-                        $dados['status_id'] = $this->getStatusId('Serviço Agendado');
+                        // ✅ Só mudar status para "Serviço Agendado" se o usuário não alterou manualmente o status
+                        // Verificar se o usuário já definiu um status_id manualmente antes de forçar "Serviço Agendado"
+                        $statusIdManual = $statusId ?? null; // status_id que o usuário escolheu no select
+                        if (empty($statusIdManual)) {
+                            // Se não foi definido manualmente, mudar para "Serviço Agendado"
+                            $dados['status_id'] = $this->getStatusId('Serviço Agendado');
+                            error_log("DEBUG atualizarDetalhes [ID:{$id}] - Status alterado automaticamente para 'Serviço Agendado' (há horários confirmados)");
+                        } else {
+                            // Se foi definido manualmente, manter o status escolhido pelo usuário
+                            $dados['status_id'] = $statusIdManual;
+                            error_log("DEBUG atualizarDetalhes [ID:{$id}] - Status mantido pelo usuário: " . $statusIdManual);
+                        }
                         
                         // ✅ Enviar notificação WhatsApp quando horários são confirmados
                         try {
@@ -1995,6 +2041,56 @@ class SolicitacoesController extends Controller
                 $resultado = $this->solicitacaoModel->update($id, $dados);
                 
                 if ($resultado) {
+                    // ✅ Registrar no histórico e enviar WhatsApp se status foi alterado
+                    if (isset($dados['status_id']) && $dados['status_id'] != $solicitacaoAtual['status_id']) {
+                        $user = $this->getUser();
+                        $observacaoStatus = 'Status alterado via detalhes da solicitação';
+                        if (isset($dados['observacoes']) && !empty($dados['observacoes'])) {
+                            $observacaoStatus .= '. ' . $dados['observacoes'];
+                        }
+                        $this->solicitacaoModel->updateStatus($id, $dados['status_id'], $user['id'] ?? null, $observacaoStatus);
+                        
+                        // ✅ Enviar notificação WhatsApp de mudança de status
+                        try {
+                            $sql = "SELECT nome FROM status WHERE id = ?";
+                            $status = \App\Core\Database::fetch($sql, [$dados['status_id']]);
+                            $statusNome = $status['nome'] ?? 'Atualizado';
+                            
+                            // Se mudou para "Serviço Agendado", enviar "Horário Confirmado" em vez de "Atualização de Status"
+                            if ($statusNome === 'Serviço Agendado') {
+                                // Buscar dados de agendamento da solicitação
+                                $solicitacaoAtualizada = $this->solicitacaoModel->find($id);
+                                $dataAgendamento = $solicitacaoAtualizada['data_agendamento'] ?? null;
+                                $horarioAgendamento = $solicitacaoAtualizada['horario_agendamento'] ?? null;
+                                
+                                // Formatar horário completo
+                                $horarioCompleto = '';
+                                if ($dataAgendamento && $horarioAgendamento) {
+                                    $dataFormatada = date('d/m/Y', strtotime($dataAgendamento));
+                                    $horarioCompleto = $dataFormatada . ' - ' . $horarioAgendamento;
+                                }
+                                
+                                $this->enviarNotificacaoWhatsApp($id, 'Horário Confirmado', [
+                                    'data_agendamento' => $dataAgendamento ? date('d/m/Y', strtotime($dataAgendamento)) : '',
+                                    'horario_agendamento' => $horarioAgendamento ?? '',
+                                    'horario_servico' => $horarioCompleto
+                                ]);
+                                
+                                error_log("WhatsApp de horário confirmado enviado [ID:{$id}] - Status: Serviço Agendado");
+                            } else {
+                                // Para outros status, enviar "Atualização de Status"
+                                $this->enviarNotificacaoWhatsApp($id, 'Atualização de Status', [
+                                    'status_atual' => $statusNome
+                                ]);
+                                
+                                error_log("WhatsApp de atualização de status enviado [ID:{$id}] - Novo status: " . $statusNome);
+                            }
+                        } catch (\Exception $e) {
+                            error_log('Erro ao enviar WhatsApp de atualização de status [ID:' . $id . ']: ' . $e->getMessage());
+                            // Não bloquear o salvamento se falhar o WhatsApp
+                        }
+                    }
+                    
                     // Enviar WhatsApp se horários da seguradora foram salvos
                     if ($horariosSeguradoraSalvos && !empty($horariosSeguradora)) {
                         try {
@@ -2159,6 +2255,125 @@ class SolicitacoesController extends Controller
             error_log('Erro ao buscar solicitação manual: ' . $e->getMessage());
             $this->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
+    }
+    
+    /**
+     * Buscar histórico de WhatsApp de uma solicitação
+     */
+    private function getWhatsAppHistorico(int $solicitacaoId): array
+    {
+        $historico = [];
+        $logFile = __DIR__ . '/../../storage/logs/whatsapp_evolution_api.log';
+        
+        if (!file_exists($logFile)) {
+            return $historico;
+        }
+        
+        try {
+            $lines = file($logFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+            $currentEntry = null;
+            
+            foreach ($lines as $line) {
+                // Procurar por linhas que começam com timestamp e contêm o ID da solicitação
+                if (preg_match('/^\[(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\] \[(\w+)\] ID:(\d+)/', $line, $matches)) {
+                    $timestamp = $matches[1];
+                    $status = $matches[2];
+                    $id = (int)$matches[3];
+                    
+                    // Se for da solicitação atual, processar
+                    if ($id === $solicitacaoId) {
+                        // Extrair informações da linha
+                        $tipo = 'N/A';
+                        $protocolo = 'N/A';
+                        $telefone = null;
+                        $erro = null;
+                        
+                        if (preg_match('/Tipo:([^|]+)/', $line, $tipoMatch)) {
+                            $tipo = trim($tipoMatch[1]);
+                        }
+                        if (preg_match('/Protocolo:([^|]+)/', $line, $protoMatch)) {
+                            $protocolo = trim($protoMatch[1]);
+                        }
+                        if (preg_match('/Telefone:([^|]+)/', $line, $telMatch)) {
+                            $telefone = trim($telMatch[1]);
+                        }
+                        if (preg_match('/ERRO:([^|]+)/', $line, $erroMatch)) {
+                            $erro = trim($erroMatch[1]);
+                        }
+                        
+                        $currentEntry = [
+                            'timestamp' => $timestamp,
+                            'status' => strtolower($status),
+                            'tipo' => $tipo,
+                            'protocolo' => $protocolo,
+                            'telefone' => $telefone,
+                            'erro' => $erro,
+                            'mensagem' => null,
+                            'detalhes' => null
+                        ];
+                    }
+                }
+                // Se encontrou uma linha de detalhes JSON
+                elseif ($currentEntry && strpos($line, 'DETALHES:') !== false) {
+                    $jsonPart = substr($line, strpos($line, 'DETALHES:') + 9);
+                    $detalhes = json_decode($jsonPart, true);
+                    
+                    if ($detalhes && is_array($detalhes)) {
+                        $currentEntry['detalhes'] = $detalhes;
+                        
+                        // Tentar extrair a mensagem dos detalhes
+                        if (isset($detalhes['mensagem'])) {
+                            // Mensagem completa salva no log
+                            $currentEntry['mensagem'] = $detalhes['mensagem'];
+                        } elseif (isset($detalhes['api_response']['message']['conversation'])) {
+                            // Mensagem enviada pela API (já com variáveis substituídas)
+                            $currentEntry['mensagem'] = $detalhes['api_response']['message']['conversation'];
+                        } elseif (isset($detalhes['template_id'])) {
+                            // Buscar template e tentar reconstruir a mensagem
+                            try {
+                                $templateModel = new \App\Models\WhatsappTemplate();
+                                $template = $templateModel->find($detalhes['template_id']);
+                                if ($template && !empty($template['corpo'])) {
+                                    $mensagemTemplate = $template['corpo'];
+                                    
+                                    // Tentar substituir variáveis básicas se disponíveis nos detalhes
+                                    if (isset($detalhes['protocolo'])) {
+                                        $mensagemTemplate = str_replace('{{protocol}}', $detalhes['protocolo'], $mensagemTemplate);
+                                        $mensagemTemplate = str_replace('{{protocolo}}', $detalhes['protocolo'], $mensagemTemplate);
+                                    }
+                                    if (isset($detalhes['cliente_nome'])) {
+                                        $mensagemTemplate = str_replace('{{cliente_nome}}', $detalhes['cliente_nome'], $mensagemTemplate);
+                                    }
+                                    
+                                    $currentEntry['mensagem'] = $mensagemTemplate;
+                                }
+                            } catch (\Exception $e) {
+                                // Ignorar erro
+                            }
+                        }
+                        
+                        // Se ainda não tem mensagem, usar o template básico
+                        if (empty($currentEntry['mensagem']) && isset($detalhes['message_type'])) {
+                            $currentEntry['mensagem'] = 'Template: ' . $detalhes['message_type'];
+                        }
+                        
+                        // Adicionar ao histórico
+                        $historico[] = $currentEntry;
+                        $currentEntry = null;
+                    }
+                }
+            }
+            
+            // Ordenar por timestamp (mais recente primeiro)
+            usort($historico, function($a, $b) {
+                return strtotime($b['timestamp']) - strtotime($a['timestamp']);
+            });
+            
+        } catch (\Exception $e) {
+            error_log('Erro ao ler histórico de WhatsApp: ' . $e->getMessage());
+        }
+        
+        return $historico;
     }
     
     /**

@@ -162,6 +162,7 @@ class WhatsAppService
             $logData['telefone_original'] = $telefone;
             $logData['telefone_formatado'] = $whatsappNumber;
             $logData['mensagem_tamanho'] = strlen($message);
+            $logData['mensagem'] = $message; // ✅ Salvar mensagem completa no log
             
             // Enviar para Evolution API
             $apiResponse = $this->sendToEvolutionAPI($whatsappNumber, $message, $logData);

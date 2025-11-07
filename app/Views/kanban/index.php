@@ -198,156 +198,145 @@ $content = ob_get_clean();
 include 'app/Views/layouts/admin.php';
 ?>
 
-<!-- SortableJS -->
-<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
-
 <script>
-// Inicializar Sortable em todas as colunas do Kanban
-// Variável para rastrear se está arrastando
-let isDragging = false;
-let dragStartTime = 0;
-let dragStartPos = { x: 0, y: 0 };
-
-document.querySelectorAll('.kanban-cards').forEach(column => {
-    new Sortable(column, {
-        group: 'kanban',
-        animation: 150,
-        ghostClass: 'bg-blue-100',
-        dragClass: 'opacity-50',
-        onStart: function(evt) {
-            isDragging = false;
-            dragStartTime = Date.now();
-            if (evt.originalEvent) {
-                dragStartPos = { x: evt.originalEvent.clientX, y: evt.originalEvent.clientY };
-            }
-        },
-        onEnd: function(evt) {
-            // Se o card foi movido para outra coluna, foi um drag
-            const wasDragging = evt.from !== evt.to;
-            if (wasDragging) {
-                isDragging = true;
-            }
-            // Resetar flag após um pequeno delay
-            setTimeout(() => {
-                isDragging = false;
-            }, 200);
-            const solicitacaoId = evt.item.getAttribute('data-solicitacao-id');
-            const novoStatusId = evt.to.getAttribute('data-status-id');
-            const antigoStatusId = evt.from.getAttribute('data-status-id');
-            
-            // Se moveu para a mesma coluna, não fazer nada
-            if (novoStatusId === antigoStatusId) {
-                return;
-            }
-            
-            // ✅ OPTIMISTIC UI: Atualizar contadores imediatamente
-            atualizarContadores();
-            
-            // ✅ OPTIMISTIC UI: Adicionar classe visual de "pendente"
-            evt.item.classList.add('opacity-75', 'border-yellow-400', 'border-2');
-            const originalBorderColor = evt.item.style.borderLeftColor;
-            
-            // Atualizar no servidor
-            fetch('<?= url('admin/kanban/mover') ?>', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    solicitacao_id: solicitacaoId,
-                    novo_status_id: novoStatusId
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    // ✅ Remover classe de pendente
-                    evt.item.classList.remove('opacity-75', 'border-yellow-400', 'border-2');
-                    evt.item.setAttribute('data-status-id', novoStatusId);
-                    
-                    // Atualizar cor da borda com a nova cor do status
-                    const novaColuna = evt.to.closest('.kanban-column');
-                    const novoStatusCor = novaColuna.querySelector('.w-3.h-3')?.style.backgroundColor;
-                    if (novoStatusCor) {
-                        evt.item.style.borderLeftColor = novoStatusCor;
-                    }
-                    
-                    // Mostrar notificação
-                    mostrarNotificacao('Status atualizado com sucesso!', 'success');
-                } else {
-                    // ✅ ROLLBACK: Reverter mudança
-                    evt.item.classList.remove('opacity-75', 'border-yellow-400', 'border-2');
-                    evt.item.style.borderLeftColor = originalBorderColor;
-                    evt.from.insertBefore(evt.item, evt.from.children[evt.oldIndex]);
-                    atualizarContadores();
-                    
-                    // Se for erro de protocolo obrigatório, mostrar mensagem específica e abrir modal
-                    if (data.requires_protocol) {
-                        mostrarNotificacao(data.error || 'É obrigatório preencher o protocolo da seguradora', 'error');
-                        // Abrir modal de detalhes para preencher o protocolo
-                        setTimeout(() => {
-                            abrirDetalhes(parseInt(solicitacaoId));
-                        }, 500);
-                    } else {
-                        mostrarNotificacao('Erro: ' + (data.error || 'Não foi possível atualizar o status'), 'error');
-                    }
-                }
-            })
-            .catch(error => {
-                console.error('Erro:', error);
-                // ✅ ROLLBACK: Reverter mudança
-                evt.item.classList.remove('opacity-75', 'border-yellow-400', 'border-2');
-                evt.item.style.borderLeftColor = originalBorderColor;
-                evt.from.insertBefore(evt.item, evt.from.children[evt.oldIndex]);
-                atualizarContadores();
-                mostrarNotificacao('Erro ao atualizar status', 'error');
-            });
-        }
+// Permitir drag visual mas fazer voltar e mostrar mensagem
+document.querySelectorAll('.kanban-card').forEach(card => {
+    // Adicionar cursor pointer para indicar que é clicável
+    card.style.cursor = 'pointer';
+    
+    // Permitir drag visual
+    card.setAttribute('draggable', 'true');
+    
+    let originalColumn = null;
+    let originalIndex = -1;
+    let isDragging = false;
+    
+    // Quando começar a arrastar
+    card.addEventListener('dragstart', function(e) {
+        isDragging = true;
+        originalColumn = this.parentElement;
+        
+        // Guardar a posição original (índice entre os irmãos)
+        const cards = Array.from(originalColumn.children);
+        originalIndex = cards.indexOf(this);
+        
+        // Adicionar classe visual de arrastando
+        this.style.opacity = '0.5';
+        this.style.cursor = 'grabbing';
+        
+        // Armazenar dados do drag
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/html', this.outerHTML);
     });
     
-    // Tornar cards clicáveis (mas não durante o drag)
-    column.querySelectorAll('.kanban-card').forEach(card => {
-        let mouseDownTime = 0;
-        let mouseDownPos = { x: 0, y: 0 };
-        let hasMoved = false;
+    // Quando terminar de arrastar
+    card.addEventListener('dragend', function(e) {
+        isDragging = false;
+        this.style.opacity = '1';
+        this.style.cursor = 'pointer';
         
-        card.addEventListener('mousedown', function(e) {
-            mouseDownTime = Date.now();
-            mouseDownPos = { x: e.clientX, y: e.clientY };
-            hasMoved = false;
-        });
-        
-        card.addEventListener('mousemove', function(e) {
-            if (mouseDownTime > 0) {
-                const distance = Math.sqrt(
-                    Math.pow(e.clientX - mouseDownPos.x, 2) + 
-                    Math.pow(e.clientY - mouseDownPos.y, 2)
-                );
-                if (distance > 5) {
-                    hasMoved = true;
-                }
-            }
-        });
-        
-        card.addEventListener('click', function(e) {
-            // Se acabou de arrastar ou moveu o mouse, não abrir detalhes
-            if (isDragging || hasMoved) {
-                hasMoved = false;
-                return;
-            }
+        // Sempre fazer o card voltar para a posição original com animação
+        if (originalColumn && originalIndex >= 0) {
+            const currentColumn = this.parentElement;
+            const currentCards = Array.from(currentColumn.children);
+            const originalCards = Array.from(originalColumn.children);
             
-            // Verificar se foi um clique simples (não um drag)
-            const clickTime = Date.now();
-            const timeDiff = clickTime - mouseDownTime;
+            // Verificar se o card foi movido
+            const wasMoved = currentColumn !== originalColumn || 
+                           (currentColumn === originalColumn && currentCards.indexOf(this) !== originalIndex);
             
-            // Se foi um clique rápido, abrir detalhes
-            if (timeDiff < 300) {
-                const solicitacaoId = this.getAttribute('data-solicitacao-id');
-                if (solicitacaoId) {
-                    abrirDetalhes(parseInt(solicitacaoId));
+            if (wasMoved) {
+                this.style.transition = 'all 0.3s ease-in-out';
+                
+                // Voltar para a posição original
+                // Remover o card de onde está agora (se estiver em outra coluna)
+                if (currentColumn !== originalColumn && currentColumn.contains(this)) {
+                    this.remove();
                 }
+                
+                // Obter lista atualizada de cards da coluna original (sem o card que está sendo movido)
+                const cardsInOriginal = Array.from(originalColumn.children).filter(c => c !== this);
+                
+                // Inserir na posição original
+                if (originalIndex < cardsInOriginal.length) {
+                    // Inserir antes do card que está na posição original
+                    originalColumn.insertBefore(this, cardsInOriginal[originalIndex]);
+                } else {
+                    // Se o índice é maior que o número de cards, adicionar no final
+                    originalColumn.appendChild(this);
+                }
+                
+                // Remover transição após animação
+                setTimeout(() => {
+                    this.style.transition = '';
+                }, 300);
             }
-        });
+        }
+        
+        // Mostrar mensagem informativa
+        mostrarNotificacao('Para alterar o status, clique no card e altere pelo modal de detalhes', 'info');
+    });
+});
+
+// Permitir visualmente o drag sobre as colunas, mas não fazer nada
+document.querySelectorAll('.kanban-cards').forEach(column => {
+    column.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        
+        // Adicionar feedback visual de que está sobre a coluna
+        this.style.backgroundColor = 'rgba(59, 130, 246, 0.1)';
+        return false;
+    });
+    
+    column.addEventListener('dragleave', function(e) {
+        // Remover feedback visual
+        this.style.backgroundColor = '';
+    });
+    
+    column.addEventListener('drop', function(e) {
+        e.preventDefault();
+        
+        // Remover feedback visual
+        this.style.backgroundColor = '';
+        
+        // Não fazer nada - o dragend já vai fazer o card voltar
+        // Mas garantir que o card não seja inserido aqui
+        return false;
+    });
+    
+    // Prevenir que o card seja inserido durante o drag
+    column.addEventListener('dragenter', function(e) {
+        e.preventDefault();
+        return false;
+    });
+});
+
+// Clique para abrir detalhes (mas não se foi um drag)
+document.querySelectorAll('.kanban-card').forEach(card => {
+    let wasDragging = false;
+    
+    card.addEventListener('dragstart', function() {
+        wasDragging = true;
+    });
+    
+    card.addEventListener('dragend', function() {
+        // Resetar flag após um pequeno delay
+        setTimeout(() => {
+            wasDragging = false;
+        }, 100);
+    });
+    
+    card.addEventListener('click', function(e) {
+        // Se acabou de arrastar, não abrir detalhes
+        if (wasDragging) {
+            return;
+        }
+        
+        const solicitacaoId = this.getAttribute('data-solicitacao-id');
+        if (solicitacaoId) {
+            abrirDetalhes(parseInt(solicitacaoId));
+        }
     });
 });
 
@@ -381,6 +370,7 @@ function mostrarNotificacao(mensagem, tipo = 'info') {
 // ✅ Variáveis globais para rastrear mudanças não salvas
 let hasUnsavedChanges = false;
 let offcanvasSolicitacaoId = null;
+let whatsappHistoricoGlobal = [];
 
 // Funções do Offcanvas (reutilizadas do Dashboard)
 function abrirDetalhes(solicitacaoId) {
@@ -406,6 +396,8 @@ function abrirDetalhes(solicitacaoId) {
             if (data.success) {
                 console.log('📸 Fotos recebidas da API:', data.solicitacao.fotos);
                 console.log('📸 Quantidade de fotos:', data.solicitacao.fotos ? data.solicitacao.fotos.length : 0);
+                // Armazenar histórico de WhatsApp globalmente
+                whatsappHistoricoGlobal = data.solicitacao.whatsapp_historico || [];
                 renderizarDetalhes(data.solicitacao);
             } else {
                 detalhesContent.innerHTML = `
@@ -917,6 +909,61 @@ function renderizarDetalhes(solicitacao) {
                     <p class="text-xs text-gray-500 mt-2">0/3 documentos</p>
                 </div>
                 
+                <!-- Histórico de WhatsApp -->
+                <div class="bg-white rounded-lg p-5">
+                    <div class="flex items-center gap-2 mb-4">
+                        <i class="fab fa-whatsapp text-green-600"></i>
+                        <h3 class="font-semibold text-gray-900">Histórico WhatsApp</h3>
+                    </div>
+                    <div class="space-y-2 max-h-64 overflow-y-auto">
+                        ${solicitacao.whatsapp_historico && solicitacao.whatsapp_historico.length > 0 ? 
+                            solicitacao.whatsapp_historico.map((envio, index) => {
+                                const statusIcon = envio.status === 'sucesso' ? 'fa-check-circle text-green-600' : 
+                                                  envio.status === 'erro' ? 'fa-times-circle text-red-600' : 
+                                                  'fa-clock text-yellow-600';
+                                const statusText = envio.status === 'sucesso' ? 'Enviado' : 
+                                                  envio.status === 'erro' ? 'Erro' : 
+                                                  'Pendente';
+                                return `
+                                    <div class="border border-gray-200 rounded-lg p-3 hover:bg-gray-50 cursor-pointer transition-colors" 
+                                         onclick="verMensagemWhatsApp(${index})">
+                                        <div class="flex items-start justify-between mb-2">
+                                            <div class="flex items-center gap-2">
+                                                <i class="fas ${statusIcon} text-sm"></i>
+                                                <span class="text-xs font-medium text-gray-700">${envio.tipo}</span>
+                                                <span class="text-xs px-2 py-0.5 rounded ${envio.status === 'sucesso' ? 'bg-green-100 text-green-700' : envio.status === 'erro' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'}">${statusText}</span>
+                                            </div>
+                                            <span class="text-xs text-gray-500">${formatarDataHora(envio.timestamp)}</span>
+                                        </div>
+                                        ${envio.telefone ? `
+                                            <div class="text-xs text-gray-600 mb-1">
+                                                <i class="fas fa-phone mr-1"></i>
+                                                ${envio.telefone}
+                                            </div>
+                                        ` : ''}
+                                        ${envio.erro ? `
+                                            <div class="text-xs text-red-600 mt-1">
+                                                <i class="fas fa-exclamation-triangle mr-1"></i>
+                                                ${envio.erro}
+                                            </div>
+                                        ` : ''}
+                                        <div class="text-xs text-blue-600 mt-2 flex items-center">
+                                            <i class="fas fa-eye mr-1"></i>
+                                            Ver mensagem
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('') : 
+                            `
+                            <div class="text-center py-6 text-gray-400">
+                                <i class="fab fa-whatsapp text-2xl mb-2 block"></i>
+                                <p class="text-sm">Nenhum envio de WhatsApp registrado</p>
+                            </div>
+                            `
+                        }
+                    </div>
+                </div>
+                
             </div>
             
             <!-- COLUNA DIREITA -->
@@ -1029,7 +1076,7 @@ function renderizarDetalhes(solicitacao) {
                         <h3 class="font-semibold text-gray-900">Status da Solicitação</h3>
                     </div>
                     <select id="statusSelectKanban" 
-                            onchange="salvarStatusKanban(${solicitacao.id}, this.value)"
+                            onchange="marcarMudancaStatus()"
                             class="w-full bg-gray-50 border border-gray-200 rounded px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500">
                         ${todosStatus.map(status => `
                             <option value="${status.id}" ${status.id == solicitacao.status_id ? 'selected' : ''}>
@@ -1046,7 +1093,7 @@ function renderizarDetalhes(solicitacao) {
                         <h3 class="font-semibold text-gray-900">Condições</h3>
                     </div>
                     <select id="condicaoSelectKanban" 
-                            onchange="salvarCondicaoKanban(${solicitacao.id}, this.value)"
+                            onchange="marcarMudancaCondicao()"
                             class="w-full bg-gray-50 border border-gray-200 rounded px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500">
                         <option value="">Selecione uma condição</option>
                         ${todasCondicoes.map(condicao => `
@@ -1180,6 +1227,31 @@ function monitorarMudancas() {
             hasUnsavedChanges = true;
         });
     });
+    
+    // Monitorar select de status
+    const statusSelect = document.getElementById('statusSelectKanban');
+    if (statusSelect) {
+        statusSelect.addEventListener('change', () => {
+            hasUnsavedChanges = true;
+        });
+    }
+    
+    // Monitorar select de condição
+    const condicaoSelect = document.getElementById('condicaoSelectKanban');
+    if (condicaoSelect) {
+        condicaoSelect.addEventListener('change', () => {
+            hasUnsavedChanges = true;
+        });
+    }
+}
+
+// Funções para marcar mudanças (não salvar automaticamente)
+function marcarMudancaStatus() {
+    hasUnsavedChanges = true;
+}
+
+function marcarMudancaCondicao() {
+    hasUnsavedChanges = true;
 }
 
 function copiarInformacoes() {
@@ -1249,6 +1321,37 @@ function salvarAlteracoes(solicitacaoId) {
     
     const protocoloSeguradora = document.getElementById('protocoloSeguradora')?.value || '';
     
+    // ✅ Coletar status e condição
+    const statusId = document.getElementById('statusSelectKanban')?.value || '';
+    const condicaoId = document.getElementById('condicaoSelectKanban')?.value || '';
+    
+    // ✅ Validação: Verificar se está tentando mudar para "Serviço Agendado" sem protocolo
+    if (statusId) {
+        const statusSelect = document.getElementById('statusSelectKanban');
+        const statusNome = statusSelect.options[statusSelect.selectedIndex]?.text || '';
+        
+        if (statusNome === 'Serviço Agendado' && !protocoloSeguradora.trim()) {
+            // Restaurar botão
+            btnSalvar.innerHTML = originalText;
+            btnSalvar.disabled = originalDisabled;
+            btnSalvar.classList.add('hover:bg-blue-700');
+            
+            mostrarNotificacao('É obrigatório preencher o protocolo da seguradora para mudar para "Serviço Agendado"', 'error');
+            
+            // Destacar o campo de protocolo
+            const protocoloInput = document.getElementById('protocoloSeguradora');
+            if (protocoloInput) {
+                protocoloInput.focus();
+                protocoloInput.classList.add('border-red-500', 'ring-2', 'ring-red-500');
+                setTimeout(() => {
+                    protocoloInput.classList.remove('border-red-500', 'ring-2', 'ring-red-500');
+                }, 3000);
+            }
+            
+            return;
+        }
+    }
+    
     // ✅ Coletar horários da seguradora da lista visual
     const horariosSeguradora = coletarHorariosSeguradoraVisual();
     
@@ -1263,6 +1366,14 @@ function salvarAlteracoes(solicitacaoId) {
         valor_reembolso: valorReembolso,
         protocolo_seguradora: protocoloSeguradora
     };
+    
+    // ✅ Adicionar status_id e condicao_id se foram alterados
+    if (statusId) {
+        dados.status_id = statusId;
+    }
+    if (condicaoId) {
+        dados.condicao_id = condicaoId;
+    }
     
     // ✅ Só adicionar schedules se houver horários selecionados
     // Se o array estiver vazio, não enviar schedules para preservar os horários existentes
@@ -1425,6 +1536,100 @@ function formatarDataHora(dateString) {
     return date.toLocaleDateString('pt-BR') + ' às ' + date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 }
 
+// Função para exibir mensagem completa do WhatsApp
+function verMensagemWhatsApp(index) {
+    if (!whatsappHistoricoGlobal || !whatsappHistoricoGlobal[index]) {
+        mostrarNotificacao('Mensagem não encontrada', 'error');
+        return;
+    }
+    
+    const envio = whatsappHistoricoGlobal[index];
+    const mensagem = envio.mensagem || 'Mensagem não disponível';
+    
+    // Criar modal para exibir a mensagem
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4';
+    modal.innerHTML = `
+        <div class="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+            <div class="bg-green-600 text-white px-6 py-4 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <i class="fab fa-whatsapp text-2xl"></i>
+                    <div>
+                        <h3 class="text-lg font-semibold">Mensagem WhatsApp</h3>
+                        <p class="text-sm text-green-100">${envio.tipo} - ${formatarDataHora(envio.timestamp)}</p>
+                    </div>
+                </div>
+                <button onclick="this.closest('.fixed').remove()" class="text-white hover:text-gray-200">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <div class="p-6 overflow-y-auto flex-1">
+                <div class="space-y-4">
+                    ${envio.telefone ? `
+                        <div class="flex items-center gap-2 text-gray-700">
+                            <i class="fas fa-phone text-gray-500"></i>
+                            <span class="font-medium">Telefone:</span>
+                            <span>${envio.telefone}</span>
+                        </div>
+                    ` : ''}
+                    ${envio.status === 'erro' && envio.erro ? `
+                        <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                            <div class="flex items-start gap-2">
+                                <i class="fas fa-exclamation-triangle text-red-600 mt-1"></i>
+                                <div>
+                                    <p class="font-medium text-red-800 mb-1">Erro no envio:</p>
+                                    <p class="text-sm text-red-700">${envio.erro}</p>
+                                </div>
+                            </div>
+                        </div>
+                    ` : ''}
+                    <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                        <p class="text-sm font-medium text-gray-700 mb-2">Mensagem enviada:</p>
+                        <div class="bg-white rounded p-4 border border-gray-200 whitespace-pre-wrap text-sm text-gray-800">
+                            ${mensagem.replace(/\n/g, '<br>')}
+                        </div>
+                    </div>
+                    ${envio.detalhes ? `
+                        <details class="mt-4">
+                            <summary class="cursor-pointer text-sm text-gray-600 hover:text-gray-800">
+                                <i class="fas fa-info-circle mr-2"></i>
+                                Ver detalhes técnicos
+                            </summary>
+                            <div class="mt-2 bg-gray-50 rounded p-3 border border-gray-200">
+                                <pre class="text-xs text-gray-700 overflow-x-auto">${JSON.stringify(envio.detalhes, null, 2)}</pre>
+                            </div>
+                        </details>
+                    ` : ''}
+                </div>
+            </div>
+            <div class="border-t border-gray-200 px-6 py-4 flex justify-end">
+                <button onclick="this.closest('.fixed').remove()" 
+                        class="px-6 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg transition-colors">
+                    Fechar
+                </button>
+            </div>
+        </div>
+    `;
+    
+    // Fechar ao clicar fora
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+            modal.remove();
+        }
+    });
+    
+    // Fechar com ESC
+    const escHandler = function(e) {
+        if (e.key === 'Escape') {
+            modal.remove();
+            document.removeEventListener('keydown', escHandler);
+        }
+    };
+    document.addEventListener('keydown', escHandler);
+    
+    document.body.appendChild(modal);
+}
+
 // ======== Horários da Seguradora (Kanban) ========
 function toggleAdicionarHorariosSeguradoraKanban(solicitacaoId, checked) {
     console.log('🔍 toggleAdicionarHorariosSeguradoraKanban chamado, solicitacaoId:', solicitacaoId, 'checked:', checked);
@@ -1451,32 +1656,12 @@ function toggleAdicionarHorariosSeguradoraKanban(solicitacaoId, checked) {
     }
 }
 
-// Atualizar status de horários indisponíveis (Kanban)
+// Atualizar status de horários indisponíveis (Kanban) - APENAS VISUAL, não salva no banco
+// O salvamento será feito quando clicar em "Salvar Alterações"
 function atualizarHorariosIndisponiveisKanban(solicitacaoId, indisponivel) {
-    fetch(`<?= url('admin/solicitacoes/') ?>${solicitacaoId}/atualizar`, {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ 
-            horarios_indisponiveis: indisponivel ? 1 : 0
-        })
-    })
-    .then(async response => {
-        const contentType = response.headers.get('content-type');
-        if (!contentType || !contentType.includes('application/json')) {
-            const text = await response.text();
-            console.error('Resposta não é JSON:', text);
-            return { success: false, error: 'Resposta inválida' };
-        }
-        return response.json();
-    })
-    .then(data => {
-        if (!data.success) {
-            console.error('Erro ao atualizar:', data.error);
-        }
-    })
-    .catch(error => {
-        console.error('Erro ao atualizar horários indisponíveis:', error);
-    });
+    // Apenas marcar que houve mudança, não salvar automaticamente
+    hasUnsavedChanges = true;
+    console.log('Horários indisponíveis alterados (será salvo ao clicar em "Salvar Alterações")');
 }
 
 // Adicionar horário da seguradora (Kanban) - APENAS VISUAL, não salva no banco
