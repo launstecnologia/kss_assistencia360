@@ -52,8 +52,16 @@ class TokenController extends Controller
             return;
         }
 
-        // Buscar dados da solicitação
-        $solicitacao = $this->solicitacaoModel->find($tokenData['solicitacao_id']);
+        // Buscar dados da solicitação com todos os campos, incluindo numero_solicitacao
+        $sql = "
+            SELECT s.*, 
+                   st.nome as status_nome,
+                   st.cor as status_cor
+            FROM solicitacoes s
+            LEFT JOIN status st ON s.status_id = st.id
+            WHERE s.id = ?
+        ";
+        $solicitacao = \App\Core\Database::fetch($sql, [$tokenData['solicitacao_id']]);
 
         if (!$solicitacao) {
             $this->view('token.error', [
@@ -152,10 +160,21 @@ class TokenController extends Controller
             return;
         }
 
-        // Validar token
+        // Validar token (permitir tokens já usados para cancelamento, mas verificar se não expirou)
         $tokenData = $this->tokenModel->validateToken($token);
+        
+        // Se o token não for válido (não usado e não expirado), tentar buscar mesmo se já foi usado
+        if (!$tokenData) {
+            $sql = "
+                SELECT * FROM schedule_confirmation_tokens
+                WHERE token = ?
+                AND expires_at > NOW()
+            ";
+            $tokenData = \App\Core\Database::fetch($sql, [$token]);
+        }
 
         if (!$tokenData) {
+            error_log('Cancelamento - Token inválido ou expirado: ' . $token);
             $this->view('token.error', [
                 'title' => 'Token Inválido ou Expirado',
                 'message' => 'Este link de cancelamento é inválido ou expirou. Por favor, entre em contato conosco.',
@@ -163,9 +182,43 @@ class TokenController extends Controller
             ]);
             return;
         }
+        
+        // Verificar se o token já foi usado para cancelamento
+        if ($tokenData['used_at'] && $tokenData['action_type'] === 'cancelled') {
+            error_log('Cancelamento - Token já foi usado para cancelamento: ' . $token);
+            // Mesmo assim, permitir ver a solicitação cancelada
+            $sql = "
+                SELECT s.*, 
+                       st.nome as status_nome,
+                       st.cor as status_cor
+                FROM solicitacoes s
+                LEFT JOIN status st ON s.status_id = st.id
+                WHERE s.id = ?
+            ";
+            $solicitacao = \App\Core\Database::fetch($sql, [$tokenData['solicitacao_id']]);
+            
+            if ($solicitacao) {
+                $this->view('token.sucesso', [
+                    'title' => 'Solicitação Já Cancelada',
+                    'message' => 'Esta solicitação já foi cancelada anteriormente.',
+                    'solicitacao' => $solicitacao,
+                    'tokenData' => $tokenData,
+                    'action' => 'cancelamento'
+                ]);
+                return;
+            }
+        }
 
-        // Buscar dados da solicitação
-        $solicitacao = $this->solicitacaoModel->find($tokenData['solicitacao_id']);
+        // Buscar dados da solicitação com todos os campos, incluindo numero_solicitacao
+        $sql = "
+            SELECT s.*, 
+                   st.nome as status_nome,
+                   st.cor as status_cor
+            FROM solicitacoes s
+            LEFT JOIN status st ON s.status_id = st.id
+            WHERE s.id = ?
+        ";
+        $solicitacao = \App\Core\Database::fetch($sql, [$tokenData['solicitacao_id']]);
 
         if (!$solicitacao) {
             $this->view('token.error', [
@@ -193,49 +246,176 @@ class TokenController extends Controller
 
     /**
      * Processa cancelamento de horário
+     * Fecha a solicitação no sistema (status "Cancelado")
      */
     private function processarCancelamento(string $token, array $tokenData, array $solicitacao): void
     {
         try {
-            $motivo = $this->input('motivo', 'Cancelado pelo cliente via link de cancelamento');
+            $motivo = $this->input('motivo', 'Horário cancelado pelo cliente via link de cancelamento');
+
+            // Validar token antes de processar (permitir tokens já usados, mas verificar se não expirou)
+            $tokenValidado = $this->tokenModel->validateToken($token);
+            
+            if (!$tokenValidado) {
+                // Tentar buscar token mesmo se já foi usado, mas verificar se não expirou
+                $sql = "
+                    SELECT * FROM schedule_confirmation_tokens
+                    WHERE token = ?
+                    AND expires_at > NOW()
+                ";
+                $tokenValidado = \App\Core\Database::fetch($sql, [$token]);
+            }
+            
+            if (!$tokenValidado) {
+                error_log('Cancelamento - Token inválido ou expirado: ' . $token);
+                $this->view('token.error', [
+                    'title' => 'Token Inválido',
+                    'message' => 'Este link de cancelamento é inválido ou expirou. Por favor, entre em contato conosco.',
+                    'error_type' => 'invalid_token'
+                ]);
+                return;
+            }
+            
+            // Verificar se a solicitação já foi cancelada
+            $sqlStatus = "
+                SELECT s.status_id, st.nome as status_nome
+                FROM solicitacoes s
+                LEFT JOIN status st ON s.status_id = st.id
+                WHERE s.id = ?
+            ";
+            $statusAtual = \App\Core\Database::fetch($sqlStatus, [$solicitacao['id']]);
+            
+            if ($statusAtual && (stripos($statusAtual['status_nome'], 'Cancelado') !== false || stripos($statusAtual['status_nome'], 'Cancel') !== false)) {
+                error_log('Cancelamento - Solicitação já está cancelada: ' . $solicitacao['id']);
+                $this->view('token.sucesso', [
+                    'title' => 'Solicitação Já Cancelada',
+                    'message' => 'Esta solicitação já foi cancelada anteriormente.',
+                    'solicitacao' => $solicitacao,
+                    'tokenData' => $tokenData,
+                    'action' => 'cancelamento'
+                ]);
+                return;
+            }
 
             // Marcar token como usado
-            $this->tokenModel->markAsUsed($token, 'cancelled');
+            try {
+                $this->tokenModel->markAsUsed($token, 'cancelled');
+            } catch (\Exception $e) {
+                error_log('Cancelamento - Aviso: Erro ao marcar token como usado (continuando): ' . $e->getMessage());
+                // Continuar mesmo se falhar ao marcar token como usado
+            }
 
-            // Atualizar status da solicitação para "Cancelado"
+            // Buscar status "Cancelado" para fechar a solicitação
             $statusModel = new \App\Models\Status();
             $statusCancelado = $statusModel->findByNome('Cancelado');
 
-            if ($statusCancelado) {
-                $this->solicitacaoModel->update($solicitacao['id'], [
-                    'status_id' => $statusCancelado['id'],
-                    'observacoes' => $motivo
+            // Log para debug
+            error_log('Cancelamento - Buscando status "Cancelado"');
+            error_log('Cancelamento - Solicitação ID: ' . $solicitacao['id']);
+
+            if (!$statusCancelado) {
+                // Se não encontrar "Cancelado", tentar buscar qualquer status que contenha "Cancelado"
+                $sql = "SELECT * FROM status WHERE (nome LIKE '%Cancelado%' OR nome LIKE '%Cancel%') AND status = 'ATIVO' LIMIT 1";
+                $statusCancelado = \App\Core\Database::fetch($sql);
+                
+                if (!$statusCancelado) {
+                    // Se ainda não encontrar, buscar status inativo também
+                    $sql = "SELECT * FROM status WHERE (nome LIKE '%Cancelado%' OR nome LIKE '%Cancel%') LIMIT 1";
+                    $statusCancelado = \App\Core\Database::fetch($sql);
+                }
+            }
+
+            if (!$statusCancelado) {
+                error_log('Cancelamento - ERRO: Status "Cancelado" não encontrado no banco de dados');
+                $this->view('token.error', [
+                    'title' => 'Erro no Sistema',
+                    'message' => 'Não foi possível processar o cancelamento. Por favor, entre em contato conosco.',
+                    'error_type' => 'status_not_found'
+                ]);
+                return;
+            }
+
+            error_log('Cancelamento - Status encontrado: ' . $statusCancelado['nome'] . ' (ID: ' . $statusCancelado['id'] . ')');
+
+            // Fechar a solicitação: atualizar status para "Cancelado" e limpar dados de agendamento
+            $observacoesAtualizadas = ($solicitacao['observacoes'] ?? '');
+            if (!empty($observacoesAtualizadas)) {
+                $observacoesAtualizadas .= "\n\n";
+            }
+            $observacoesAtualizadas .= "CANCELADO VIA TOKEN: " . $motivo;
+
+            $updateSql = "
+                UPDATE solicitacoes 
+                SET status_id = ?,
+                    data_agendamento = NULL,
+                    horario_agendamento = NULL,
+                    horario_confirmado = 0,
+                    horario_confirmado_raw = NULL,
+                    data_confirmada = NULL,
+                    confirmed_schedules = NULL,
+                    observacoes = ?,
+                    updated_at = NOW()
+                WHERE id = ?
+            ";
+            
+            try {
+                \App\Core\Database::query($updateSql, [
+                    $statusCancelado['id'],
+                    $observacoesAtualizadas,
+                    $solicitacao['id']
                 ]);
 
+                error_log('Cancelamento - Solicitação fechada com sucesso. Status: ' . $statusCancelado['nome'] . ' (ID: ' . $statusCancelado['id'] . ')');
+
                 // Registrar no histórico diretamente
-                $sql = "
+                $sqlHistorico = "
                     INSERT INTO historico_status (solicitacao_id, status_id, usuario_id, observacoes, created_at)
                     VALUES (?, ?, ?, ?, NOW())
                 ";
-                \App\Core\Database::query($sql, [
+                \App\Core\Database::query($sqlHistorico, [
                     $solicitacao['id'],
                     $statusCancelado['id'],
                     null, // Usuário sistema (null = cliente)
-                    $motivo
+                    'Solicitação cancelada pelo cliente via link de cancelamento. Motivo: ' . $motivo
                 ]);
-            }
 
-            // Exibir página de sucesso
-            $this->view('token.sucesso', [
-                'title' => 'Horário Cancelado',
-                'message' => 'Seu horário foi cancelado com sucesso. Entraremos em contato para reagendar.',
-                'solicitacao' => $solicitacao,
-                'tokenData' => $tokenData,
-                'action' => 'cancelamento'
-            ]);
+                // Buscar solicitação atualizada com todos os campos, incluindo numero_solicitacao
+                $sqlBuscar = "
+                    SELECT s.*, 
+                           st.nome as status_nome,
+                           st.cor as status_cor
+                    FROM solicitacoes s
+                    LEFT JOIN status st ON s.status_id = st.id
+                    WHERE s.id = ?
+                ";
+                $solicitacaoAtualizada = \App\Core\Database::fetch($sqlBuscar, [$solicitacao['id']]);
+                
+                if ($solicitacaoAtualizada) {
+                    // Mesclar dados atualizados com os dados originais para manter compatibilidade
+                    $solicitacao = array_merge($solicitacao, $solicitacaoAtualizada);
+                    error_log('Cancelamento - Solicitação atualizada. Protocolo: ' . ($solicitacao['numero_solicitacao'] ?? 'N/A'));
+                } else {
+                    error_log('Cancelamento - AVISO: Não foi possível buscar solicitação atualizada (ID: ' . $solicitacao['id'] . '), mas a atualização foi realizada');
+                }
+
+                // Exibir página de sucesso
+                $this->view('token.sucesso', [
+                    'title' => 'Solicitação Cancelada',
+                    'message' => 'Sua solicitação foi cancelada com sucesso.',
+                    'solicitacao' => $solicitacao,
+                    'tokenData' => $tokenData,
+                    'action' => 'cancelamento'
+                ]);
+
+            } catch (\Exception $e) {
+                error_log('Cancelamento - ERRO ao atualizar solicitação: ' . $e->getMessage());
+                error_log('Cancelamento - Stack trace: ' . $e->getTraceAsString());
+                throw $e; // Re-lançar para ser capturado pelo catch externo
+            }
 
         } catch (\Exception $e) {
             error_log('Erro ao processar cancelamento de horário: ' . $e->getMessage());
+            error_log('Stack trace: ' . $e->getTraceAsString());
             $this->view('token.error', [
                 'title' => 'Erro ao Cancelar',
                 'message' => 'Ocorreu um erro ao processar seu cancelamento. Por favor, tente novamente ou entre em contato conosco.',
@@ -245,8 +425,462 @@ class TokenController extends Controller
     }
 
     /**
+     * Exibe página de cancelamento de solicitação
+     * GET /cancelar-solicitacao?token=xxx
+     * Este método usa token permanente que não expira
+     */
+    public function cancelarSolicitacao(): void
+    {
+        $token = $this->input('token');
+
+        if (!$token) {
+            $this->view('token.error', [
+                'title' => 'Token Inválido',
+                'message' => 'Token não fornecido. Por favor, use o link completo enviado no WhatsApp.',
+                'error_type' => 'missing_token'
+            ]);
+            return;
+        }
+
+        // Validar token de cancelamento permanente
+        $solicitacaoId = $this->solicitacaoModel->validarTokenCancelamento($token);
+
+        if (!$solicitacaoId) {
+            $this->view('token.error', [
+                'title' => 'Token Inválido',
+                'message' => 'Este link de cancelamento é inválido. Por favor, entre em contato conosco.',
+                'error_type' => 'invalid_token'
+            ]);
+            return;
+        }
+
+        // Buscar dados da solicitação
+        $sql = "
+            SELECT s.*, 
+                   st.nome as status_nome,
+                   st.cor as status_cor,
+                   c.nome as categoria_nome
+            FROM solicitacoes s
+            LEFT JOIN status st ON s.status_id = st.id
+            LEFT JOIN categorias c ON s.categoria_id = c.id
+            WHERE s.id = ?
+        ";
+        $solicitacao = \App\Core\Database::fetch($sql, [$solicitacaoId]);
+
+        if (!$solicitacao) {
+            $this->view('token.error', [
+                'title' => 'Solicitação Não Encontrada',
+                'message' => 'A solicitação associada a este link não foi encontrada.',
+                'error_type' => 'solicitacao_not_found'
+            ]);
+            return;
+        }
+
+        // Verificar se a solicitação já foi cancelada
+        $statusAtual = $solicitacao['status_nome'] ?? '';
+        if (stripos($statusAtual, 'Cancelado') !== false || stripos($statusAtual, 'Cancel') !== false) {
+            $this->view('token.sucesso', [
+                'title' => 'Solicitação Já Cancelada',
+                'message' => 'Esta solicitação já foi cancelada anteriormente.',
+                'solicitacao' => $solicitacao,
+                'action' => 'cancelamento'
+            ]);
+            return;
+        }
+
+        // Se já foi processado (POST), processar cancelamento
+        if ($this->isPost()) {
+            $this->processarCancelamentoSolicitacao($token, $solicitacao);
+            return;
+        }
+
+        // Exibir formulário de cancelamento
+        $this->view('token.cancelamento-solicitacao', [
+            'token' => $token,
+            'solicitacao' => $solicitacao,
+            'title' => 'Cancelar Solicitação'
+        ]);
+    }
+
+    /**
+     * Processa cancelamento de solicitação
+     * Fecha a solicitação no sistema (status "Cancelado")
+     */
+    private function processarCancelamentoSolicitacao(string $token, array $solicitacao): void
+    {
+        try {
+            $motivo = $this->input('motivo', 'Solicitação cancelada pelo cliente via link de cancelamento');
+
+            // Validar token novamente
+            $solicitacaoId = $this->solicitacaoModel->validarTokenCancelamento($token);
+            
+            if (!$solicitacaoId || $solicitacaoId != $solicitacao['id']) {
+                error_log('Cancelamento Solicitação - Token inválido: ' . $token);
+                $this->view('token.error', [
+                    'title' => 'Token Inválido',
+                    'message' => 'Este link de cancelamento é inválido. Por favor, entre em contato conosco.',
+                    'error_type' => 'invalid_token'
+                ]);
+                return;
+            }
+
+            // Buscar status "Cancelado"
+            $sqlStatus = "SELECT * FROM status WHERE nome = 'Cancelado' AND status = 'ATIVO' LIMIT 1";
+            $statusCancelado = \App\Core\Database::fetch($sqlStatus);
+
+            if (!$statusCancelado) {
+                // Se não encontrar "Cancelado", tentar buscar qualquer status que contenha "Cancelado"
+                $sql = "SELECT * FROM status WHERE (nome LIKE '%Cancelado%' OR nome LIKE '%Cancel%') AND status = 'ATIVO' LIMIT 1";
+                $statusCancelado = \App\Core\Database::fetch($sql);
+                
+                if (!$statusCancelado) {
+                    // Se ainda não encontrar, buscar status inativo também
+                    $sql = "SELECT * FROM status WHERE (nome LIKE '%Cancelado%' OR nome LIKE '%Cancel%') LIMIT 1";
+                    $statusCancelado = \App\Core\Database::fetch($sql);
+                }
+            }
+
+            if (!$statusCancelado) {
+                error_log('Cancelamento Solicitação - ERRO: Status "Cancelado" não encontrado no banco de dados');
+                $this->view('token.error', [
+                    'title' => 'Erro no Sistema',
+                    'message' => 'Não foi possível processar o cancelamento. Por favor, entre em contato conosco.',
+                    'error_type' => 'status_not_found'
+                ]);
+                return;
+            }
+
+            error_log('Cancelamento Solicitação - Status encontrado: ' . $statusCancelado['nome'] . ' (ID: ' . $statusCancelado['id'] . ')');
+
+            // Atualizar observações
+            $observacoesAtualizadas = ($solicitacao['observacoes'] ?? '');
+            if (!empty($observacoesAtualizadas)) {
+                $observacoesAtualizadas .= "\n\n";
+            }
+            $observacoesAtualizadas .= "CANCELADO VIA LINK PERMANENTE: " . $motivo;
+
+            // Fechar a solicitação: atualizar status para "Cancelado"
+            $updateSql = "
+                UPDATE solicitacoes 
+                SET status_id = ?,
+                    observacoes = ?,
+                    updated_at = NOW()
+                WHERE id = ?
+            ";
+            
+            try {
+                \App\Core\Database::query($updateSql, [
+                    $statusCancelado['id'],
+                    $observacoesAtualizadas,
+                    $solicitacao['id']
+                ]);
+
+                error_log('Cancelamento Solicitação - Solicitação cancelada com sucesso. Status: ' . $statusCancelado['nome'] . ' (ID: ' . $statusCancelado['id'] . ')');
+
+                // Registrar no histórico
+                $sqlHistorico = "
+                    INSERT INTO historico_status (solicitacao_id, status_id, usuario_id, observacoes, created_at)
+                    VALUES (?, ?, ?, ?, NOW())
+                ";
+                \App\Core\Database::query($sqlHistorico, [
+                    $solicitacao['id'],
+                    $statusCancelado['id'],
+                    null, // Usuário sistema (null = cliente)
+                    'Solicitação cancelada pelo cliente via link permanente de cancelamento. Motivo: ' . $motivo
+                ]);
+
+                // Buscar solicitação atualizada
+                $sqlBuscar = "
+                    SELECT s.*, 
+                           st.nome as status_nome,
+                           st.cor as status_cor
+                    FROM solicitacoes s
+                    LEFT JOIN status st ON s.status_id = st.id
+                    WHERE s.id = ?
+                ";
+                $solicitacaoAtualizada = \App\Core\Database::fetch($sqlBuscar, [$solicitacao['id']]);
+                
+                if ($solicitacaoAtualizada) {
+                    $solicitacao = array_merge($solicitacao, $solicitacaoAtualizada);
+                    error_log('Cancelamento Solicitação - Solicitação atualizada. Protocolo: ' . ($solicitacao['numero_solicitacao'] ?? 'N/A'));
+                }
+
+                // Exibir página de sucesso
+                $this->view('token.sucesso', [
+                    'title' => 'Solicitação Cancelada',
+                    'message' => 'Sua solicitação foi cancelada com sucesso.',
+                    'solicitacao' => $solicitacao,
+                    'action' => 'cancelamento'
+                ]);
+
+            } catch (\Exception $e) {
+                error_log('Cancelamento Solicitação - ERRO ao atualizar solicitação: ' . $e->getMessage());
+                error_log('Cancelamento Solicitação - Stack trace: ' . $e->getTraceAsString());
+                throw $e;
+            }
+
+        } catch (\Exception $e) {
+            error_log('Erro ao processar cancelamento de solicitação: ' . $e->getMessage());
+            error_log('Stack trace: ' . $e->getTraceAsString());
+            $this->view('token.error', [
+                'title' => 'Erro ao Cancelar',
+                'message' => 'Ocorreu um erro ao processar seu cancelamento. Por favor, tente novamente ou entre em contato conosco.',
+                'error_type' => 'processing_error'
+            ]);
+        }
+    }
+
+    /**
+     * Exibe página de reagendamento de horário
+     * GET /reagendamento-horario?token=xxx
+     */
+    public function reagendamentoHorario(): void
+    {
+        $token = $this->input('token');
+
+        if (!$token) {
+            $this->view('token.error', [
+                'title' => 'Token Inválido',
+                'message' => 'Token não fornecido. Por favor, use o link completo enviado no WhatsApp.',
+                'error_type' => 'missing_token'
+            ]);
+            return;
+        }
+
+        // Validar token (permitir tokens já usados, mas verificar se não expirou)
+        $tokenData = $this->tokenModel->validateToken($token);
+        
+        if (!$tokenData) {
+            // Tentar buscar token mesmo se já foi usado, mas verificar se não expirou
+            $sql = "
+                SELECT * FROM schedule_confirmation_tokens
+                WHERE token = ?
+                AND expires_at > NOW()
+            ";
+            $tokenData = \App\Core\Database::fetch($sql, [$token]);
+        }
+
+        if (!$tokenData) {
+            $this->view('token.error', [
+                'title' => 'Token Inválido ou Expirado',
+                'message' => 'Este link de reagendamento é inválido ou expirou. Por favor, entre em contato conosco.',
+                'error_type' => 'invalid_token'
+            ]);
+            return;
+        }
+
+        // Buscar dados da solicitação
+        $sql = "
+            SELECT s.*, 
+                   st.nome as status_nome,
+                   st.cor as status_cor
+            FROM solicitacoes s
+            LEFT JOIN status st ON s.status_id = st.id
+            WHERE s.id = ?
+        ";
+        $solicitacao = \App\Core\Database::fetch($sql, [$tokenData['solicitacao_id']]);
+
+        if (!$solicitacao) {
+            $this->view('token.error', [
+                'title' => 'Solicitação Não Encontrada',
+                'message' => 'A solicitação associada a este token não foi encontrada.',
+                'error_type' => 'solicitacao_not_found'
+            ]);
+            return;
+        }
+
+        // Se já foi processado (POST), processar reagendamento
+        if ($this->isPost()) {
+            $this->processarReagendamento($token, $tokenData, $solicitacao);
+            return;
+        }
+
+        // Exibir formulário de reagendamento
+        $this->view('token.reagendamento', [
+            'token' => $token,
+            'tokenData' => $tokenData,
+            'solicitacao' => $solicitacao,
+            'title' => 'Reagendar Horário de Atendimento'
+        ]);
+    }
+
+    /**
+     * Processa reagendamento de horário
+     */
+    private function processarReagendamento(string $token, array $tokenData, array $solicitacao): void
+    {
+        try {
+            $novasDatas = $this->input('novas_datas', []);
+            
+            // Se vier como string JSON, parsear
+            if (is_string($novasDatas)) {
+                $novasDatas = json_decode($novasDatas, true) ?? [];
+            }
+            
+            // Se não for array, tentar converter
+            if (!is_array($novasDatas)) {
+                $novasDatas = [];
+            }
+
+            if (empty($novasDatas)) {
+                $this->view('token.error', [
+                    'title' => 'Dados Inválidos',
+                    'message' => 'Por favor, selecione pelo menos uma nova data e horário.',
+                    'error_type' => 'invalid_data'
+                ]);
+                return;
+            }
+
+            // Converter datas do formato "dd/mm/yyyy - HH:MM-HH:MM" para DateTime
+            $datasConvertidas = [];
+            foreach ($novasDatas as $dataString) {
+                // Formato esperado: "dd/mm/yyyy - HH:MM-HH:MM"
+                if (preg_match('/(\d{2})\/(\d{2})\/(\d{4})\s*-\s*(\d{2}):(\d{2})-(\d{2}):(\d{2})/', $dataString, $matches)) {
+                    $dia = $matches[1];
+                    $mes = $matches[2];
+                    $ano = $matches[3];
+                    $hora = $matches[4];
+                    $minuto = $matches[5];
+                    
+                    // Converter para formato DateTime (Y-m-d H:i:s)
+                    $dataFormatada = sprintf('%s-%s-%s %s:%s:00', $ano, $mes, $dia, $hora, $minuto);
+                    $datasConvertidas[] = $dataFormatada;
+                } else {
+                    // Tentar parsear como data simples
+                    try {
+                        $dt = new \DateTime($dataString);
+                        $datasConvertidas[] = $dt->format('Y-m-d H:i:s');
+                    } catch (\Exception $e) {
+                        error_log('Erro ao converter data: ' . $dataString . ' - ' . $e->getMessage());
+                    }
+                }
+            }
+            
+            if (empty($datasConvertidas)) {
+                $this->view('token.error', [
+                    'title' => 'Dados Inválidos',
+                    'message' => 'Por favor, selecione pelo menos uma nova data e horário válidos.',
+                    'error_type' => 'invalid_data'
+                ]);
+                return;
+            }
+
+            // Validar novas datas
+            $datasErrors = $this->solicitacaoModel->validarDatasOpcoes($datasConvertidas);
+            if (!empty($datasErrors)) {
+                $this->view('token.error', [
+                    'title' => 'Datas Inválidas',
+                    'message' => 'As datas selecionadas não são válidas: ' . implode(', ', $datasErrors),
+                    'error_type' => 'invalid_dates'
+                ]);
+                return;
+            }
+
+            // Validar token antes de processar
+            $tokenValidado = $this->tokenModel->validateToken($token);
+            
+            if (!$tokenValidado) {
+                $sql = "
+                    SELECT * FROM schedule_confirmation_tokens
+                    WHERE token = ?
+                    AND expires_at > NOW()
+                ";
+                $tokenValidado = \App\Core\Database::fetch($sql, [$token]);
+            }
+            
+            if (!$tokenValidado) {
+                $this->view('token.error', [
+                    'title' => 'Token Inválido',
+                    'message' => 'Este link de reagendamento é inválido ou expirou.',
+                    'error_type' => 'invalid_token'
+                ]);
+                return;
+            }
+
+            // Marcar token como usado
+            try {
+                $this->tokenModel->markAsUsed($token, 'rescheduled');
+            } catch (\Exception $e) {
+                error_log('Reagendamento - Aviso: Erro ao marcar token como usado (continuando): ' . $e->getMessage());
+            }
+
+            // Atualizar solicitação com novas datas (salvar no formato original para exibição)
+            $this->solicitacaoModel->update($solicitacao['id'], [
+                'datas_opcoes' => json_encode($novasDatas), // Salvar no formato original "dd/mm/yyyy - HH:MM-HH:MM"
+                'horarios_opcoes' => null, // Limpar horários antigos
+                'data_agendamento' => null,
+                'horario_agendamento' => null,
+                'horario_confirmado' => 0,
+                'horario_confirmado_raw' => null,
+                'data_confirmada' => null,
+                'confirmed_schedules' => null,
+                'horarios_indisponiveis' => 0, // Resetar flag de horários indisponíveis
+                'status_id' => $this->getStatusId('Buscando Prestador'),
+                'observacoes' => ($solicitacao['observacoes'] ?? '') . "\n\nREAGENDADO VIA TOKEN: Cliente solicitou reagendamento com novas datas: " . implode(', ', $novasDatas)
+            ]);
+
+            // Registrar no histórico
+            $sql = "
+                INSERT INTO historico_status (solicitacao_id, status_id, usuario_id, observacoes, created_at)
+                VALUES (?, ?, ?, ?, NOW())
+            ";
+            $statusBuscandoPrestador = $this->getStatusId('Buscando Prestador');
+            \App\Core\Database::query($sql, [
+                $solicitacao['id'],
+                $statusBuscandoPrestador,
+                null, // Usuário sistema (null = cliente)
+                'Solicitação reagendada pelo cliente via link de reagendamento. Novas datas: ' . implode(', ', $novasDatas)
+            ]);
+
+            // Buscar solicitação atualizada
+            $sqlBuscar = "
+                SELECT s.*, 
+                       st.nome as status_nome,
+                       st.cor as status_cor
+                FROM solicitacoes s
+                LEFT JOIN status st ON s.status_id = st.id
+                WHERE s.id = ?
+            ";
+            $solicitacaoAtualizada = \App\Core\Database::fetch($sqlBuscar, [$solicitacao['id']]);
+            
+            if ($solicitacaoAtualizada) {
+                $solicitacao = array_merge($solicitacao, $solicitacaoAtualizada);
+            }
+
+            // Exibir página de sucesso
+            $this->view('token.sucesso', [
+                'title' => 'Horário Reagendado',
+                'message' => 'Sua solicitação de reagendamento foi enviada com sucesso! Entraremos em contato para confirmar o novo horário.',
+                'solicitacao' => $solicitacao,
+                'tokenData' => $tokenData,
+                'action' => 'reagendamento'
+            ]);
+
+        } catch (\Exception $e) {
+            error_log('Erro ao processar reagendamento de horário: ' . $e->getMessage());
+            error_log('Stack trace: ' . $e->getTraceAsString());
+            $this->view('token.error', [
+                'title' => 'Erro ao Reagendar',
+                'message' => 'Ocorreu um erro ao processar seu reagendamento. Por favor, tente novamente ou entre em contato conosco.',
+                'error_type' => 'processing_error'
+            ]);
+        }
+    }
+
+    /**
+     * Retorna o ID do status pelo nome
+     */
+    private function getStatusId(string $statusNome): int
+    {
+        $sql = "SELECT id FROM status WHERE nome = ? LIMIT 1";
+        $status = \App\Core\Database::fetch($sql, [$statusNome]);
+        return $status['id'] ?? 2; // Default: Buscando Prestador (ID 2)
+    }
+
+    /**
      * Exibe status do serviço
      * GET /status-servico?token=xxx
+     * Aceita tanto tokens de confirmação quanto tokens públicos permanentes
      */
     public function statusServico(): void
     {
@@ -261,10 +895,26 @@ class TokenController extends Controller
             return;
         }
 
-        // Validar token
-        $tokenData = $this->tokenModel->validateToken($token);
+        $solicitacaoId = null;
+        $tokenData = null;
+        $isPublicToken = false;
 
-        if (!$tokenData) {
+        // Tentar validar como token de confirmação primeiro
+        $tokenData = $this->tokenModel->validateToken($token);
+        
+        if ($tokenData) {
+            // É um token de confirmação válido
+            $solicitacaoId = $tokenData['solicitacao_id'];
+        } else {
+            // Tentar validar como token público permanente
+            $solicitacaoId = $this->solicitacaoModel->validarTokenPublico($token);
+            
+            if ($solicitacaoId) {
+                $isPublicToken = true;
+            }
+        }
+
+        if (!$solicitacaoId) {
             $this->view('token.error', [
                 'title' => 'Token Inválido ou Expirado',
                 'message' => 'Este link de status é inválido ou expirou. Por favor, entre em contato conosco.',
@@ -280,7 +930,8 @@ class TokenController extends Controller
                 st.nome as status_nome,
                 st.cor as status_cor,
                 c.nome as categoria_nome,
-                i.nome as imobiliaria_nome
+                i.nome as imobiliaria_nome,
+                i.instancia as imobiliaria_instancia
             FROM solicitacoes s
             LEFT JOIN status st ON s.status_id = st.id
             LEFT JOIN categorias c ON s.categoria_id = c.id
@@ -288,7 +939,7 @@ class TokenController extends Controller
             WHERE s.id = ?
         ";
         
-        $solicitacao = \App\Core\Database::fetch($sql, [$tokenData['solicitacao_id']]);
+        $solicitacao = \App\Core\Database::fetch($sql, [$solicitacaoId]);
 
         if (!$solicitacao) {
             $this->view('token.error', [
@@ -308,6 +959,7 @@ class TokenController extends Controller
             'tokenData' => $tokenData,
             'solicitacao' => $solicitacao,
             'historico' => $historico,
+            'isPublicToken' => $isPublicToken,
             'title' => 'Status do Serviço'
         ]);
     }

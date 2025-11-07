@@ -79,22 +79,23 @@ ob_start();
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
                         <?php
                         $vars = [
-                            'protocolo' => 'Protocolo',
-                            'contrato' => 'Contrato',
+                            'protocol' => 'Protocolo',
+                            'contrato_numero' => 'Nº Contrato',
                             'protocolo_seguradora' => 'Protocolo Seguradora',
                             'cliente_nome' => 'Nome Cliente',
                             'cliente_cpf' => 'CPF',
                             'cliente_telefone' => 'Telefone',
                             'endereco_completo' => 'Endereço Completo',
-                            'tipo_servico' => 'Tipo de Serviço',
-                            'descricao_problema' => 'Descrição',
-                            'status' => 'Status',
-                            'data_agendamento' => 'Data',
-                            'horario_agendamento' => 'Horário',
+                            'servico_tipo' => 'Tipo de Serviço',
+                            'descricao_problema' => 'Descrição Problema',
+                            'status_atual' => 'Status',
+                            'data_agendamento' => 'Data Agendamento',
+                            'horario_agendamento' => 'Horário Agendamento',
                             'imobiliaria_nome' => 'Imobiliária',
                             'link_rastreamento' => 'Link Rastreamento',
                             'link_confirmacao' => 'Link Confirmação',
-                            'link_cancelamento' => 'Link Cancelamento',
+                            'link_cancelamento' => 'Link Cancelamento Horário',
+                            'link_cancelamento_solicitacao' => 'Link Cancelar Solicitação',
                             'prestador_nome' => 'Prestador',
                         ];
                         foreach ($vars as $k => $label): ?>

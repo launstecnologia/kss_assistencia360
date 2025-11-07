@@ -324,7 +324,10 @@ include 'app/Views/layouts/admin.php';
 
 <script>
 function updatePeriod(periodo) {
-    window.location.href = '<?= url('dashboard') ?>?periodo=' + periodo;
+    // Atualizar URL e recarregar página com novo período
+    const url = new URL(window.location.href);
+    url.searchParams.set('periodo', periodo);
+    window.location.href = url.toString();
 }
 
 // Funções do Offcanvas (removidas - usando versão atualizada abaixo)
@@ -1090,27 +1093,52 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Gráfico de Imobiliárias
     const imobiliariaCtx = document.getElementById('imobiliariaChart');
-    if (imobiliariaCtx) {
-        const imobiliariaChart = new Chart(imobiliariaCtx.getContext('2d'), {
-            type: 'bar',
-            data: {
-                labels: ['Imobiliária A', 'Imobiliária B', 'Imobiliária C'],
-                datasets: [{
-                    label: 'Solicitações',
-                    data: [12, 19, 8],
-                    backgroundColor: '#3B82F6'
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
+    let imobiliariaChart = null;
+    
+    function carregarGraficoImobiliarias(periodo) {
+        const periodoAtual = periodo || '<?= $periodo ?? '30' ?>';
+        
+        fetch('<?= url('admin/dashboard/solicitacoes-por-imobiliaria') ?>?periodo=' + periodoAtual)
+            .then(response => response.json())
+            .then(data => {
+                const labels = data.map(item => item.imobiliaria_nome || 'Sem imobiliária');
+                const valores = data.map(item => parseInt(item.quantidade) || 0);
+                
+                if (imobiliariaChart) {
+                    imobiliariaChart.destroy();
                 }
-            }
-        });
+                
+                imobiliariaChart = new Chart(imobiliariaCtx.getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Solicitações',
+                            data: valores,
+                            backgroundColor: '#3B82F6'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    stepSize: 1
+                                }
+                            }
+                        }
+                    }
+                });
+            })
+            .catch(error => {
+                console.error('Erro ao carregar dados do gráfico de imobiliárias:', error);
+            });
+    }
+    
+    if (imobiliariaCtx) {
+        carregarGraficoImobiliarias();
     }
 });
 </script>

@@ -27,15 +27,36 @@ class WhatsAppService
     
     /**
      * Construtor - Carrega configurações do WhatsApp
+     * Prioriza instância do banco de dados, depois configuração do arquivo
      */
     public function __construct()
     {
-        // ✅ Usar função global config() ou ler do arquivo de configuração
+        // Tentar buscar instância padrão do banco de dados
+        try {
+            $instanceModel = new \App\Models\WhatsappInstance();
+            $instancePadrao = $instanceModel->getPadrao();
+            
+            if ($instancePadrao && $instancePadrao['status'] === 'CONECTADO') {
+                // Usar instância do banco
+                $this->apiUrl = rtrim($instancePadrao['api_url'], '/');
+                $this->instance = $instancePadrao['instance_name'];
+                $this->apiKey = $instancePadrao['api_key'];
+                $this->enabled = true;
+                
+                // Armazenar token se disponível
+                $this->token = $instancePadrao['token'] ?? null;
+                
+                return;
+            }
+        } catch (\Exception $e) {
+            error_log('WhatsApp: Erro ao buscar instância do banco: ' . $e->getMessage());
+        }
+        
+        // Fallback: usar configuração do arquivo
         $configFile = __DIR__ . '/../Config/config.php';
         $config = file_exists($configFile) ? require $configFile : [];
         $whatsappConfig = $config['whatsapp'] ?? [];
         
-        // ✅ Ler de variáveis de ambiente se config não tiver (usar função global)
         $envEnabled = (function_exists('env') ? env('WHATSAPP_ENABLED', 'false') : (getenv('WHATSAPP_ENABLED') ?: 'false'));
         $this->enabled = $whatsappConfig['enabled'] ?? ($envEnabled === 'true');
         $envApiUrl = (function_exists('env') ? env('WHATSAPP_API_URL', '') : (getenv('WHATSAPP_API_URL') ?: ''));
@@ -44,15 +65,18 @@ class WhatsAppService
         $this->instance = $whatsappConfig['instance'] ?? $envInstance;
         $envApiKey = (function_exists('env') ? env('WHATSAPP_API_KEY', '') : (getenv('WHATSAPP_API_KEY') ?: ''));
         $this->apiKey = $whatsappConfig['api_key'] ?? $envApiKey;
+        $envToken = (function_exists('env') ? env('WHATSAPP_TOKEN', '') : (getenv('WHATSAPP_TOKEN') ?: ''));
+        $this->token = $whatsappConfig['token'] ?? $envToken;
         
         // Validar configurações
         if ($this->enabled && (empty($this->apiUrl) || empty($this->instance) || empty($this->apiKey))) {
             error_log('WhatsApp: Configurações incompletas. Verifique WHATSAPP_API_URL, WHATSAPP_INSTANCE e WHATSAPP_API_KEY.');
             error_log('WhatsApp: Configurações atuais - URL: ' . ($this->apiUrl ?: 'VAZIA') . ', Instância: ' . ($this->instance ?: 'VAZIA') . ', API Key: ' . (!empty($this->apiKey) ? 'CONFIGURADO' : 'VAZIA'));
-            // Desabilitar WhatsApp se configurações estiverem incompletas
             $this->enabled = false;
         }
     }
+    
+    private ?string $token = null;
     
     /**
      * Envia mensagem WhatsApp de forma síncrona/direta
@@ -234,8 +258,11 @@ class WhatsAppService
                 s.imovel_cidade as cliente_cidade,
                 s.imovel_estado as cliente_estado,
                 s.imovel_cep as cliente_cep,
+                s.numero_contrato as contrato_numero,
+                s.descricao_problema,
                 i.nome as imobiliaria_nome,
                 i.telefone as imobiliaria_telefone,
+                i.instancia as imobiliaria_instancia,
                 st.nome as status_nome,
                 c.nome as categoria_nome
             FROM solicitacoes s
@@ -342,9 +369,9 @@ class WhatsAppService
             
             // Solicitação
             'protocol' => $solicitacao['numero_solicitacao'] ?? ('KS' . $solicitacao['id']),
-            'contrato_numero' => $solicitacao['contrato_numero'] ?? '',
+            'contrato_numero' => $solicitacao['contrato_numero'] ?? $solicitacao['numero_contrato'] ?? '',
             'protocolo_seguradora' => $solicitacao['protocolo_seguradora'] ?? '',
-            'descricao_problema' => $solicitacao['descricao'] ?? '',
+            'descricao_problema' => $solicitacao['descricao_problema'] ?? $solicitacao['descricao'] ?? '',
             'servico_tipo' => $solicitacao['categoria_nome'] ?? 'Serviço',
             
             // Status
@@ -373,10 +400,15 @@ class WhatsAppService
             'prestador_telefone' => $extraData['prestador_telefone'] ?? '',
             
             // Links (sempre absolutos, sem barras invertidas)
-            'link_rastreamento' => $this->cleanUrl($baseUrl . '/locatario/solicitacao/' . $solicitacao['id']),
+            // Link de rastreamento: /{instancia}/solicitacoes/{id}
+            'link_rastreamento' => $this->getRastreamentoLink($baseUrl, $solicitacao),
             'link_confirmacao' => $token ? $this->cleanUrl($baseUrl . '/confirmacao-horario?token=' . $token) : '',
             'link_cancelamento' => $token ? $this->cleanUrl($baseUrl . '/cancelamento-horario?token=' . $token) : '',
-            'link_status' => $token ? $this->cleanUrl($baseUrl . '/status-servico?token=' . $token) : $this->cleanUrl($baseUrl . '/locatario/solicitacao/' . $solicitacao['id']),
+            'link_reagendamento' => $token ? $this->cleanUrl($baseUrl . '/reagendamento-horario?token=' . $token) : '',
+            // Link de status sempre usa token público permanente (não expira, acesso sem login)
+            'link_status' => $this->getStatusPublicLink($baseUrl, $solicitacao),
+            // Link de cancelamento de solicitação (permanente, não expira)
+            'link_cancelamento_solicitacao' => $this->getCancelamentoSolicitacaoLink($baseUrl, $solicitacao),
         ];
         
         // Mesclar com dados extras (sobrescreve se existir)
@@ -534,6 +566,90 @@ class WhatsAppService
     }
     
     /**
+     * Gera o link de rastreamento da solicitação com a instância correta
+     * 
+     * @param string $baseUrl URL base
+     * @param array $solicitacao Dados da solicitação
+     * @return string Link de rastreamento
+     */
+    private function getRastreamentoLink(string $baseUrl, array $solicitacao): string
+    {
+        $instancia = $solicitacao['imobiliaria_instancia'] ?? '';
+        $solicitacaoId = $solicitacao['id'] ?? 0;
+        
+        if (empty($instancia)) {
+            // Fallback: tentar buscar a instância da imobiliária
+            if (!empty($solicitacao['imobiliaria_id'])) {
+                $sql = "SELECT instancia FROM imobiliarias WHERE id = ? LIMIT 1";
+                $imobiliaria = Database::fetch($sql, [$solicitacao['imobiliaria_id']]);
+                $instancia = $imobiliaria['instancia'] ?? '';
+            }
+        }
+        
+        // Se ainda não tiver instância, usar um fallback genérico
+        if (empty($instancia)) {
+            $instancia = 'demo'; // Fallback padrão
+        }
+        
+        // Formato: /{instancia}/solicitacoes/{id}
+        $link = $baseUrl . '/' . $instancia . '/solicitacoes/' . $solicitacaoId;
+        
+        return $this->cleanUrl($link);
+    }
+
+    /**
+     * Gera o link público de status da solicitação com token permanente
+     * Este link não expira e permite acesso sem login
+     * 
+     * @param string $baseUrl URL base
+     * @param array $solicitacao Dados da solicitação
+     * @return string Link público de status
+     */
+    private function getStatusPublicLink(string $baseUrl, array $solicitacao): string
+    {
+        $solicitacaoId = $solicitacao['id'] ?? 0;
+        
+        if (empty($solicitacaoId)) {
+            return '';
+        }
+        
+        // Gerar token público permanente
+        $solicitacaoModel = new \App\Models\Solicitacao();
+        $tokenPublico = $solicitacaoModel->gerarTokenPublico($solicitacaoId);
+        
+        // Formato: /status-servico?token={token_publico}
+        $link = $baseUrl . '/status-servico?token=' . $tokenPublico;
+        
+        return $this->cleanUrl($link);
+    }
+
+    /**
+     * Gera o link de cancelamento de solicitação com token permanente
+     * Este link não expira e permite cancelar a solicitação sem login
+     * 
+     * @param string $baseUrl URL base
+     * @param array $solicitacao Dados da solicitação
+     * @return string Link de cancelamento de solicitação
+     */
+    private function getCancelamentoSolicitacaoLink(string $baseUrl, array $solicitacao): string
+    {
+        $solicitacaoId = $solicitacao['id'] ?? 0;
+        
+        if (empty($solicitacaoId)) {
+            return '';
+        }
+        
+        // Gerar token de cancelamento permanente
+        $solicitacaoModel = new \App\Models\Solicitacao();
+        $tokenCancelamento = $solicitacaoModel->gerarTokenCancelamento($solicitacaoId);
+        
+        // Formato: /cancelar-solicitacao?token={token_cancelamento}
+        $link = $baseUrl . '/cancelar-solicitacao?token=' . $tokenCancelamento;
+        
+        return $this->cleanUrl($link);
+    }
+    
+    /**
      * Obtém a URL base para links enviados nas mensagens WhatsApp
      * 
      * @return string URL base (sem barra final)
@@ -624,13 +740,8 @@ class WhatsAppService
         ];
         
         // Adicionar token da instância se disponível
-        $configFile = __DIR__ . '/../Config/config.php';
-        $config = file_exists($configFile) ? require $configFile : [];
-        $whatsappConfig = $config['whatsapp'] ?? [];
-        $envToken = (function_exists('env') ? env('WHATSAPP_TOKEN', '') : (getenv('WHATSAPP_TOKEN') ?: ''));
-        $token = $whatsappConfig['token'] ?? $envToken;
-        if (!empty($token)) {
-            $headers[] = 'Authorization: Bearer ' . $token;
+        if (!empty($this->token)) {
+            $headers[] = 'Authorization: Bearer ' . $this->token;
         }
         
         curl_setopt_array($ch, [

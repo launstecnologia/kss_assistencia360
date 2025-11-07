@@ -97,87 +97,122 @@
 </head>
 <body class="bg-gray-50">
     <!-- Header -->
-    <header class="bg-white shadow-sm border-b">
+    <?php 
+    $isLocatarioLogged = isset($_SESSION['locatario']) && 
+                         !empty($_SESSION['locatario']) && 
+                         is_array($_SESSION['locatario']) &&
+                         isset($_SESSION['locatario']['id']) &&
+                         !empty($_SESSION['locatario']['id']);
+    if ($isLocatarioLogged): ?>
+    <header class="bg-white shadow-sm border-b sticky top-0 z-40">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center py-4">
-                <!-- Logo -->
-                <div class="flex items-center space-x-3">
-                    <div class="flex items-center space-x-2">
-                        <span class="text-green-600 font-bold text-xl">KSS</span>
-                        <span class="text-gray-600 text-sm">ASSISTÊNCIA 360°</span>
-                    </div>
+            <div class="flex justify-between items-center py-3">
+                <!-- Logo da Imobiliária (Esquerda) -->
+                <div class="flex items-center">
+                    <?php 
+                    if (isset($_SESSION['locatario']['imobiliaria_id'])) {
+                        // Buscar logo da imobiliária do banco de dados
+                        $imobiliariaModel = new \App\Models\Imobiliaria();
+                        $imobiliaria = $imobiliariaModel->find($_SESSION['locatario']['imobiliaria_id']);
+                        
+                        if ($imobiliaria && !empty($imobiliaria['logo'])): ?>
+                            <img src="<?= url('Public/uploads/logos/' . $imobiliaria['logo']) ?>" 
+                                 alt="<?= htmlspecialchars($imobiliaria['nome'] ?? 'Imobiliária') ?>" 
+                                 class="h-10 w-auto"
+                                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                            <div class="h-10 w-10 bg-blue-600 rounded flex items-center justify-center" style="display: none;">
+                                <i class="fas fa-building text-white text-sm"></i>
+                            </div>
+                        <?php elseif ($imobiliaria && !empty($imobiliaria['nome'])): ?>
+                            <div class="h-10 w-10 bg-blue-600 rounded flex items-center justify-center">
+                                <i class="fas fa-building text-white text-sm"></i>
+                            </div>
+                        <?php endif;
+                    }
+                    ?>
                 </div>
                 
-                <!-- User Info -->
-                <?php if (isset($_SESSION['locatario'])): ?>
-                    <div class="flex items-center space-x-4">
-                        <!-- Dark mode toggle -->
-                        <button id="theme-toggle" class="text-gray-600 hover:text-gray-800" title="Alternar tema">
-                            <i id="theme-toggle-icon" class="fas fa-moon"></i>
-                        </button>
-                        <div class="text-right">
-                            <p class="text-sm font-medium text-gray-900">
-                                <?= htmlspecialchars($_SESSION['locatario']['nome']) ?>
-                            </p>
-                            <p class="text-xs text-gray-500">
-                                <?= htmlspecialchars($_SESSION['locatario']['imobiliaria_nome']) ?>
-                            </p>
-                        </div>
-                        
-                        <!-- Menu Dropdown -->
-                        <div class="relative">
-                            <button onclick="toggleUserMenu()" 
-                                    class="flex items-center space-x-2 text-gray-700 hover:text-gray-900 focus:outline-none">
-                                <div class="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center">
-                                    <i class="fas fa-user text-white text-sm"></i>
-                                </div>
-                                <i class="fas fa-chevron-down text-xs"></i>
-                            </button>
-                            
-                            <!-- Dropdown Menu -->
-                            <div id="user-menu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
-                                <a href="<?= url($_SESSION['locatario']['instancia'] . '/dashboard') ?>" 
-                                   class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                    <i class="fas fa-home mr-2"></i>
-                                    Dashboard
-                                </a>
-                                <a href="<?= url($_SESSION['locatario']['instancia'] . '/solicitacoes') ?>" 
-                                   class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                    <i class="fas fa-list mr-2"></i>
-                                    Minhas Solicitações
-                                </a>
-                                <a href="<?= url($_SESSION['locatario']['instancia'] . '/perfil') ?>" 
-                                   class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                    <i class="fas fa-user mr-2"></i>
-                                    Meu Perfil
-                                </a>
-                                <div class="border-t border-gray-100"></div>
-                                <a href="<?= url($_SESSION['locatario']['instancia'] . '/logout') ?>" 
-                                   class="block px-4 py-2 text-sm text-red-600 hover:bg-red-50">
-                                    <i class="fas fa-sign-out-alt mr-2"></i>
-                                    Sair
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                <?php endif; ?>
+                <!-- Logo KSS (Direita - Menor) -->
+                <div class="flex items-center">
+                    <?= kss_logo('', 'KSS ASSISTÊNCIA 360°', 20) ?>
+                </div>
             </div>
         </div>
     </header>
+    <?php endif; ?>
 
     <!-- Main Content -->
-    <main class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+    <main class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 pb-24">
         <?= $content ?>
     </main>
 
-    <!-- Footer -->
-    <footer class="bg-white border-t mt-12">
-        <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-            <div class="text-center text-gray-500 text-sm">
-                <p>&copy; <?= date('Y') ?> KSS Assistência 360°. Todos os direitos reservados.</p>
+    <!-- NavBottom - Barra de navegação inferior estilo app -->
+    <?php if ($isLocatarioLogged): 
+        $currentPath = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+        $instancia = $_SESSION['locatario']['instancia'] ?? '';
+    ?>
+    <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-50 md:hidden">
+        <div class="flex justify-around items-center h-16">
+            <!-- Dashboard -->
+            <a href="<?= url($instancia . '/dashboard') ?>" 
+               class="flex flex-col items-center justify-center flex-1 h-full <?= strpos($currentPath, '/dashboard') !== false ? 'text-green-600' : 'text-gray-500' ?>">
+                <i class="fas fa-home text-xl mb-1"></i>
+                <span class="text-xs">Início</span>
+            </a>
+            
+            <!-- Solicitações -->
+            <a href="<?= url($instancia . '/solicitacoes') ?>" 
+               class="flex flex-col items-center justify-center flex-1 h-full <?= strpos($currentPath, '/solicitacoes') !== false ? 'text-green-600' : 'text-gray-500' ?>">
+                <i class="fas fa-list text-xl mb-1"></i>
+                <span class="text-xs">Solicitações</span>
+            </a>
+            
+            <!-- Nova Solicitação -->
+            <a href="<?= url($instancia . '/nova-solicitacao') ?>" 
+               class="flex flex-col items-center justify-center flex-1 h-full text-green-600">
+                <div class="w-12 h-12 bg-green-600 rounded-full flex items-center justify-center mb-1 shadow-lg">
+                    <i class="fas fa-plus text-white text-xl"></i>
+                </div>
+                <span class="text-xs">Nova</span>
+            </a>
+            
+            <!-- Perfil -->
+            <a href="<?= url($instancia . '/perfil') ?>" 
+               class="flex flex-col items-center justify-center flex-1 h-full <?= strpos($currentPath, '/perfil') !== false ? 'text-green-600' : 'text-gray-500' ?>">
+                <i class="fas fa-user text-xl mb-1"></i>
+                <span class="text-xs">Perfil</span>
+            </a>
+            
+            <!-- Menu -->
+            <div class="flex flex-col items-center justify-center flex-1 h-full text-gray-500 relative">
+                <button onclick="toggleNavMenu()" class="flex flex-col items-center">
+                    <i class="fas fa-ellipsis-v text-xl mb-1"></i>
+                    <span class="text-xs">Mais</span>
+                </button>
+                
+                <!-- Menu Dropdown -->
+                <div id="nav-menu" class="hidden absolute bottom-full right-0 mb-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 py-2">
+                    <a href="<?= url($instancia . '/dashboard') ?>" 
+                       class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                        <i class="fas fa-home mr-2"></i>
+                        Dashboard
+                    </a>
+                    <a href="<?= url($instancia . '/solicitacoes') ?>" 
+                       class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                        <i class="fas fa-list mr-2"></i>
+                        Minhas Solicitações
+                    </a>
+                    <div class="border-t border-gray-100 my-1"></div>
+                    <a href="<?= url($instancia . '/logout') ?>" 
+                       class="block px-4 py-2 text-sm text-red-600 hover:bg-red-50">
+                        <i class="fas fa-sign-out-alt mr-2"></i>
+                        Sair
+                    </a>
+                </div>
             </div>
         </div>
-    </footer>
+    </nav>
+    <?php endif; ?>
 
     <script>
         // Theme handling
@@ -203,18 +238,23 @@
             });
         })();
 
-        // Toggle user menu
-        function toggleUserMenu() {
-            const menu = document.getElementById('user-menu');
-            menu.classList.toggle('hidden');
+        // Toggle nav menu
+        function toggleNavMenu() {
+            const menu = document.getElementById('nav-menu');
+            if (menu) {
+                menu.classList.toggle('hidden');
+            }
         }
         
-        // Close menu when clicking outside
+        // Close nav menu when clicking outside
         document.addEventListener('click', function(event) {
-            const menu = document.getElementById('user-menu');
-            const button = event.target.closest('button');
+            const menu = document.getElementById('nav-menu');
+            if (!menu) return;
             
-            if (!button || !button.onclick || button.onclick.toString().indexOf('toggleUserMenu') === -1) {
+            const button = event.target.closest('button');
+            const isMenuClick = menu.contains(event.target);
+            
+            if (!isMenuClick && (!button || !button.onclick || button.onclick.toString().indexOf('toggleNavMenu') === -1)) {
                 menu.classList.add('hidden');
             }
         });

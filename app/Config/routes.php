@@ -29,12 +29,20 @@ $router->get('/', 'PwaController@index'); // Página inicial vai para PWA do loc
 $router->get('/pwa', 'PwaController@index');
 $router->get('/pwa/login', 'PwaController@login');
 $router->post('/pwa/login', 'PwaController@authenticate');
+// APIs para busca de imobiliárias
+$router->get('/api/estados', 'PwaController@getEstados');
+$router->get('/api/cidades', 'PwaController@getCidades');
+$router->get('/api/imobiliarias', 'PwaController@getImobiliarias');
 
 // Rotas públicas para tokens de confirmação/cancelamento (sem autenticação)
 $router->get('/confirmacao-horario', 'TokenController@confirmacaoHorario');
 $router->post('/confirmacao-horario', 'TokenController@confirmacaoHorario');
 $router->get('/cancelamento-horario', 'TokenController@cancelamentoHorario');
 $router->post('/cancelamento-horario', 'TokenController@cancelamentoHorario');
+$router->get('/cancelar-solicitacao', 'TokenController@cancelarSolicitacao');
+$router->post('/cancelar-solicitacao', 'TokenController@cancelarSolicitacao');
+$router->get('/reagendamento-horario', 'TokenController@reagendamentoHorario');
+$router->post('/reagendamento-horario', 'TokenController@reagendamentoHorario');
 $router->get('/status-servico', 'TokenController@statusServico');
 
 // Rotas do admin/operador
@@ -52,11 +60,23 @@ $router->get('/pwa/solicitacao/{id}', 'PwaController@showSolicitacao', ['auth'])
 $router->get('/admin/dashboard', 'DashboardController@index', ['auth']);
 $router->get('/admin/kanban', 'DashboardController@kanban', ['auth']);
 $router->post('/admin/kanban/mover', 'DashboardController@moverCard', ['auth']);
+$router->post('/admin/kanban/atualizar-condicao', 'DashboardController@atualizarCondicao', ['auth']);
+$router->get('/admin/dashboard/solicitacoes-por-imobiliaria', 'DashboardController@solicitacoesPorImobiliaria', ['auth']);
+$router->get('/admin/dashboard/solicitacoes-por-status', 'DashboardController@solicitacoesPorStatus', ['auth']);
 $router->get('/admin/templates-whatsapp', 'WhatsappTemplatesController@index', ['auth']);
 $router->post('/admin/templates-whatsapp', 'WhatsappTemplatesController@store', ['auth']);
 $router->get('/admin/templates-whatsapp/{id}/edit', 'WhatsappTemplatesController@edit', ['auth']);
 $router->post('/admin/templates-whatsapp/{id}', 'WhatsappTemplatesController@update', ['auth']);
 $router->post('/admin/templates-whatsapp/{id}/delete', 'WhatsappTemplatesController@destroy', ['auth']);
+// Rotas para gerenciar instâncias WhatsApp
+$router->get('/admin/whatsapp-instances', 'WhatsappInstancesController@index', ['auth']);
+$router->get('/admin/whatsapp-instances/create', 'WhatsappInstancesController@create', ['auth']);
+$router->post('/admin/whatsapp-instances', 'WhatsappInstancesController@store', ['auth']);
+$router->get('/admin/whatsapp-instances/{id}/qrcode', 'WhatsappInstancesController@qrcode', ['auth']);
+$router->get('/admin/whatsapp-instances/{id}/verificar-status', 'WhatsappInstancesController@verificarStatus', ['auth']);
+$router->post('/admin/whatsapp-instances/{id}/set-padrao', 'WhatsappInstancesController@setPadrao', ['auth']);
+$router->post('/admin/whatsapp-instances/{id}/desconectar', 'WhatsappInstancesController@desconectar', ['auth']);
+$router->post('/admin/whatsapp-instances/{id}/delete', 'WhatsappInstancesController@destroy', ['auth']);
 $router->get('/admin/solicitacoes', 'SolicitacoesController@index', ['auth']);
 $router->get('/admin/solicitacoes/{id}/api', 'SolicitacoesController@api', ['auth']);
 $router->get('/admin/solicitacoes/{id}', 'SolicitacoesController@show', ['auth']);
@@ -66,6 +86,8 @@ $router->post('/admin/solicitacoes/{id}/desconfirmar-horario', 'SolicitacoesCont
 $router->post('/admin/solicitacoes/{id}/horarios/bulk', 'SolicitacoesController@confirmarHorariosBulk', ['auth']);
 $router->post('/admin/solicitacoes/{id}/confirmar-servico', 'SolicitacoesController@confirmarServico', ['auth']);
 $router->post('/admin/solicitacoes/{id}/solicitar-novos-horarios', 'SolicitacoesController@solicitarNovosHorarios', ['auth']);
+$router->post('/admin/solicitacoes/{id}/adicionar-horario-seguradora', 'SolicitacoesController@adicionarHorarioSeguradora', ['auth']);
+$router->post('/admin/solicitacoes/{id}/remover-horario-seguradora', 'SolicitacoesController@removerHorarioSeguradora', ['auth']);
 $router->post('/admin/solicitacoes/{id}/atualizar', 'SolicitacoesController@atualizarDetalhes', ['auth']);
 $router->get('/admin/solicitacoes/{id}/edit', 'SolicitacoesController@edit', ['auth']);
 $router->post('/admin/solicitacoes/{id}/edit', 'SolicitacoesController@update', ['auth']);
@@ -103,6 +125,7 @@ $router->get('/{instancia}/solicitacao-manual/etapa/{etapa}', 'LocatarioControll
 $router->post('/{instancia}/solicitacao-manual/etapa/{etapa}', 'LocatarioController@solicitacaoManualEtapa');
 $router->get('/{instancia}/solicitacao-manual', 'LocatarioController@solicitacaoManual');
 $router->post('/{instancia}/solicitacao-manual', 'LocatarioController@solicitacaoManual');
+$router->get('/{instancia}/logout', 'LocatarioController@logout');
 $router->post('/{instancia}/logout', 'LocatarioController@logout');
 
 // API Routes
@@ -156,6 +179,15 @@ $router->post('/admin/status/reordenar', 'StatusController@reordenar', ['auth', 
 $router->get('/admin/status/{id}/edit', 'StatusController@edit', ['auth', 'admin']);
 $router->post('/admin/status/{id}', 'StatusController@update', ['auth', 'admin']);
 $router->post('/admin/status/{id}/delete', 'StatusController@delete', ['auth', 'admin']);
+
+// Gerenciamento de Condições
+$router->get('/admin/condicoes', 'CondicoesController@index', ['auth', 'admin']);
+$router->get('/admin/condicoes/create', 'CondicoesController@create', ['auth', 'admin']);
+$router->post('/admin/condicoes', 'CondicoesController@store', ['auth', 'admin']);
+$router->post('/admin/condicoes/reordenar', 'CondicoesController@reordenar', ['auth', 'admin']); // ANTES das rotas com {id}
+$router->get('/admin/condicoes/{id}/edit', 'CondicoesController@edit', ['auth', 'admin']);
+$router->post('/admin/condicoes/{id}', 'CondicoesController@update', ['auth', 'admin']);
+$router->post('/admin/condicoes/{id}/delete', 'CondicoesController@delete', ['auth', 'admin']);
 
 // Gerenciamento de Solicitações Manuais
 $router->get('/admin/solicitacoes-manuais', 'SolicitacoesController@solicitacoesManuais', ['auth']);

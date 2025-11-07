@@ -18,18 +18,20 @@
     <header class="bg-white shadow-sm border-b">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center py-4">
-                <div class="flex items-center">
+                <div class="flex items-center space-x-3">
+                    <?= kss_logo('', 'KSS ASSISTÊNCIA 360°', 32) ?>
                     <?php if (!empty($imobiliaria['logo'])): ?>
-                        <img class="h-8 w-auto mr-3" src="<?= url('Public/uploads/logos/' . $imobiliaria['logo']) ?>" alt="<?= htmlspecialchars($imobiliaria['nome']) ?>" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                        <div class="h-8 w-8 bg-blue-600 rounded-full flex items-center justify-center mr-3" style="display: none;">
-                            <i class="fas fa-building text-white text-sm"></i>
+                        <div class="h-px w-6 bg-gray-300"></div>
+                        <img class="h-8 w-auto" src="<?= url('Public/uploads/logos/' . $imobiliaria['logo']) ?>" alt="<?= htmlspecialchars($imobiliaria['nome']) ?>" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <div class="h-8 w-8 bg-blue-600 rounded flex items-center justify-center" style="display: none;">
+                            <i class="fas fa-building text-white text-xs"></i>
                         </div>
-                    <?php else: ?>
-                        <div class="h-8 w-8 bg-blue-600 rounded-full flex items-center justify-center mr-3">
-                            <i class="fas fa-building text-white text-sm"></i>
+                    <?php elseif (!empty($imobiliaria['nome'])): ?>
+                        <div class="h-px w-6 bg-gray-300"></div>
+                        <div class="h-8 w-8 bg-blue-600 rounded flex items-center justify-center">
+                            <i class="fas fa-building text-white text-xs"></i>
                         </div>
                     <?php endif; ?>
-                    <h1 class="text-xl font-semibold text-gray-900"><?= htmlspecialchars($imobiliaria['nome'] ?? 'KSS Seguros') ?></h1>
                 </div>
                 <div class="flex items-center space-x-4">
                     <span class="text-sm text-gray-600">Olá, <?= htmlspecialchars($locatario['nome'] ?? 'Usuário') ?></span>

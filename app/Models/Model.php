@@ -76,8 +76,12 @@ abstract class Model
             // Não importa se linhas foram afetadas ou não
             return true;
         } catch (\PDOException $e) {
-            error_log("Erro no update: " . $e->getMessage());
-            return false;
+            error_log("Erro no update [Table: {$this->table}, ID: {$id}]: " . $e->getMessage());
+            error_log("SQL: " . $sql);
+            error_log("Params: " . json_encode($params));
+            error_log("Stack trace: " . $e->getTraceAsString());
+            // Relançar a exceção para que o controller possa tratá-la
+            throw $e;
         }
     }
 

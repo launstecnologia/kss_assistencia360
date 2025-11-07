@@ -8,22 +8,17 @@ ob_start();
 ?>
 
 <!-- Welcome Banner -->
-<div class="locatario-gradient rounded-lg p-8 mb-8 text-white">
-    <div class="flex items-center justify-between">
-        <div>
-            <h1 class="text-3xl font-bold mb-2">
-                Olá, <?= htmlspecialchars(explode(' ', $locatario['nome'])[0]) ?>! 👋
-            </h1>
-            <p class="text-lg opacity-90">
-                Bem-vindo ao seu portal de assistência. Aqui você pode criar novas solicitações e acompanhar o andamento dos seus serviços.
-            </p>
-        </div>
-        <div class="hidden md:block">
-            <i class="fas fa-home text-6xl opacity-20"></i>
-        </div>
+<div class="locatario-gradient rounded-lg p-8 mb-8 text-white text-center">
+    <div>
+        <h1 class="text-3xl font-bold mb-2">
+            Olá, <?= htmlspecialchars(explode(' ', $locatario['nome'])[0]) ?>.
+        </h1>
+        <p class="text-lg opacity-90 mb-6">
+            Bem-vindo ao seu portal de assistência.
+        </p>
     </div>
     
-    <div class="mt-6">
+    <div class="flex justify-center">
         <a href="<?= url($locatario['instancia'] . '/nova-solicitacao') ?>" 
            class="inline-flex items-center px-6 py-3 bg-white text-green-600 font-medium rounded-lg hover:bg-gray-50 transition-colors">
             <i class="fas fa-plus mr-2"></i>
@@ -48,45 +43,33 @@ ob_start();
 <?php endif; ?>
 
 <!-- Stats Cards -->
-<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-    <div class="bg-white rounded-lg shadow-sm p-6 card-hover">
-        <div class="flex items-center">
-            <div class="flex-shrink-0">
-                <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <i class="fas fa-calendar-alt text-blue-600 text-xl"></i>
+<div class="grid grid-cols-2 md:grid-cols-2 gap-3 md:gap-6 mb-8">
+    <!-- Solicitações Agendadas -->
+    <div class="bg-white rounded-lg shadow-sm p-4 md:p-6 card-hover">
+        <div class="flex flex-col md:flex-row items-center md:items-start text-center md:text-left">
+            <div class="flex-shrink-0 mb-2 md:mb-0">
+                <div class="w-10 h-10 md:w-12 md:h-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto md:mx-0">
+                    <i class="fas fa-calendar-check text-blue-600 text-lg md:text-xl"></i>
                 </div>
             </div>
-            <div class="ml-4">
-                <p class="text-sm font-medium text-gray-500">Solicitações Ativas</p>
-                <p class="text-2xl font-bold text-gray-900"><?= $stats['ativas'] ?></p>
+            <div class="md:ml-4 flex-1">
+                <p class="hidden md:block text-sm font-medium text-gray-500">Agendadas</p>
+                <p class="text-xl md:text-2xl font-bold text-gray-900"><?= $stats['agendadas'] ?? 0 ?></p>
             </div>
         </div>
     </div>
     
-    <div class="bg-white rounded-lg shadow-sm p-6 card-hover">
-        <div class="flex items-center">
-            <div class="flex-shrink-0">
-                <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                    <i class="fas fa-check-circle text-green-600 text-xl"></i>
+    <!-- Solicitações Concluídas -->
+    <div class="bg-white rounded-lg shadow-sm p-4 md:p-6 card-hover">
+        <div class="flex flex-col md:flex-row items-center md:items-start text-center md:text-left">
+            <div class="flex-shrink-0 mb-2 md:mb-0">
+                <div class="w-10 h-10 md:w-12 md:h-12 bg-green-100 rounded-lg flex items-center justify-center mx-auto md:mx-0">
+                    <i class="fas fa-check-circle text-green-600 text-lg md:text-xl"></i>
                 </div>
             </div>
-            <div class="ml-4">
-                <p class="text-sm font-medium text-gray-500">Serviços Concluídos</p>
-                <p class="text-2xl font-bold text-gray-900"><?= $stats['concluidas'] ?></p>
-            </div>
-        </div>
-    </div>
-    
-    <div class="bg-white rounded-lg shadow-sm p-6 card-hover">
-        <div class="flex items-center">
-            <div class="flex-shrink-0">
-                <div class="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
-                    <i class="fas fa-list text-gray-600 text-xl"></i>
-                </div>
-            </div>
-            <div class="ml-4">
-                <p class="text-sm font-medium text-gray-500">Total de Solicitações</p>
-                <p class="text-2xl font-bold text-gray-900"><?= $stats['total'] ?></p>
+            <div class="md:ml-4 flex-1">
+                <p class="hidden md:block text-sm font-medium text-gray-500">Concluídas</p>
+                <p class="text-xl md:text-2xl font-bold text-gray-900"><?= $stats['concluidas'] ?></p>
             </div>
         </div>
     </div>
@@ -120,45 +103,54 @@ ob_start();
                 </a>
             </div>
         <?php else: ?>
-            <div class="space-y-4">
-                <?php foreach (array_slice($solicitacoes, 0, 5) as $solicitacao): ?>
-                    <div class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
-                        <div class="flex items-start justify-between">
-                            <div class="flex-1">
-                                <div class="flex items-center space-x-3 mb-2">
-                                    <h3 class="text-sm font-medium text-gray-900">
-                                        <?= htmlspecialchars($solicitacao['categoria_nome']) ?>
-                                    </h3>
-                                    <span class="status-badge status-<?= strtolower(str_replace([' ', '(', ')'], ['-', '', ''], $solicitacao['status_nome'])) ?>">
-                                        <?= htmlspecialchars($solicitacao['status_nome']) ?>
-                                    </span>
-                                </div>
-                                
-                                <p class="text-xs text-gray-500 mb-2">
-                                    Protocolo: <?= htmlspecialchars($solicitacao['numero_solicitacao'] ?? '#' . $solicitacao['id']) ?>
-                                </p>
-                                
-                                <?php if (!empty($solicitacao['descricao_problema'])): ?>
-                                    <p class="text-sm text-gray-600 mb-2">
-                                        <?= htmlspecialchars(substr($solicitacao['descricao_problema'], 0, 100)) ?>
-                                        <?= strlen($solicitacao['descricao_problema']) > 100 ? '...' : '' ?>
-                                    </p>
-                                <?php endif; ?>
-                                
-                                <p class="text-xs text-gray-400">
-                                    Criado em: <?= date('d/m/Y \à\s H:i', strtotime($solicitacao['created_at'])) ?>
-                                </p>
+            <div class="space-y-3">
+                <?php foreach (array_slice($solicitacoes, 0, 5) as $solicitacao): 
+                    $numeroSolicitacao = $solicitacao['numero_solicitacao'] ?? ('KSI' . $solicitacao['id']);
+                    $protocolo = $solicitacao['numero_solicitacao'] ?? ('#' . $solicitacao['id']);
+                    $dataAgendada = !empty($solicitacao['data_agendamento']) ? date('d/m/Y', strtotime($solicitacao['data_agendamento'])) : '-';
+                ?>
+                    <a href="<?= url($locatario['instancia'] . '/solicitacoes/' . $solicitacao['id']) ?>" 
+                       class="block border border-gray-200 rounded-lg p-3 hover:bg-gray-50 hover:border-green-300 transition-all cursor-pointer">
+                        <div class="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs">
+                            <!-- Nº Solicitação -->
+                            <div>
+                                <span class="text-gray-500">Nº Solicitação:</span>
+                                <span class="font-semibold text-gray-900 ml-1"><?= htmlspecialchars($numeroSolicitacao) ?></span>
                             </div>
                             
-                            <div class="flex-shrink-0 ml-4">
-                                <a href="<?= url($locatario['instancia'] . '/solicitacoes/' . $solicitacao['id']) ?>" 
-                                   class="inline-flex items-center px-3 py-1 text-xs font-medium text-blue-600 bg-blue-50 rounded-full hover:bg-blue-100 transition-colors">
-                                    <i class="fas fa-eye mr-1"></i>
-                                    Ver Detalhes
-                                </a>
+                            <!-- Nº Protocolo -->
+                            <div>
+                                <span class="text-gray-500">Nº Protocolo:</span>
+                                <span class="font-semibold text-gray-900 ml-1"><?= htmlspecialchars($protocolo) ?></span>
+                            </div>
+                            
+                            <!-- Status -->
+                            <div class="col-span-2 md:col-span-1">
+                                <span class="text-gray-500">Status:</span>
+                                <span class="status-badge status-<?= strtolower(str_replace([' ', '(', ')'], ['-', '', ''], $solicitacao['status_nome'])) ?> ml-1 text-xs">
+                                    <?= htmlspecialchars($solicitacao['status_nome']) ?>
+                                </span>
+                            </div>
+                            
+                            <!-- Categoria -->
+                            <div>
+                                <span class="text-gray-500">Categoria:</span>
+                                <span class="font-medium text-gray-900 ml-1"><?= htmlspecialchars($solicitacao['categoria_nome'] ?? '-') ?></span>
+                            </div>
+                            
+                            <!-- Data Criada -->
+                            <div>
+                                <span class="text-gray-500">Data Criada:</span>
+                                <span class="font-medium text-gray-900 ml-1"><?= date('d/m/Y', strtotime($solicitacao['created_at'])) ?></span>
+                            </div>
+                            
+                            <!-- Data Agendada -->
+                            <div>
+                                <span class="text-gray-500">Data Agendada:</span>
+                                <span class="font-medium text-gray-900 ml-1"><?= $dataAgendada ?></span>
                             </div>
                         </div>
-                    </div>
+                    </a>
                 <?php endforeach; ?>
             </div>
             

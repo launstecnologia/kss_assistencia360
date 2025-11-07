@@ -61,6 +61,9 @@ ob_start();
 
         <!-- Footer -->
         <div class="text-center text-sm text-gray-500">
+            <div class="flex items-center justify-center mb-2">
+                <?= kss_logo('', 'KSS ASSISTÊNCIA 360°', 24) ?>
+            </div>
             <p>KSS Seguros - Assistência 360°</p>
         </div>
     </div>

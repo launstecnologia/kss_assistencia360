@@ -49,10 +49,17 @@ ob_start();
                     <span class="text-red-700 font-semibold">Pendente</span>
                 <?php endif; ?>
             </li>
+            <li class="mb-1">datas_opcoes (JSON): 
+                <?php if (!empty($hasDatasOpcoes)): ?>
+                    <span class="text-green-700 font-semibold">Aplicada</span>
+                <?php else: ?>
+                    <span class="text-red-700 font-semibold">Pendente</span>
+                <?php endif; ?>
+            </li>
         </ul>
         <form method="POST" action="/admin/migracoes/run">
             <input type="hidden" name="csrf_token" value="<?= \App\Core\View::csrfToken() ?>">
-            <button class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700" <?= (!empty($hasDescricaoCard) && !empty($hasHorarioConfirmado) && !empty($hasHorarioRaw) && !empty($hasConfirmedSchedules)) ? 'disabled' : '' ?>>Executar migração</button>
+            <button class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700" <?= (!empty($hasDescricaoCard) && !empty($hasHorarioConfirmado) && !empty($hasHorarioRaw) && !empty($hasConfirmedSchedules) && !empty($hasDatasOpcoes)) ? 'disabled' : '' ?>>Executar migração</button>
         </form>
     </div>
 

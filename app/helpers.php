@@ -48,3 +48,6 @@ if (!function_exists('back')) {
         redirect(\App\Core\Url::previous());
     }
 }
+
+// Carregar helper da logo KSS
+require_once __DIR__ . '/Helpers/kss_logo.php';

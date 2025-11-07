@@ -82,16 +82,27 @@ ob_start();
                 </button>
             </form>
 
-            <!-- Link para cancelar -->
-            <div class="mt-4 text-center">
-                <a href="<?= url('cancelamento-horario?token=' . urlencode($token)) ?>" class="text-sm text-red-600 hover:text-red-700">
-                    Não posso neste horário, quero cancelar
+            <!-- Opções Adicionais -->
+            <div class="mt-4 space-y-2">
+                <a href="<?= url('reagendamento-horario?token=' . urlencode($token)) ?>" 
+                   class="w-full flex items-center justify-center gap-2 bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-3 px-4 rounded-lg transition-colors duration-200">
+                    <i class="fas fa-calendar-alt mr-2"></i>
+                    Reagendar Horário
+                </a>
+                
+                <a href="<?= url('cancelamento-horario?token=' . urlencode($token)) ?>" 
+                   class="w-full flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors duration-200">
+                    <i class="fas fa-times-circle mr-2"></i>
+                    Cancelar Solicitação
                 </a>
             </div>
         </div>
 
         <!-- Footer -->
         <div class="text-center text-sm text-gray-500">
+            <div class="flex items-center justify-center mb-2">
+                <?= kss_logo('', 'KSS ASSISTÊNCIA 360°', 24) ?>
+            </div>
             <p>KSS Seguros - Assistência 360°</p>
         </div>
     </div>

@@ -55,7 +55,7 @@ ob_start();
             </div>
             <?php else: ?>
                 <?php foreach ($solicitacoes as $solicitacao): ?>
-                <div class="kanban-card bg-white rounded-lg shadow-sm p-4 cursor-move hover:shadow-md transition-shadow border-l-4" 
+                <div class="kanban-card bg-white rounded-lg shadow-sm p-4 cursor-pointer hover:shadow-md transition-shadow border-l-4" 
                      style="border-color: <?= $status['cor'] ?>"
                      data-solicitacao-id="<?= $solicitacao['id'] ?>"
                      data-status-id="<?= $solicitacao['status_id'] ?>">
@@ -63,22 +63,39 @@ ob_start();
                     <!-- Header do Card -->
                     <div class="flex items-start justify-between mb-3">
                         <div class="flex-1">
-                            <h4 class="font-semibold text-gray-900 text-sm">
-                                <?= htmlspecialchars($solicitacao['numero_solicitacao'] ?? 'KSI' . $solicitacao['id']) ?>
-                            </h4>
+                            <div class="flex items-center gap-2 mb-1">
+                                <h4 class="font-semibold text-gray-900 text-sm">
+                                    <?= htmlspecialchars($solicitacao['numero_solicitacao'] ?? 'KSI' . $solicitacao['id']) ?>
+                                </h4>
+                                <?php if (!empty($solicitacao['numero_contrato'])): ?>
+                                    <span class="text-xs text-gray-500">
+                                        Contrato: <?= htmlspecialchars($solicitacao['numero_contrato']) ?>
+                                    </span>
+                                <?php endif; ?>
+                            </div>
+                            <div class="flex items-center text-xs text-gray-600 mt-1">
+                                <i class="fas fa-wrench w-3 mr-1 text-gray-400"></i>
+                                <span class="truncate"><?= htmlspecialchars($solicitacao['categoria_nome'] ?? 'Sem categoria') ?></span>
+                            </div>
                         </div>
-                        <button onclick="abrirDetalhes(<?= $solicitacao['id'] ?>)" 
-                                class="text-gray-400 hover:text-gray-600 text-sm">
-                            <i class="fas fa-ellipsis-v"></i>
-                        </button>
+                        <div class="flex flex-col items-end gap-1">
+                            <?php if (!empty($solicitacao['imobiliaria_logo'])): ?>
+                                <img src="<?= url('Public/uploads/logos/' . $solicitacao['imobiliaria_logo']) ?>" 
+                                     alt="<?= htmlspecialchars($solicitacao['imobiliaria_nome'] ?? 'Imobiliária') ?>" 
+                                     class="h-7 w-auto"
+                                     onerror="this.style.display='none';">
+                            <?php endif; ?>
+                            <?php if (!empty($solicitacao['condicao_nome'])): ?>
+                                <span class="inline-block px-2 py-0.5 rounded-md text-xs font-medium" 
+                                      style="background-color: <?= htmlspecialchars($solicitacao['condicao_cor'] ?? '#6B7280') ?>20; color: <?= htmlspecialchars($solicitacao['condicao_cor'] ?? '#6B7280') ?>">
+                                    <?= htmlspecialchars($solicitacao['condicao_nome']) ?>
+                                </span>
+                            <?php endif; ?>
+                        </div>
                     </div>
                     
                     <!-- Informações do Card -->
                     <div class="space-y-1 text-xs text-gray-600">
-                        <div class="flex items-center">
-                            <i class="fas fa-wrench w-4 mr-1 text-gray-400"></i>
-                            <span class="truncate"><?= htmlspecialchars($solicitacao['categoria_nome'] ?? 'Sem categoria') ?></span>
-                        </div>
                         
                         <?php if (!empty($solicitacao['subcategoria_nome'])): ?>
                         <div class="flex items-center">
@@ -87,16 +104,15 @@ ob_start();
                         </div>
                         <?php endif; ?>
                         
-                        <!-- Tag Residencial/Comercial -->
-                        <?php if (!empty($solicitacao['observacoes']) && strpos($solicitacao['observacoes'], 'Finalidade:') !== false): 
-                            preg_match('/Finalidade:\s*(RESIDENCIAL|COMERCIAL)/i', $solicitacao['observacoes'], $matches);
-                            if (!empty($matches[1])): ?>
-                        <div class="my-2">
-                            <span class="inline-block px-2 py-1 bg-gray-100 text-gray-700 rounded-md text-xs font-medium">
-                                <?= htmlspecialchars($matches[1]) ?>
+                        <!-- Protocolo da Seguradora -->
+                        <?php if (!empty($solicitacao['protocolo_seguradora'])): ?>
+                        <div class="flex items-center">
+                            <i class="fas fa-hashtag w-4 mr-1 text-gray-400"></i>
+                            <span class="truncate text-xs text-gray-500">
+                                Protocolo: <?= htmlspecialchars($solicitacao['protocolo_seguradora']) ?>
                             </span>
                         </div>
-                        <?php endif; endif; ?>
+                        <?php endif; ?>
                         
                         <div class="flex items-center">
                             <i class="fas fa-user w-4 mr-1 text-gray-400"></i>
@@ -187,14 +203,34 @@ include 'app/Views/layouts/admin.php';
 
 <script>
 // Inicializar Sortable em todas as colunas do Kanban
+// Variável para rastrear se está arrastando
+let isDragging = false;
+let dragStartTime = 0;
+let dragStartPos = { x: 0, y: 0 };
+
 document.querySelectorAll('.kanban-cards').forEach(column => {
     new Sortable(column, {
         group: 'kanban',
         animation: 150,
         ghostClass: 'bg-blue-100',
         dragClass: 'opacity-50',
-        handle: '.kanban-card',
+        onStart: function(evt) {
+            isDragging = false;
+            dragStartTime = Date.now();
+            if (evt.originalEvent) {
+                dragStartPos = { x: evt.originalEvent.clientX, y: evt.originalEvent.clientY };
+            }
+        },
         onEnd: function(evt) {
+            // Se o card foi movido para outra coluna, foi um drag
+            const wasDragging = evt.from !== evt.to;
+            if (wasDragging) {
+                isDragging = true;
+            }
+            // Resetar flag após um pequeno delay
+            setTimeout(() => {
+                isDragging = false;
+            }, 200);
             const solicitacaoId = evt.item.getAttribute('data-solicitacao-id');
             const novoStatusId = evt.to.getAttribute('data-status-id');
             const antigoStatusId = evt.from.getAttribute('data-status-id');
@@ -244,7 +280,17 @@ document.querySelectorAll('.kanban-cards').forEach(column => {
                     evt.item.style.borderLeftColor = originalBorderColor;
                     evt.from.insertBefore(evt.item, evt.from.children[evt.oldIndex]);
                     atualizarContadores();
-                    mostrarNotificacao('Erro: ' + (data.error || 'Não foi possível atualizar o status'), 'error');
+                    
+                    // Se for erro de protocolo obrigatório, mostrar mensagem específica e abrir modal
+                    if (data.requires_protocol) {
+                        mostrarNotificacao(data.error || 'É obrigatório preencher o protocolo da seguradora', 'error');
+                        // Abrir modal de detalhes para preencher o protocolo
+                        setTimeout(() => {
+                            abrirDetalhes(parseInt(solicitacaoId));
+                        }, 500);
+                    } else {
+                        mostrarNotificacao('Erro: ' + (data.error || 'Não foi possível atualizar o status'), 'error');
+                    }
                 }
             })
             .catch(error => {
@@ -257,6 +303,51 @@ document.querySelectorAll('.kanban-cards').forEach(column => {
                 mostrarNotificacao('Erro ao atualizar status', 'error');
             });
         }
+    });
+    
+    // Tornar cards clicáveis (mas não durante o drag)
+    column.querySelectorAll('.kanban-card').forEach(card => {
+        let mouseDownTime = 0;
+        let mouseDownPos = { x: 0, y: 0 };
+        let hasMoved = false;
+        
+        card.addEventListener('mousedown', function(e) {
+            mouseDownTime = Date.now();
+            mouseDownPos = { x: e.clientX, y: e.clientY };
+            hasMoved = false;
+        });
+        
+        card.addEventListener('mousemove', function(e) {
+            if (mouseDownTime > 0) {
+                const distance = Math.sqrt(
+                    Math.pow(e.clientX - mouseDownPos.x, 2) + 
+                    Math.pow(e.clientY - mouseDownPos.y, 2)
+                );
+                if (distance > 5) {
+                    hasMoved = true;
+                }
+            }
+        });
+        
+        card.addEventListener('click', function(e) {
+            // Se acabou de arrastar ou moveu o mouse, não abrir detalhes
+            if (isDragging || hasMoved) {
+                hasMoved = false;
+                return;
+            }
+            
+            // Verificar se foi um clique simples (não um drag)
+            const clickTime = Date.now();
+            const timeDiff = clickTime - mouseDownTime;
+            
+            // Se foi um clique rápido, abrir detalhes
+            if (timeDiff < 300) {
+                const solicitacaoId = this.getAttribute('data-solicitacao-id');
+                if (solicitacaoId) {
+                    abrirDetalhes(parseInt(solicitacaoId));
+                }
+            }
+        });
     });
 });
 
@@ -311,7 +402,10 @@ function abrirDetalhes(solicitacaoId) {
     fetch(`<?= url('admin/solicitacoes/') ?>${solicitacaoId}/api`)
         .then(response => response.json())
         .then(data => {
+            console.log('📡 Resposta da API:', data);
             if (data.success) {
+                console.log('📸 Fotos recebidas da API:', data.solicitacao.fotos);
+                console.log('📸 Quantidade de fotos:', data.solicitacao.fotos ? data.solicitacao.fotos.length : 0);
                 renderizarDetalhes(data.solicitacao);
             } else {
                 detalhesContent.innerHTML = `
@@ -369,16 +463,33 @@ window.addEventListener('beforeunload', (e) => {
     }
 });
 
+// Variável global com todos os status
+const todosStatus = <?= json_encode($todosStatus ?? []) ?>;
+const todasCondicoes = <?= json_encode($todasCondicoes ?? []) ?>;
+
 function renderizarDetalhes(solicitacao) {
     const content = document.getElementById('detalhesContent');
     
     // ✅ Resetar flag de mudanças ao renderizar
     hasUnsavedChanges = false;
     
-    // Parse horários se existirem
+    console.log('🔍 renderizarDetalhes - horarios_indisponiveis:', solicitacao.horarios_indisponiveis);
+    console.log('📸 renderizarDetalhes - fotos:', solicitacao.fotos);
+    console.log('📸 renderizarDetalhes - quantidade de fotos:', solicitacao.fotos ? solicitacao.fotos.length : 0);
+    
+    // Parse horários do locatário
+    // IMPORTANTE: Quando horarios_indisponiveis = 1, os horários originais do locatário estão SEMPRE em datas_opcoes
+    // NUNCA ler de horarios_opcoes quando horarios_indisponiveis = 1, pois esse campo contém os horários da seguradora
     let horariosOpcoes = [];
     try {
-        horariosOpcoes = solicitacao.horarios_opcoes ? JSON.parse(solicitacao.horarios_opcoes) : [];
+        if (solicitacao.horarios_indisponiveis) {
+            // Horários originais do locatário foram preservados em datas_opcoes
+            // IMPORTANTE: NUNCA ler de horarios_opcoes aqui, pois contém os horários da seguradora
+            horariosOpcoes = solicitacao.datas_opcoes ? JSON.parse(solicitacao.datas_opcoes) : [];
+        } else {
+            // Horários do locatário estão em horarios_opcoes (quando horarios_indisponiveis = 0)
+            horariosOpcoes = solicitacao.horarios_opcoes ? JSON.parse(solicitacao.horarios_opcoes) : [];
+        }
     } catch (e) {
         horariosOpcoes = [];
     }
@@ -388,7 +499,14 @@ function renderizarDetalhes(solicitacao) {
         <div class="bg-white rounded-lg p-5 mb-4">
             <div class="flex items-start justify-between">
                 <div>
-                    <div class="text-3xl font-bold text-gray-900 mb-2">${solicitacao.numero_solicitacao || 'KS' + solicitacao.id}</div>
+                    <div class="flex items-center gap-3 mb-2">
+                        <div class="text-3xl font-bold text-gray-900">${solicitacao.numero_solicitacao || 'KS' + solicitacao.id}</div>
+                        ${solicitacao.numero_contrato ? `
+                            <span class="text-sm text-gray-500 mt-2">
+                                Contrato: ${solicitacao.numero_contrato}
+                            </span>
+                        ` : ''}
+                    </div>
                     <div class="text-lg font-semibold text-gray-800">${solicitacao.categoria_nome}</div>
                     ${solicitacao.subcategoria_nome ? `<div class="text-sm text-gray-600 mt-1">${solicitacao.subcategoria_nome}</div>` : ''}
                 </div>
@@ -479,14 +597,33 @@ function renderizarDetalhes(solicitacao) {
                     <div class="space-y-2">
                         ${horariosOpcoes.map((horario, index) => {
                             try {
-                                const dt = new Date(horario);
-                                const dia = String(dt.getDate()).padStart(2, '0');
-                                const mes = String(dt.getMonth() + 1).padStart(2, '0');
-                                const ano = dt.getFullYear();
-                                const hora = String(dt.getHours()).padStart(2, '0');
-                                const min = String(dt.getMinutes()).padStart(2, '0');
-                                const faixaHora = hora + ':00-' + (parseInt(hora) + 3) + ':00';
-                                const textoHorario = `${dia}/${mes}/${ano} - ${faixaHora}`;
+                                let dt, textoHorario;
+                                
+                                // Verificar se horario é uma string no formato "dd/mm/yyyy - HH:00-HH:00"
+                                if (typeof horario === 'string' && horario.includes(' - ')) {
+                                    // Já está no formato correto, usar diretamente
+                                    textoHorario = horario;
+                                    // Extrair data para comparação
+                                    const match = horario.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+                                    if (match) {
+                                        dt = new Date(`${match[3]}-${match[2]}-${match[1]}`);
+                                    } else {
+                                        dt = new Date();
+                                    }
+                                } else {
+                                    // É uma data ISO, converter para o formato esperado
+                                    dt = new Date(horario);
+                                    if (isNaN(dt.getTime())) {
+                                        // Se não for uma data válida, pular
+                                        return '';
+                                    }
+                                    const dia = String(dt.getDate()).padStart(2, '0');
+                                    const mes = String(dt.getMonth() + 1).padStart(2, '0');
+                                    const ano = dt.getFullYear();
+                                    const hora = String(dt.getHours()).padStart(2, '0');
+                                    const faixaHora = hora + ':00-' + (parseInt(hora) + 3) + ':00';
+                                    textoHorario = `${dia}/${mes}/${ano} - ${faixaHora}`;
+                                }
                                 
                                 // ✅ Verificar se este horário está confirmado
                                 let isConfirmed = false;
@@ -593,13 +730,179 @@ function renderizarDetalhes(solicitacao) {
                         }).join('')}
                     </div>
                     <div class="mt-4 pt-3 border-t">
-                        <label class="flex items-center gap-2">
-                            <input type="checkbox" class="w-4 h-4 text-blue-600 rounded">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" 
+                                   id="horarios-indisponiveis-kanban" 
+                                   class="w-4 h-4 text-blue-600 rounded"
+                                   ${solicitacao.horarios_indisponiveis ? 'checked' : ''}
+                                   onchange="toggleAdicionarHorariosSeguradoraKanban(${solicitacao.id}, this.checked)">
                             <span class="text-sm text-gray-700">Nenhum horário está disponível</span>
                         </label>
                     </div>
+                    
+                    <!-- Seção: Adicionar Horários da Seguradora (aparece quando checkbox está marcado) -->
+                    <div id="secao-adicionar-horarios-seguradora-kanban" 
+                         class="mt-4 ${solicitacao.horarios_indisponiveis ? '' : 'hidden'}"
+                         style="${solicitacao.horarios_indisponiveis ? 'display: block;' : 'display: none;'}">
+                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                            <h3 class="text-sm font-semibold text-blue-900 mb-2">
+                                <i class="fas fa-clock mr-2"></i>Adicionar Horário da Seguradora
+                            </h3>
+                            <p class="text-xs text-blue-700 mb-4">
+                                Adicione horários alternativos que a seguradora pode oferecer
+                            </p>
+                            
+                            <!-- Formulário para adicionar horário -->
+                            <div class="space-y-3">
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-700 mb-1">Data</label>
+                                    <div class="relative">
+                                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                            <i class="fas fa-calendar-alt text-gray-400"></i>
+                                        </div>
+                                        <input type="date" 
+                                               id="data-seguradora-kanban" 
+                                               class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+                                               min="${new Date(Date.now() + 86400000).toISOString().split('T')[0]}"
+                                               max="${new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0]}">
+                                    </div>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-700 mb-2">Horário</label>
+                                    <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+                                        <label class="relative cursor-pointer">
+                                            <input type="radio" name="horario-seguradora-kanban" value="08:00-11:00" class="sr-only">
+                                            <div class="border-2 border-gray-200 rounded-lg p-2 text-center hover:border-blue-300 transition-colors horario-seguradora-card-kanban">
+                                                <div class="text-xs font-medium text-gray-900">08h00 às 11h00</div>
+                                            </div>
+                                        </label>
+                                        
+                                        <label class="relative cursor-pointer">
+                                            <input type="radio" name="horario-seguradora-kanban" value="11:00-14:00" class="sr-only">
+                                            <div class="border-2 border-gray-200 rounded-lg p-2 text-center hover:border-blue-300 transition-colors horario-seguradora-card-kanban">
+                                                <div class="text-xs font-medium text-gray-900">11h00 às 14h00</div>
+                                            </div>
+                                        </label>
+                                        
+                                        <label class="relative cursor-pointer">
+                                            <input type="radio" name="horario-seguradora-kanban" value="14:00-17:00" class="sr-only">
+                                            <div class="border-2 border-gray-200 rounded-lg p-2 text-center hover:border-blue-300 transition-colors horario-seguradora-card-kanban">
+                                                <div class="text-xs font-medium text-gray-900">14h00 às 17h00</div>
+                                            </div>
+                                        </label>
+                                        
+                                        <label class="relative cursor-pointer">
+                                            <input type="radio" name="horario-seguradora-kanban" value="17:00-20:00" class="sr-only">
+                                            <div class="border-2 border-gray-200 rounded-lg p-2 text-center hover:border-blue-300 transition-colors horario-seguradora-card-kanban">
+                                                <div class="text-xs font-medium text-gray-900">17h00 às 20h00</div>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <button type="button" 
+                                        onclick="adicionarHorarioSeguradoraKanban(${solicitacao.id})" 
+                                        class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium">
+                                    <i class="fas fa-plus mr-2"></i>Salvar Horário
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 ` : ''}
+                
+                <!-- Disponibilidade Informada pela Seguradora -->
+                ${solicitacao.horarios_indisponiveis ? (() => {
+                    try {
+                        // IMPORTANTE: Quando horarios_indisponiveis = 1, horarios_opcoes contém APENAS os horários da seguradora
+                        // Os horários do locatário estão em datas_opcoes e NÃO devem ser lidos aqui
+                        const horariosSeguradora = solicitacao.horarios_opcoes ? JSON.parse(solicitacao.horarios_opcoes) : [];
+                        const horariosArray = Array.isArray(horariosSeguradora) ? horariosSeguradora : [];
+                        
+                        // Sempre mostrar a seção quando horarios_indisponiveis está marcado, mesmo que vazia
+                        return `
+                        <div class="bg-white rounded-lg p-5" id="secao-horarios-seguradora-kanban">
+                            <div class="flex items-center gap-2 mb-3">
+                                <i class="fas fa-building text-blue-600"></i>
+                                <h3 class="font-semibold text-gray-900">Disponibilidade Informada pela Seguradora</h3>
+                            </div>
+                            <div class="space-y-3" id="lista-horarios-seguradora-kanban">
+                                ${horariosArray.length > 0 ? horariosArray.map(horario => {
+                                    const horarioFormatado = typeof horario === 'string' ? horario : '';
+                                    const horarioEscapado = horarioFormatado.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                                    
+                                    // Verificar se o horário está confirmado
+                                    let isConfirmed = false;
+                                    try {
+                                        const confirmedSchedules = solicitacao.confirmed_schedules ? 
+                                            (typeof solicitacao.confirmed_schedules === 'string' ? 
+                                                JSON.parse(solicitacao.confirmed_schedules) : 
+                                                solicitacao.confirmed_schedules) : [];
+                                        
+                                        if (Array.isArray(confirmedSchedules)) {
+                                            // Normalizar horário para comparação
+                                            const horarioNorm = horarioFormatado.replace(/\s+/g, ' ').trim();
+                                            
+                                            for (const confirmed of confirmedSchedules) {
+                                                const confirmedRaw = confirmed.raw || '';
+                                                const confirmedNorm = confirmedRaw.replace(/\s+/g, ' ').trim();
+                                                
+                                                // Comparação exata
+                                                if (horarioNorm === confirmedNorm) {
+                                                    isConfirmed = true;
+                                                    break;
+                                                }
+                                                
+                                                // Comparação por regex (formato: dd/mm/yyyy - HH:MM-HH:MM)
+                                                const regex = /(\d{2}\/\d{2}\/\d{4})\s*-\s*(\d{2}:\d{2})-(\d{2}:\d{2})/;
+                                                const match1 = regex.exec(horarioNorm);
+                                                const match2 = regex.exec(confirmedNorm);
+                                                
+                                                if (match1 && match2) {
+                                                    if (match1[1] === match2[1] && match1[2] === match2[2] && match1[3] === match2[3]) {
+                                                        isConfirmed = true;
+                                                        break;
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    } catch (e) {
+                                        console.error('Erro ao verificar confirmação:', e);
+                                    }
+                                    
+                                    return `
+                                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 flex items-center justify-between ${isConfirmed ? 'border-green-300 bg-green-50' : ''}">
+                                        <div class="flex items-center gap-3 flex-1">
+                                            <i class="fas fa-clock text-blue-600"></i>
+                                            <span class="text-sm font-medium text-blue-900">${horarioFormatado}</span>
+                                            ${isConfirmed ? '<span class="text-xs text-green-700 font-semibold bg-green-100 px-2 py-1 rounded-full">Confirmado</span>' : ''}
+                                        </div>
+                                        <button onclick="removerHorarioSeguradoraKanban(${solicitacao.id}, '${horarioEscapado}')" 
+                                                class="text-red-600 hover:text-red-800">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                    `;
+                                }).join('') : '<!-- Horários serão adicionados aqui dinamicamente -->'}
+                            </div>
+                        </div>
+                        `;
+                    } catch (e) {
+                        // Em caso de erro, ainda mostrar a seção vazia
+                        return `
+                        <div class="bg-white rounded-lg p-5" id="secao-horarios-seguradora-kanban">
+                            <div class="flex items-center gap-2 mb-3">
+                                <i class="fas fa-building text-blue-600"></i>
+                                <h3 class="font-semibold text-gray-900">Disponibilidade Informada pela Seguradora</h3>
+                            </div>
+                            <div class="space-y-3" id="lista-horarios-seguradora-kanban">
+                                <!-- Horários serão adicionados aqui dinamicamente -->
+                            </div>
+                        </div>
+                        `;
+                    }
+                })() : ''}
                 
                 <!-- Anexar Documento -->
                 <div class="bg-white rounded-lg p-5">
@@ -642,6 +945,62 @@ function renderizarDetalhes(solicitacao) {
                               placeholder="Descreva qualquer situação adicional (ex: prestador não compareceu, precisa comprar peças, etc.)">${solicitacao.observacoes || ''}</textarea>
                 </div>
                 
+                <!-- Fotos -->
+                <div class="bg-white rounded-lg p-5">
+                    <div class="flex items-center gap-2 mb-3">
+                        <i class="fas fa-camera text-gray-600"></i>
+                        <h3 class="font-semibold text-gray-900">Fotos Enviadas</h3>
+                        <span class="text-xs text-gray-500" id="fotos-count">(${solicitacao.fotos && Array.isArray(solicitacao.fotos) ? solicitacao.fotos.length : 0})</span>
+                    </div>
+                    ${solicitacao.fotos && Array.isArray(solicitacao.fotos) && solicitacao.fotos.length > 0 ? `
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                        ${solicitacao.fotos.map((foto, index) => {
+                            // Construir URL correta da foto
+                            let urlFoto = '';
+                            
+                            // Obter nome do arquivo (priorizar nome_arquivo)
+                            const nomeArquivo = foto.nome_arquivo || (foto.url_arquivo ? foto.url_arquivo.split('/').pop() : '');
+                            
+                            if (nomeArquivo) {
+                                // Construir URL usando a função url() do PHP
+                                urlFoto = '<?= url("Public/uploads/solicitacoes/") ?>' + nomeArquivo;
+                                
+                                // Log para debug
+                                console.log('📸 Construindo URL da foto:', {
+                                    foto: foto,
+                                    nomeArquivo: nomeArquivo,
+                                    urlFinal: urlFoto
+                                });
+                            } else {
+                                console.error('❌ Erro: Nome do arquivo não encontrado', foto);
+                                return '';
+                            }
+                            
+                            // Escapar aspas para evitar problemas no JavaScript
+                            const urlFotoEscapada = urlFoto.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                            
+                            return `
+                                <div class="relative group">
+                                    <img src="${urlFotoEscapada}" 
+                                         alt="Foto ${index + 1} da solicitação" 
+                                         class="w-full h-32 object-cover rounded-lg border border-gray-200 cursor-pointer hover:opacity-80 transition-opacity shadow-sm"
+                                         onclick="abrirFotoModal('${urlFotoEscapada}')"
+                                         onerror="console.error('Erro ao carregar foto:', '${urlFotoEscapada}'); this.parentElement.innerHTML='<div class=\\'w-full h-32 bg-gray-100 rounded-lg flex items-center justify-center text-gray-400 text-xs\\'><i class=\\'fas fa-image mr-2\\'></i>Erro ao carregar</div>';">
+                                    <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 rounded-lg transition-all flex items-center justify-center">
+                                        <i class="fas fa-search-plus text-white opacity-0 group-hover:opacity-100 transition-opacity text-2xl"></i>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                    ` : `
+                    <div class="text-center py-8 text-gray-400">
+                        <i class="fas fa-camera text-3xl mb-2 block"></i>
+                        <p class="text-sm">Nenhuma foto enviada</p>
+                    </div>
+                    `}
+                </div>
+                
                 <!-- Precisa de Reembolso -->
                 <div class="bg-white rounded-lg p-5">
                     <label class="flex items-center gap-2 mb-3">
@@ -669,8 +1028,32 @@ function renderizarDetalhes(solicitacao) {
                         <i class="fas fa-info-circle text-gray-600"></i>
                         <h3 class="font-semibold text-gray-900">Status da Solicitação</h3>
                     </div>
-                    <select class="w-full bg-gray-50 border border-gray-200 rounded px-3 py-2 text-sm text-gray-900">
-                        <option selected>${solicitacao.status_nome}</option>
+                    <select id="statusSelectKanban" 
+                            onchange="salvarStatusKanban(${solicitacao.id}, this.value)"
+                            class="w-full bg-gray-50 border border-gray-200 rounded px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                        ${todosStatus.map(status => `
+                            <option value="${status.id}" ${status.id == solicitacao.status_id ? 'selected' : ''}>
+                                ${status.nome}
+                            </option>
+                        `).join('')}
+                    </select>
+                </div>
+                
+                <!-- Condições -->
+                <div class="bg-white rounded-lg p-5">
+                    <div class="flex items-center gap-2 mb-3">
+                        <i class="fas fa-tag text-gray-600"></i>
+                        <h3 class="font-semibold text-gray-900">Condições</h3>
+                    </div>
+                    <select id="condicaoSelectKanban" 
+                            onchange="salvarCondicaoKanban(${solicitacao.id}, this.value)"
+                            class="w-full bg-gray-50 border border-gray-200 rounded px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                        <option value="">Selecione uma condição</option>
+                        ${todasCondicoes.map(condicao => `
+                            <option value="${condicao.id}" ${condicao.id == solicitacao.condicao_id ? 'selected' : ''}>
+                                ${condicao.nome}
+                            </option>
+                        `).join('')}
                     </select>
                 </div>
                 
@@ -734,6 +1117,25 @@ function renderizarDetalhes(solicitacao) {
     // ✅ Monitorar mudanças em todos os campos após renderizar
     setTimeout(() => {
         monitorarMudancas();
+        
+        // Verificar se a seção foi criada
+        const secao = document.getElementById('secao-adicionar-horarios-seguradora-kanban');
+        const checkbox = document.getElementById('horarios-indisponiveis-kanban');
+        console.log('🔍 Após renderizar - Seção encontrada:', secao);
+        console.log('🔍 Após renderizar - Checkbox encontrado:', checkbox);
+        console.log('🔍 Após renderizar - Checkbox checked:', checkbox?.checked);
+        console.log('🔍 Após renderizar - Seção display:', secao?.style.display);
+        
+        // Ajustar visibilidade inicial baseado no estado do checkbox
+        if (checkbox && secao) {
+            if (checkbox.checked) {
+                secao.style.display = 'block';
+                secao.classList.remove('hidden');
+            } else {
+                secao.style.display = 'none';
+                secao.classList.add('hidden');
+            }
+        }
     }, 100);
 }
 
@@ -847,17 +1249,31 @@ function salvarAlteracoes(solicitacaoId) {
     
     const protocoloSeguradora = document.getElementById('protocoloSeguradora')?.value || '';
     
+    // ✅ Coletar horários da seguradora da lista visual
+    const horariosSeguradora = coletarHorariosSeguradoraVisual();
+    
     // Criar objeto com os dados
-    // ✅ Coletar horários selecionados (sempre enviar, mesmo que vazio)
-    // Isso permite ao backend saber quais foram desmarcados
+    // ✅ Coletar horários selecionados
+    // IMPORTANTE: Só enviar schedules se houver horários selecionados
+    // Se não houver horários selecionados, não enviar schedules para não limpar os existentes
     const schedules = coletarSchedulesOffcanvas();
     const dados = {
         observacoes: observacoes,
         precisa_reembolso: precisaReembolso,
         valor_reembolso: valorReembolso,
-        protocolo_seguradora: protocoloSeguradora,
-        schedules: schedules  // ✅ Sempre enviar (array vazio se nenhum marcado)
+        protocolo_seguradora: protocoloSeguradora
     };
+    
+    // ✅ Só adicionar schedules se houver horários selecionados
+    // Se o array estiver vazio, não enviar schedules para preservar os horários existentes
+    if (schedules.length > 0) {
+        dados.schedules = schedules;
+    }
+    
+    // ✅ Adicionar horários da seguradora se houver
+    if (horariosSeguradora.length > 0) {
+        dados.horarios_seguradora = horariosSeguradora;
+    }
     
     console.log('Dados a serem salvos:', dados); // Debug
     
@@ -944,9 +1360,20 @@ function coletarSchedulesOffcanvas() {
     const schedules = checkboxes
         .map(chk => {
             const raw = chk.getAttribute('data-raw');
-            return parseScheduleRawOffcanvas(raw);
+            // ✅ Validar se raw é válido (não contém NaN ou formato inválido)
+            if (!raw || raw.includes('NaN') || raw.trim() === '') {
+                console.warn('⚠️ Horário inválido ignorado:', raw);
+                return null;
+            }
+            const parsed = parseScheduleRawOffcanvas(raw);
+            // ✅ Validar se o parse foi bem-sucedido
+            if (!parsed.date && !parsed.time) {
+                console.warn('⚠️ Horário não parseado corretamente:', raw);
+                return null;
+            }
+            return parsed;
         })
-        .filter(s => s.date || s.time);
+        .filter(s => s !== null && (s.date || s.time));
     
     // ✅ Remover duplicatas baseado no raw (comparação precisa)
     const schedulesUnicos = [];
@@ -997,6 +1424,349 @@ function formatarDataHora(dateString) {
     const date = new Date(dateString);
     return date.toLocaleDateString('pt-BR') + ' às ' + date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 }
+
+// ======== Horários da Seguradora (Kanban) ========
+function toggleAdicionarHorariosSeguradoraKanban(solicitacaoId, checked) {
+    console.log('🔍 toggleAdicionarHorariosSeguradoraKanban chamado, solicitacaoId:', solicitacaoId, 'checked:', checked);
+    
+    const secao = document.getElementById('secao-adicionar-horarios-seguradora-kanban');
+    
+    if (!secao) {
+        console.error('❌ Seção não encontrada!');
+        return;
+    }
+    
+    if (checked) {
+        console.log('🔍 Mostrando seção...');
+        secao.classList.remove('hidden');
+        secao.style.display = 'block';
+        // Atualizar status no banco
+        atualizarHorariosIndisponiveisKanban(solicitacaoId, true);
+    } else {
+        console.log('🔍 Ocultando seção...');
+        secao.classList.add('hidden');
+        secao.style.display = 'none';
+        // Atualizar status no banco
+        atualizarHorariosIndisponiveisKanban(solicitacaoId, false);
+    }
+}
+
+// Atualizar status de horários indisponíveis (Kanban)
+function atualizarHorariosIndisponiveisKanban(solicitacaoId, indisponivel) {
+    fetch(`<?= url('admin/solicitacoes/') ?>${solicitacaoId}/atualizar`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ 
+            horarios_indisponiveis: indisponivel ? 1 : 0
+        })
+    })
+    .then(async response => {
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            const text = await response.text();
+            console.error('Resposta não é JSON:', text);
+            return { success: false, error: 'Resposta inválida' };
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (!data.success) {
+            console.error('Erro ao atualizar:', data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Erro ao atualizar horários indisponíveis:', error);
+    });
+}
+
+// Adicionar horário da seguradora (Kanban) - APENAS VISUAL, não salva no banco
+function adicionarHorarioSeguradoraKanban(solicitacaoId) {
+    const data = document.getElementById('data-seguradora-kanban').value;
+    const horarioRadio = document.querySelector('input[name="horario-seguradora-kanban"]:checked');
+    
+    if (!data) {
+        mostrarNotificacao('Por favor, selecione uma data', 'error');
+        return;
+    }
+    
+    if (!horarioRadio) {
+        mostrarNotificacao('Por favor, selecione um horário', 'error');
+        return;
+    }
+    
+    const horario = horarioRadio.value;
+    const [horaInicio, horaFim] = horario.split('-');
+    
+    // Formatar horário: "dd/mm/yyyy - HH:00-HH:00"
+    const dataObj = new Date(data + 'T' + horaInicio + ':00');
+    const dia = String(dataObj.getDate()).padStart(2, '0');
+    const mes = String(dataObj.getMonth() + 1).padStart(2, '0');
+    const ano = dataObj.getFullYear();
+    const horarioFormatado = `${dia}/${mes}/${ano} - ${horaInicio}:00-${horaFim}:00`;
+    
+    // Adicionar horário apenas visualmente (não salva no banco ainda)
+    let listaHorarios = document.getElementById('lista-horarios-seguradora-kanban');
+    let secaoHorarios = document.getElementById('secao-horarios-seguradora-kanban');
+    
+    // Se a seção não existe, criar ela
+    if (!secaoHorarios) {
+        // Buscar onde inserir (antes de "Anexar Documento")
+        const anexarDocumento = Array.from(document.querySelectorAll('.bg-white.rounded-lg.p-5')).find(el => {
+            return el.querySelector('.fa-paperclip');
+        });
+        if (anexarDocumento && anexarDocumento.parentNode) {
+            const novaSecao = document.createElement('div');
+            novaSecao.className = 'bg-white rounded-lg p-5';
+            novaSecao.id = 'secao-horarios-seguradora-kanban';
+            novaSecao.innerHTML = `
+                <div class="flex items-center gap-2 mb-3">
+                    <i class="fas fa-building text-blue-600"></i>
+                    <h3 class="font-semibold text-gray-900">Disponibilidade Informada pela Seguradora</h3>
+                </div>
+                <div class="space-y-3" id="lista-horarios-seguradora-kanban">
+                    <!-- Horários serão adicionados aqui dinamicamente -->
+                </div>
+            `;
+            anexarDocumento.parentNode.insertBefore(novaSecao, anexarDocumento);
+            listaHorarios = document.getElementById('lista-horarios-seguradora-kanban');
+            secaoHorarios = document.getElementById('secao-horarios-seguradora-kanban');
+        }
+    }
+    
+    if (listaHorarios) {
+        // Verificar se o horário já existe na lista
+        const horariosExistentes = Array.from(listaHorarios.querySelectorAll('.text-sm.font-medium.text-blue-900'));
+        const jaExiste = horariosExistentes.some(el => el.textContent.trim() === horarioFormatado);
+        
+        if (jaExiste) {
+            mostrarNotificacao('Este horário já foi adicionado', 'error');
+            return;
+        }
+        
+        // Criar elemento do novo horário
+        const horarioEscapado = horarioFormatado.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+        const novoHorario = document.createElement('div');
+        novoHorario.className = 'bg-blue-50 border border-blue-200 rounded-lg p-3 flex items-center justify-between';
+        novoHorario.setAttribute('data-horario-seguradora', horarioFormatado);
+        novoHorario.innerHTML = `
+            <div class="flex items-center gap-3">
+                <i class="fas fa-clock text-blue-600"></i>
+                <span class="text-sm font-medium text-blue-900">${horarioFormatado}</span>
+            </div>
+            <button onclick="removerHorarioSeguradoraKanban(${solicitacaoId}, '${horarioEscapado}')" 
+                    class="text-red-600 hover:text-red-800">
+                <i class="fas fa-times"></i>
+            </button>
+        `;
+        listaHorarios.appendChild(novoHorario);
+        
+        // Mostrar a seção se estava oculta
+        if (secaoHorarios) {
+            secaoHorarios.classList.remove('hidden');
+        }
+        
+        // Marcar que há mudanças não salvas
+        hasUnsavedChanges = true;
+        
+        // Limpar formulário
+        document.getElementById('data-seguradora-kanban').value = '';
+        document.querySelectorAll('input[name="horario-seguradora-kanban"]').forEach(radio => radio.checked = false);
+        
+        mostrarNotificacao('Horário adicionado (será salvo ao clicar em "Salvar Alterações")', 'info');
+    } else {
+        mostrarNotificacao('Erro: Seção não encontrada', 'error');
+    }
+}
+
+// Coletar horários da seguradora da lista visual
+function coletarHorariosSeguradoraVisual() {
+    const listaHorarios = document.getElementById('lista-horarios-seguradora-kanban');
+    if (!listaHorarios) {
+        return [];
+    }
+    
+    const horarios = [];
+    const elementos = listaHorarios.querySelectorAll('[data-horario-seguradora]');
+    elementos.forEach(el => {
+        const horario = el.getAttribute('data-horario-seguradora');
+        if (horario) {
+            horarios.push(horario);
+        }
+    });
+    
+    return horarios;
+}
+
+// Remover horário da seguradora (Kanban) - APENAS VISUAL, não salva no banco
+function removerHorarioSeguradoraKanban(solicitacaoId, horario) {
+    const listaHorarios = document.getElementById('lista-horarios-seguradora-kanban');
+    if (!listaHorarios) {
+        return;
+    }
+    
+    // Encontrar e remover o elemento visual
+    const elementos = listaHorarios.querySelectorAll('[data-horario-seguradora]');
+    elementos.forEach(el => {
+        const horarioAtual = el.getAttribute('data-horario-seguradora');
+        if (horarioAtual === horario) {
+            el.remove();
+            hasUnsavedChanges = true;
+            mostrarNotificacao('Horário removido (será salvo ao clicar em "Salvar Alterações")', 'info');
+        }
+    });
+    
+    // Se não há mais horários, ocultar a seção
+    if (listaHorarios.children.length === 0) {
+        const secaoHorarios = document.getElementById('secao-horarios-seguradora-kanban');
+        if (secaoHorarios) {
+            secaoHorarios.classList.add('hidden');
+        }
+    }
+}
+
+// Função para salvar condição no Kanban
+function salvarCondicaoKanban(solicitacaoId, condicaoId) {
+    if (!solicitacaoId) {
+        mostrarNotificacao('Erro: Dados inválidos', 'error');
+        return;
+    }
+    
+    // Mostrar loading
+    const select = document.getElementById('condicaoSelectKanban');
+    if (select) {
+        select.disabled = true;
+    }
+    
+    fetch('<?= url('admin/kanban/atualizar-condicao') ?>', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            solicitacao_id: solicitacaoId,
+            condicao_id: condicaoId || null
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (select) {
+            select.disabled = false;
+        }
+        
+        if (data.success) {
+            mostrarNotificacao('Condição atualizada com sucesso!', 'success');
+        } else {
+            mostrarNotificacao('Erro: ' + (data.error || 'Não foi possível atualizar a condição'), 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Erro:', error);
+        if (select) {
+            select.disabled = false;
+        }
+        mostrarNotificacao('Erro ao atualizar condição', 'error');
+    });
+}
+
+// Função para salvar status no Kanban
+function salvarStatusKanban(solicitacaoId, novoStatusId) {
+    if (!solicitacaoId || !novoStatusId) {
+        mostrarNotificacao('Erro: Dados inválidos', 'error');
+        return;
+    }
+    
+    // Mostrar loading
+    const select = document.getElementById('statusSelectKanban');
+    if (select) {
+        select.disabled = true;
+    }
+    
+    fetch(`<?= url('admin/solicitacoes/') ?>${solicitacaoId}/status`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify({
+            status_id: novoStatusId
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            mostrarNotificacao('Status atualizado com sucesso!', 'success');
+            
+            // Fechar o modal
+            fecharDetalhes();
+            
+            // Recarregar a página para atualizar o Kanban
+            setTimeout(() => {
+                window.location.reload();
+            }, 500);
+        } else {
+            mostrarNotificacao('Erro: ' + (data.error || 'Não foi possível atualizar o status'), 'error');
+            if (select) {
+                select.disabled = false;
+            }
+        }
+    })
+    .catch(error => {
+        console.error('Erro:', error);
+        mostrarNotificacao('Erro ao atualizar status', 'error');
+        if (select) {
+            select.disabled = false;
+        }
+    });
+}
+
+// Função para abrir foto em modal
+function abrirFotoModal(urlFoto) {
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center p-4';
+    modal.innerHTML = `
+        <div class="relative max-w-6xl max-h-full w-full">
+            <button onclick="this.closest('.fixed').remove()" 
+                    class="absolute -top-12 right-0 text-white hover:text-gray-300 text-3xl z-10 bg-black bg-opacity-50 rounded-full w-10 h-10 flex items-center justify-center">
+                <i class="fas fa-times"></i>
+            </button>
+            <img src="${urlFoto}" 
+                 alt="Foto ampliada" 
+                 class="max-w-full max-h-[90vh] rounded-lg mx-auto block object-contain"
+                 onerror="this.onerror=null; this.src='data:image/svg+xml,%3Csvg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'400\\' height=\\'300\\'%3E%3Crect fill=\\'%23ddd\\' width=\\'400\\' height=\\'300\\'/%3E%3Ctext fill=\\'%23999\\' font-family=\\'sans-serif\\' font-size=\\'18\\' x=\\'50%25\\' y=\\'50%25\\' text-anchor=\\'middle\\' dominant-baseline=\\'middle\\'%3EErro ao carregar imagem%3C/text%3E%3C/svg%3E';">
+        </div>
+    `;
+    modal.onclick = function(e) {
+        if (e.target === modal || e.target.tagName === 'BUTTON') {
+            modal.remove();
+        }
+    };
+    document.body.appendChild(modal);
+    
+    // Fechar com ESC
+    const escHandler = function(e) {
+        if (e.key === 'Escape') {
+            modal.remove();
+            document.removeEventListener('keydown', escHandler);
+        }
+    };
+    document.addEventListener('keydown', escHandler);
+}
+
+// Estilização dos cards de horário da seguradora (Kanban)
+document.addEventListener('change', function(e) {
+    if (e.target.name === 'horario-seguradora-kanban') {
+        document.querySelectorAll('.horario-seguradora-card-kanban').forEach(card => {
+            card.classList.remove('border-blue-500', 'bg-blue-100');
+            card.classList.add('border-gray-200');
+        });
+        
+        const selectedCard = e.target.closest('label').querySelector('.horario-seguradora-card-kanban');
+        if (selectedCard) {
+            selectedCard.classList.remove('border-gray-200');
+            selectedCard.classList.add('border-blue-500', 'bg-blue-100');
+        }
+    }
+});
 </script>
 
 

@@ -137,6 +137,27 @@ class SolicitacoesController extends Controller
             $solicitacao['confirmed_schedules'] = null;
         }
 
+        // Buscar fotos da solicitação
+        $fotos = $this->solicitacaoModel->getFotos($id);
+        $solicitacao['fotos'] = $fotos;
+        
+        // Debug: Log das fotos encontradas
+        error_log("📸 API Solicitação #{$id} - Fotos encontradas: " . count($fotos));
+        if (!empty($fotos)) {
+            foreach ($fotos as $foto) {
+                error_log("  📸 Foto ID: {$foto['id']}, Nome: {$foto['nome_arquivo']}, URL: {$foto['url_arquivo']}");
+                // Verificar se o arquivo físico existe
+                $caminhoFisico = __DIR__ . '/../../Public/uploads/solicitacoes/' . $foto['nome_arquivo'];
+                if (file_exists($caminhoFisico)) {
+                    error_log("  ✅ Arquivo físico existe: {$caminhoFisico}");
+                } else {
+                    error_log("  ❌ Arquivo físico NÃO existe: {$caminhoFisico}");
+                }
+            }
+        } else {
+            error_log("  ⚠️ Nenhuma foto encontrada na tabela 'fotos' para solicitação #{$id}");
+        }
+
         $this->json([
             'success' => true,
             'solicitacao' => $solicitacao
@@ -1316,6 +1337,184 @@ class SolicitacoesController extends Controller
     }
 
     /**
+     * Adiciona horário sugerido pela seguradora
+     */
+    public function adicionarHorarioSeguradora(int $id): void
+    {
+        while (ob_get_level()) {
+            ob_end_clean();
+        }
+        ob_start();
+        
+        $oldErrorReporting = error_reporting(E_ALL);
+        $oldDisplayErrors = ini_set('display_errors', '0');
+        
+        try {
+            if (!$this->isPost()) {
+                $this->json(['success' => false, 'error' => 'Método não permitido'], 405);
+                return;
+            }
+
+            $raw = file_get_contents('php://input');
+            $json = json_decode($raw, true);
+            
+            $horario = $json['horario'] ?? $this->input('horario');
+            $data = $json['data'] ?? $this->input('data');
+            $horaInicio = $json['hora_inicio'] ?? $this->input('hora_inicio');
+            $horaFim = $json['hora_fim'] ?? $this->input('hora_fim');
+            
+            if (empty($horario) || empty($data)) {
+                $this->json(['success' => false, 'error' => 'Horário e data são obrigatórios'], 400);
+                return;
+            }
+
+            // Buscar solicitação atual
+            $solicitacao = $this->solicitacaoModel->find($id);
+            if (!$solicitacao) {
+                $this->json(['success' => false, 'error' => 'Solicitação não encontrada'], 404);
+                return;
+            }
+
+            // IMPORTANTE: Quando horarios_indisponiveis = 1, horarios_opcoes contém APENAS os horários da seguradora
+            // Os horários originais do locatário devem estar preservados em datas_opcoes
+            
+            // Se horarios_indisponiveis ainda não está marcado, preservar horários originais do locatário
+            if (empty($solicitacao['horarios_indisponiveis']) && !empty($solicitacao['horarios_opcoes'])) {
+                // Preservar horários originais do locatário em datas_opcoes
+                $horariosOriginaisLocatario = json_decode($solicitacao['horarios_opcoes'], true) ?? [];
+                if (!empty($horariosOriginaisLocatario)) {
+                    $this->solicitacaoModel->update($id, [
+                        'datas_opcoes' => json_encode($horariosOriginaisLocatario),
+                        'horarios_opcoes' => json_encode([]) // Limpar para receber horários da seguradora
+                    ]);
+                }
+            }
+            
+            // Buscar horários da seguradora existentes
+            $horariosSeguradora = [];
+            if (!empty($solicitacao['horarios_indisponiveis']) && !empty($solicitacao['horarios_opcoes'])) {
+                $horariosSeguradora = json_decode($solicitacao['horarios_opcoes'], true) ?? [];
+                if (!is_array($horariosSeguradora)) {
+                    $horariosSeguradora = [];
+                }
+            }
+
+            // Verificar se horário já existe
+            if (in_array($horario, $horariosSeguradora)) {
+                $this->json(['success' => false, 'error' => 'Este horário já foi adicionado'], 400);
+                return;
+            }
+
+            // Adicionar novo horário da seguradora
+            $horariosSeguradora[] = $horario;
+
+            // Atualizar solicitação
+            // IMPORTANTE: Quando horarios_indisponiveis = 1, horarios_opcoes contém APENAS horários da seguradora
+            // Não alterar datas_opcoes aqui, apenas horarios_opcoes
+            $this->solicitacaoModel->update($id, [
+                'horarios_opcoes' => json_encode($horariosSeguradora),
+                'horarios_indisponiveis' => 1
+            ]);
+
+            // Enviar notificação WhatsApp com horário sugerido
+            try {
+                $this->enviarNotificacaoWhatsApp($id, 'Horário Sugerido', [
+                    'data_agendamento' => date('d/m/Y', strtotime($data)),
+                    'horario_agendamento' => $horaInicio . ':00-' . $horaFim . ':00'
+                ]);
+            } catch (\Exception $e) {
+                error_log('Erro ao enviar WhatsApp: ' . $e->getMessage());
+            }
+
+            $this->json(['success' => true, 'message' => 'Horário adicionado com sucesso']);
+
+        } catch (\Exception $e) {
+            error_log('Erro em adicionarHorarioSeguradora: ' . $e->getMessage());
+            $this->json(['success' => false, 'error' => 'Erro ao adicionar horário: ' . $e->getMessage()], 500);
+        } finally {
+            while (ob_get_level()) {
+                ob_end_clean();
+            }
+            error_reporting($oldErrorReporting);
+            if ($oldDisplayErrors !== false) {
+                ini_set('display_errors', $oldDisplayErrors);
+            }
+        }
+    }
+
+    /**
+     * Remove horário sugerido pela seguradora
+     */
+    public function removerHorarioSeguradora(int $id): void
+    {
+        while (ob_get_level()) {
+            ob_end_clean();
+        }
+        ob_start();
+        
+        $oldErrorReporting = error_reporting(E_ALL);
+        $oldDisplayErrors = ini_set('display_errors', '0');
+        
+        try {
+            if (!$this->isPost()) {
+                $this->json(['success' => false, 'error' => 'Método não permitido'], 405);
+                return;
+            }
+
+            $raw = file_get_contents('php://input');
+            $json = json_decode($raw, true);
+            
+            $horario = $json['horario'] ?? $this->input('horario');
+            
+            if (empty($horario)) {
+                $this->json(['success' => false, 'error' => 'Horário é obrigatório'], 400);
+                return;
+            }
+
+            // Buscar solicitação atual
+            $solicitacao = $this->solicitacaoModel->find($id);
+            if (!$solicitacao) {
+                $this->json(['success' => false, 'error' => 'Solicitação não encontrada'], 404);
+                return;
+            }
+
+            // Buscar horários existentes
+            $horariosExistentes = [];
+            if (!empty($solicitacao['horarios_opcoes'])) {
+                $horariosExistentes = json_decode($solicitacao['horarios_opcoes'], true) ?? [];
+                if (!is_array($horariosExistentes)) {
+                    $horariosExistentes = [];
+                }
+            }
+
+            // Remover horário
+            $horariosExistentes = array_filter($horariosExistentes, function($h) use ($horario) {
+                return $h !== $horario;
+            });
+            $horariosExistentes = array_values($horariosExistentes); // Reindexar
+
+            // Atualizar solicitação
+            $this->solicitacaoModel->update($id, [
+                'horarios_opcoes' => !empty($horariosExistentes) ? json_encode($horariosExistentes) : null
+            ]);
+
+            $this->json(['success' => true, 'message' => 'Horário removido com sucesso']);
+
+        } catch (\Exception $e) {
+            error_log('Erro em removerHorarioSeguradora: ' . $e->getMessage());
+            $this->json(['success' => false, 'error' => 'Erro ao remover horário: ' . $e->getMessage()], 500);
+        } finally {
+            while (ob_get_level()) {
+                ob_end_clean();
+            }
+            error_reporting($oldErrorReporting);
+            if ($oldDisplayErrors !== false) {
+                ini_set('display_errors', $oldDisplayErrors);
+            }
+        }
+    }
+
+    /**
      * Confirma realização do serviço
      */
     public function confirmarServico(int $id): void
@@ -1380,10 +1579,11 @@ class SolicitacoesController extends Controller
         $valorReembolso = $this->input('valor_reembolso');
         $protocoloSeguradora = $this->input('protocolo_seguradora');
         $horariosIndisponiveis = $this->input('horarios_indisponiveis');
-
+        
         // Tentar ler JSON cru (caso o front envie via fetch JSON)
         $raw = file_get_contents('php://input');
         $json = json_decode($raw, true);
+        $horariosSeguradora = $json['horarios_seguradora'] ?? null;
         $schedulesFromJson = null; // null = não foi enviado, array = foi enviado (pode ser vazio)
         $schedulesFoiEnviado = false;
         
@@ -1411,6 +1611,13 @@ class SolicitacoesController extends Controller
         }
 
         try {
+            // Buscar solicitação atual para preservar horários originais
+            $solicitacaoAtual = $this->solicitacaoModel->find($id);
+            if (!$solicitacaoAtual) {
+                $this->json(['success' => false, 'error' => 'Solicitação não encontrada'], 404);
+                return;
+            }
+            
             $dados = [
                 'observacoes' => $observacoes
             ];
@@ -1431,10 +1638,54 @@ class SolicitacoesController extends Controller
             }
             
             // Adicionar campo de horários indisponíveis
+            // IMPORTANTE: Quando marcar horarios_indisponiveis pela primeira vez, preservar horários originais do locatário
             if ($horariosIndisponiveis === true || $horariosIndisponiveis === 'true' || $horariosIndisponiveis === 1) {
+                // Se está marcando pela primeira vez (antes era 0), preservar horários originais do locatário
+                if (empty($solicitacaoAtual['horarios_indisponiveis']) && !empty($solicitacaoAtual['horarios_opcoes'])) {
+                    // Preservar horários originais do locatário em datas_opcoes (que é um campo JSON)
+                    $horariosOriginaisLocatario = json_decode($solicitacaoAtual['horarios_opcoes'], true) ?? [];
+                    if (!empty($horariosOriginaisLocatario)) {
+                        // Salvar horários originais em datas_opcoes (que pode armazenar arrays JSON)
+                        $dados['datas_opcoes'] = json_encode($horariosOriginaisLocatario);
+                        // Limpar horarios_opcoes para que seja usado apenas para horários da seguradora
+                        $dados['horarios_opcoes'] = json_encode([]);
+                    }
+                }
                 $dados['horarios_indisponiveis'] = 1;
             } else {
+                // Se está desmarcando, restaurar horários originais do locatário
+                if (!empty($solicitacaoAtual['horarios_indisponiveis']) && !empty($solicitacaoAtual['datas_opcoes'])) {
+                    $horariosOriginaisLocatario = json_decode($solicitacaoAtual['datas_opcoes'], true) ?? [];
+                    if (!empty($horariosOriginaisLocatario)) {
+                        // Restaurar horários originais do locatário em horarios_opcoes
+                        $dados['horarios_opcoes'] = json_encode($horariosOriginaisLocatario);
+                        // Limpar datas_opcoes (ou manter, dependendo do uso)
+                    }
+                }
                 $dados['horarios_indisponiveis'] = 0;
+            }
+            
+            // Processar horários da seguradora se foram enviados
+            $horariosSeguradoraSalvos = false;
+            if ($horariosSeguradora !== null && is_array($horariosSeguradora) && !empty($horariosSeguradora)) {
+                try {
+                    // IMPORTANTE: Quando horarios_indisponiveis = 1, horarios_opcoes contém APENAS os horários da seguradora
+                    // Se horarios_indisponiveis ainda não está marcado, preservar horários originais do locatário primeiro
+                    if (empty($solicitacaoAtual['horarios_indisponiveis']) && !empty($solicitacaoAtual['horarios_opcoes'])) {
+                        $horariosOriginaisLocatario = json_decode($solicitacaoAtual['horarios_opcoes'], true) ?? [];
+                        if (!empty($horariosOriginaisLocatario) && is_array($horariosOriginaisLocatario)) {
+                            $dados['datas_opcoes'] = json_encode($horariosOriginaisLocatario);
+                        }
+                    }
+                    
+                    // Salvar horários da seguradora em horarios_opcoes
+                    $dados['horarios_opcoes'] = json_encode($horariosSeguradora);
+                    $dados['horarios_indisponiveis'] = 1;
+                    $horariosSeguradoraSalvos = true;
+                } catch (\Exception $e) {
+                    error_log('Erro ao processar horários da seguradora: ' . $e->getMessage());
+                    // Não bloquear o salvamento, apenas logar o erro
+                }
             }
 
             // Debug log
@@ -1442,15 +1693,21 @@ class SolicitacoesController extends Controller
                 'id' => $id,
                 'precisa_reembolso' => $precisaReembolso,
                 'valor_reembolso_raw' => $valorReembolso,
-                'valor_reembolso_convertido' => isset($dados['valor_reembolso']) ? $dados['valor_reembolso'] : 'null'
+                'valor_reembolso_convertido' => isset($dados['valor_reembolso']) ? $dados['valor_reembolso'] : 'null',
+                'horarios_seguradora' => $horariosSeguradora !== null ? (is_array($horariosSeguradora) ? count($horariosSeguradora) : 'not array') : 'null',
+                'dados_keys' => array_keys($dados)
             ]));
 
-            // ✅ Se schedules foi enviado (mesmo que vazio), processar confirmação
+            // ✅ Se schedules foi enviado explicitamente (mesmo que vazio), processar confirmação
             // IMPORTANTE: schedulesFromJson contém apenas os horários MARCADOS (checked)
             // Se um horário estava confirmado e não está na lista, significa que foi DESMARCADO
-            if ($schedulesFoiEnviado) {
+            // IMPORTANTE: Só processar schedules se foi explicitamente enviado no JSON
+            if ($schedulesFoiEnviado && $schedulesFromJson !== null) {
                 // ✅ Buscar solicitação atual e horários disponíveis
-                $solicitacaoAtual = $this->solicitacaoModel->find($id);
+                // Não buscar novamente se já foi buscado acima
+                if (!isset($solicitacaoAtual)) {
+                    $solicitacaoAtual = $this->solicitacaoModel->find($id);
+                }
                 $confirmedExistentes = [];
                 
                 if (!empty($solicitacaoAtual['confirmed_schedules'])) {
@@ -1465,6 +1722,7 @@ class SolicitacoesController extends Controller
                 }
                 
                 // ✅ Se schedulesFromJson está vazio (todos desmarcados), limpar todos os confirmados
+                // IMPORTANTE: Só limpar se foi explicitamente enviado como array vazio
                 if (is_array($schedulesFromJson) && empty($schedulesFromJson)) {
                     // Usuário desmarcou todos - limpar confirmações
                     $dados['horario_confirmado'] = 0;
@@ -1730,16 +1988,67 @@ class SolicitacoesController extends Controller
                 }
             }
 
-            $resultado = $this->solicitacaoModel->update($id, $dados);
+            // Debug: Log dos dados antes de atualizar
+            error_log('Dados finais antes de atualizar: ' . json_encode($dados));
             
-            if ($resultado) {
-                $this->json([
-                    'success' => true, 
-                    'message' => 'Alterações salvas com sucesso',
-                    'dados_salvos' => $dados
-                ]);
-            } else {
-                $this->json(['success' => false, 'error' => 'Falha ao atualizar no banco de dados'], 500);
+            try {
+                $resultado = $this->solicitacaoModel->update($id, $dados);
+                
+                if ($resultado) {
+                    // Enviar WhatsApp se horários da seguradora foram salvos
+                    if ($horariosSeguradoraSalvos && !empty($horariosSeguradora)) {
+                        try {
+                            // Buscar solicitação atualizada para obter dados completos
+                            $solicitacaoAtualizada = $this->solicitacaoModel->find($id);
+                            
+                            // Formatar horários para exibição
+                            $horariosTexto = [];
+                            foreach ($horariosSeguradora as $horario) {
+                                // Extrair data e horário do formato "dd/mm/yyyy - HH:MM-HH:MM"
+                                if (preg_match('/(\d{2}\/\d{2}\/\d{4})\s*-\s*(\d{2}:\d{2})-(\d{2}:\d{2})/', $horario, $matches)) {
+                                    $horariosTexto[] = $matches[1] . ' das ' . $matches[2] . ' às ' . $matches[3];
+                                } else {
+                                    $horariosTexto[] = $horario;
+                                }
+                            }
+                            
+                            // Usar o primeiro horário para data e horário de agendamento
+                            $primeiroHorario = $horariosSeguradora[0] ?? '';
+                            $dataAgendamento = '';
+                            $horarioAgendamento = '';
+                            
+                            if (preg_match('/(\d{2}\/\d{2}\/\d{4})\s*-\s*(\d{2}:\d{2})-(\d{2}:\d{2})/', $primeiroHorario, $matches)) {
+                                $dataAgendamento = $matches[1];
+                                $horarioAgendamento = $matches[2] . '-' . $matches[3];
+                            }
+                            
+                            // Enviar WhatsApp com horários sugeridos pela seguradora
+                            $this->enviarNotificacaoWhatsApp($id, 'Horário Sugerido', [
+                                'data_agendamento' => $dataAgendamento,
+                                'horario_agendamento' => $horarioAgendamento,
+                                'horarios_sugeridos' => implode(', ', $horariosTexto)
+                            ]);
+                            
+                            error_log("WhatsApp enviado para horários da seguradora [ID:{$id}]: " . count($horariosSeguradora) . " horários");
+                        } catch (\Exception $e) {
+                            // Ignorar erro de WhatsApp, não bloquear a resposta
+                            error_log('Erro ao enviar WhatsApp para horários da seguradora [ID:' . $id . ']: ' . $e->getMessage());
+                        }
+                    }
+                    
+                    $this->json([
+                        'success' => true, 
+                        'message' => 'Alterações salvas com sucesso',
+                        'dados_salvos' => $dados
+                    ]);
+                } else {
+                    error_log('Erro: update() retornou false');
+                    $this->json(['success' => false, 'error' => 'Falha ao atualizar no banco de dados'], 500);
+                }
+            } catch (\Exception $e) {
+                error_log('Erro no update(): ' . $e->getMessage());
+                error_log('Stack trace: ' . $e->getTraceAsString());
+                throw $e; // Re-lançar para ser capturado pelo catch externo
             }
         } catch (\Exception $e) {
             error_log('Erro ao salvar: ' . $e->getMessage());

@@ -1,0 +1,91 @@
+<?php
+ob_start();
+?>
+
+<div class="bg-white rounded-lg shadow p-6">
+    <div class="flex items-center justify-between mb-4">
+        <h3 class="text-xl font-semibold text-gray-800">Nova Instância WhatsApp</h3>
+        <a href="<?= url('admin/whatsapp-instances') ?>" class="text-gray-600 hover:text-gray-800">
+            <i class="fas fa-arrow-left mr-2"></i>Voltar
+        </a>
+    </div>
+
+    <form method="POST" action="<?= url('admin/whatsapp-instances') ?>" class="space-y-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Nome da Instância <span class="text-red-500">*</span>
+                </label>
+                <input type="text" name="nome" required
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                       placeholder="Ex: Notificações Principal">
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Nome da Instância (Evolution API) <span class="text-red-500">*</span>
+                </label>
+                <input type="text" name="instance_name" required
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                       placeholder="Ex: notificacoes_principal">
+                <p class="text-xs text-gray-500 mt-1">Nome único na Evolution API (sem espaços, use _ ou -)</p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    URL da Evolution API <span class="text-red-500">*</span>
+                </label>
+                <input type="url" name="api_url" required
+                       value="<?= htmlspecialchars($apiUrl) ?>"
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                       placeholder="https://evolutionapi.launs.com.br">
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    API Key <span class="text-red-500">*</span>
+                </label>
+                <input type="text" name="api_key" required
+                       value="<?= htmlspecialchars($apiKey) ?>"
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                       placeholder="Sua API Key">
+            </div>
+        </div>
+
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+                Token (Opcional)
+            </label>
+            <input type="text" name="token"
+                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                   placeholder="Token Bearer (opcional)">
+            <p class="text-xs text-gray-500 mt-1">Token de autenticação Bearer, se necessário</p>
+        </div>
+
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <p class="text-sm text-blue-800">
+                <i class="fas fa-info-circle mr-2"></i>
+                Após criar a instância, você precisará escanear o QR code para conectar o WhatsApp.
+            </p>
+        </div>
+
+        <div class="flex justify-end space-x-3">
+            <a href="<?= url('admin/whatsapp-instances') ?>" 
+               class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
+                Cancelar
+            </a>
+            <button type="submit" 
+                    class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                <i class="fas fa-plus mr-2"></i>Criar Instância
+            </button>
+        </div>
+    </form>
+</div>
+
+<?php
+$content = ob_get_clean();
+include __DIR__ . '/../layouts/admin.php';
+?>
+

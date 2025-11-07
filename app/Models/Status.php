@@ -30,10 +30,10 @@ class Status extends Model
 
     public function getKanban(): array
     {
-        // Retornar apenas os 4 status principais do Kanban
+        // Retornar apenas os status marcados como visíveis no Kanban
         $sql = "
             SELECT * FROM {$this->table} 
-            WHERE nome IN ('Nova Solicitação', 'Buscando Prestador', 'Serviço Agendado', 'Pendências')
+            WHERE visivel_kanban = 1
             AND status = 'ATIVO'
             ORDER BY ordem ASC
         ";

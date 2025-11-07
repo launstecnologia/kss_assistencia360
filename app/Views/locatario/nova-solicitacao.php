@@ -47,7 +47,33 @@ $steps = [
 
 <!-- Progress Steps -->
 <div class="mb-8">
-    <div class="flex items-center justify-between">
+    <!-- Mobile: Versão compacta apenas com números -->
+    <div class="md:hidden">
+        <div class="flex items-center justify-between">
+            <?php foreach ($steps as $numero => $step): ?>
+                <div class="flex flex-col items-center flex-1">
+                    <!-- Step Circle -->
+                    <div class="flex items-center justify-center w-8 h-8 rounded-full border-2 <?= $numero <= $etapaAtual ? 'bg-green-600 border-green-600 text-white' : 'border-gray-300 text-gray-400' ?>">
+                        <?php if ($numero < $etapaAtual): ?>
+                            <i class="fas fa-check text-xs"></i>
+                        <?php else: ?>
+                            <span class="text-xs font-medium"><?= $numero ?></span>
+                        <?php endif; ?>
+                    </div>
+                    <!-- Step Label (apenas para etapa atual) -->
+                    <?php if ($numero == $etapaAtual): ?>
+                        <p class="text-xs font-medium text-green-600 mt-1 text-center"><?= $step['nome'] ?></p>
+                    <?php endif; ?>
+                </div>
+                <?php if ($numero < count($steps)): ?>
+                    <div class="flex-1 mx-1 h-0.5 <?= $numero < $etapaAtual ? 'bg-green-600' : 'bg-gray-300' ?>"></div>
+                <?php endif; ?>
+            <?php endforeach; ?>
+        </div>
+    </div>
+    
+    <!-- Desktop: Versão completa -->
+    <div class="hidden md:flex items-center justify-between">
         <?php foreach ($steps as $numero => $step): ?>
             <div class="flex items-center">
                 <!-- Step Circle -->
@@ -199,15 +225,15 @@ $steps = [
                 <!-- Finalidade da Locação -->
                 <div>
                     <h3 class="text-sm font-medium text-gray-700 mb-3">Finalidade da Locação</h3>
-                    <select name="finalidade_locacao" required 
-                            class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500">
+                    <select name="finalidade_locacao" id="finalidade_locacao" required 
+                            class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 text-sm">
                         <option value="RESIDENCIAL" selected>Residencial</option>
                         <option value="COMERCIAL">Comercial</option>
                     </select>
                 </div>
                 
                 <!-- Tipo de Imóvel -->
-                <div>
+                <div id="tipo_imovel_container">
                     <h3 class="text-sm font-medium text-gray-700 mb-3">Tipo de Imóvel</h3>
                     <div class="flex space-x-4">
                         <label class="flex items-center">
@@ -351,17 +377,18 @@ $steps = [
         </div>
         
         <div class="p-6">
-            <form method="POST" action="<?= url($locatario['instancia'] . '/nova-solicitacao/etapa/3') ?>" class="space-y-6">
+            <form method="POST" action="<?= url($locatario['instancia'] . '/nova-solicitacao/etapa/3') ?>" 
+                  enctype="multipart/form-data" class="space-y-6">
                 <?= \App\Core\View::csrfField() ?>
                 
                 <!-- Local da Manutenção -->
                 <div>
                     <label for="local_manutencao" class="block text-sm font-medium text-gray-700 mb-2">
-                        Local da Manutenção
+                        Local do imóvel onde será feito a manutenção
                     </label>
                     <input type="text" id="local_manutencao" name="local_manutencao" 
-                           class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
-                           placeholder="Ex: Banheiro Social, Cozinha, Sala..."
+                           class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 text-sm"
+                           placeholder="Ex: Fechadura do Portão da Rua"
                            value="<?= htmlspecialchars($_SESSION['nova_solicitacao']['local_manutencao'] ?? '') ?>">
                 </div>
                 
@@ -371,7 +398,7 @@ $steps = [
                         Descrição do Problema
                     </label>
                     <textarea id="descricao_problema" name="descricao_problema" rows="6" required
-                              class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
+                              class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 text-sm resize-none"
                               placeholder="Descreva detalhadamente o problema que precisa ser resolvido..."><?= htmlspecialchars($_SESSION['nova_solicitacao']['descricao_problema'] ?? '') ?></textarea>
                 </div>
                 
@@ -471,7 +498,7 @@ $steps = [
                             <i class="fas fa-calendar-alt text-gray-400"></i>
                         </div>
                         <input type="date" id="data_selecionada" name="data_selecionada" 
-                               class="block w-full pl-10 pr-3 py-3 border-2 border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors text-gray-700 cursor-pointer"
+                               class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 text-sm text-gray-700 cursor-pointer transition-colors"
                                placeholder="Selecione uma data"
                                min="<?= date('Y-m-d', strtotime('+1 day')) ?>"
                                max="<?= date('Y-m-d', strtotime('+30 days')) ?>">
@@ -1128,6 +1155,37 @@ document.addEventListener('DOMContentLoaded', function() {
             inputHorarios.value = JSON.stringify(horariosFormatados);
             form.appendChild(inputHorarios);
         });
+    }
+    
+    // Controlar visibilidade do campo "Tipo de Imóvel" baseado em "Finalidade da Locação"
+    const finalidadeSelect = document.getElementById('finalidade_locacao');
+    const tipoImovelContainer = document.getElementById('tipo_imovel_container');
+    
+    if (finalidadeSelect && tipoImovelContainer) {
+        function toggleTipoImovel() {
+            if (finalidadeSelect.value === 'COMERCIAL') {
+                tipoImovelContainer.style.display = 'none';
+                // Limpar seleção dos radio buttons
+                const radioButtons = tipoImovelContainer.querySelectorAll('input[type="radio"]');
+                radioButtons.forEach(radio => {
+                    radio.checked = false;
+                    radio.removeAttribute('required');
+                });
+            } else {
+                tipoImovelContainer.style.display = 'block';
+                // Restaurar seleção padrão (Casa)
+                const radioCasa = tipoImovelContainer.querySelector('input[value="CASA"]');
+                if (radioCasa) {
+                    radioCasa.checked = true;
+                }
+            }
+        }
+        
+        // Executar na carga da página
+        toggleTipoImovel();
+        
+        // Executar quando mudar a seleção
+        finalidadeSelect.addEventListener('change', toggleTipoImovel);
     }
 });
 </script>

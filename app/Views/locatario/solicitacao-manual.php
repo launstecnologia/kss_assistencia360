@@ -105,7 +105,7 @@ $steps = [
                             <!-- Nome Completo -->
                             <div>
                                 <label for="nome_completo" class="block text-sm font-medium text-gray-700 mb-2">
-                                    Nome Completo <span class="text-red-500">*</span>
+                                    Nome Completo do Locatário <span class="text-red-500">*</span>
                                 </label>
                                 <input type="text" id="nome_completo" name="nome_completo" required
                                        class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
@@ -116,7 +116,7 @@ $steps = [
                             <!-- CPF -->
                             <div>
                                 <label for="cpf" class="block text-sm font-medium text-gray-700 mb-2">
-                                    CPF <span class="text-red-500">*</span>
+                                    CPF do locatário <span class="text-red-500">*</span>
                                 </label>
                                 <input type="text" id="cpf" name="cpf" required
                                        class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"

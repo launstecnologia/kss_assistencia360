@@ -26,6 +26,7 @@ class MaintenanceController extends Controller
         $hasHorarioConfirmado = $check('horario_confirmado');
         $hasHorarioRaw = $check('horario_confirmado_raw');
         $hasConfirmedSchedules = $check('confirmed_schedules');
+        $hasDatasOpcoes = $check('datas_opcoes');
 
         $this->view('admin.migracoes', [
             'title' => 'Migrações rápidas',
@@ -33,6 +34,7 @@ class MaintenanceController extends Controller
             'hasHorarioConfirmado' => $hasHorarioConfirmado,
             'hasHorarioRaw' => $hasHorarioRaw,
             'hasConfirmedSchedules' => $hasConfirmedSchedules,
+            'hasDatasOpcoes' => $hasDatasOpcoes,
         ]);
     }
 
@@ -63,6 +65,17 @@ class MaintenanceController extends Controller
 
             // confirmed_schedules JSON (lista de confirmações)
             Database::query("ALTER TABLE solicitacoes ADD COLUMN IF NOT EXISTS confirmed_schedules JSON NULL AFTER horario_confirmado_raw");
+
+            // datas_opcoes JSON (para preservar horários originais do locatário quando horarios_indisponiveis = 1)
+            $checkColumn = function(string $column): bool {
+                $sql = "SELECT COUNT(*) AS c FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'solicitacoes' AND COLUMN_NAME = ?";
+                $row = Database::fetch($sql, [$column]);
+                return (int)($row['c'] ?? 0) > 0;
+            };
+            
+            if (!$checkColumn('datas_opcoes')) {
+                Database::query("ALTER TABLE solicitacoes ADD COLUMN datas_opcoes JSON NULL AFTER horarios_opcoes");
+            }
 
             $this->view('admin.migracoes', [ 'success' => 'Migrações executadas com sucesso.' ]);
         } catch (\Exception $e) {

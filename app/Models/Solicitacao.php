@@ -8,7 +8,7 @@ class Solicitacao extends Model
 {
     protected string $table = 'solicitacoes';
     protected array $fillable = [
-        'imobiliaria_id', 'categoria_id', 'subcategoria_id', 'status_id',
+        'imobiliaria_id', 'categoria_id', 'subcategoria_id', 'status_id', 'condicao_id',
         'locatario_id', 'locatario_nome', 'locatario_telefone', 'locatario_email',
         'imovel_endereco', 'imovel_numero', 'imovel_complemento', 'imovel_bairro',
         'imovel_cidade', 'imovel_estado', 'imovel_cep',
@@ -16,7 +16,7 @@ class Solicitacao extends Model
         'data_agendamento', 'horario_agendamento', 'horario_confirmado', 'horario_confirmado_raw', 'confirmed_schedules', 'prestador_nome', 'prestador_telefone',
         'valor_orcamento', 'numero_ncp', 'avaliacao_satisfacao',
         // Novos campos para fluxo operacional
-        'numero_solicitacao', 'tipo_atendimento', 'datas_opcoes', 'horarios_opcoes', 'data_confirmada',
+        'numero_solicitacao', 'numero_contrato', 'tipo_atendimento', 'datas_opcoes', 'horarios_opcoes', 'data_confirmada',
         'mawdy_id', 'mawdy_nome', 'mawdy_telefone', 'mawdy_email',
         'data_limite_cancelamento', 'data_limite_peca', 'data_ultimo_lembrete',
         'confirmacao_atendimento', 'avaliacao_imobiliaria', 'avaliacao_app',
@@ -93,6 +93,7 @@ class Solicitacao extends Model
                 c.nome as categoria_nome,
                 sc.nome as subcategoria_nome,
                 i.nome as imobiliaria_nome,
+                i.logo as imobiliaria_logo,
                 CASE 
                     WHEN st.nome = 'Nova Solicitação' THEN 1
                     WHEN st.nome = 'Buscando Prestador' THEN 2
@@ -129,13 +130,16 @@ class Solicitacao extends Model
                 i.nome as imobiliaria_nome,
                 i.url_base as imobiliaria_url,
                 i.telefone as imobiliaria_telefone,
-                l.cpf as locatario_cpf
+                l.cpf as locatario_cpf,
+                cond.nome as condicao_nome,
+                cond.cor as condicao_cor
             FROM solicitacoes s
             LEFT JOIN status st ON s.status_id = st.id
             LEFT JOIN categorias c ON s.categoria_id = c.id
             LEFT JOIN subcategorias sc ON s.subcategoria_id = sc.id
             LEFT JOIN imobiliarias i ON s.imobiliaria_id = i.id
             LEFT JOIN locatarios l ON (s.locatario_id = l.id OR s.locatario_id = l.ksi_cliente_id)
+            LEFT JOIN condicoes cond ON s.condicao_id = cond.id
             WHERE s.id = ?
         ";
         
@@ -352,6 +356,105 @@ class Solicitacao extends Model
     public function gerarTokenConfirmacao(): string
     {
         return 'confirm_' . uniqid() . '_' . bin2hex(random_bytes(16));
+    }
+
+    /**
+     * Gera um token público permanente para visualização de status
+     * Este token não expira e pode ser usado múltiplas vezes
+     * 
+     * @param int $solicitacaoId ID da solicitação
+     * @return string Token público
+     */
+    public function gerarTokenPublico(int $solicitacaoId): string
+    {
+        // Usar uma chave secreta para gerar o token de forma determinística
+        // Isso garante que o mesmo ID sempre gere o mesmo token
+        $secretKey = 'kss_public_token_secret_2024'; // Chave secreta para gerar tokens públicos
+        $hash = hash_hmac('sha256', $solicitacaoId, $secretKey);
+        
+        // Retornar apenas os primeiros 32 caracteres para um token mais curto
+        return 'public_' . substr($hash, 0, 32);
+    }
+
+    /**
+     * Valida um token público e retorna o ID da solicitação
+     * 
+     * @param string $token Token público
+     * @return int|null ID da solicitação ou null se inválido
+     */
+    public function validarTokenPublico(string $token): ?int
+    {
+        // Remover prefixo "public_" se existir
+        $token = str_replace('public_', '', $token);
+        
+        if (strlen($token) !== 32) {
+            return null;
+        }
+
+        // Como o token é determinístico, precisamos buscar todas as solicitações
+        // e verificar qual tem o token correspondente
+        // Para otimizar, vamos buscar apenas IDs (mais leve)
+        $sql = "SELECT id FROM solicitacoes ORDER BY id DESC LIMIT 1000";
+        $solicitacoes = Database::fetchAll($sql);
+        
+        foreach ($solicitacoes as $solicitacao) {
+            $tokenGerado = $this->gerarTokenPublico($solicitacao['id']);
+            $tokenGeradoLimpo = str_replace('public_', '', $tokenGerado);
+            
+            if ($tokenGeradoLimpo === $token) {
+                return (int) $solicitacao['id'];
+            }
+        }
+        
+        return null;
+    }
+
+    /**
+     * Gera um token de cancelamento permanente para a solicitação
+     * Este token não expira e pode ser usado para cancelar a solicitação
+     * 
+     * @param int $solicitacaoId ID da solicitação
+     * @return string Token de cancelamento
+     */
+    public function gerarTokenCancelamento(int $solicitacaoId): string
+    {
+        // Usar uma chave secreta específica para cancelamento
+        $secretKey = 'kss_cancel_token_secret_2024';
+        $hash = hash_hmac('sha256', $solicitacaoId, $secretKey);
+        
+        // Retornar apenas os primeiros 32 caracteres para um token mais curto
+        return 'cancel_' . substr($hash, 0, 32);
+    }
+
+    /**
+     * Valida um token de cancelamento e retorna o ID da solicitação
+     * 
+     * @param string $token Token de cancelamento
+     * @return int|null ID da solicitação ou null se inválido
+     */
+    public function validarTokenCancelamento(string $token): ?int
+    {
+        // Remover prefixo "cancel_" se existir
+        $token = str_replace('cancel_', '', $token);
+        
+        if (strlen($token) !== 32) {
+            return null;
+        }
+
+        // Buscar todas as solicitações e verificar qual tem o token correspondente
+        $sql = "SELECT id FROM solicitacoes ORDER BY id DESC LIMIT 1000";
+        $solicitacoes = Database::fetchAll($sql);
+        
+        foreach ($solicitacoes as $solicitacao) {
+            $tokenGerado = $this->gerarTokenCancelamento($solicitacao['id']);
+            $tokenGeradoLimpo = str_replace('cancel_', '', $tokenGerado);
+            
+            if ($tokenGeradoLimpo === $token) {
+                return (int) $solicitacao['id'];
+            }
+        }
+        
+        return null;
     }
 
     public function getSolicitacoesParaLembrete(): array

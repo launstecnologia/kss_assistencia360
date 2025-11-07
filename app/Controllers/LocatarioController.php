@@ -152,7 +152,7 @@ class LocatarioController extends Controller
         // Estatísticas
         $stats = [
             'total' => count($solicitacoes),
-            'ativas' => count(array_filter($solicitacoes, fn($s) => !in_array($s['status_nome'], ['Concluído (NCP)', 'Cancelado', 'Expirado']))),
+            'agendadas' => count(array_filter($solicitacoes, fn($s) => $s['status_nome'] === 'Serviço Agendado')),
             'concluidas' => count(array_filter($solicitacoes, fn($s) => $s['status_nome'] === 'Concluído (NCP)'))
         ];
         
@@ -414,8 +414,17 @@ class LocatarioController extends Controller
                 $_SESSION['nova_solicitacao']['descricao_problema'] = $this->input('descricao_problema');
                 
                 // Processar upload de fotos se houver
+                error_log("🔍 Etapa 3 - Verificando upload de fotos");
+                error_log("🔍 \$_FILES: " . print_r($_FILES, true));
+                
                 if (!empty($_FILES['fotos']['name'][0])) {
-                    $_SESSION['nova_solicitacao']['fotos'] = $this->processarUploadFotos();
+                    error_log("✅ Fotos detectadas no upload");
+                    $fotosSalvas = $this->processarUploadFotos();
+                    error_log("✅ Fotos processadas: " . print_r($fotosSalvas, true));
+                    $_SESSION['nova_solicitacao']['fotos'] = $fotosSalvas;
+                } else {
+                    error_log("⚠️ Nenhuma foto detectada no upload");
+                    error_log("⚠️ \$_FILES['fotos']: " . print_r($_FILES['fotos'] ?? 'NÃO DEFINIDO', true));
                 }
                 break;
                 
@@ -468,26 +477,63 @@ class LocatarioController extends Controller
     private function processarUploadFotos(): array
     {
         $fotosSalvas = [];
-        $uploadDir = 'Public/uploads/solicitacoes/';
+        $uploadDir = __DIR__ . '/../../Public/uploads/solicitacoes/';
         
         // Criar diretório se não existir
         if (!is_dir($uploadDir)) {
             mkdir($uploadDir, 0755, true);
+            error_log("📁 Diretório criado: {$uploadDir}");
         }
         
+        error_log("📸 Processando " . count($_FILES['fotos']['name']) . " arquivo(s)");
+        
         foreach ($_FILES['fotos']['name'] as $key => $name) {
-            if ($_FILES['fotos']['error'][$key] === UPLOAD_ERR_OK) {
+            $error = $_FILES['fotos']['error'][$key];
+            error_log("📸 Arquivo {$key}: {$name}, Erro: {$error}");
+            
+            if ($error === UPLOAD_ERR_OK) {
                 $tmpName = $_FILES['fotos']['tmp_name'][$key];
-                $extension = pathinfo($name, PATHINFO_EXTENSION);
+                $extension = strtolower(pathinfo($name, PATHINFO_EXTENSION));
+                
+                // Validar extensão
+                $extensoesPermitidas = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+                if (!in_array($extension, $extensoesPermitidas)) {
+                    error_log("❌ Extensão não permitida: {$extension}");
+                    continue;
+                }
+                
+                // Validar tamanho (10MB)
+                $tamanho = $_FILES['fotos']['size'][$key];
+                $tamanhoMaximo = 10 * 1024 * 1024; // 10MB
+                if ($tamanho > $tamanhoMaximo) {
+                    error_log("❌ Arquivo muito grande: " . number_format($tamanho / 1024 / 1024, 2) . " MB");
+                    continue;
+                }
+                
                 $fileName = uniqid() . '_' . time() . '.' . $extension;
                 $filePath = $uploadDir . $fileName;
                 
                 if (move_uploaded_file($tmpName, $filePath)) {
                     $fotosSalvas[] = $fileName;
+                    error_log("✅ Foto salva: {$fileName} em {$filePath}");
+                } else {
+                    error_log("❌ Erro ao mover arquivo: {$tmpName} para {$filePath}");
                 }
+            } else {
+                $mensagensErro = [
+                    UPLOAD_ERR_INI_SIZE => 'Arquivo excede upload_max_filesize',
+                    UPLOAD_ERR_FORM_SIZE => 'Arquivo excede MAX_FILE_SIZE',
+                    UPLOAD_ERR_PARTIAL => 'Upload parcial',
+                    UPLOAD_ERR_NO_FILE => 'Nenhum arquivo enviado',
+                    UPLOAD_ERR_NO_TMP_DIR => 'Diretório temporário não encontrado',
+                    UPLOAD_ERR_CANT_WRITE => 'Falha ao escrever arquivo',
+                    UPLOAD_ERR_EXTENSION => 'Upload bloqueado por extensão'
+                ];
+                error_log("❌ Erro no upload: " . ($mensagensErro[$error] ?? "Erro desconhecido ({$error})"));
             }
         }
         
+        error_log("📸 Total de fotos salvas: " . count($fotosSalvas));
         return $fotosSalvas;
     }
     
@@ -519,6 +565,22 @@ class LocatarioController extends Controller
         // Preparar dados para criação da solicitação
         $imovel = $locatario['imoveis'][$dados['endereco_selecionado']];
         
+        // Buscar número do contrato do imóvel
+        $numeroContrato = null;
+        if (!empty($imovel['contratos'])) {
+            foreach ($imovel['contratos'] as $contrato) {
+                if (isset($contrato['CtrTipo']) && $contrato['CtrTipo'] == 'PRINCIPAL') {
+                    $numeroContrato = ($contrato['CtrCod'] ?? '') . '-' . ($contrato['CtrDV'] ?? '');
+                    break;
+                }
+            }
+            // Se não encontrou principal, pegar o primeiro
+            if (!$numeroContrato && !empty($imovel['contratos'][0])) {
+                $contrato = $imovel['contratos'][0];
+                $numeroContrato = ($contrato['CtrCod'] ?? '') . '-' . ($contrato['CtrDV'] ?? '');
+            }
+        }
+        
         // Buscar status inicial (geralmente "Nova Solicitação" ou similar)
         $statusModel = new \App\Models\Status();
         $statusInicial = $statusModel->findByNome('Nova Solicitação') 
@@ -549,6 +611,9 @@ class LocatarioController extends Controller
             // Horários preferenciais
             'horarios_opcoes' => $horariosJson,
             
+            // Número do contrato
+            'numero_contrato' => $numeroContrato,
+            
             // Dados do imóvel (com prefixo imovel_)
             'imovel_endereco' => $imovel['endereco'] ?? '',
             'imovel_numero' => $imovel['numero'] ?? '',
@@ -564,6 +629,31 @@ class LocatarioController extends Controller
         
         $instancia = $locatario['instancia'];
         if ($solicitacaoId) {
+            // Gerar token de cancelamento permanente (não expira)
+            $tokenCancelamento = $this->solicitacaoModel->gerarTokenCancelamento($solicitacaoId);
+            error_log("✅ Token de cancelamento gerado para solicitação #{$solicitacaoId}: {$tokenCancelamento}");
+            
+            // Salvar fotos na tabela fotos se houver
+            error_log("🔍 finalizarSolicitacao - Verificando fotos na sessão");
+            error_log("🔍 finalizarSolicitacao - dados['fotos']: " . print_r($dados['fotos'] ?? 'NÃO DEFINIDO', true));
+            
+            if (!empty($dados['fotos']) && is_array($dados['fotos'])) {
+                error_log("✅ finalizarSolicitacao - Encontradas " . count($dados['fotos']) . " foto(s) para salvar");
+                foreach ($dados['fotos'] as $fotoNome) {
+                    $urlArquivo = 'Public/uploads/solicitacoes/' . $fotoNome;
+                    $sqlFoto = "INSERT INTO fotos (solicitacao_id, nome_arquivo, url_arquivo, created_at) 
+                                VALUES (?, ?, ?, NOW())";
+                    try {
+                        \App\Core\Database::query($sqlFoto, [$solicitacaoId, $fotoNome, $urlArquivo]);
+                        error_log("✅ Foto salva: {$fotoNome} para solicitação #{$solicitacaoId}");
+                    } catch (\Exception $e) {
+                        error_log("❌ Erro ao salvar foto {$fotoNome}: " . $e->getMessage());
+                    }
+                }
+            } else {
+                error_log("⚠️ finalizarSolicitacao - Nenhuma foto encontrada ou não é array");
+            }
+            
             // Enviar notificação WhatsApp
             try {
                 $this->enviarNotificacaoWhatsApp($solicitacaoId, 'Nova Solicitação');
@@ -777,10 +867,62 @@ class LocatarioController extends Controller
      */
     public function logout(string $instancia = ''): void
     {
+        // Tentar pegar a instância da sessão antes de limpar
+        if (empty($instancia) && isset($_SESSION['locatario']['instancia'])) {
+            $instancia = $_SESSION['locatario']['instancia'];
+        }
+        
+        // Se ainda estiver vazio, tentar da URL
         if (empty($instancia)) {
             $instancia = $this->getInstanciaFromUrl();
         }
-        unset($_SESSION['locatario']);
+        
+        // Se ainda estiver vazio, usar 'demo' como padrão
+        if (empty($instancia)) {
+            $instancia = 'demo';
+        }
+        
+        // Log para debug
+        error_log('Logout iniciado - Instância: ' . $instancia);
+        error_log('Sessão antes do logout: ' . json_encode($_SESSION));
+        
+        // Limpar completamente a sessão do locatário
+        if (isset($_SESSION['locatario'])) {
+            unset($_SESSION['locatario']);
+        }
+        if (isset($_SESSION['locatario_id'])) {
+            unset($_SESSION['locatario_id']);
+        }
+        if (isset($_SESSION['user_id'])) {
+            unset($_SESSION['user_id']);
+        }
+        if (isset($_SESSION['instancia'])) {
+            unset($_SESSION['instancia']);
+        }
+        if (isset($_SESSION['imobiliaria_id'])) {
+            unset($_SESSION['imobiliaria_id']);
+        }
+        if (isset($_SESSION['cliente_data'])) {
+            unset($_SESSION['cliente_data']);
+        }
+        
+        // Limpar todas as variáveis de sessão relacionadas
+        foreach ($_SESSION as $key => $value) {
+            if (strpos($key, 'locatario') !== false || strpos($key, 'imobiliaria') !== false) {
+                unset($_SESSION[$key]);
+            }
+        }
+        
+        // Garantir que a sessão foi limpa
+        $_SESSION['locatario'] = null;
+        
+        // Regenerar ID da sessão para segurança
+        session_regenerate_id(true);
+        
+        // Log para debug
+        error_log('Sessão após logout: ' . json_encode($_SESSION));
+        error_log('Redirecionando para: /' . $instancia);
+        
         $this->redirect('/' . $instancia);
     }
     

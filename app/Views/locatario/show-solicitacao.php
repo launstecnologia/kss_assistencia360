@@ -24,6 +24,9 @@ ob_start();
             </h1>
             <p class="text-gray-600 mt-1">
                 Protocolo: <?= htmlspecialchars($solicitacao['numero_solicitacao'] ?? '#' . $solicitacao['id']) ?>
+                <?php if (!empty($solicitacao['numero_contrato'])): ?>
+                    | Contrato: <?= htmlspecialchars($solicitacao['numero_contrato']) ?>
+                <?php endif; ?>
             </p>
         </div>
     </div>

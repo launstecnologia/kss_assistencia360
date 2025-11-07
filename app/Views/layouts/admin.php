@@ -132,8 +132,21 @@
 <body class="bg-gray-100">
     <!-- Sidebar -->
     <div id="sidebar" class="fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg sidebar-transition transform -translate-x-full lg:translate-x-0">
-        <div class="flex items-center justify-center h-16 bg-blue-600">
-            <h1 class="text-white text-xl font-bold"><?= htmlspecialchars($app['name'] ?? 'KSS Seguros', ENT_QUOTES, 'UTF-8') ?></h1>
+        <div class="flex items-center justify-center h-16 px-4">
+            <?php 
+            $logoUrl = \App\Core\Url::kssLogo();
+            if (!empty($logoUrl)): ?>
+                <img src="<?= htmlspecialchars($logoUrl) ?>" alt="KSS ASSISTÊNCIA 360°" class="h-10 w-auto" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                <div class="flex items-center space-x-2" style="display: none;">
+                    <span class="text-green-600 font-bold text-xl">KSS</span>
+                    <span class="text-gray-600 text-sm">ASSISTÊNCIA 360°</span>
+                </div>
+            <?php else: ?>
+                <div class="flex items-center space-x-2">
+                    <span class="text-green-600 font-bold text-xl">KSS</span>
+                    <span class="text-gray-600 text-sm">ASSISTÊNCIA 360°</span>
+                </div>
+            <?php endif; ?>
         </div>
         
         <nav class="mt-8">
@@ -156,6 +169,10 @@
                 <a href="<?= url('admin/templates-whatsapp') ?>" class="flex items-center px-4 py-2 text-gray-700 rounded-lg hover:bg-gray-100 <?= $currentPage === 'templates-whatsapp' ? 'bg-blue-50 text-blue-700' : '' ?>">
                     <i class="fas fa-file-code mr-3"></i>
                     Templates WhatsApp
+                </a>
+                <a href="<?= url('admin/whatsapp-instances') ?>" class="flex items-center px-4 py-2 text-gray-700 rounded-lg hover:bg-gray-100 <?= $currentPage === 'whatsapp-instances' ? 'bg-blue-50 text-blue-700' : '' ?>">
+                    <i class="fas fa-mobile-alt mr-3"></i>
+                    Instâncias WhatsApp
                 </a>
 
                 <a href="<?= url('admin/solicitacoes-manuais') ?>" class="flex items-center px-4 py-2 text-gray-700 rounded-lg hover:bg-gray-100 <?= $currentPage === 'solicitacoes-manuais' ? 'bg-blue-50 text-blue-700' : '' ?>">
@@ -202,6 +219,11 @@
                 <a href="<?= url('admin/status') ?>" class="flex items-center px-4 py-2 text-gray-700 rounded-lg hover:bg-gray-100 <?= $currentPage === 'status' ? 'bg-blue-50 text-blue-700' : '' ?>">
                     <i class="fas fa-list mr-3"></i>
                     Status
+                </a>
+                
+                <a href="<?= url('admin/condicoes') ?>" class="flex items-center px-4 py-2 text-gray-700 rounded-lg hover:bg-gray-100 <?= $currentPage === 'condicoes' ? 'bg-blue-50 text-blue-700' : '' ?>">
+                    <i class="fas fa-tag mr-3"></i>
+                    Condições
                 </a>
                 <?php endif; ?>
             </div>

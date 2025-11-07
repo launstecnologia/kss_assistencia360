@@ -85,4 +85,20 @@ class Url
         // Implementar sistema de rotas nomeadas se necessário
         return self::to($name);
     }
+    
+    /**
+     * Retorna a URL da logo da KSS
+     */
+    public static function kssLogo(): string
+    {
+        $logoPath = 'Public/assets/images/kss/logo.png';
+        $fullPath = __DIR__ . '/../../' . $logoPath;
+        
+        if (file_exists($fullPath)) {
+            return self::to($logoPath);
+        }
+        
+        // Se não existir, retorna null para usar fallback de texto
+        return '';
+    }
 }

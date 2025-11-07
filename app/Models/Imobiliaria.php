@@ -50,6 +50,49 @@ class Imobiliaria extends Model
         return Database::fetch($sql, [$cnpj]);
     }
 
+    /**
+     * Buscar estados únicos de imobiliárias ativas
+     */
+    public function getEstados(): array
+    {
+        $sql = "SELECT DISTINCT endereco_estado as estado 
+                FROM {$this->table} 
+                WHERE status = 'ATIVA' 
+                AND endereco_estado IS NOT NULL 
+                AND endereco_estado != ''
+                ORDER BY endereco_estado ASC";
+        return Database::fetchAll($sql);
+    }
+
+    /**
+     * Buscar cidades por estado
+     */
+    public function getCidadesPorEstado(string $estado): array
+    {
+        $sql = "SELECT DISTINCT endereco_cidade as cidade 
+                FROM {$this->table} 
+                WHERE status = 'ATIVA' 
+                AND endereco_estado = ?
+                AND endereco_cidade IS NOT NULL 
+                AND endereco_cidade != ''
+                ORDER BY endereco_cidade ASC";
+        return Database::fetchAll($sql, [$estado]);
+    }
+
+    /**
+     * Buscar imobiliárias por estado e cidade
+     */
+    public function getImobiliariasPorLocalizacao(string $estado, string $cidade): array
+    {
+        $sql = "SELECT id, nome, nome_fantasia, instancia, logo, endereco_cidade, endereco_estado
+                FROM {$this->table} 
+                WHERE status = 'ATIVA' 
+                AND endereco_estado = ?
+                AND endereco_cidade = ?
+                ORDER BY nome ASC";
+        return Database::fetchAll($sql, [$estado, $cidade]);
+    }
+
 
 
     public function create(array $data): int

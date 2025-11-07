@@ -15,6 +15,7 @@ class DashboardController extends Controller
     private Usuario $usuarioModel;
     private Categoria $categoriaModel;
     private \App\Models\Status $statusModel;
+    private \App\Models\Condicao $condicaoModel;
 
     public function __construct()
     {
@@ -24,6 +25,7 @@ class DashboardController extends Controller
         $this->usuarioModel = new Usuario();
         $this->categoriaModel = new Categoria();
         $this->statusModel = new \App\Models\Status();
+        $this->condicaoModel = new \App\Models\Condicao();
     }
 
     public function index(): void
@@ -107,12 +109,13 @@ class DashboardController extends Controller
         
         $sql = "
             SELECT 
-                i.nome as imobiliaria_nome,
+                COALESCE(i.nome, i.nome_fantasia, 'Sem imobiliária') as imobiliaria_nome,
                 COUNT(*) as quantidade
             FROM solicitacoes s
             LEFT JOIN imobiliarias i ON s.imobiliaria_id = i.id
             WHERE s.created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
-            GROUP BY i.id, i.nome
+            GROUP BY i.id, i.nome, i.nome_fantasia
+            HAVING quantidade > 0
             ORDER BY quantidade DESC
         ";
         
@@ -178,13 +181,17 @@ class DashboardController extends Controller
                     c.nome as categoria_nome,
                     sc.nome as subcategoria_nome,
                     i.nome as imobiliaria_nome,
+                    i.logo as imobiliaria_logo,
                     st.nome as status_nome,
-                    st.cor as status_cor
+                    st.cor as status_cor,
+                    cond.nome as condicao_nome,
+                    cond.cor as condicao_cor
                 FROM solicitacoes s
                 LEFT JOIN categorias c ON s.categoria_id = c.id
                 LEFT JOIN subcategorias sc ON s.subcategoria_id = sc.id
                 LEFT JOIN imobiliarias i ON s.imobiliaria_id = i.id
                 LEFT JOIN status st ON s.status_id = st.id
+                LEFT JOIN condicoes cond ON s.condicao_id = cond.id
                 WHERE s.status_id = ?
             ";
             
@@ -203,13 +210,71 @@ class DashboardController extends Controller
         // Buscar imobiliárias para filtro
         $imobiliarias = $this->imobiliariaModel->getAtivas();
         
+        // Buscar todos os status ativos para o select do modal
+        $todosStatus = $this->statusModel->getAtivos();
+        
+        // Buscar todas as condições ativas para o select do modal
+        $todasCondicoes = $this->condicaoModel->getAtivos();
+        
         $this->view('kanban.index', [
             'statusKanban' => $statusKanban,
             'solicitacoesPorStatus' => $solicitacoesPorStatus,
             'imobiliarias' => $imobiliarias,
             'imobiliariaId' => $imobiliariaId,
-            'user' => $user
+            'user' => $user,
+            'todosStatus' => $todosStatus,
+            'todasCondicoes' => $todasCondicoes
         ]);
+    }
+
+    public function atualizarCondicao(): void
+    {
+        if (!$this->isPost()) {
+            $this->json(['error' => 'Método não permitido'], 405);
+            return;
+        }
+
+        // Ler JSON do body da requisição
+        $input = file_get_contents('php://input');
+        $data = json_decode($input, true);
+        
+        $solicitacaoId = $data['solicitacao_id'] ?? null;
+        $condicaoId = $data['condicao_id'] ?? null;
+        
+        if (!$solicitacaoId) {
+            $this->json(['error' => 'ID da solicitação não informado'], 400);
+            return;
+        }
+        
+        try {
+            // Converter condicaoId vazio para null
+            $condicaoIdValue = (!empty($condicaoId) && $condicaoId !== '0' && $condicaoId !== '') ? (int)$condicaoId : null;
+            
+            // Atualizar condição da solicitação
+            $updateData = ['condicao_id' => $condicaoIdValue];
+            
+            error_log("🔍 Atualizando condição - Solicitação ID: {$solicitacaoId}, Condição ID: " . ($condicaoIdValue ?? 'NULL'));
+            
+            $result = $this->solicitacaoModel->update($solicitacaoId, $updateData);
+            
+            error_log("✅ Resultado do update: " . ($result ? 'SUCESSO' : 'FALHOU'));
+            
+            // Verificar se foi salvo corretamente
+            $solicitacaoAtualizada = $this->solicitacaoModel->find($solicitacaoId);
+            error_log("🔍 Condição após update: " . ($solicitacaoAtualizada['condicao_id'] ?? 'NULL'));
+            
+            $this->json([
+                'success' => true,
+                'message' => 'Condição atualizada com sucesso',
+                'condicao_id' => $condicaoIdValue
+            ]);
+        } catch (\Exception $e) {
+            error_log("❌ Erro ao atualizar condição: " . $e->getMessage());
+            error_log("❌ Stack trace: " . $e->getTraceAsString());
+            $this->json([
+                'error' => 'Erro ao atualizar condição: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     public function moverCard(): void
@@ -233,16 +298,30 @@ class DashboardController extends Controller
         }
 
         try {
+            // Buscar nome do status de destino
+            $sql = "SELECT nome FROM status WHERE id = ?";
+            $statusDestino = \App\Core\Database::fetch($sql, [$novoStatusId]);
+            
+            // Verificar se está tentando mover para "Serviço Agendado"
+            if ($statusDestino && $statusDestino['nome'] === 'Serviço Agendado') {
+                // Buscar a solicitação para verificar se tem protocolo da seguradora
+                $solicitacao = $this->solicitacaoModel->find($solicitacaoId);
+                
+                if (empty($solicitacao['protocolo_seguradora'])) {
+                    $this->json([
+                        'error' => 'É obrigatório preencher o protocolo da seguradora para mover para "Serviço Agendado"',
+                        'requires_protocol' => true
+                    ], 400);
+                    return;
+                }
+            }
+            
             $success = $this->solicitacaoModel->updateStatus($solicitacaoId, $novoStatusId, $user['id']);
             
             if ($success) {
-                // Buscar nome do status
-                $sql = "SELECT nome FROM status WHERE id = ?";
-                $status = \App\Core\Database::fetch($sql, [$novoStatusId]);
-                
                 // Enviar notificação WhatsApp
                 $this->enviarNotificacaoWhatsApp($solicitacaoId, 'Atualização de Status', [
-                    'status_atual' => $status['nome'] ?? 'Atualizado'
+                    'status_atual' => $statusDestino['nome'] ?? 'Atualizado'
                 ]);
                 
                 $this->json(['success' => true, 'message' => 'Status atualizado com sucesso']);

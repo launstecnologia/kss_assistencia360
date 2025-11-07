@@ -14,31 +14,22 @@ ob_start();
             <?php if (!empty($imobiliaria['logo'])): ?>
                 <img src="<?= url('Public/uploads/logos/' . $imobiliaria['logo']) ?>" 
                      alt="<?= htmlspecialchars($imobiliaria['nome']) ?>" 
-                     class="mx-auto h-16 w-auto"
+                     class="mx-auto h-20 w-auto"
                      onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                <div class="mx-auto h-16 w-16 bg-blue-600 rounded-lg flex items-center justify-center" style="display: none;">
+                <div class="mx-auto h-20 w-20 bg-blue-600 rounded-lg flex items-center justify-center" style="display: none;">
                     <i class="fas fa-building text-white text-2xl"></i>
                 </div>
             <?php else: ?>
-                <div class="mx-auto h-16 w-16 bg-blue-600 rounded-lg flex items-center justify-center">
+                <div class="mx-auto h-20 w-20 bg-blue-600 rounded-lg flex items-center justify-center">
                     <i class="fas fa-building text-white text-2xl"></i>
                 </div>
             <?php endif; ?>
-            <h2 class="mt-4 text-2xl font-bold text-gray-900">
-                <?= htmlspecialchars($imobiliaria['nome']) ?>
-            </h2>
-            <p class="mt-2 text-sm text-gray-600">
-                <?= htmlspecialchars($imobiliaria['nome_fantasia'] ?? '') ?>
-            </p>
         </div>
         
         <!-- Título Principal -->
-        <h1 class="text-center text-3xl font-bold text-gray-900 mb-2">
+        <h1 class="text-center text-3xl font-bold text-gray-900 mb-8">
             Assistência 360°
         </h1>
-        <p class="text-center text-sm text-gray-600 mb-8">
-            Digite seu CPF/CNPJ para acessar suas solicitações
-        </p>
     </div>
 
     <div class="sm:mx-auto sm:w-full sm:max-w-md">
@@ -122,12 +113,9 @@ ob_start();
         </div>
     </div>
     
-    <!-- Footer -->
-    <div class="mt-8 text-center">
-        <div class="flex items-center justify-center space-x-2">
-            <span class="text-green-600 font-bold text-lg">KSS</span>
-            <span class="text-gray-600 text-sm">ASSISTÊNCIA 360°</span>
-        </div>
+    <!-- Logo KSS pequena abaixo do card -->
+    <div class="mt-6 flex justify-center items-center">
+        <?= kss_logo('mx-auto', 'KSS ASSISTÊNCIA 360°', 20) ?>
     </div>
 </div>
 

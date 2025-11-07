@@ -82,6 +82,11 @@ function safe($value, $default = 'Não informado') {
             <h2 class="text-xl font-bold text-gray-900">
                 <?= safe($solicitacao['numero_solicitacao'] ?? '#'.$solicitacao['id'], '#'.$solicitacao['id']) ?>
             </h2>
+            <?php if (!empty($solicitacao['numero_contrato'])): ?>
+                <span class="text-sm text-gray-500">
+                    Contrato: <?= htmlspecialchars($solicitacao['numero_contrato']) ?>
+                </span>
+            <?php endif; ?>
             <span class="px-3 py-1 rounded-full text-sm font-medium" 
                   style="background-color: <?= $solicitacao['status_cor'] ?? '#3B82F6' ?>20; color: <?= $solicitacao['status_cor'] ?? '#3B82F6' ?>">
                 <?= safe($solicitacao['status_nome'], 'Sem status') ?>
@@ -172,8 +177,17 @@ function safe($value, $default = 'Não informado') {
 
         <!-- Disponibilidade Informada pelo Locatário -->
         <?php 
-        $horariosOpcoes = !empty($solicitacao['horarios_opcoes']) 
-            ? json_decode($solicitacao['horarios_opcoes'], true) : [];
+        // Se horarios_indisponiveis está marcado, os horários originais do locatário estão em datas_opcoes
+        // Caso contrário, estão em horarios_opcoes
+        if (!empty($solicitacao['horarios_indisponiveis'])) {
+            // Horários originais do locatário foram preservados em datas_opcoes
+            $horariosOpcoes = !empty($solicitacao['datas_opcoes']) 
+                ? json_decode($solicitacao['datas_opcoes'], true) : [];
+        } else {
+            // Horários do locatário estão em horarios_opcoes
+            $horariosOpcoes = !empty($solicitacao['horarios_opcoes']) 
+                ? json_decode($solicitacao['horarios_opcoes'], true) : [];
+        }
         if (!empty($horariosOpcoes)): 
         ?>
         <div class="section-card">
@@ -402,10 +416,140 @@ function safe($value, $default = 'Não informado') {
             <div class="mt-4 border-t pt-4">
                 <label class="flex items-center cursor-pointer">
                     <input type="checkbox" id="horarios-indisponiveis" 
-                           onchange="toggleSolicitarNovosHorarios(<?= $solicitacao['id'] ?>)"
+                           <?= ($solicitacao['horarios_indisponiveis'] ?? 0) ? 'checked' : '' ?>
+                           onchange="console.log('🔍 Checkbox alterado:', this.checked); toggleAdicionarHorariosSeguradora(<?= $solicitacao['id'] ?>);"
                            class="w-4 h-4 text-blue-600 rounded">
-                    <span class="ml-2 text-sm text-gray-700">Horários Indisponíveis - Solicitar novos horários</span>
+                    <span class="ml-2 text-sm text-gray-700">Nenhum horário está disponível</span>
                 </label>
+            </div>
+            
+            <!-- Seção: Adicionar Horários da Seguradora (aparece quando checkbox está marcado) -->
+            <div id="secao-adicionar-horarios-seguradora" class="mt-4" style="<?= ($solicitacao['horarios_indisponiveis'] ?? 0) ? 'display: block;' : 'display: none;' ?>">
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <h3 class="text-sm font-semibold text-blue-900 mb-2">
+                        <i class="fas fa-clock mr-2"></i>Adicionar Horário da Seguradora
+                    </h3>
+                    <p class="text-xs text-blue-700 mb-4">
+                        Adicione horários alternativos que a seguradora pode oferecer
+                    </p>
+                    
+                    <!-- Formulário para adicionar horário -->
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-700 mb-1">Data</label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fas fa-calendar-alt text-gray-400"></i>
+                                </div>
+                                <input type="date" id="data-seguradora" 
+                                       class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+                                       min="<?= date('Y-m-d', strtotime('+1 day')) ?>"
+                                       max="<?= date('Y-m-d', strtotime('+30 days')) ?>">
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-xs font-medium text-gray-700 mb-2">Horário</label>
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+                                <label class="relative cursor-pointer">
+                                    <input type="radio" name="horario-seguradora" value="08:00-11:00" class="sr-only">
+                                    <div class="border-2 border-gray-200 rounded-lg p-2 text-center hover:border-blue-300 transition-colors horario-seguradora-card">
+                                        <div class="text-xs font-medium text-gray-900">08h00 às 11h00</div>
+                                    </div>
+                                </label>
+                                
+                                <label class="relative cursor-pointer">
+                                    <input type="radio" name="horario-seguradora" value="11:00-14:00" class="sr-only">
+                                    <div class="border-2 border-gray-200 rounded-lg p-2 text-center hover:border-blue-300 transition-colors horario-seguradora-card">
+                                        <div class="text-xs font-medium text-gray-900">11h00 às 14h00</div>
+                                    </div>
+                                </label>
+                                
+                                <label class="relative cursor-pointer">
+                                    <input type="radio" name="horario-seguradora" value="14:00-17:00" class="sr-only">
+                                    <div class="border-2 border-gray-200 rounded-lg p-2 text-center hover:border-blue-300 transition-colors horario-seguradora-card">
+                                        <div class="text-xs font-medium text-gray-900">14h00 às 17h00</div>
+                                    </div>
+                                </label>
+                                
+                                <label class="relative cursor-pointer">
+                                    <input type="radio" name="horario-seguradora" value="17:00-20:00" class="sr-only">
+                                    <div class="border-2 border-gray-200 rounded-lg p-2 text-center hover:border-blue-300 transition-colors horario-seguradora-card">
+                                        <div class="text-xs font-medium text-gray-900">17h00 às 20h00</div>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <button type="button" onclick="adicionarHorarioSeguradora(<?= $solicitacao['id'] ?>)" 
+                                class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium">
+                            <i class="fas fa-plus mr-2"></i>Salvar Horário
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <?php endif; ?>
+        
+        <!-- Disponibilidade Informada pela Seguradora -->
+        <?php 
+        // Buscar horários sugeridos pela seguradora (armazenados em horarios_opcoes quando horarios_indisponiveis = 1)
+        $horariosSeguradora = [];
+        if (!empty($solicitacao['horarios_indisponiveis']) && !empty($solicitacao['horarios_opcoes'])) {
+            $horariosSeguradora = json_decode($solicitacao['horarios_opcoes'], true) ?? [];
+            if (!is_array($horariosSeguradora)) {
+                $horariosSeguradora = [];
+            }
+        }
+        if (!empty($horariosSeguradora)): 
+        ?>
+        <div class="section-card">
+            <div class="section-title">
+                <i class="fas fa-building text-blue-600"></i>
+                Disponibilidade Informada pela Seguradora
+            </div>
+            
+            <div class="space-y-3" id="lista-horarios-seguradora">
+                <?php foreach ($horariosSeguradora as $index => $horario): 
+                    // Formatar horário para exibição
+                    $horarioFormatado = is_string($horario) ? $horario : '';
+                    
+                    // Se já está no formato "dd/mm/yyyy - HH:00-HH:00", usar diretamente
+                    if (preg_match('/^\d{2}\/\d{2}\/\d{4}\s*-\s*\d{2}:\d{2}-\d{2}:\d{2}$/', $horarioFormatado)) {
+                        // Já está formatado corretamente
+                    } elseif (preg_match('/(\d{4}-\d{2}-\d{2})[T ](\d{2}):(\d{2})/', $horarioFormatado, $matches)) {
+                        // Formato ISO: converter para "dd/mm/yyyy - HH:00-HH:00"
+                        try {
+                            $dt = new \DateTime($matches[1] . ' ' . $matches[2] . ':' . $matches[3]);
+                            $horaInicio = (int)$matches[2];
+                            $horaFim = $horaInicio + 3;
+                            $horarioFormatado = $dt->format('d/m/Y') . ' - ' . sprintf('%02d:00', $horaInicio) . '-' . sprintf('%02d:00', $horaFim);
+                        } catch (\Exception $e) {
+                            // Manter formato original se houver erro
+                        }
+                    } elseif (preg_match('/(\d{2})\/(\d{2})\/(\d{4})[ -](\d{2}):(\d{2})/', $horarioFormatado, $matches)) {
+                        // Formato parcial: completar
+                        $horaInicio = (int)$matches[4];
+                        $horaFim = $horaInicio + 3;
+                        $horarioFormatado = $matches[1] . '/' . $matches[2] . '/' . $matches[3] . ' - ' . sprintf('%02d:00', $horaInicio) . '-' . sprintf('%02d:00', $horaFim);
+                    }
+                    
+                    // Escapar para JavaScript
+                    $horarioEscapado = htmlspecialchars($horario, ENT_QUOTES, 'UTF-8');
+                ?>
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <i class="fas fa-clock text-blue-600"></i>
+                        <span class="text-sm font-medium text-blue-900">
+                            <?= htmlspecialchars($horarioFormatado) ?>
+                        </span>
+                    </div>
+                    <button onclick="removerHorarioSeguradora(<?= $solicitacao['id'] ?>, '<?= $horarioEscapado ?>')" 
+                            class="text-red-600 hover:text-red-800">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <?php endforeach; ?>
             </div>
         </div>
         <?php endif; ?>
@@ -747,45 +891,205 @@ function desconfirmarHorario(solicitacaoId, horario) {
     });
 }
 
-function toggleSolicitarNovosHorarios(solicitacaoId) {
-    const checked = document.getElementById('horarios-indisponiveis').checked;
+// Toggle da seção de adicionar horários da seguradora
+function toggleAdicionarHorariosSeguradora(solicitacaoId) {
+    console.log('🔍 toggleAdicionarHorariosSeguradora chamado, solicitacaoId:', solicitacaoId);
+    
+    const checkbox = document.getElementById('horarios-indisponiveis');
+    const secao = document.getElementById('secao-adicionar-horarios-seguradora');
+    
+    console.log('🔍 Checkbox encontrado:', checkbox);
+    console.log('🔍 Seção encontrada:', secao);
+    
+    if (!checkbox) {
+        console.error('❌ Checkbox não encontrado!');
+        return;
+    }
+    
+    if (!secao) {
+        console.error('❌ Seção não encontrada!');
+        return;
+    }
+    
+    const checked = checkbox.checked;
+    console.log('🔍 Checkbox checked:', checked);
     
     if (checked) {
-        const obs = prompt('Por favor, informe o motivo dos horários estarem indisponíveis:');
-        if (!obs) {
-            document.getElementById('horarios-indisponiveis').checked = false;
-            return;
-        }
-        
-        fetch(`<?= url('admin/solicitacoes/') ?>${solicitacaoId}/solicitar-novos-horarios`, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ observacao: obs })
-        })
-        .then(async response => {
-            // ✅ Verificar se a resposta é JSON válido antes de parsear
-            const contentType = response.headers.get('content-type');
-            if (!contentType || !contentType.includes('application/json')) {
-                const text = await response.text();
-                console.error('Resposta não é JSON:', text);
-                throw new Error('Resposta do servidor não é JSON válido. Verifique o console para mais detalhes.');
-            }
-            return response.json();
-        })
-        .then(data => {
-            if (data.success) {
-                alert('Solicitação enviada! O locatário receberá notificação para informar novos horários.');
-                location.reload();
-            } else {
-                alert('Erro: ' + (data.error || 'Não foi possível solicitar'));
-            }
-        })
-        .catch(error => {
-            console.error('Erro ao solicitar novos horários:', error);
-            alert('Erro ao solicitar novos horários: ' + error.message);
-        });
+        console.log('🔍 Mostrando seção...');
+        secao.classList.remove('hidden');
+        secao.style.display = 'block';
+        console.log('🔍 Seção display:', secao.style.display);
+        console.log('🔍 Seção classes:', secao.className);
+        // Atualizar status no banco
+        atualizarHorariosIndisponiveis(solicitacaoId, true);
+    } else {
+        console.log('🔍 Ocultando seção...');
+        secao.classList.add('hidden');
+        secao.style.display = 'none';
+        // Atualizar status no banco
+        atualizarHorariosIndisponiveis(solicitacaoId, false);
     }
 }
+
+// Inicializar visibilidade da seção ao carregar a página
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🔍 DOM carregado, verificando checkbox...');
+    const checkbox = document.getElementById('horarios-indisponiveis');
+    const secao = document.getElementById('secao-adicionar-horarios-seguradora');
+    
+    if (checkbox && secao) {
+        const solicitacaoId = <?= $solicitacao['id'] ?>;
+        console.log('🔍 Checkbox inicial:', checkbox.checked);
+        console.log('🔍 Seção inicial display:', secao.style.display);
+        
+        // Ajustar visibilidade inicial baseado no estado do checkbox
+        if (checkbox.checked) {
+            secao.style.display = 'block';
+            secao.classList.remove('hidden');
+        } else {
+            secao.style.display = 'none';
+            secao.classList.add('hidden');
+        }
+    }
+});
+
+// Atualizar status de horários indisponíveis
+function atualizarHorariosIndisponiveis(solicitacaoId, indisponivel) {
+    fetch(`<?= url('admin/solicitacoes/') ?>${solicitacaoId}/atualizar`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ 
+            horarios_indisponiveis: indisponivel ? 1 : 0
+        })
+    })
+    .then(async response => {
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            const text = await response.text();
+            console.error('Resposta não é JSON:', text);
+            return { success: false, error: 'Resposta inválida' };
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (!data.success) {
+            console.error('Erro ao atualizar:', data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Erro ao atualizar horários indisponíveis:', error);
+    });
+}
+
+// Adicionar horário da seguradora
+function adicionarHorarioSeguradora(solicitacaoId) {
+    const data = document.getElementById('data-seguradora').value;
+    const horarioRadio = document.querySelector('input[name="horario-seguradora"]:checked');
+    
+    if (!data) {
+        alert('Por favor, selecione uma data');
+        return;
+    }
+    
+    if (!horarioRadio) {
+        alert('Por favor, selecione um horário');
+        return;
+    }
+    
+    const horario = horarioRadio.value;
+    const [horaInicio, horaFim] = horario.split('-');
+    
+    // Formatar horário: "dd/mm/yyyy - HH:00-HH:00"
+    const dataObj = new Date(data + 'T' + horaInicio + ':00');
+    const dia = String(dataObj.getDate()).padStart(2, '0');
+    const mes = String(dataObj.getMonth() + 1).padStart(2, '0');
+    const ano = dataObj.getFullYear();
+    const horarioFormatado = `${dia}/${mes}/${ano} - ${horaInicio}:00-${horaFim}:00`;
+    
+    fetch(`<?= url('admin/solicitacoes/') ?>${solicitacaoId}/adicionar-horario-seguradora`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ 
+            horario: horarioFormatado,
+            data: data,
+            hora_inicio: horaInicio,
+            hora_fim: horaFim
+        })
+    })
+    .then(async response => {
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            const text = await response.text();
+            console.error('Resposta não é JSON:', text);
+            throw new Error('Resposta inválida');
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            // Limpar formulário
+            document.getElementById('data-seguradora').value = '';
+            document.querySelectorAll('input[name="horario-seguradora"]').forEach(radio => radio.checked = false);
+            // Recarregar página para mostrar novo horário
+            location.reload();
+        } else {
+            alert('Erro: ' + (data.error || 'Não foi possível adicionar horário'));
+        }
+    })
+    .catch(error => {
+        console.error('Erro ao adicionar horário:', error);
+        alert('Erro ao adicionar horário: ' + error.message);
+    });
+}
+
+// Remover horário da seguradora
+function removerHorarioSeguradora(solicitacaoId, horario) {
+    if (!confirm('Deseja remover este horário?')) {
+        return;
+    }
+    
+    fetch(`<?= url('admin/solicitacoes/') ?>${solicitacaoId}/remover-horario-seguradora`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ horario: horario })
+    })
+    .then(async response => {
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            const text = await response.text();
+            console.error('Resposta não é JSON:', text);
+            throw new Error('Resposta inválida');
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Erro: ' + (data.error || 'Não foi possível remover horário'));
+        }
+    })
+    .catch(error => {
+        console.error('Erro ao remover horário:', error);
+        alert('Erro ao remover horário: ' + error.message);
+    });
+}
+
+// Estilização dos cards de horário da seguradora
+document.addEventListener('change', function(e) {
+    if (e.target.name === 'horario-seguradora') {
+        document.querySelectorAll('.horario-seguradora-card').forEach(card => {
+            card.classList.remove('border-blue-500', 'bg-blue-100');
+            card.classList.add('border-gray-200');
+        });
+        
+        const selectedCard = e.target.closest('label').querySelector('.horario-seguradora-card');
+        if (selectedCard) {
+            selectedCard.classList.remove('border-gray-200');
+            selectedCard.classList.add('border-blue-500', 'bg-blue-100');
+        }
+    }
+});
 </script>
 
 <?php
