@@ -126,7 +126,7 @@ return [
         'token' => env('WHATSAPP_TOKEN', ''),
         'api_key' => env('WHATSAPP_API_KEY', ''),
         // URL base para links enviados nas mensagens WhatsApp (links de token, confirmação, etc.)
-        'links_base_url' => env('WHATSAPP_LINKS_BASE_URL', 'https:///kss.launs.com.br'),
+        'links_base_url' => env('WHATSAPP_LINKS_BASE_URL', 'https://kss.launs.com.br'),
     ],
     
     'ksi_api' => [

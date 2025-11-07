@@ -43,3 +43,15 @@ VALUES (
     '{"janela_minutos": 60, "status_requerido": "Serviço Agendado"}'
 ) ON DUPLICATE KEY UPDATE descricao = VALUES(descricao);
 
+-- Inserir cron job para notificações pós-serviço
+INSERT INTO cron_jobs (nome, descricao, classe_controller, metodo, frequencia_minutos, ativo, configuracao) 
+VALUES (
+    'Notificações Pós-Serviço',
+    'Envia notificações WhatsApp após o horário agendado para confirmar o serviço',
+    'SolicitacoesController',
+    'processarNotificacoesPosServico',
+    5,
+    1,
+    '{"status_requerido": "Serviço Agendado", "minutos_apos_agendamento": 5}'
+) ON DUPLICATE KEY UPDATE descricao = VALUES(descricao);
+

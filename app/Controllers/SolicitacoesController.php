@@ -725,13 +725,23 @@ class SolicitacoesController extends Controller
                         );
                         
                         // Enviar notificação WhatsApp
-                        $baseUrl = \App\Core\Url::base();
+                        // Usar URL base configurada para links WhatsApp
+                        $config = require __DIR__ . '/../Config/config.php';
+                        $whatsappConfig = $config['whatsapp'] ?? [];
+                        $baseUrl = $whatsappConfig['links_base_url'] ?? \App\Core\Url::base();
+                        $baseUrl = rtrim($baseUrl, '/');
                         $linkAcoes = $baseUrl . '/acoes-servico?token=' . $token;
+                        
+                        // Calcular período de chegada (1 hora antes até o horário agendado)
+                        $periodoInicio = clone $dataHoraInicioJanela;
+                        $periodoFim = clone $dataHoraAgendamento;
+                        $periodoTexto = $periodoInicio->format('H:i') . ' às ' . $periodoFim->format('H:i');
                         
                         $this->enviarNotificacaoWhatsApp($solicitacao['id'], 'Lembrete Pré-Serviço', [
                             'link_acoes_servico' => $linkAcoes,
                             'data_agendamento' => date('d/m/Y', strtotime($dataAgendamento)),
-                            'horario_agendamento' => date('H:i', strtotime($horarioAgendamento))
+                            'horario_agendamento' => date('H:i', strtotime($horarioAgendamento)),
+                            'periodo_chegada' => $periodoTexto
                         ]);
                         
                         // Marcar como enviada
@@ -788,6 +798,145 @@ class SolicitacoesController extends Controller
     {
         $this->requireAuth();
         $this->processarNotificacoesPreServico();
+    }
+
+    /**
+     * Processa notificações após o horário agendado
+     * Envia "Confirmação de Serviço" com link para informar o que aconteceu
+     */
+    private function processarNotificacoesPosServico(): void
+    {
+        try {
+            // Buscar solicitações com status "Serviço Agendado" que já passaram do horário
+            $sql = "
+                SELECT s.*, st.nome as status_nome
+                FROM solicitacoes s
+                INNER JOIN status st ON s.status_id = st.id
+                WHERE st.nome = 'Serviço Agendado'
+                AND s.horario_confirmado = 1
+                AND s.horario_confirmado_raw IS NOT NULL
+                AND s.notificacao_pos_servico_enviada = 0
+                AND s.data_agendamento IS NOT NULL
+                AND s.horario_agendamento IS NOT NULL
+                AND CONCAT(s.data_agendamento, ' ', s.horario_agendamento) <= NOW()
+            ";
+            
+            $solicitacoes = \App\Core\Database::fetchAll($sql);
+            $enviadas = 0;
+            $erros = [];
+            
+            foreach ($solicitacoes as $solicitacao) {
+                try {
+                    $dataAgendamento = $solicitacao['data_agendamento'];
+                    $horarioAgendamento = $solicitacao['horario_agendamento'];
+                    
+                    // Parsear horário
+                    $horarioParts = explode(':', $horarioAgendamento);
+                    $hora = (int)($horarioParts[0] ?? 0);
+                    $minuto = (int)($horarioParts[1] ?? 0);
+                    
+                    // Criar DateTime para o horário agendado
+                    $dataHoraAgendamento = new \DateTime($dataAgendamento . ' ' . sprintf('%02d:%02d:00', $hora, $minuto));
+                    $agora = new \DateTime();
+                    
+                    // Verificar se já passou do horário agendado (pelo menos 5 minutos depois)
+                    $diferencaMinutos = ($agora->getTimestamp() - $dataHoraAgendamento->getTimestamp()) / 60;
+                    
+                    // Só enviar se passou pelo menos 5 minutos do horário agendado
+                    if ($diferencaMinutos >= 5) {
+                        // Criar token para a página de ações
+                        $tokenModel = new \App\Models\ScheduleConfirmationToken();
+                        $protocol = $solicitacao['numero_solicitacao'] ?? ('KS' . $solicitacao['id']);
+                        $token = $tokenModel->createToken(
+                            $solicitacao['id'],
+                            $protocol,
+                            $dataAgendamento,
+                            $horarioAgendamento,
+                            'pos_servico'
+                        );
+                        
+                        // Enviar notificação WhatsApp
+                        // Usar URL base configurada para links WhatsApp
+                        $config = require __DIR__ . '/../Config/config.php';
+                        $whatsappConfig = $config['whatsapp'] ?? [];
+                        $baseUrl = $whatsappConfig['links_base_url'] ?? \App\Core\Url::base();
+                        $baseUrl = rtrim($baseUrl, '/');
+                        $linkAcoes = $baseUrl . '/acoes-servico?token=' . $token;
+                        
+                        $this->enviarNotificacaoWhatsApp($solicitacao['id'], 'Confirmação de Serviço', [
+                            'link_acoes_servico' => $linkAcoes,
+                            'data_agendamento' => date('d/m/Y', strtotime($dataAgendamento)),
+                            'horario_agendamento' => date('H:i', strtotime($horarioAgendamento))
+                        ]);
+                        
+                        // Marcar como enviada
+                        $this->solicitacaoModel->update($solicitacao['id'], [
+                            'notificacao_pos_servico_enviada' => 1
+                        ]);
+                        
+                        $enviadas++;
+                        error_log("✅ Notificação pós-serviço enviada para solicitação #{$solicitacao['id']}");
+                    }
+                } catch (\Exception $e) {
+                    $erros[] = "Solicitação #{$solicitacao['id']}: " . $e->getMessage();
+                    error_log("❌ Erro ao processar notificação pós-serviço para solicitação #{$solicitacao['id']}: " . $e->getMessage());
+                }
+            }
+            
+            $resultado = [
+                'success' => true,
+                'message' => 'Notificações pós-serviço processadas',
+                'enviadas' => $enviadas,
+                'total_verificadas' => count($solicitacoes),
+                'timestamp' => date('Y-m-d H:i:s')
+            ];
+            
+            if (!empty($erros)) {
+                $resultado['erros'] = $erros;
+            }
+            
+            if (php_sapi_name() !== 'cli') {
+                $this->json($resultado);
+            } else {
+                echo json_encode($resultado, JSON_PRETTY_PRINT) . "\n";
+            }
+            
+        } catch (\Exception $e) {
+            $erro = ['error' => 'Erro ao enviar notificações pós-serviço: ' . $e->getMessage()];
+            error_log('❌ Erro geral no processamento de notificações pós-serviço: ' . $e->getMessage());
+            
+            if (php_sapi_name() !== 'cli') {
+                $this->json($erro, 500);
+            } else {
+                echo json_encode($erro, JSON_PRETTY_PRINT) . "\n";
+            }
+        }
+    }
+
+    /**
+     * Endpoint público para cron job de notificações pós-serviço
+     */
+    public function cronNotificacoesPosServico(): void
+    {
+        $tokenSecreto = $_ENV['CRON_SECRET_TOKEN'] ?? 'kss_cron_secret_2024';
+        $tokenRecebido = $this->input('token');
+        
+        if ($tokenRecebido !== $tokenSecreto) {
+            http_response_code(401);
+            echo json_encode(['error' => 'Token inválido']);
+            exit;
+        }
+        
+        $this->processarNotificacoesPosServico();
+    }
+
+    /**
+     * Endpoint para chamada manual (requer autenticação)
+     */
+    public function enviarNotificacoesPosServico(): void
+    {
+        $this->requireAuth();
+        $this->processarNotificacoesPosServico();
     }
 
     private function enviarNotificacaoWhatsApp(int $solicitacaoId, string $tipo, array $extraData = []): void

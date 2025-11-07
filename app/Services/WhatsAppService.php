@@ -395,6 +395,7 @@ class WhatsAppService
                 ($solicitacao['data_agendamento'] ? date('d/m/Y', strtotime($solicitacao['data_agendamento'])) : ''),
             'horario_agendamento' => $extraData['horario_agendamento'] ?? '',
             'horario_servico' => $extraData['horario_servico'] ?? '',
+            'periodo_chegada' => $extraData['periodo_chegada'] ?? '',
             
             // Prestador (se disponível)
             'prestador_nome' => $extraData['prestador_nome'] ?? '',

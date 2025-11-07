@@ -103,8 +103,10 @@ $router->post('/admin/solicitacoes/informar-compra-peca', 'SolicitacoesControlle
 $router->post('/admin/solicitacoes/enviar-lembretes', 'SolicitacoesController@enviarLembretes', ['auth', 'admin']);
 $router->post('/admin/solicitacoes/expirar', 'SolicitacoesController@expirarSolicitacoes', ['auth', 'admin']);
 $router->post('/admin/solicitacoes/enviar-notificacoes-pre-servico', 'SolicitacoesController@enviarNotificacoesPreServico', ['auth', 'admin']);
+$router->post('/admin/solicitacoes/enviar-notificacoes-pos-servico', 'SolicitacoesController@enviarNotificacoesPosServico', ['auth', 'admin']);
 // Rota pública para cron job (com autenticação via token secreto)
 $router->get('/cron/notificacoes-pre-servico', 'SolicitacoesController@cronNotificacoesPreServico');
+$router->get('/cron/notificacoes-pos-servico', 'SolicitacoesController@cronNotificacoesPosServico');
 
 // Gerenciamento de Cron Jobs
 $router->get('/admin/cron-jobs', 'CronJobsController@index', ['auth', 'admin']);
