@@ -469,18 +469,55 @@ function renderizarDetalhes(solicitacao) {
     console.log('📸 renderizarDetalhes - fotos:', solicitacao.fotos);
     console.log('📸 renderizarDetalhes - quantidade de fotos:', solicitacao.fotos ? solicitacao.fotos.length : 0);
     
-    // Parse horários do locatário
-    // IMPORTANTE: Quando horarios_indisponiveis = 1, os horários originais do locatário estão SEMPRE em datas_opcoes
-    // NUNCA ler de horarios_opcoes quando horarios_indisponiveis = 1, pois esse campo contém os horários da seguradora
+    // Parse TODOS os horários (locatário + prestador)
+    // IMPORTANTE: Combinar horários do locatário e do prestador em uma única lista
+    let horariosLocatario = [];
+    let horariosPrestador = [];
     let horariosOpcoes = [];
+    
     try {
+        // Buscar horários do locatário
         if (solicitacao.horarios_indisponiveis) {
-            // Horários originais do locatário foram preservados em datas_opcoes
-            // IMPORTANTE: NUNCA ler de horarios_opcoes aqui, pois contém os horários da seguradora
-            horariosOpcoes = solicitacao.datas_opcoes ? JSON.parse(solicitacao.datas_opcoes) : [];
+            // Quando horarios_indisponiveis = 1, horários originais do locatário estão em datas_opcoes
+            horariosLocatario = solicitacao.datas_opcoes ? JSON.parse(solicitacao.datas_opcoes) : [];
         } else {
-            // Horários do locatário estão em horarios_opcoes (quando horarios_indisponiveis = 0)
-            horariosOpcoes = solicitacao.horarios_opcoes ? JSON.parse(solicitacao.horarios_opcoes) : [];
+            // Quando horarios_indisponiveis = 0, horários do locatário estão em horarios_opcoes
+            horariosLocatario = solicitacao.horarios_opcoes ? JSON.parse(solicitacao.horarios_opcoes) : [];
+        }
+        
+        // Buscar horários do prestador (quando horarios_indisponiveis = 1)
+        if (solicitacao.horarios_indisponiveis) {
+            horariosPrestador = solicitacao.horarios_opcoes ? JSON.parse(solicitacao.horarios_opcoes) : [];
+        }
+        
+        // Verificar se condição é "Data Aceita pelo Prestador" - mostrar apenas essa data
+        const condicaoAtual = todasCondicoes.find(c => c.id === solicitacao.condicao_id);
+        if (condicaoAtual && condicaoAtual.nome === 'Data Aceita pelo Prestador') {
+            // Quando prestador aceitou uma data, mostrar apenas essa data de confirmed_schedules
+            if (solicitacao.confirmed_schedules) {
+                try {
+                    const confirmed = JSON.parse(solicitacao.confirmed_schedules);
+                    if (Array.isArray(confirmed) && confirmed.length > 0) {
+                        // Buscar apenas horários com source='prestador'
+                        const horarioPrestador = confirmed.find(s => s && s.source === 'prestador' && s.raw);
+                        if (horarioPrestador && horarioPrestador.raw) {
+                            horariosOpcoes = [horarioPrestador.raw];
+                        }
+                    }
+                } catch (e) {
+                    // Se não conseguir parsear, usar horario_confirmado_raw
+                    if (solicitacao.horario_confirmado_raw) {
+                        horariosOpcoes = [solicitacao.horario_confirmado_raw];
+                    }
+                }
+            } else if (solicitacao.horario_confirmado_raw) {
+                horariosOpcoes = [solicitacao.horario_confirmado_raw];
+            }
+        } else {
+            // Combinar todos os horários (locatário + prestador)
+            horariosOpcoes = [...horariosLocatario, ...horariosPrestador];
+            // Remover duplicatas
+            horariosOpcoes = [...new Set(horariosOpcoes)];
         }
     } catch (e) {
         horariosOpcoes = [];
@@ -576,48 +613,14 @@ function renderizarDetalhes(solicitacao) {
                     </div>
                 </div>
                 
-                <!-- Data Selecionada pelo Locatário -->
-                ${solicitacao.horario_confirmado && solicitacao.horario_confirmado_raw ? `
-                <div class="bg-white rounded-lg p-5 border-2 border-green-500">
-                    <div class="flex items-center gap-2 mb-3">
-                        <i class="fas fa-calendar-check text-green-600"></i>
-                        <div>
-                            <h3 class="font-semibold text-gray-900">Data Selecionada</h3>
-                            <p class="text-xs text-gray-500">Horário confirmado pelo locatário</p>
-                        </div>
-                    </div>
-                    <div class="bg-green-50 border border-green-200 rounded-lg p-4">
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center gap-3">
-                                <i class="fas fa-check-circle text-green-600 text-xl"></i>
-                                <div>
-                                    <p class="text-lg font-bold text-green-900">${solicitacao.horario_confirmado_raw}</p>
-                                    ${solicitacao.data_agendamento ? `
-                                        <p class="text-xs text-green-700 mt-1">
-                                            <i class="fas fa-calendar mr-1"></i>
-                                            ${new Date(solicitacao.data_agendamento).toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-                                        </p>
-                                    ` : ''}
-                                </div>
-                            </div>
-                            <button onclick="confirmarHorarioSelecionado(${solicitacao.id})" 
-                                    class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-medium transition-colors">
-                                <i class="fas fa-check mr-2"></i>
-                                Confirmar
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                ` : ''}
-                
                 <!-- Disponibilidade Informada -->
                 ${horariosOpcoes.length > 0 ? `
                 <div class="bg-white rounded-lg p-5">
                     <div class="flex items-center gap-2 mb-3">
                         <i class="fas fa-clock text-gray-600"></i>
                         <div>
-                            <h3 class="font-semibold text-gray-900">Disponibilidade Informada pelo Segurado</h3>
-                            <p class="text-xs text-gray-500">Horários da Solicitação Inicial</p>
+                            <h3 class="font-semibold text-gray-900">Disponibilidade Informada</h3>
+                            <p class="text-xs text-gray-500">Horários informados pelo locatário e prestador</p>
                         </div>
                     </div>
                     <div class="space-y-2">
@@ -837,98 +840,6 @@ function renderizarDetalhes(solicitacao) {
                     </div>
                 </div>
                 ` : ''}
-                
-                <!-- Disponibilidade Informada pela Seguradora -->
-                ${solicitacao.horarios_indisponiveis ? (() => {
-                    try {
-                        // IMPORTANTE: Quando horarios_indisponiveis = 1, horarios_opcoes contém APENAS os horários da seguradora
-                        // Os horários do locatário estão em datas_opcoes e NÃO devem ser lidos aqui
-                        const horariosSeguradora = solicitacao.horarios_opcoes ? JSON.parse(solicitacao.horarios_opcoes) : [];
-                        const horariosArray = Array.isArray(horariosSeguradora) ? horariosSeguradora : [];
-                        
-                        // Sempre mostrar a seção quando horarios_indisponiveis está marcado, mesmo que vazia
-                        return `
-                        <div class="bg-white rounded-lg p-5" id="secao-horarios-seguradora-kanban">
-                            <div class="flex items-center gap-2 mb-3">
-                                <i class="fas fa-building text-blue-600"></i>
-                                <h3 class="font-semibold text-gray-900">Disponibilidade Informada pela Seguradora</h3>
-                            </div>
-                            <div class="space-y-3" id="lista-horarios-seguradora-kanban">
-                                ${horariosArray.length > 0 ? horariosArray.map(horario => {
-                                    const horarioFormatado = typeof horario === 'string' ? horario : '';
-                                    const horarioEscapado = horarioFormatado.replace(/'/g, "\\'").replace(/"/g, '&quot;');
-                                    
-                                    // Verificar se o horário está confirmado
-                                    let isConfirmed = false;
-                                    try {
-                                        const confirmedSchedules = solicitacao.confirmed_schedules ? 
-                                            (typeof solicitacao.confirmed_schedules === 'string' ? 
-                                                JSON.parse(solicitacao.confirmed_schedules) : 
-                                                solicitacao.confirmed_schedules) : [];
-                                        
-                                        if (Array.isArray(confirmedSchedules)) {
-                                            // Normalizar horário para comparação
-                                            const horarioNorm = horarioFormatado.replace(/\s+/g, ' ').trim();
-                                            
-                                            for (const confirmed of confirmedSchedules) {
-                                                const confirmedRaw = confirmed.raw || '';
-                                                const confirmedNorm = confirmedRaw.replace(/\s+/g, ' ').trim();
-                                                
-                                                // Comparação exata
-                                                if (horarioNorm === confirmedNorm) {
-                                                    isConfirmed = true;
-                                                    break;
-                                                }
-                                                
-                                                // Comparação por regex (formato: dd/mm/yyyy - HH:MM-HH:MM)
-                                                const regex = /(\d{2}\/\d{2}\/\d{4})\s*-\s*(\d{2}:\d{2})-(\d{2}:\d{2})/;
-                                                const match1 = regex.exec(horarioNorm);
-                                                const match2 = regex.exec(confirmedNorm);
-                                                
-                                                if (match1 && match2) {
-                                                    if (match1[1] === match2[1] && match1[2] === match2[2] && match1[3] === match2[3]) {
-                                                        isConfirmed = true;
-                                                        break;
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    } catch (e) {
-                                        console.error('Erro ao verificar confirmação:', e);
-                                    }
-                                    
-                                    return `
-                                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 flex items-center justify-between ${isConfirmed ? 'border-green-300 bg-green-50' : ''}">
-                                        <div class="flex items-center gap-3 flex-1">
-                                            <i class="fas fa-clock text-blue-600"></i>
-                                            <span class="text-sm font-medium text-blue-900">${horarioFormatado}</span>
-                                            ${isConfirmed ? '<span class="text-xs text-green-700 font-semibold bg-green-100 px-2 py-1 rounded-full">Confirmado</span>' : ''}
-                                        </div>
-                                        <button onclick="removerHorarioSeguradoraKanban(${solicitacao.id}, '${horarioEscapado}')" 
-                                                class="text-red-600 hover:text-red-800">
-                                            <i class="fas fa-times"></i>
-                                        </button>
-                                    </div>
-                                    `;
-                                }).join('') : '<!-- Horários serão adicionados aqui dinamicamente -->'}
-                            </div>
-                        </div>
-                        `;
-                    } catch (e) {
-                        // Em caso de erro, ainda mostrar a seção vazia
-                        return `
-                        <div class="bg-white rounded-lg p-5" id="secao-horarios-seguradora-kanban">
-                            <div class="flex items-center gap-2 mb-3">
-                                <i class="fas fa-building text-blue-600"></i>
-                                <h3 class="font-semibold text-gray-900">Disponibilidade Informada pela Seguradora</h3>
-                            </div>
-                            <div class="space-y-3" id="lista-horarios-seguradora-kanban">
-                                <!-- Horários serão adicionados aqui dinamicamente -->
-                            </div>
-                        </div>
-                        `;
-                    }
-                })() : ''}
                 
                 <!-- Anexar Documento -->
                 <div class="bg-white rounded-lg p-5">
@@ -1699,65 +1610,7 @@ function atualizarHorariosIndisponiveisKanban(solicitacaoId, indisponivel) {
 }
 
 // Confirmar horário selecionado pelo locatário
-function confirmarHorarioSelecionado(solicitacaoId) {
-    // Buscar o horário confirmado raw da solicitação atual
-    const solicitacaoAtual = solicitacoesGlobal.find(s => s.id === solicitacaoId);
-    if (!solicitacaoAtual || !solicitacaoAtual.horario_confirmado_raw) {
-        mostrarNotificacao('Horário não encontrado', 'error');
-        return;
-    }
-    
-    const horarioRaw = solicitacaoAtual.horario_confirmado_raw;
-    
-    // Extrair data e horário do raw (formato: "dd/mm/yyyy - HH:MM-HH:MM")
-    const match = horarioRaw.match(/(\d{2})\/(\d{2})\/(\d{4})\s*-\s*(\d{2}:\d{2})-(\d{2}:\d{2})/);
-    if (!match) {
-        mostrarNotificacao('Formato de horário inválido', 'error');
-        return;
-    }
-    
-    const dataFormatada = `${match[3]}-${match[2]}-${match[1]}`;
-    const horarioFormatado = `${match[4]}-${match[5]}`;
-    
-    // Criar objeto schedule no formato esperado
-    const schedule = {
-        date: dataFormatada,
-        time: horarioFormatado,
-        raw: horarioRaw
-    };
-    
-    // Enviar para o servidor
-    fetch(`<?= url('admin/solicitacoes/') ?>${solicitacaoId}/atualizar`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            schedules: [schedule]
-        })
-    })
-    .then(async response => {
-        const contentType = response.headers.get('content-type');
-        if (!contentType || !contentType.includes('application/json')) {
-            const text = await response.text();
-            throw new Error('Resposta do servidor não é JSON válido');
-        }
-        return response.json();
-    })
-    .then(data => {
-        if (data.success) {
-            mostrarNotificacao('Horário confirmado com sucesso!', 'success');
-            // Recarregar os detalhes da solicitação
-            abrirDetalhes(solicitacaoId);
-        } else {
-            mostrarNotificacao(data.error || 'Erro ao confirmar horário', 'error');
-        }
-    })
-    .catch(error => {
-        console.error('Erro ao confirmar horário:', error);
-        mostrarNotificacao('Erro ao confirmar horário. Tente novamente.', 'error');
-    });
-}
+// Função removida - confirmação agora é feita diretamente pelos checkboxes na seção "Disponibilidade Informada"
 
 // Adicionar horário da seguradora (Kanban) - APENAS VISUAL, não salva no banco
 function adicionarHorarioSeguradoraKanban(solicitacaoId) {
