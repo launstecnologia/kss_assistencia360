@@ -81,8 +81,51 @@ class TokenController extends Controller
         // Buscar horários disponíveis para seleção
         $horariosDisponiveis = [];
         
-        // Se houver confirmed_schedules, usar eles
-        if (!empty($solicitacao['confirmed_schedules'])) {
+        // IMPORTANTE: Se horarios_indisponiveis = 1, horarios_opcoes contém os horários da seguradora
+        // Esses são os horários que o locatário deve escolher
+        if (!empty($solicitacao['horarios_indisponiveis']) && !empty($solicitacao['horarios_opcoes'])) {
+            $horariosSeguradora = json_decode($solicitacao['horarios_opcoes'], true);
+            if (is_array($horariosSeguradora) && !empty($horariosSeguradora)) {
+                foreach ($horariosSeguradora as $horario) {
+                    if (is_string($horario)) {
+                        // Formato esperado: "dd/mm/yyyy - HH:MM:SS-HH:MM:SS" ou "dd/mm/yyyy - HH:MM-HH:MM"
+                        // Exemplo: "11/11/2025 - 08:00:00-11:00:00" ou "11/11/2025 - 08:00-11:00"
+                        if (preg_match('/(\d{2})\/(\d{2})\/(\d{4})\s*-\s*(\d{2}):(\d{2})(?::(\d{2}))?-(\d{2}):(\d{2})(?::(\d{2}))?/', $horario, $matches)) {
+                            $dataFormatada = $matches[3] . '-' . $matches[2] . '-' . $matches[1];
+                            $horaInicio = $matches[4] . ':' . $matches[5];
+                            $horaFim = $matches[7] . ':' . $matches[8];
+                            
+                            // Normalizar raw para formato padrão sem segundos se necessário
+                            $rawNormalizado = $horario;
+                            if (strpos($horario, ':00:00') !== false) {
+                                // Remover segundos do formato de exibição
+                                $rawNormalizado = preg_replace('/(\d{2}:\d{2}):\d{2}-(\d{2}:\d{2}):\d{2}/', '$1-$2', $horario);
+                            }
+                            
+                            $horariosDisponiveis[] = [
+                                'raw' => $rawNormalizado,
+                                'date' => $dataFormatada,
+                                'time' => $horaInicio . '-' . $horaFim
+                            ];
+                        } elseif (preg_match('/(\d{4}-\d{2}-\d{2})\s+(\d{2}:\d{2}:\d{2})-(\d{2}:\d{2}:\d{2})/', $horario, $matches)) {
+                            // Formato: "YYYY-MM-DD HH:MM:SS-HH:MM:SS"
+                            $dataFormatada = $matches[1];
+                            $horaInicio = substr($matches[2], 0, 5); // HH:MM
+                            $horaFim = substr($matches[3], 0, 5); // HH:MM
+                            $rawFormatado = date('d/m/Y', strtotime($dataFormatada)) . ' - ' . $horaInicio . '-' . $horaFim;
+                            $horariosDisponiveis[] = [
+                                'raw' => $rawFormatado,
+                                'date' => $dataFormatada,
+                                'time' => $horaInicio . '-' . $horaFim
+                            ];
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Se não houver horários da seguradora, verificar confirmed_schedules
+        if (empty($horariosDisponiveis) && !empty($solicitacao['confirmed_schedules'])) {
             $confirmedSchedules = json_decode($solicitacao['confirmed_schedules'], true);
             if (is_array($confirmedSchedules) && !empty($confirmedSchedules)) {
                 foreach ($confirmedSchedules as $schedule) {
@@ -97,18 +140,19 @@ class TokenController extends Controller
             }
         }
         
-        // Se não houver confirmed_schedules mas houver horarios_opcoes, usar eles
+        // Se ainda não houver horários, verificar horarios_opcoes (horários originais do locatário)
         if (empty($horariosDisponiveis) && !empty($solicitacao['horarios_opcoes'])) {
             $horariosOpcoes = json_decode($solicitacao['horarios_opcoes'], true);
             if (is_array($horariosOpcoes) && !empty($horariosOpcoes)) {
                 foreach ($horariosOpcoes as $horario) {
                     if (is_string($horario)) {
                         // Formato: "dd/mm/yyyy - HH:MM-HH:MM"
-                        if (preg_match('/(\d{2}\/\d{2}\/\d{4})\s*-\s*(\d{2}:\d{2})-(\d{2}:\d{2})/', $horario, $matches)) {
+                        if (preg_match('/(\d{2})\/(\d{2})\/(\d{4})\s*-\s*(\d{2}):(\d{2})-(\d{2}):(\d{2})/', $horario, $matches)) {
+                            $dataFormatada = $matches[3] . '-' . $matches[2] . '-' . $matches[1];
                             $horariosDisponiveis[] = [
                                 'raw' => $horario,
-                                'date' => date('Y-m-d', strtotime(str_replace('/', '-', $matches[1]))),
-                                'time' => $matches[2] . '-' . $matches[3]
+                                'date' => $dataFormatada,
+                                'time' => $matches[4] . ':' . $matches[5] . '-' . $matches[6] . ':' . $matches[7]
                             ];
                         }
                     }
