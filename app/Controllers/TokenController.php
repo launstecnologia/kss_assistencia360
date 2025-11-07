@@ -229,6 +229,17 @@ class TokenController extends Controller
             return;
         }
 
+        // Validar se ainda é possível cancelar (até 1 hora antes do horário confirmado)
+        $podeCancelar = $this->validarPrazoCancelamento($solicitacao);
+        if (!$podeCancelar['permitido']) {
+            $this->view('token.error', [
+                'title' => 'Prazo de Cancelamento Expirado',
+                'message' => $podeCancelar['mensagem'] ?? 'Não é mais possível cancelar este agendamento. O prazo para cancelamento expirou (1 hora antes do horário confirmado). Por favor, entre em contato conosco.',
+                'error_type' => 'prazo_expirado'
+            ]);
+            return;
+        }
+
         // Se já foi processado (POST), processar cancelamento
         if ($this->isPost()) {
             $this->processarCancelamento($token, $tokenData, $solicitacao);
@@ -252,6 +263,17 @@ class TokenController extends Controller
     {
         try {
             $motivo = $this->input('motivo', 'Horário cancelado pelo cliente via link de cancelamento');
+
+            // Validar se ainda é possível cancelar (até 1 hora antes do horário confirmado)
+            $podeCancelar = $this->validarPrazoCancelamento($solicitacao);
+            if (!$podeCancelar['permitido']) {
+                $this->view('token.error', [
+                    'title' => 'Prazo de Cancelamento Expirado',
+                    'message' => $podeCancelar['mensagem'] ?? 'Não é mais possível cancelar este agendamento. O prazo para cancelamento expirou (1 hora antes do horário confirmado). Por favor, entre em contato conosco.',
+                    'error_type' => 'prazo_expirado'
+                ]);
+                return;
+            }
 
             // Validar token antes de processar (permitir tokens já usados, mas verificar se não expirou)
             $tokenValidado = $this->tokenModel->validateToken($token);
@@ -864,6 +886,109 @@ class TokenController extends Controller
                 'message' => 'Ocorreu um erro ao processar seu reagendamento. Por favor, tente novamente ou entre em contato conosco.',
                 'error_type' => 'processing_error'
             ]);
+        }
+    }
+
+    /**
+     * Valida se ainda é possível cancelar (até 1 hora antes do horário confirmado)
+     * @param array $solicitacao
+     * @return array ['permitido' => bool, 'mensagem' => string|null]
+     */
+    private function validarPrazoCancelamento(array $solicitacao): array
+    {
+        // Se não há horário confirmado, permitir cancelamento
+        if (empty($solicitacao['horario_confirmado']) || $solicitacao['horario_confirmado'] == 0) {
+            return ['permitido' => true, 'mensagem' => null];
+        }
+
+        $horarioConfirmado = null;
+        $dataConfirmada = null;
+
+        // Tentar buscar o primeiro horário confirmado de confirmed_schedules
+        if (!empty($solicitacao['confirmed_schedules'])) {
+            $confirmedSchedules = json_decode($solicitacao['confirmed_schedules'], true);
+            if (is_array($confirmedSchedules) && !empty($confirmedSchedules)) {
+                // Ordenar por data/hora e pegar o primeiro (mais próximo)
+                usort($confirmedSchedules, function($a, $b) {
+                    $dateA = ($a['date'] ?? '') . ' ' . ($a['time'] ?? '');
+                    $dateB = ($b['date'] ?? '') . ' ' . ($b['time'] ?? '');
+                    return strtotime($dateA) <=> strtotime($dateB);
+                });
+                
+                $primeiroHorario = $confirmedSchedules[0];
+                if (!empty($primeiroHorario['date']) && !empty($primeiroHorario['time'])) {
+                    $dataConfirmada = $primeiroHorario['date'];
+                    // Extrair apenas a hora inicial se for uma faixa (ex: "14:00-17:00")
+                    $horarioConfirmado = preg_match('/^(\d{2}:\d{2})/', $primeiroHorario['time'], $matches) 
+                        ? $matches[1] 
+                        : $primeiroHorario['time'];
+                }
+            }
+        }
+
+        // Se não encontrou em confirmed_schedules, usar data_agendamento e horario_agendamento
+        if (!$horarioConfirmado && !empty($solicitacao['data_agendamento']) && !empty($solicitacao['horario_agendamento'])) {
+            $dataConfirmada = $solicitacao['data_agendamento'];
+            $horarioConfirmado = preg_match('/^(\d{2}:\d{2})/', $solicitacao['horario_agendamento'], $matches) 
+                ? $matches[1] 
+                : $solicitacao['horario_agendamento'];
+        }
+
+        // Se ainda não encontrou horário, permitir cancelamento
+        if (!$horarioConfirmado || !$dataConfirmada) {
+            return ['permitido' => true, 'mensagem' => null];
+        }
+
+        // Montar DateTime do horário confirmado
+        try {
+            // Garantir formato correto da data (YYYY-MM-DD)
+            if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $dataConfirmada)) {
+                // Já está no formato correto
+                $dataFormatada = $dataConfirmada;
+            } else {
+                // Tentar converter de outros formatos
+                $timestamp = strtotime($dataConfirmada);
+                if ($timestamp === false) {
+                    throw new \Exception("Data inválida: {$dataConfirmada}");
+                }
+                $dataFormatada = date('Y-m-d', $timestamp);
+            }
+            
+            // Garantir formato correto do horário (HH:MM)
+            if (!preg_match('/^\d{2}:\d{2}/', $horarioConfirmado)) {
+                throw new \Exception("Horário inválido: {$horarioConfirmado}");
+            }
+            
+            $dataHoraConfirmada = new \DateTime($dataFormatada . ' ' . $horarioConfirmado);
+            $agora = new \DateTime();
+            
+            // Se o horário já passou, não permitir cancelamento
+            if ($dataHoraConfirmada <= $agora) {
+                $horarioFormatado = $dataHoraConfirmada->format('d/m/Y H:i');
+                return [
+                    'permitido' => false,
+                    'mensagem' => "Não é mais possível cancelar este agendamento. O horário confirmado já passou ({$horarioFormatado}). Por favor, entre em contato conosco."
+                ];
+            }
+            
+            // Calcular diferença em horas (sempre positiva pois já verificamos que é futuro)
+            $diferenca = $agora->diff($dataHoraConfirmada);
+            $horasRestantes = ($diferenca->days * 24) + $diferenca->h + ($diferenca->i / 60);
+            
+            // Se faltam menos de 1 hora, não permitir cancelamento
+            if ($horasRestantes < 1) {
+                $horarioFormatado = $dataHoraConfirmada->format('d/m/Y H:i');
+                return [
+                    'permitido' => false,
+                    'mensagem' => "Não é mais possível cancelar este agendamento. O prazo para cancelamento expirou (1 hora antes do horário confirmado). O horário confirmado é: {$horarioFormatado}. Por favor, entre em contato conosco."
+                ];
+            }
+            
+            return ['permitido' => true, 'mensagem' => null];
+        } catch (\Exception $e) {
+            error_log('Erro ao validar prazo de cancelamento: ' . $e->getMessage());
+            // Em caso de erro, permitir cancelamento (fail-safe)
+            return ['permitido' => true, 'mensagem' => null];
         }
     }
 

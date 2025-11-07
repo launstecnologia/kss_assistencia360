@@ -131,8 +131,8 @@
 </head>
 <body class="bg-gray-100">
     <!-- Sidebar -->
-    <div id="sidebar" class="fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg sidebar-transition transform -translate-x-full lg:translate-x-0">
-        <div class="flex items-center justify-center h-16 px-4">
+    <div id="sidebar" class="fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg sidebar-transition transform -translate-x-full lg:translate-x-0 flex flex-col">
+        <div class="flex items-center justify-center h-16 px-4 flex-shrink-0">
             <?php 
             $logoUrl = \App\Core\Url::kssLogo();
             if (!empty($logoUrl)): ?>
@@ -149,8 +149,8 @@
             <?php endif; ?>
         </div>
         
-        <nav class="mt-8">
-            <div class="px-4 space-y-2">
+        <nav class="mt-8 flex-1 overflow-y-auto">
+            <div class="px-4 space-y-2 pb-4">
                 <a href="<?= url('admin/dashboard') ?>" class="flex items-center px-4 py-2 text-gray-700 rounded-lg hover:bg-gray-100 <?= $currentPage === 'dashboard' ? 'bg-blue-50 text-blue-700' : '' ?>">
                     <i class="fas fa-tachometer-alt mr-3"></i>
                     Dashboard
@@ -229,7 +229,7 @@
             </div>
         </nav>
         
-        <div class="absolute bottom-0 w-full p-4">
+        <div class="w-full p-4 flex-shrink-0 border-t border-gray-200">
             <div class="flex items-center px-4 py-2 bg-gray-50 rounded-lg">
                 <div class="flex-shrink-0">
                     <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
