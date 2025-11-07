@@ -22,6 +22,36 @@ class Subcategoria extends Model
         return $this->findAll(['categoria_id' => $categoriaId], 'ordem ASC, nome ASC');
     }
 
+    public function getAtivasAgrupadas(): array
+    {
+        $sql = "
+            SELECT 
+                sc.*, 
+                c.nome as categoria_nome
+            FROM subcategorias sc
+            LEFT JOIN categorias c ON sc.categoria_id = c.id
+            WHERE sc.status = 'ATIVA'
+            ORDER BY c.nome ASC, sc.nome ASC
+        ";
+
+        $dados = Database::fetchAll($sql);
+        $agrupados = [];
+
+        foreach ($dados as $subcategoria) {
+            $categoriaId = $subcategoria['categoria_id'] ?? 0;
+            if (!isset($agrupados[$categoriaId])) {
+                $agrupados[$categoriaId] = [
+                    'categoria_nome' => $subcategoria['categoria_nome'] ?? 'Sem categoria',
+                    'itens' => []
+                ];
+            }
+
+            $agrupados[$categoriaId]['itens'][] = $subcategoria;
+        }
+
+        return $agrupados;
+    }
+
     public function getById(int $id): ?array
     {
         return $this->find($id);

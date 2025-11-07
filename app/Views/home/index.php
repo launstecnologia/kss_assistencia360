@@ -11,15 +11,6 @@
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* Dark mode overrides (uses .dark on <html>) */
-        .dark body { background-color: #0b1220; color: #e5e7eb; }
-        .dark .bg-white { background-color: #111827 !important; }
-        .dark .bg-gray-50 { background-color: #0f172a !important; }
-        .dark .text-gray-900 { color: #e5e7eb !important; }
-        .dark .text-gray-700 { color: #d1d5db !important; }
-        .dark .text-gray-600 { color: #9ca3af !important; }
-        .dark .text-gray-500 { color: #9ca3af !important; }
-        .dark .hover\:bg-gray-50:hover { background-color: #111827 !important; }
     </style>
     
     <!-- PWA Meta Tags -->
@@ -49,9 +40,6 @@
                 </div>
                 
                 <div class="flex items-center space-x-4">
-                    <button id="theme-toggle" class="text-gray-600 hover:text-gray-800" title="Alternar tema">
-                        <i id="theme-toggle-icon" class="fas fa-moon"></i>
-                    </button>
                     <a href="/login" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition duration-150 ease-in-out">
                         <i class="fas fa-sign-in-alt mr-2"></i>
                         Login Admin
@@ -263,29 +251,6 @@
     </div>
     
     <script>
-        // Theme handling
-        (function() {
-            const root = document.documentElement;
-            const stored = localStorage.getItem('theme');
-            if (stored === 'dark' || (!stored && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-                root.classList.add('dark');
-            }
-            function updateIcon() {
-                const icon = document.getElementById('theme-toggle-icon');
-                if (!icon) return;
-                icon.classList.remove('fa-moon','fa-sun');
-                icon.classList.add(root.classList.contains('dark') ? 'fa-sun' : 'fa-moon');
-            }
-            document.addEventListener('DOMContentLoaded', updateIcon);
-            document.addEventListener('click', function(e){
-                const btn = e.target.closest('#theme-toggle');
-                if (!btn) return;
-                root.classList.toggle('dark');
-                localStorage.setItem('theme', root.classList.contains('dark') ? 'dark' : 'light');
-                updateIcon();
-            });
-        })();
-
         // PWA Install functionality
         let deferredPrompt;
         

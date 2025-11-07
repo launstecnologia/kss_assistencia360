@@ -17,19 +17,6 @@ ob_start();
 .request-card:hover {
     box-shadow: 0 4px 6px rgba(0,0,0,0.1);
 }
-/* Dark mode overrides */
-.dark .request-card {
-    background: #0a0f1a;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.7);
-    border-left-color: #3B82F6;
-}
-.dark .request-card:hover {
-    box-shadow: 0 10px 25px rgba(0,0,0,0.7);
-}
-.dark .bg-yellow-50 { background-color: #3b2e00 !important; }
-.dark .border-yellow-200 { border-color: #705b00 !important; }
-.dark .text-yellow-800 { color: #facc15 !important; }
-.dark .hover\:bg-yellow-100:hover { background-color: #4b3b00 !important; }
 </style>
 
 <!-- Header com Link para Solicitações Manuais -->

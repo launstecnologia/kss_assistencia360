@@ -49,6 +49,31 @@ class Solicitacao extends Model
         'updated_at' => 'datetime'
     ];
 
+    private static array $colunaCache = [];
+
+    public function hasDataLimiteCancelamento(): bool
+    {
+        return $this->colunaExiste('data_limite_cancelamento');
+    }
+
+    private function colunaExiste(string $coluna): bool
+    {
+        if (!array_key_exists($coluna, self::$colunaCache)) {
+            $sql = "DESCRIBE {$this->table}";
+            $resultado = Database::fetchAll($sql);
+
+            self::$colunaCache = [];
+            foreach ($resultado as $colunaInfo) {
+                $nome = $colunaInfo['Field'] ?? '';
+                if ($nome !== '') {
+                    self::$colunaCache[$nome] = true;
+                }
+            }
+        }
+
+        return self::$colunaCache[$coluna] ?? false;
+    }
+
     public function getByStatus(int $statusId): array
     {
         return $this->findAll(['status_id' => $statusId], 'created_at DESC');
@@ -233,6 +258,184 @@ class Solicitacao extends Model
         ";
         
         return Database::fetch($sql, [$periodo]) ?: [];
+    }
+
+    private function montarFiltrosRelatorio(array $filtros): array
+    {
+        $condicoes = [];
+        $params = [];
+        $temDataLimite = $this->hasDataLimiteCancelamento();
+
+        if (!empty($filtros['status_ids'])) {
+            $placeholders = implode(',', array_fill(0, count($filtros['status_ids']), '?'));
+            $condicoes[] = "s.status_id IN ({$placeholders})";
+            $params = array_merge($params, $filtros['status_ids']);
+        } elseif (!empty($filtros['status_id'])) {
+            $condicoes[] = 's.status_id = ?';
+            $params[] = $filtros['status_id'];
+        }
+
+        if (!empty($filtros['condicao_id'])) {
+            $condicoes[] = 's.condicao_id = ?';
+            $params[] = $filtros['condicao_id'];
+        }
+
+        if (!empty($filtros['imobiliaria_id'])) {
+            $condicoes[] = 's.imobiliaria_id = ?';
+            $params[] = $filtros['imobiliaria_id'];
+        }
+
+        if (!empty($filtros['categoria_id'])) {
+            $condicoes[] = 's.categoria_id = ?';
+            $params[] = $filtros['categoria_id'];
+        }
+
+        if (!empty($filtros['subcategoria_id'])) {
+            $condicoes[] = 's.subcategoria_id = ?';
+            $params[] = $filtros['subcategoria_id'];
+        }
+
+        if (!empty($filtros['cpf'])) {
+            $cpf = preg_replace('/[^0-9]/', '', $filtros['cpf']);
+            if ($cpf !== '') {
+                $condicoes[] = "REPLACE(REPLACE(REPLACE(COALESCE(s.locatario_cpf, l.cpf, ''), '.', ''), '-', ''), '/', '') LIKE ?";
+                $params[] = '%' . $cpf . '%';
+            }
+        }
+
+        if (!empty($filtros['numero_contrato'])) {
+            $condicoes[] = 's.numero_contrato LIKE ?';
+            $params[] = '%' . $filtros['numero_contrato'] . '%';
+        }
+
+        if (!empty($filtros['locatario_nome'])) {
+            $condicoes[] = '(s.locatario_nome LIKE ? OR l.nome LIKE ? OR s.locatario_email LIKE ?)';
+            $termo = '%' . $filtros['locatario_nome'] . '%';
+            $params[] = $termo;
+            $params[] = $termo;
+            $params[] = $termo;
+        }
+
+        if (!empty($filtros['data_inicio'])) {
+            $condicoes[] = 'DATE(s.created_at) >= ?';
+            $params[] = $filtros['data_inicio'];
+        }
+
+        if (!empty($filtros['data_fim'])) {
+            $condicoes[] = 'DATE(s.created_at) <= ?';
+            $params[] = $filtros['data_fim'];
+        }
+
+        if (!empty($filtros['agendamento_inicio'])) {
+            $condicoes[] = 'DATE(s.data_agendamento) >= ?';
+            $params[] = $filtros['agendamento_inicio'];
+        }
+
+        if (!empty($filtros['agendamento_fim'])) {
+            $condicoes[] = 'DATE(s.data_agendamento) <= ?';
+            $params[] = $filtros['agendamento_fim'];
+        }
+
+        if (!empty($filtros['sla_atrasado']) && $temDataLimite) {
+            $condicoes[] = "(s.data_limite_cancelamento IS NOT NULL AND s.data_limite_cancelamento < NOW() AND (st.nome IS NULL OR st.nome NOT IN ('Concluído', 'Cancelado', 'Cancelada')) )";
+        }
+
+        if (array_key_exists('precisa_reembolso', $filtros)) {
+            $condicoes[] = 's.precisa_reembolso = ?';
+            $params[] = $filtros['precisa_reembolso'] ? 1 : 0;
+        }
+
+        if (array_key_exists('whatsapp_enviado', $filtros) && $this->colunaExiste('whatsapp_enviado')) {
+            $condicoes[] = 's.whatsapp_enviado = ?';
+            $params[] = $filtros['whatsapp_enviado'] ? 1 : 0;
+        }
+
+        $whereSql = $condicoes ? 'WHERE ' . implode(' AND ', $condicoes) : '';
+
+        return [$whereSql, $params];
+    }
+
+    public function getRelatorioResumo(array $filtros = []): array
+    {
+        [$whereSql, $params] = $this->montarFiltrosRelatorio($filtros);
+        $temDataLimite = $this->hasDataLimiteCancelamento();
+        $slaSelect = $temDataLimite
+            ? "COUNT(CASE WHEN s.data_limite_cancelamento IS NOT NULL AND s.data_limite_cancelamento < NOW() AND (st.nome IS NULL OR st.nome NOT IN ('Concluído', 'Cancelado', 'Cancelada')) THEN 1 END) as total_sla_atrasado"
+            : '0 as total_sla_atrasado';
+
+        $sql = "
+            SELECT
+                COUNT(*) as total_solicitacoes,
+                COUNT(CASE WHEN st.nome IN ('Pendências', 'Aguardando Peça', 'Aguardando Confirmação Mawdy', 'Aguardando Confirmação Locatário') THEN 1 END) as total_pendentes,
+                COUNT(CASE WHEN st.nome IN ('Serviço Agendado') THEN 1 END) as total_agendados,
+                COUNT(CASE WHEN st.nome IN ('Buscando Prestador') THEN 1 END) as total_buscando_prestador,
+                COUNT(CASE WHEN st.nome IN ('Concluído') THEN 1 END) as total_concluidos,
+                COUNT(CASE WHEN st.nome IN ('Cancelado', 'Cancelada') THEN 1 END) as total_cancelados,
+                COUNT(CASE WHEN s.precisa_reembolso = 1 THEN 1 END) as total_reembolsos,
+                {$slaSelect}
+            FROM solicitacoes s
+            LEFT JOIN status st ON s.status_id = st.id
+            LEFT JOIN condicoes cond ON s.condicao_id = cond.id
+            LEFT JOIN locatarios l ON (s.locatario_id = l.id OR s.locatario_id = l.ksi_cliente_id)
+            {$whereSql}
+        ";
+
+        $resultado = Database::fetch($sql, $params) ?: [];
+
+        return [
+            'total_solicitacoes' => (int) ($resultado['total_solicitacoes'] ?? 0),
+            'total_pendentes' => (int) ($resultado['total_pendentes'] ?? 0),
+            'total_agendados' => (int) ($resultado['total_agendados'] ?? 0),
+            'total_buscando_prestador' => (int) ($resultado['total_buscando_prestador'] ?? 0),
+            'total_concluidos' => (int) ($resultado['total_concluidos'] ?? 0),
+            'total_cancelados' => (int) ($resultado['total_cancelados'] ?? 0),
+            'total_reembolsos' => (int) ($resultado['total_reembolsos'] ?? 0),
+            'total_sla_atrasado' => (int) ($resultado['total_sla_atrasado'] ?? 0),
+        ];
+    }
+
+    public function getRelatorioSolicitacoes(array $filtros = [], int $limite = 100): array
+    {
+        [$whereSql, $params] = $this->montarFiltrosRelatorio($filtros);
+
+        $limite = max(1, min($limite, 500));
+        $paramsLista = array_merge($params, [$limite]);
+
+        $temWhatsApp = $this->colunaExiste('whatsapp_enviado');
+        $temReembolso = $this->colunaExiste('precisa_reembolso');
+
+        $sql = "
+            SELECT
+                s.id,
+                s.numero_contrato,
+                s.locatario_nome,
+                COALESCE(s.locatario_cpf, l.cpf) as locatario_cpf,
+                st.nome as status_nome,
+                st.cor as status_cor,
+                cond.nome as condicao_nome,
+                cond.cor as condicao_cor,
+                c.nome as categoria_nome,
+                sc.nome as subcategoria_nome,
+                s.prioridade,
+                " . ($temReembolso ? 's.precisa_reembolso' : 'NULL') . " as precisa_reembolso,
+                " . ($temWhatsApp ? 's.whatsapp_enviado' : 'NULL') . " as whatsapp_enviado,
+                s.created_at,
+                s.data_agendamento,
+                s.updated_at,
+                i.nome as imobiliaria_nome
+            FROM solicitacoes s
+            LEFT JOIN status st ON s.status_id = st.id
+            LEFT JOIN condicoes cond ON s.condicao_id = cond.id
+            LEFT JOIN imobiliarias i ON s.imobiliaria_id = i.id
+            LEFT JOIN categorias c ON s.categoria_id = c.id
+            LEFT JOIN subcategorias sc ON s.subcategoria_id = sc.id
+            LEFT JOIN locatarios l ON (s.locatario_id = l.id OR s.locatario_id = l.ksi_cliente_id)
+            {$whereSql}
+            ORDER BY s.created_at DESC
+            LIMIT ?
+        ";
+
+        return Database::fetchAll($sql, $paramsLista);
     }
 
     public function getSolicitacoesPendentes(): array

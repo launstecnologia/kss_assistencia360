@@ -13,59 +13,6 @@
     
     <!-- Custom CSS -->
     <style>
-        /* Dark mode overrides (uses .dark on <html>) */
-        .dark body { background-color: #050a12; color: #e5e7eb; }
-        .dark .bg-white { background-color: #0b1220 !important; }
-        .dark .bg-gray-50 { background-color: #0a0f1a !important; }
-        .dark .bg-gray-100 { background-color: #0a0f1a !important; }
-        .dark .text-gray-900 { color: #e5e7eb !important; }
-        .dark .text-gray-700 { color: #d1d5db !important; }
-        .dark .text-gray-600 { color: #9ca3af !important; }
-        .dark .text-gray-500 { color: #9ca3af !important; }
-        .dark .border-gray-200 { border-color: #243042 !important; }
-        .dark .border-gray-100 { border-color: #243042 !important; }
-        .dark .border-gray-300 { border-color: #334155 !important; }
-        .dark .hover\:bg-gray-100:hover { background-color: #1f2937 !important; }
-        .dark .hover\:bg-gray-50:hover { background-color: #111827 !important; }
-        .dark .hover\:bg-white:hover { background-color: #0f172a !important; }
-        .dark .bg-blue-50 { background-color: #0b2a4a !important; }
-        .dark .text-blue-700 { color: #93c5fd !important; }
-        .dark .shadow-lg { box-shadow: 0 10px 25px rgba(0,0,0,0.7) !important; }
-        /* Form controls */
-        .dark input[type="text"],
-        .dark input[type="search"],
-        .dark input[type="number"],
-        .dark input[type="date"],
-        .dark select,
-        .dark textarea {
-            background-color: #0f172a !important;
-            color: #e5e7eb !important;
-            border-color: #374151 !important;
-        }
-        /* Improve select appearance and arrow in dark */
-        .dark select {
-            appearance: none;
-            -webkit-appearance: none;
-            -moz-appearance: none;
-            padding-right: 2.25rem !important; /* room for arrow */
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%23cbd5e1' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: right 0.75rem center;
-            background-size: 1rem 1rem;
-            color-scheme: dark; /* dark native dropdown on supported browsers */
-        }
-        .dark select:focus,
-        .dark input:focus,
-        .dark textarea:focus {
-            outline: none !important;
-            box-shadow: 0 0 0 3px rgba(59,130,246,0.35) !important; /* blue-500 ring */
-            border-color: #3b82f6 !important;
-        }
-        .dark input::placeholder,
-        .dark textarea::placeholder {
-            color: #6b7280 !important;
-        }
-        .dark .divide-gray-200 > :not([hidden]) ~ :not([hidden]) { border-color: #1f2937 !important; }
         .sidebar-transition {
             transition: all 0.3s ease-in-out;
         }
@@ -154,6 +101,11 @@
                 <a href="<?= url('admin/dashboard') ?>" class="flex items-center px-4 py-2 text-gray-700 rounded-lg hover:bg-gray-100 <?= $currentPage === 'dashboard' ? 'bg-blue-50 text-blue-700' : '' ?>">
                     <i class="fas fa-tachometer-alt mr-3"></i>
                     Dashboard
+                </a>
+
+                <a href="<?= url('admin/relatorios') ?>" class="flex items-center px-4 py-2 text-gray-700 rounded-lg hover:bg-gray-100 <?= $currentPage === 'relatorios' ? 'bg-blue-50 text-blue-700' : '' ?>">
+                    <i class="fas fa-chart-line mr-3"></i>
+                    Relatórios
                 </a>
                 
                 <a href="<?= url('admin/kanban') ?>" class="flex items-center px-4 py-2 text-gray-700 rounded-lg hover:bg-gray-100 <?= $currentPage === 'kanban' ? 'bg-blue-50 text-blue-700' : '' ?>">
@@ -269,10 +221,6 @@
                 </div>
                 
                 <div class="flex items-center space-x-4">
-                    <!-- Dark mode toggle -->
-                    <button id="theme-toggle" class="text-gray-500 hover:text-gray-700" title="Alternar tema">
-                        <i id="theme-toggle-icon" class="fas fa-moon text-xl"></i>
-                    </button>
                     <!-- Notifications -->
                     <button class="relative text-gray-500 hover:text-gray-700">
                         <i class="fas fa-bell text-xl"></i>
@@ -361,29 +309,6 @@
     
     <!-- Scripts -->
     <script>
-        // Theme handling
-        (function() {
-            const root = document.documentElement;
-            const stored = localStorage.getItem('theme');
-            if (stored === 'dark' || (!stored && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-                root.classList.add('dark');
-            }
-            function updateIcon() {
-                const icon = document.getElementById('theme-toggle-icon');
-                if (!icon) return;
-                icon.classList.remove('fa-moon','fa-sun');
-                icon.classList.add(root.classList.contains('dark') ? 'fa-sun' : 'fa-moon');
-            }
-            document.addEventListener('DOMContentLoaded', updateIcon);
-            document.addEventListener('click', function(e){
-                const btn = e.target.closest('#theme-toggle');
-                if (!btn) return;
-                root.classList.toggle('dark');
-                localStorage.setItem('theme', root.classList.contains('dark') ? 'dark' : 'light');
-                updateIcon();
-            });
-        })();
-
         // Sidebar toggle for mobile
         document.getElementById('sidebar-toggle').addEventListener('click', function() {
             const sidebar = document.getElementById('sidebar');

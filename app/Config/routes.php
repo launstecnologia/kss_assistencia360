@@ -60,6 +60,7 @@ $router->get('/pwa/solicitacao/{id}', 'PwaController@showSolicitacao', ['auth'])
 
 // Painel Administrativo
 $router->get('/admin/dashboard', 'DashboardController@index', ['auth']);
+$router->get('/admin/relatorios', 'RelatoriosController@index', ['auth']);
 $router->get('/admin/kanban', 'DashboardController@kanban', ['auth']);
 $router->post('/admin/kanban/mover', 'DashboardController@moverCard', ['auth']);
 $router->post('/admin/kanban/atualizar-condicao', 'DashboardController@atualizarCondicao', ['auth']);
