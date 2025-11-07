@@ -2037,11 +2037,13 @@ class SolicitacoesController extends Controller
             
             // Processar horários da seguradora se foram enviados
             $horariosSeguradoraSalvos = false;
+            $enviarNotificacaoHorariosIndisponiveis = false;
             if ($horariosSeguradora !== null && is_array($horariosSeguradora) && !empty($horariosSeguradora)) {
                 try {
                     // IMPORTANTE: Quando horarios_indisponiveis = 1, horarios_opcoes contém APENAS os horários da seguradora
                     // Se horarios_indisponiveis ainda não está marcado, preservar horários originais do locatário primeiro
-                    if (empty($solicitacaoAtual['horarios_indisponiveis']) && !empty($solicitacaoAtual['horarios_opcoes'])) {
+                    $eraPrimeiraVez = empty($solicitacaoAtual['horarios_indisponiveis']);
+                    if ($eraPrimeiraVez && !empty($solicitacaoAtual['horarios_opcoes'])) {
                         $horariosOriginaisLocatario = json_decode($solicitacaoAtual['horarios_opcoes'], true) ?? [];
                         if (!empty($horariosOriginaisLocatario) && is_array($horariosOriginaisLocatario)) {
                             $dados['datas_opcoes'] = json_encode($horariosOriginaisLocatario);
@@ -2052,6 +2054,11 @@ class SolicitacoesController extends Controller
                     $dados['horarios_opcoes'] = json_encode($horariosSeguradora);
                     $dados['horarios_indisponiveis'] = 1;
                     $horariosSeguradoraSalvos = true;
+                    
+                    // Se é a primeira vez marcando "Nenhum horário disponível" e há horários, enviar notificação
+                    if ($eraPrimeiraVez) {
+                        $enviarNotificacaoHorariosIndisponiveis = true;
+                    }
                 } catch (\Exception $e) {
                     error_log('Erro ao processar horários da seguradora: ' . $e->getMessage());
                     // Não bloquear o salvamento, apenas logar o erro
@@ -2425,8 +2432,8 @@ class SolicitacoesController extends Controller
                         }
                     }
                     
-                    // Enviar WhatsApp se horários da seguradora foram salvos
-                    if ($horariosSeguradoraSalvos && !empty($horariosSeguradora)) {
+                    // Enviar WhatsApp se horários da seguradora foram salvos E é a primeira vez marcando "Nenhum horário disponível"
+                    if ($enviarNotificacaoHorariosIndisponiveis && $horariosSeguradoraSalvos && !empty($horariosSeguradora)) {
                         try {
                             // Buscar solicitação atualizada para obter dados completos
                             $solicitacaoAtualizada = $this->solicitacaoModel->find($id);
@@ -2452,17 +2459,17 @@ class SolicitacoesController extends Controller
                                 $horarioAgendamento = $matches[2] . '-' . $matches[3];
                             }
                             
-                            // Enviar WhatsApp com horários sugeridos pela seguradora
+                            // Enviar WhatsApp com horários sugeridos pela seguradora (template "Horário Sugerido" com link para escolher)
                             $this->enviarNotificacaoWhatsApp($id, 'Horário Sugerido', [
                                 'data_agendamento' => $dataAgendamento,
                                 'horario_agendamento' => $horarioAgendamento,
                                 'horarios_sugeridos' => implode(', ', $horariosTexto)
                             ]);
                             
-                            error_log("WhatsApp enviado para horários da seguradora [ID:{$id}]: " . count($horariosSeguradora) . " horários");
+                            error_log("WhatsApp enviado para horários indisponíveis [ID:{$id}]: " . count($horariosSeguradora) . " horários sugeridos");
                         } catch (\Exception $e) {
                             // Ignorar erro de WhatsApp, não bloquear a resposta
-                            error_log('Erro ao enviar WhatsApp para horários da seguradora [ID:' . $id . ']: ' . $e->getMessage());
+                            error_log('Erro ao enviar WhatsApp para horários indisponíveis [ID:' . $id . ']: ' . $e->getMessage());
                         }
                     }
                     

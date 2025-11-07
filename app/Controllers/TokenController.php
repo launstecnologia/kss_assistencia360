@@ -1174,6 +1174,28 @@ class TokenController extends Controller
 
             switch ($acao) {
                 case 'servico_realizado':
+                    // Mudar status para "Concluído"
+                    $statusConcluido = $statusModel->findByNome('Concluído');
+                    if (!$statusConcluido) {
+                        // Tentar variações do nome
+                        $statusConcluido = $statusModel->findByNome('Concluido');
+                    }
+                    if (!$statusConcluido) {
+                        // Buscar qualquer status que contenha "Concluído"
+                        $sql = "SELECT * FROM status WHERE (nome LIKE '%Concluído%' OR nome LIKE '%Concluido%') AND status = 'ATIVO' LIMIT 1";
+                        $statusConcluido = \App\Core\Database::fetch($sql);
+                    }
+                    
+                    if ($statusConcluido) {
+                        $this->solicitacaoModel->update($solicitacaoId, [
+                            'status_id' => $statusConcluido['id'],
+                            'observacoes' => ($solicitacao['observacoes'] ?? '') . "\n\nServiço realizado com sucesso - confirmado pelo locatário."
+                        ]);
+                    }
+                    
+                    // Marcar token como usado
+                    $this->tokenModel->markAsUsed($token);
+                    
                     // Redirecionar para avaliação (pode ser uma página de avaliação)
                     $this->json([
                         'success' => true,
@@ -1237,14 +1259,35 @@ class TokenController extends Controller
 
                     $dataLimite = date('Y-m-d', strtotime('+10 days'));
 
-                    $this->solicitacaoModel->update($solicitacaoId, [
+                    // Preparar dados de atualização
+                    $updateData = [
                         'status_id' => $statusPendente['id'] ?? $solicitacao['status_id'],
                         'condicao_id' => $condicaoId,
-                        'data_limite_peca' => $dataLimite,
                         'data_ultimo_lembrete' => null,
                         'lembretes_enviados' => 0,
                         'observacoes' => ($solicitacao['observacoes'] ?? '') . "\n\nLocatário precisa comprar peças. Prazo: " . date('d/m/Y', strtotime($dataLimite))
-                    ]);
+                    ];
+                    
+                    // Adicionar data_limite_peca (o Model vai filtrar se não estiver no fillable)
+                    // Se a coluna não existir no banco, o erro será tratado no catch externo
+                    $updateData['data_limite_peca'] = $dataLimite;
+
+                    try {
+                        $this->solicitacaoModel->update($solicitacaoId, $updateData);
+                    } catch (\Exception $e) {
+                        // Se o erro for de coluna não encontrada, tentar novamente sem data_limite_peca
+                        if (strpos($e->getMessage(), 'data_limite_peca') !== false || 
+                            strpos($e->getMessage(), "Unknown column 'data_limite_peca'") !== false ||
+                            strpos($e->getMessage(), "Column 'data_limite_peca'") !== false) {
+                            error_log('Aviso: Coluna data_limite_peca não existe, salvando apenas na observação');
+                            unset($updateData['data_limite_peca']);
+                            $updateData['observacoes'] .= " (Data limite: " . date('d/m/Y', strtotime($dataLimite)) . ")";
+                            $this->solicitacaoModel->update($solicitacaoId, $updateData);
+                        } else {
+                            // Re-lançar se for outro tipo de erro
+                            throw $e;
+                        }
+                    }
 
                     // Marcar token como usado
                     $this->tokenModel->markAsUsed($token);
@@ -1257,7 +1300,7 @@ class TokenController extends Controller
                     break;
 
                 case 'ausente':
-                    // Condição: "Locatário se ausentou", volta para nova solicitação
+                    // Condição: "Locatário se ausentou", status: Cancelado
                     $condicao = $condicaoModel->findByNome('Locatário se ausentou');
                     if (!$condicao) {
                         $condicaoId = $condicaoModel->create([
@@ -1270,10 +1313,17 @@ class TokenController extends Controller
                         $condicaoId = $condicao['id'];
                     }
 
-                    $statusNova = $statusModel->findByNome('Nova Solicitação');
-                    if ($statusNova) {
+                    // Buscar status "Cancelado"
+                    $statusCancelado = $statusModel->findByNome('Cancelado');
+                    if (!$statusCancelado) {
+                        // Tentar buscar qualquer status que contenha "Cancelado"
+                        $sql = "SELECT * FROM status WHERE (nome LIKE '%Cancelado%' OR nome LIKE '%Cancel%') AND status = 'ATIVO' LIMIT 1";
+                        $statusCancelado = \App\Core\Database::fetch($sql);
+                    }
+                    
+                    if ($statusCancelado) {
                         $this->solicitacaoModel->update($solicitacaoId, [
-                            'status_id' => $statusNova['id'],
+                            'status_id' => $statusCancelado['id'],
                             'condicao_id' => $condicaoId,
                             'observacoes' => ($solicitacao['observacoes'] ?? '') . "\n\nLocatário se ausentou no horário agendado."
                         ]);
@@ -1284,7 +1334,7 @@ class TokenController extends Controller
 
                     $this->json([
                         'success' => true,
-                        'message' => 'Sua solicitação foi reaberta. Entre em contato quando estiver disponível.',
+                        'message' => 'Sua solicitação foi cancelada. Por favor, entre no sistema e faça uma nova solicitação quando estiver disponível.',
                         'redirect' => false
                     ]);
                     break;
