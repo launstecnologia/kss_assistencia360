@@ -2335,7 +2335,7 @@ class SolicitacoesController extends Controller
                             error_log("DEBUG atualizarDetalhes [ID:{$id}] - Status mantido pelo usuário: " . $statusIdManual);
                         }
                         
-                        // ✅ Enviar notificação WhatsApp quando horários são confirmados
+                        // ✅ Enviar notificação WhatsApp quando horários são adicionados pelo admin
                         try {
                             // Buscar dados atualizados da solicitação para garantir que temos o telefone correto
                             $solicitacaoAtual = $this->solicitacaoModel->find($id);
@@ -2350,50 +2350,54 @@ class SolicitacoesController extends Controller
                             }
                             
                             if (!empty($telefone)) {
-                                // Formatar horário completo para exibição (usar o último horário confirmado)
-                                $horarioCompleto = $last['raw'] ?? '';
-                                
-                                // Enviar WhatsApp para cada horário NOVO confirmado (não os que já existiam)
+                                // Identificar horários NOVOS adicionados pelo admin (não os que já existiam)
                                 $horariosNovos = [];
                                 foreach ($confirmedFinalLimpo as $confirmado) {
                                     $confirmadoRaw = $confirmado['raw'] ?? '';
+                                    $source = $confirmado['source'] ?? 'operator';
                                     $jaExistia = false;
                                     
                                     // Verificar se este horário já estava confirmado antes
                                     foreach ($confirmedExistentes as $existente) {
                                         $existenteRaw = $existente['raw'] ?? '';
-                                        if ($confirmadoRaw === $existenteRaw) {
+                                        // Comparação normalizada
+                                        $raw1Norm = preg_replace('/\s+/', ' ', trim($confirmadoRaw));
+                                        $raw2Norm = preg_replace('/\s+/', ' ', trim($existenteRaw));
+                                        if ($raw1Norm === $raw2Norm) {
                                             $jaExistia = true;
                                             break;
                                         }
                                     }
                                     
-                                    if (!$jaExistia) {
+                                    // Se é um horário novo E foi adicionado pelo admin (source='operator' ou não tem source definido)
+                                    if (!$jaExistia && ($source === 'operator' || empty($confirmado['source']))) {
                                         $horariosNovos[] = $confirmado;
                                     }
                                 }
                                 
-                                // Se há horários novos confirmados, enviar WhatsApp
+                                // Se há horários novos adicionados pelo admin, enviar notificação "Horário Sugerido"
                                 if (!empty($horariosNovos)) {
                                     // Formatar lista de horários para a mensagem
                                     $horariosLista = [];
                                     foreach ($horariosNovos as $horarioNovo) {
-                                        $horariosLista[] = $horarioNovo['raw'] ?? '';
+                                        $raw = $horarioNovo['raw'] ?? '';
+                                        // Remover segundos se houver
+                                        if (strpos($raw, ':00:00') !== false) {
+                                            $raw = preg_replace('/(\d{2}:\d{2}):\d{2}-(\d{2}:\d{2}):\d{2}/', '$1-$2', $raw);
+                                        }
+                                        $horariosLista[] = $raw;
                                     }
                                     $horariosTexto = implode(', ', $horariosLista);
                                     
-                                    $this->enviarNotificacaoWhatsApp($id, 'Horário Confirmado', [
-                                        'data_agendamento' => date('d/m/Y', strtotime($dataAg)),
-                                        'horario_agendamento' => $horaAg ? date('H:i', strtotime($horaAg)) : '',
-                                        'horario_servico' => $horarioCompleto,
-                                        'horario_confirmado_raw' => $horarioCompleto,
-                                        'horarios_confirmados' => $horariosTexto
+                                    // Enviar notificação "Horário Sugerido" para o locatário escolher
+                                    $this->enviarNotificacaoWhatsApp($id, 'Horário Sugerido', [
+                                        'horarios_sugeridos' => $horariosTexto
                                     ]);
                                     
-                                    error_log("DEBUG atualizarDetalhes [ID:{$id}] - WhatsApp enviado para telefone: {$telefone}");
-                                    error_log("DEBUG atualizarDetalhes [ID:{$id}] - Horários novos confirmados: " . json_encode($horariosNovos));
+                                    error_log("DEBUG atualizarDetalhes [ID:{$id}] - ✅ Notificação 'Horário Sugerido' enviada para telefone: {$telefone}");
+                                    error_log("DEBUG atualizarDetalhes [ID:{$id}] - Horários novos adicionados pelo admin: " . json_encode($horariosNovos));
                                 } else {
-                                    error_log("DEBUG atualizarDetalhes [ID:{$id}] - Nenhum horário novo confirmado, WhatsApp NÃO enviado");
+                                    error_log("DEBUG atualizarDetalhes [ID:{$id}] - Nenhum horário novo adicionado pelo admin, notificação NÃO enviada");
                                 }
                             } else {
                                 error_log("DEBUG atualizarDetalhes [ID:{$id}] - ⚠️ Telefone não encontrado, WhatsApp NÃO enviado");

@@ -4,7 +4,7 @@ ob_start();
 ?>
 
 <div class="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-    <div class="max-w-md w-full space-y-8">
+    <div class="max-w-2xl w-full space-y-8">
         <div class="bg-white rounded-lg shadow-lg p-8">
             <!-- Header -->
             <div class="text-center mb-6">
@@ -39,38 +39,85 @@ ob_start();
             </div>
 
             <!-- Formulário de Reagendamento -->
-            <form method="POST" action="<?= url('reagendamento-horario?token=' . urlencode($token)) ?>" id="formReagendamento" class="space-y-4">
-                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-                    <p class="text-sm text-blue-800">
-                        <i class="fas fa-info-circle mr-2"></i>
-                        Selecione até 3 datas e horários preferenciais. Após sua escolha, entraremos em contato para confirmar o novo horário.
-                    </p>
+            <form method="POST" action="<?= url('reagendamento-horario?token=' . urlencode($token)) ?>" id="formReagendamento" class="space-y-6">
+                
+                <!-- Seleção de Data -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-3">
+                        Selecione uma Data
+                    </label>
+                    <div class="relative cursor-pointer">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fas fa-calendar-alt text-gray-400"></i>
+                        </div>
+                        <input type="date" id="data_selecionada" name="data_selecionada" 
+                               class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 text-sm text-gray-700 cursor-pointer transition-colors"
+                               placeholder="dd/mm/2025"
+                               min="<?= date('Y-m-d', strtotime('+1 day')) ?>"
+                               max="<?= date('Y-m-d', strtotime('+30 days')) ?>">
+                    </div>
+                    <div class="mt-2 flex items-center text-xs text-gray-500">
+                        <i class="fas fa-info-circle mr-1.5"></i>
+                        <span>Atendimentos disponíveis apenas em dias úteis (segunda a sexta-feira)</span>
+                    </div>
                 </div>
-
-                <!-- Seleção de Datas e Horários -->
-                <div id="horarios-container" class="space-y-4">
-                    <!-- Horários serão adicionados aqui dinamicamente -->
+                
+                <!-- Seleção de Horário -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-3">
+                        Selecione um Horário
+                    </label>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <label class="relative">
+                            <input type="radio" name="horario_selecionado" value="08:00-11:00" class="sr-only horario-radio">
+                            <div class="border-2 border-gray-200 rounded-lg p-3 text-center cursor-pointer hover:border-green-300 transition-colors horario-card">
+                                <div class="text-sm font-medium text-gray-900">08h00 às 11h00</div>
+                            </div>
+                        </label>
+                        
+                        <label class="relative">
+                            <input type="radio" name="horario_selecionado" value="11:00-14:00" class="sr-only horario-radio">
+                            <div class="border-2 border-gray-200 rounded-lg p-3 text-center cursor-pointer hover:border-green-300 transition-colors horario-card">
+                                <div class="text-sm font-medium text-gray-900">11h00 às 14h00</div>
+                            </div>
+                        </label>
+                        
+                        <label class="relative">
+                            <input type="radio" name="horario_selecionado" value="14:00-17:00" class="sr-only horario-radio">
+                            <div class="border-2 border-gray-200 rounded-lg p-3 text-center cursor-pointer hover:border-green-300 transition-colors horario-card">
+                                <div class="text-sm font-medium text-gray-900">14h00 às 17h00</div>
+                            </div>
+                        </label>
+                        
+                        <label class="relative">
+                            <input type="radio" name="horario_selecionado" value="17:00-20:00" class="sr-only horario-radio">
+                            <div class="border-2 border-gray-200 rounded-lg p-3 text-center cursor-pointer hover:border-green-300 transition-colors horario-card">
+                                <div class="text-sm font-medium text-gray-900">17h00 às 20h00</div>
+                            </div>
+                        </label>
+                    </div>
                 </div>
-
-                <!-- Botão para adicionar mais horários -->
-                <button type="button" 
-                        onclick="adicionarHorario()" 
-                        id="btnAdicionarHorario"
-                        class="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center">
-                    <i class="fas fa-plus mr-2"></i>
-                    Adicionar Outro Horário
-                </button>
+                
+                <!-- Horários Selecionados -->
+                <div id="horarios-selecionados" class="hidden">
+                    <h4 class="text-sm font-medium text-gray-700 mb-3">
+                        Horários Selecionados (<span id="contador-horarios">0</span>/3)
+                    </h4>
+                    <div id="lista-horarios" class="space-y-2">
+                        <!-- Horários serão inseridos aqui via JavaScript -->
+                    </div>
+                </div>
 
                 <input type="hidden" name="novas_datas" id="novas_datas" value="[]">
 
-                <div class="flex gap-3 mt-6">
+                <!-- Navigation -->
+                <div class="flex justify-between pt-6">
                     <a href="<?= url('confirmacao-horario?token=' . urlencode($token)) ?>" 
-                       class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-3 px-4 rounded-lg transition-colors duration-200 text-center">
+                       class="px-6 py-3 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors">
                         Voltar
                     </a>
-                    <button type="submit" 
-                            class="flex-1 bg-yellow-600 hover:bg-yellow-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors duration-200">
-                        <i class="fas fa-calendar-check mr-2"></i>
+                    <button type="submit" id="btn-continuar" disabled
+                            class="px-6 py-3 bg-gray-400 text-white font-medium rounded-lg cursor-not-allowed transition-colors">
                         Solicitar Reagendamento
                     </button>
                 </div>
@@ -87,160 +134,238 @@ ob_start();
     </div>
 </div>
 
-<script>
-let horarioCount = 0;
-const maxHorarios = 3;
-
-function adicionarHorario() {
-    if (horarioCount >= maxHorarios) {
-        alert('Você pode selecionar no máximo 3 horários');
-        return;
-    }
-
-    const container = document.getElementById('horarios-container');
-    const horarioDiv = document.createElement('div');
-    horarioDiv.className = 'bg-gray-50 border border-gray-200 rounded-lg p-4 horario-item';
-    horarioDiv.innerHTML = `
-        <div class="flex items-center justify-between mb-3">
-            <h4 class="text-sm font-semibold text-gray-900">Horário ${horarioCount + 1}</h4>
-            ${horarioCount > 0 ? '<button type="button" onclick="removerHorario(this)" class="text-red-600 hover:text-red-800"><i class="fas fa-times"></i></button>' : ''}
-        </div>
-        <div class="space-y-3">
-            <div>
-                <label class="block text-xs font-medium text-gray-700 mb-1">Data</label>
-                <input type="date" 
-                       class="data-input w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-yellow-500"
-                       min="${new Date(Date.now() + 86400000).toISOString().split('T')[0]}"
-                       max="${new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0]}"
-                       required>
-            </div>
-            <div>
-                <label class="block text-xs font-medium text-gray-700 mb-2">Horário</label>
-                <div class="grid grid-cols-2 gap-2">
-                    <label class="relative cursor-pointer">
-                        <input type="radio" name="horario_${horarioCount}" value="08:00-11:00" class="sr-only horario-radio">
-                        <div class="border-2 border-gray-200 rounded-lg p-2 text-center hover:border-yellow-300 transition-colors horario-card">
-                            <div class="text-xs font-medium text-gray-900">08h00 às 11h00</div>
-                        </div>
-                    </label>
-                    <label class="relative cursor-pointer">
-                        <input type="radio" name="horario_${horarioCount}" value="11:00-14:00" class="sr-only horario-radio">
-                        <div class="border-2 border-gray-200 rounded-lg p-2 text-center hover:border-yellow-300 transition-colors horario-card">
-                            <div class="text-xs font-medium text-gray-900">11h00 às 14h00</div>
-                        </div>
-                    </label>
-                    <label class="relative cursor-pointer">
-                        <input type="radio" name="horario_${horarioCount}" value="14:00-17:00" class="sr-only horario-radio">
-                        <div class="border-2 border-gray-200 rounded-lg p-2 text-center hover:border-yellow-300 transition-colors horario-card">
-                            <div class="text-xs font-medium text-gray-900">14h00 às 17h00</div>
-                        </div>
-                    </label>
-                    <label class="relative cursor-pointer">
-                        <input type="radio" name="horario_${horarioCount}" value="17:00-20:00" class="sr-only horario-radio">
-                        <div class="border-2 border-gray-200 rounded-lg p-2 text-center hover:border-yellow-300 transition-colors horario-card">
-                            <div class="text-xs font-medium text-gray-900">17h00 às 20h00</div>
-                        </div>
-                    </label>
-                </div>
-            </div>
-        </div>
-    `;
-    
-    container.appendChild(horarioDiv);
-    horarioCount++;
-    
-    if (horarioCount >= maxHorarios) {
-        document.getElementById('btnAdicionarHorario').style.display = 'none';
-    }
-    
-    // Adicionar listeners para estilização dos cards
-    adicionarListenersHorarios();
-}
-
-function removerHorario(btn) {
-    btn.closest('.horario-item').remove();
-    horarioCount--;
-    
-    if (horarioCount < maxHorarios) {
-        document.getElementById('btnAdicionarHorario').style.display = 'block';
-    }
-    
-    atualizarHorarios();
-}
-
-function adicionarListenersHorarios() {
-    // Estilização dos cards de horário
-    document.querySelectorAll('.horario-radio').forEach(radio => {
-        radio.addEventListener('change', function() {
-            const card = this.closest('label').querySelector('.horario-card');
-            const allCards = this.closest('.grid').querySelectorAll('.horario-card');
-            
-            allCards.forEach(c => {
-                c.classList.remove('border-yellow-500', 'bg-yellow-50');
-                c.classList.add('border-gray-200');
-            });
-            
-            if (this.checked) {
-                card.classList.remove('border-gray-200');
-                card.classList.add('border-yellow-500', 'bg-yellow-50');
-            }
-        });
-    });
-}
-
-function atualizarHorarios() {
-    const horarios = [];
-    const items = document.querySelectorAll('.horario-item');
-    
-    items.forEach(item => {
-        const dataInput = item.querySelector('.data-input');
-        const horarioRadio = item.querySelector('.horario-radio:checked');
-        
-        if (dataInput && dataInput.value && horarioRadio) {
-            const data = new Date(dataInput.value + 'T' + horarioRadio.value.split('-')[0] + ':00');
-            const dia = String(data.getDate()).padStart(2, '0');
-            const mes = String(data.getMonth() + 1).padStart(2, '0');
-            const ano = data.getFullYear();
-            const [horaInicio, horaFim] = horarioRadio.value.split('-');
-            
-            horarios.push(`${dia}/${mes}/${ano} - ${horaInicio}:00-${horaFim}:00`);
-        }
-    });
-    
-    document.getElementById('novas_datas').value = JSON.stringify(horarios);
-}
-
-// Adicionar listener ao formulário
-document.getElementById('formReagendamento').addEventListener('submit', function(e) {
-    atualizarHorarios();
-    const horarios = JSON.parse(document.getElementById('novas_datas').value);
-    
-    if (horarios.length === 0) {
-        e.preventDefault();
-        alert('Por favor, selecione pelo menos uma data e horário');
-        return false;
-    }
-});
-
-// Adicionar listeners para atualizar horários quando mudar
-document.addEventListener('change', function(e) {
-    if (e.target.classList.contains('data-input') || e.target.classList.contains('horario-radio')) {
-        atualizarHorarios();
-    }
-});
-
-// Adicionar primeiro horário automaticamente
-adicionarHorario();
-</script>
-
 <style>
+/* Melhorar aparência do input de data */
+input[type="date"] {
+    position: relative;
+    cursor: pointer;
+    font-family: inherit;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+    position: absolute;
+    right: 12px;
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    opacity: 0.6;
+    transition: opacity 0.2s;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator:hover {
+    opacity: 1;
+}
+
+input[type="date"]:focus {
+    outline: none;
+}
+
+/* Estilo quando a data está vazia (placeholder visual) */
+input[type="date"]:not(:focus)::-webkit-datetime-edit {
+    color: transparent;
+}
+
+input[type="date"]:not(:focus)::before {
+    content: attr(placeholder);
+    color: #9ca3af;
+    margin-right: 8px;
+}
+
+input[type="date"]:valid:not(:focus)::before,
+input[type="date"]:focus::before {
+    content: none;
+}
+
+input[type="date"]:valid:not(:focus)::-webkit-datetime-edit {
+    color: #374151;
+}
+
 .horario-card {
     transition: all 0.2s;
 }
 </style>
 
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Sistema de agendamento
+    const dataInput = document.getElementById('data_selecionada');
+    const horarioRadios = document.querySelectorAll('.horario-radio');
+    const horarioCards = document.querySelectorAll('.horario-card');
+    const horariosSelecionados = document.getElementById('horarios-selecionados');
+    const listaHorarios = document.getElementById('lista-horarios');
+    const contadorHorarios = document.getElementById('contador-horarios');
+    const btnContinuar = document.getElementById('btn-continuar');
+    
+    let horariosEscolhidos = [];
+    
+    // Abrir calendário ao clicar no campo de data
+    if (dataInput) {
+        dataInput.removeAttribute('readonly');
+        
+        const abrirCalendario = function() {
+            try {
+                if (dataInput.showPicker) {
+                    dataInput.showPicker();
+                } else {
+                    dataInput.focus();
+                    dataInput.click();
+                }
+            } catch (e) {
+                console.log('Calendário será aberto pelo navegador');
+            }
+        };
+        
+        dataInput.addEventListener('click', abrirCalendario);
+        
+        const containerData = dataInput.closest('.relative');
+        if (containerData) {
+            containerData.addEventListener('click', function(e) {
+                if (e.target !== dataInput) {
+                    abrirCalendario();
+                }
+            });
+        }
+        
+        // Validação: bloquear seleção de fins de semana
+        dataInput.addEventListener('change', function() {
+            if (!this.value) return;
+            
+            const dataSelecionada = new Date(this.value + 'T12:00:00');
+            const diaDaSemana = dataSelecionada.getDay(); // 0 = Domingo, 6 = Sábado
+            
+            if (diaDaSemana === 0 || diaDaSemana === 6) {
+                const nomeDia = diaDaSemana === 0 ? 'domingo' : 'sábado';
+                alert('⚠️ Atendimentos não são realizados aos fins de semana.\n\nA data selecionada é um ' + nomeDia + '.\nPor favor, selecione um dia útil (segunda a sexta-feira).');
+                this.value = '';
+            }
+        });
+    }
+    
+    // Seleção de horário
+    horarioRadios.forEach(radio => {
+        radio.addEventListener('change', function() {
+            const data = dataInput ? dataInput.value : '';
+            const horario = this.value;
+            
+            if (data && horario) {
+                const horarioCompleto = `${formatarData(data)} - ${horario}`;
+                
+                // Verificar se já existe
+                if (horariosEscolhidos.includes(horarioCompleto)) {
+                    return; // Já está na lista
+                }
+                
+                // Verificar limite de 3 horários
+                if (horariosEscolhidos.length >= 3) {
+                    alert('Você pode selecionar no máximo 3 horários');
+                    this.checked = false;
+                    return;
+                }
+                
+                horariosEscolhidos.push(horarioCompleto);
+                atualizarListaHorarios();
+                
+                // Limpar seleção do radio após adicionar
+                this.checked = false;
+                atualizarEstiloCards();
+            } else if (!data) {
+                alert('Por favor, selecione uma data primeiro');
+                this.checked = false;
+            }
+        });
+    });
+
+    // Click no card de horário também seleciona o radio
+    horarioCards.forEach(card => {
+        card.addEventListener('click', function() {
+            const label = this.closest('label');
+            const radio = label ? label.querySelector('.horario-radio') : null;
+            if (radio) {
+                radio.checked = true;
+                radio.dispatchEvent(new Event('change'));
+            }
+        });
+    });
+    
+    function atualizarListaHorarios() {
+        if (horariosEscolhidos.length > 0) {
+            horariosSelecionados.classList.remove('hidden');
+            contadorHorarios.textContent = horariosEscolhidos.length;
+            
+            listaHorarios.innerHTML = '';
+            horariosEscolhidos.forEach((horario, index) => {
+                const div = document.createElement('div');
+                div.className = 'flex items-center justify-between bg-green-50 border border-green-200 rounded-lg p-3';
+                div.innerHTML = `
+                    <div class="flex items-center">
+                        <i class="fas fa-clock text-green-600 mr-2"></i>
+                        <span class="text-sm text-green-800">${horario}</span>
+                    </div>
+                    <button type="button" onclick="removerHorario(${index})" 
+                            class="text-red-500 hover:text-red-700">
+                        <i class="fas fa-times"></i>
+                    </button>
+                `;
+                listaHorarios.appendChild(div);
+            });
+            
+            // Habilitar botão continuar se tiver pelo menos 1 horário
+            if (horariosEscolhidos.length > 0) {
+                btnContinuar.disabled = false;
+                btnContinuar.classList.remove('bg-gray-400', 'cursor-not-allowed');
+                btnContinuar.classList.add('bg-green-600', 'hover:bg-green-700');
+            }
+        } else {
+            horariosSelecionados.classList.add('hidden');
+            btnContinuar.disabled = true;
+            btnContinuar.classList.add('bg-gray-400', 'cursor-not-allowed');
+            btnContinuar.classList.remove('bg-green-600', 'hover:bg-green-700');
+        }
+    }
+    
+    window.removerHorario = function(index) {
+        horariosEscolhidos.splice(index, 1);
+        atualizarListaHorarios();
+        atualizarEstiloCards();
+    };
+    
+    function atualizarEstiloCards() {
+        horarioCards.forEach(card => {
+            card.classList.remove('border-green-500', 'bg-green-50');
+            card.classList.add('border-gray-200');
+        });
+    }
+    
+    function formatarData(data) {
+        const [ano, mes, dia] = data.split('-');
+        return `${dia}/${mes}/${ano}`;
+    }
+    
+    // Salvar horários no formulário antes de enviar
+    const form = document.getElementById('formReagendamento');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            // Converter: "11/11/2025 - 08:00-11:00" → "11/11/2025 - 08:00-11:00"
+            const horariosFormatados = horariosEscolhidos.map(horario => {
+                // Formato já está correto: "dd/mm/yyyy - HH:MM-HH:MM"
+                return horario;
+            });
+            
+            // Atualizar campo hidden
+            document.getElementById('novas_datas').value = JSON.stringify(horariosFormatados);
+            
+            // Validar se há pelo menos 1 horário
+            if (horariosFormatados.length === 0) {
+                e.preventDefault();
+                alert('Por favor, selecione pelo menos uma data e horário');
+                return false;
+            }
+        });
+    }
+});
+</script>
+
 <?php
 $content = ob_get_clean();
 include 'app/Views/layouts/public.php';
 ?>
-

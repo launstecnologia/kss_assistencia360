@@ -17,7 +17,27 @@ class LogsController extends Controller
      */
     public function index(): void
     {
-        $logFile = $this->input('file', 'php_error_log');
+        $availableLogs = $this->getAvailableLogs();
+        
+        // Se não foi especificado um arquivo, tentar usar o primeiro disponível
+        $logFile = $this->input('file', '');
+        if (empty($logFile) && !empty($availableLogs)) {
+            // Tentar php_error_log primeiro, senão usar o primeiro disponível
+            $phpLogExists = false;
+            foreach ($availableLogs as $log) {
+                if ($log['name'] === 'php_error_log') {
+                    $phpLogExists = true;
+                    $logFile = 'php_error_log';
+                    break;
+                }
+            }
+            if (!$phpLogExists) {
+                $logFile = $availableLogs[0]['name'];
+            }
+        } elseif (empty($logFile)) {
+            $logFile = 'php_error_log'; // Fallback padrão
+        }
+        
         $filter = $this->input('filter', '');
         $lines = (int)($this->input('lines', 100));
         
@@ -39,7 +59,7 @@ class LogsController extends Controller
             'logFile' => $logFile,
             'filter' => $filter,
             'lines' => $lines,
-            'availableLogs' => $this->getAvailableLogs()
+            'availableLogs' => $availableLogs
         ]);
     }
 
@@ -53,8 +73,11 @@ class LogsController extends Controller
         if (!file_exists($logPath)) {
             return [
                 'content' => [],
-                'error' => "Arquivo de log não encontrado: {$logFile}",
-                'file_exists' => false
+                'error' => "Arquivo de log não encontrado: {$logFile}. O arquivo não existe no caminho especificado: {$logPath}",
+                'file_exists' => false,
+                'total_lines' => 0,
+                'showing_lines' => 0,
+                'file_size' => 0
             ];
         }
 
@@ -66,7 +89,10 @@ class LogsController extends Controller
                 return [
                     'content' => [],
                     'error' => "Erro ao ler arquivo de log: {$logFile}",
-                    'file_exists' => true
+                    'file_exists' => true,
+                    'total_lines' => 0,
+                    'showing_lines' => 0,
+                    'file_size' => 0
                 ];
             }
 
@@ -111,7 +137,10 @@ class LogsController extends Controller
             return [
                 'content' => [],
                 'error' => "Erro ao processar log: " . $e->getMessage(),
-                'file_exists' => true
+                'file_exists' => true,
+                'total_lines' => 0,
+                'showing_lines' => 0,
+                'file_size' => 0
             ];
         }
     }
@@ -172,9 +201,10 @@ class LogsController extends Controller
         $allowedLogs = [
             'php_error_log' => $isWindows 
                 ? 'C:/xampp/php/logs/php_error_log' 
-                : ini_get('error_log') ?: '/var/log/php_errors.log',
+                : (ini_get('error_log') ?: '/var/log/php_errors.log'),
             'whatsapp_evolution_api.log' => __DIR__ . '/../../storage/logs/whatsapp_evolution_api.log',
-            'error.log' => __DIR__ . '/../../storage/logs/error.log'
+            'error.log' => __DIR__ . '/../../storage/logs/error.log',
+            'app.log' => __DIR__ . '/../../storage/logs/app.log'
         ];
 
         // Se o arquivo está na lista permitida, usar o caminho definido
@@ -273,6 +303,18 @@ class LogsController extends Controller
                 'path' => $errorLogPath,
                 'size' => filesize($errorLogPath),
                 'modified' => filemtime($errorLogPath)
+            ];
+        }
+
+        // App Log
+        $appLogPath = __DIR__ . '/../../storage/logs/app.log';
+        if (file_exists($appLogPath)) {
+            $logs[] = [
+                'name' => 'app.log',
+                'label' => 'App Log',
+                'path' => $appLogPath,
+                'size' => filesize($appLogPath),
+                'modified' => filemtime($appLogPath)
             ];
         }
 

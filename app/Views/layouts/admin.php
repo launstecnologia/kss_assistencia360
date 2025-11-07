@@ -290,7 +290,7 @@
         </header>
         
         <!-- Page Content -->
-        <main class="p-6">
+        <main class="px-6 pb-6 pt-6">
             <?php 
             // Mostrar mensagens flash
             if (isset($_SESSION['flash_message'])): 

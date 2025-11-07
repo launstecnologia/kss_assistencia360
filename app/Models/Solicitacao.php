@@ -274,26 +274,30 @@ class Solicitacao extends Model
     {
         $errors = [];
         $hoje = new \DateTime();
+        $hoje->setTime(0, 0, 0); // Resetar hora para comparar apenas datas
         
         foreach ($datas as $index => $data) {
-            $dataObj = new \DateTime($data);
-            
-            // Verificar se é maioridade (18 anos)
-            $idadeMinima = $hoje->diff($dataObj)->y;
-            if ($idadeMinima < 18) {
-                $errors[] = "Data " . ($index + 1) . " deve ser de uma pessoa maior de idade";
-            }
-            
-            // Verificar horário comercial (8h às 18h)
-            $hora = $dataObj->format('H');
-            if ($hora < 8 || $hora > 18) {
-                $errors[] = "Data " . ($index + 1) . " deve estar no horário comercial (8h às 18h)";
-            }
-            
-            // Verificar prazo mínimo (24h)
-            $diferenca = $hoje->diff($dataObj)->days;
-            if ($diferenca < 1) {
-                $errors[] = "Data " . ($index + 1) . " deve ter pelo menos 24h de antecedência";
+            try {
+                $dataObj = new \DateTime($data);
+                
+                // Verificar se a data não é no passado
+                if ($dataObj < $hoje) {
+                    $errors[] = "Data " . ($index + 1) . " não pode ser no passado";
+                    continue;
+                }
+                
+                // Verificar horário comercial (8h às 20h)
+                $hora = (int)$dataObj->format('H');
+                if ($hora < 8 || $hora > 20) {
+                    $errors[] = "Data " . ($index + 1) . " deve estar no horário comercial (8h às 20h)";
+                }
+                
+                // Verificar prazo mínimo (24h) - apenas se a data for hoje
+                if ($dataObj->format('Y-m-d') === $hoje->format('Y-m-d')) {
+                    $errors[] = "Data " . ($index + 1) . " deve ter pelo menos 24h de antecedência";
+                }
+            } catch (\Exception $e) {
+                $errors[] = "Data " . ($index + 1) . " é inválida: " . $e->getMessage();
             }
         }
         

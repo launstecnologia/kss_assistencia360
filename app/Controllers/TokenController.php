@@ -110,8 +110,33 @@ class TokenController extends Controller
         error_log("DEBUG confirmacaoHorario [ID:{$tokenData['solicitacao_id']}] - horariosOpcoesRaw: " . var_export($horariosOpcoesRaw, true));
         error_log("DEBUG confirmacaoHorario [ID:{$tokenData['solicitacao_id']}] - horariosOpcoesRaw empty?: " . var_export(empty($horariosOpcoesRaw), true));
         
-        // PRIORIDADE 1: Se horarios_indisponiveis = 1, buscar horários da seguradora em horarios_opcoes
-        if ($horariosIndisponiveis == 1 && !empty($horariosOpcoesRaw)) {
+        // PRIORIDADE 1: Verificar confirmed_schedules (horários marcados pelo admin)
+        // IMPORTANTE: Se o admin marcou checkboxes, os horários estão em confirmed_schedules
+        if (!empty($solicitacao['confirmed_schedules'])) {
+            $confirmedSchedules = json_decode($solicitacao['confirmed_schedules'], true);
+            if (is_array($confirmedSchedules) && !empty($confirmedSchedules)) {
+                foreach ($confirmedSchedules as $schedule) {
+                    if (!empty($schedule['raw'])) {
+                        // Normalizar formato do raw se necessário
+                        $raw = $schedule['raw'];
+                        // Remover segundos se houver
+                        if (strpos($raw, ':00:00') !== false) {
+                            $raw = preg_replace('/(\d{2}:\d{2}):\d{2}-(\d{2}:\d{2}):\d{2}/', '$1-$2', $raw);
+                        }
+                        
+                        $horariosDisponiveis[] = [
+                            'raw' => $raw,
+                            'date' => $schedule['date'] ?? '',
+                            'time' => $schedule['time'] ?? ''
+                        ];
+                        error_log("DEBUG confirmacaoHorario [ID:{$tokenData['solicitacao_id']}] - ✅ Horário de confirmed_schedules adicionado: {$raw}");
+                    }
+                }
+            }
+        }
+        
+        // PRIORIDADE 2: Se horarios_indisponiveis = 1, buscar horários da seguradora em horarios_opcoes
+        if (empty($horariosDisponiveis) && $horariosIndisponiveis == 1 && !empty($horariosOpcoesRaw)) {
             $horariosSeguradora = json_decode($horariosOpcoesRaw, true);
             error_log("DEBUG confirmacaoHorario [ID:{$tokenData['solicitacao_id']}] - horariosSeguradora parseado: " . var_export($horariosSeguradora, true));
             
@@ -165,22 +190,8 @@ class TokenController extends Controller
                 error_log("DEBUG confirmacaoHorario [ID:{$tokenData['solicitacao_id']}] - ⚠️ horariosSeguradora não é array ou está vazio");
             }
         } else {
-            error_log("DEBUG confirmacaoHorario [ID:{$tokenData['solicitacao_id']}] - ⚠️ Condição não atendida: horariosIndisponiveis={$horariosIndisponiveis}, horariosOpcoesRaw=" . ($horariosOpcoesRaw ? 'tem valor' : 'vazio'));
-        }
-        
-        // Se não houver horários da seguradora, verificar confirmed_schedules
-        if (empty($horariosDisponiveis) && !empty($solicitacao['confirmed_schedules'])) {
-            $confirmedSchedules = json_decode($solicitacao['confirmed_schedules'], true);
-            if (is_array($confirmedSchedules) && !empty($confirmedSchedules)) {
-                foreach ($confirmedSchedules as $schedule) {
-                    if (!empty($schedule['raw'])) {
-                        $horariosDisponiveis[] = [
-                            'raw' => $schedule['raw'],
-                            'date' => $schedule['date'] ?? '',
-                            'time' => $schedule['time'] ?? ''
-                        ];
-                    }
-                }
+            if (empty($horariosDisponiveis)) {
+                error_log("DEBUG confirmacaoHorario [ID:{$tokenData['solicitacao_id']}] - ⚠️ Condição não atendida: horariosIndisponiveis={$horariosIndisponiveis}, horariosOpcoesRaw=" . ($horariosOpcoesRaw ? 'tem valor' : 'vazio'));
             }
         }
         
@@ -967,9 +978,13 @@ class TokenController extends Controller
         try {
             $novasDatas = $this->input('novas_datas', []);
             
+            // Debug: Log do que está sendo recebido
+            error_log("DEBUG processarReagendamento - novas_datas recebido (tipo: " . gettype($novasDatas) . "): " . var_export($novasDatas, true));
+            
             // Se vier como string JSON, parsear
             if (is_string($novasDatas)) {
                 $novasDatas = json_decode($novasDatas, true) ?? [];
+                error_log("DEBUG processarReagendamento - novas_datas parseado: " . var_export($novasDatas, true));
             }
             
             // Se não for array, tentar converter
@@ -978,6 +993,7 @@ class TokenController extends Controller
             }
 
             if (empty($novasDatas)) {
+                error_log("DEBUG processarReagendamento - novas_datas está vazio após processamento");
                 $this->view('token.error', [
                     'title' => 'Dados Inválidos',
                     'message' => 'Por favor, selecione pelo menos uma nova data e horário.',
@@ -986,11 +1002,15 @@ class TokenController extends Controller
                 return;
             }
 
-            // Converter datas do formato "dd/mm/yyyy - HH:MM-HH:MM" para DateTime
+            // Converter datas do formato "dd/mm/yyyy - HH:MM-HH:MM" ou "dd/mm/yyyy - HH:MM:SS-HH:MM:SS" para DateTime
             $datasConvertidas = [];
-            foreach ($novasDatas as $dataString) {
-                // Formato esperado: "dd/mm/yyyy - HH:MM-HH:MM"
-                if (preg_match('/(\d{2})\/(\d{2})\/(\d{4})\s*-\s*(\d{2}):(\d{2})-(\d{2}):(\d{2})/', $dataString, $matches)) {
+            foreach ($novasDatas as $index => $dataString) {
+                error_log("DEBUG processarReagendamento - Processando data [{$index}]: " . var_export($dataString, true));
+                
+                // Formato esperado: "dd/mm/yyyy - HH:MM-HH:MM" ou "dd/mm/yyyy - HH:MM:SS-HH:MM:SS"
+                // Aceitar segundos opcionais - regex mais flexível
+                // Padrão: dd/mm/yyyy - HH:MM:SS-HH:MM:SS ou dd/mm/yyyy - HH:MM-HH:MM
+                if (preg_match('/(\d{2})\/(\d{2})\/(\d{4})\s*-\s*(\d{2}):(\d{2})(?::\d{2})?\s*-\s*(\d{2}):(\d{2})(?::\d{2})?/', $dataString, $matches)) {
                     $dia = $matches[1];
                     $mes = $matches[2];
                     $ano = $matches[3];
@@ -1000,18 +1020,24 @@ class TokenController extends Controller
                     // Converter para formato DateTime (Y-m-d H:i:s)
                     $dataFormatada = sprintf('%s-%s-%s %s:%s:00', $ano, $mes, $dia, $hora, $minuto);
                     $datasConvertidas[] = $dataFormatada;
+                    error_log("DEBUG processarReagendamento - ✅ Data convertida [{$index}]: {$dataFormatada} (de: {$dataString})");
                 } else {
+                    error_log("DEBUG processarReagendamento - ⚠️ Regex não correspondeu para: {$dataString}");
                     // Tentar parsear como data simples
                     try {
                         $dt = new \DateTime($dataString);
                         $datasConvertidas[] = $dt->format('Y-m-d H:i:s');
+                        error_log("DEBUG processarReagendamento - ✅ Data parseada como DateTime [{$index}]: " . $dt->format('Y-m-d H:i:s'));
                     } catch (\Exception $e) {
-                        error_log('Erro ao converter data: ' . $dataString . ' - ' . $e->getMessage());
+                        error_log("DEBUG processarReagendamento - ⚠️ Erro ao converter data [{$index}]: {$dataString} - " . $e->getMessage());
                     }
                 }
             }
             
+            error_log("DEBUG processarReagendamento - Total de datas convertidas: " . count($datasConvertidas));
+            
             if (empty($datasConvertidas)) {
+                error_log("DEBUG processarReagendamento - Nenhuma data foi convertida com sucesso");
                 $this->view('token.error', [
                     'title' => 'Dados Inválidos',
                     'message' => 'Por favor, selecione pelo menos uma nova data e horário válidos.',
