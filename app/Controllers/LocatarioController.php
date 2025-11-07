@@ -1107,37 +1107,10 @@ class LocatarioController extends Controller
         }
         
         switch ($etapa) {
-            case 1: // Dados Pessoais
+            case 1: // Dados e Endereço
                 $nome = trim($this->input('nome_completo'));
                 $cpf = trim($this->input('cpf'));
                 $whatsapp = trim($this->input('whatsapp'));
-                
-                // Validações
-                if (empty($nome) || empty($cpf) || empty($whatsapp)) {
-                    $this->redirect(url($instancia . '/solicitacao-manual?error=' . urlencode('Todos os campos são obrigatórios')));
-                    return;
-                }
-                
-                // Validar CPF
-                $solicitacaoManualModel = new \App\Models\SolicitacaoManual();
-                if (!$solicitacaoManualModel->validarCPF($cpf)) {
-                    $this->redirect(url($instancia . '/solicitacao-manual?error=' . urlencode('CPF inválido')));
-                    return;
-                }
-                
-                // Validar WhatsApp
-                $whatsappLimpo = preg_replace('/\D/', '', $whatsapp);
-                if (strlen($whatsappLimpo) < 10 || strlen($whatsappLimpo) > 11) {
-                    $this->redirect(url($instancia . '/solicitacao-manual?error=' . urlencode('WhatsApp inválido')));
-                    return;
-                }
-                
-                $_SESSION['solicitacao_manual']['nome_completo'] = $nome;
-                $_SESSION['solicitacao_manual']['cpf'] = $cpf;
-                $_SESSION['solicitacao_manual']['whatsapp'] = $whatsapp;
-                break;
-                
-            case 2: // Endereço
                 $tipoImovel = $this->input('tipo_imovel');
                 $subtipoImovel = $this->input('subtipo_imovel');
                 $cep = trim($this->input('cep'));
@@ -1147,14 +1120,30 @@ class LocatarioController extends Controller
                 $bairro = trim($this->input('bairro'));
                 $cidade = trim($this->input('cidade'));
                 $estado = trim($this->input('estado'));
-                
-                // Validações
-                if (empty($tipoImovel) || empty($cep) || empty($endereco) || 
-                    empty($numero) || empty($bairro) || empty($cidade) || empty($estado)) {
-                    $this->redirect(url($instancia . '/solicitacao-manual/etapa/2?error=' . urlencode('Todos os campos obrigatórios devem ser preenchidos')));
+                $numeroContrato = trim($this->input('numero_contrato'));
+
+                if (empty($nome) || empty($cpf) || empty($whatsapp) || empty($tipoImovel) ||
+                    empty($cep) || empty($endereco) || empty($numero) || empty($bairro) ||
+                    empty($cidade) || empty($estado)) {
+                    $this->redirect(url($instancia . '/solicitacao-manual?error=' . urlencode('Preencha todos os dados obrigatórios antes de continuar')));
                     return;
                 }
-                
+
+                $solicitacaoManualModel = new \App\Models\SolicitacaoManual();
+                if (!$solicitacaoManualModel->validarCPF($cpf)) {
+                    $this->redirect(url($instancia . '/solicitacao-manual?error=' . urlencode('CPF inválido')));
+                    return;
+                }
+
+                $whatsappLimpo = preg_replace('/\D/', '', $whatsapp);
+                if (strlen($whatsappLimpo) < 10 || strlen($whatsappLimpo) > 11) {
+                    $this->redirect(url($instancia . '/solicitacao-manual?error=' . urlencode('WhatsApp inválido')));
+                    return;
+                }
+
+                $_SESSION['solicitacao_manual']['nome_completo'] = $nome;
+                $_SESSION['solicitacao_manual']['cpf'] = $cpf;
+                $_SESSION['solicitacao_manual']['whatsapp'] = $whatsapp;
                 $_SESSION['solicitacao_manual']['tipo_imovel'] = $tipoImovel;
                 $_SESSION['solicitacao_manual']['subtipo_imovel'] = $subtipoImovel;
                 $_SESSION['solicitacao_manual']['cep'] = $cep;
@@ -1164,31 +1153,43 @@ class LocatarioController extends Controller
                 $_SESSION['solicitacao_manual']['bairro'] = $bairro;
                 $_SESSION['solicitacao_manual']['cidade'] = $cidade;
                 $_SESSION['solicitacao_manual']['estado'] = $estado;
+                $_SESSION['solicitacao_manual']['numero_contrato'] = $numeroContrato;
                 break;
-                
-            case 3: // Serviço
+
+            case 2: // Serviço
                 $categoriaId = $this->input('categoria_id');
                 $subcategoriaId = $this->input('subcategoria_id');
-                $descricaoProblema = trim($this->input('descricao_problema'));
-                
-                // Validações
-                if (empty($categoriaId) || empty($subcategoriaId) || empty($descricaoProblema)) {
-                    $this->redirect(url($instancia . '/solicitacao-manual/etapa/3?error=' . urlencode('Todos os campos são obrigatórios')));
+
+                if (empty($categoriaId) || empty($subcategoriaId)) {
+                    $this->redirect(url($instancia . '/solicitacao-manual/etapa/2?error=' . urlencode('Selecione a categoria e o tipo de serviço para continuar')));
                     return;
                 }
-                
+
                 $_SESSION['solicitacao_manual']['categoria_id'] = $categoriaId;
                 $_SESSION['solicitacao_manual']['subcategoria_id'] = $subcategoriaId;
-                $_SESSION['solicitacao_manual']['descricao_problema'] = $descricaoProblema;
                 break;
-                
-            case 4: // Fotos e Horários
-                // Processar upload de fotos
+
+            case 3: // Descrição + Fotos
+                $localManutencao = trim($this->input('local_manutencao'));
+                $descricaoProblema = trim($this->input('descricao_problema'));
+
+                if (empty($descricaoProblema)) {
+                    $this->redirect(url($instancia . '/solicitacao-manual/etapa/3?error=' . urlencode('Descreva o problema para continuar')));
+                    return;
+                }
+
+                // Upload de fotos (agora nesta etapa)
                 $fotos = [];
                 if (!empty($_FILES['fotos']['name'][0])) {
                     $fotos = $this->processarUploadFotos();
                 }
-                
+
+                $_SESSION['solicitacao_manual']['local_manutencao'] = $localManutencao;
+                $_SESSION['solicitacao_manual']['descricao_problema'] = $descricaoProblema;
+                $_SESSION['solicitacao_manual']['fotos'] = $fotos;
+                break;
+
+            case 4: // Agendamento (somente horários)
                 // Horários preferenciais
                 $horariosRaw = $this->input('horarios_opcoes');
                 $horarios = [];
@@ -1203,7 +1204,6 @@ class LocatarioController extends Controller
                     return;
                 }
                 
-                $_SESSION['solicitacao_manual']['fotos'] = $fotos;
                 $_SESSION['solicitacao_manual']['horarios_preferenciais'] = $horarios;
                 break;
                 
@@ -1277,6 +1277,8 @@ class LocatarioController extends Controller
             'estado' => $dados['estado'],
             'categoria_id' => $dados['categoria_id'],
             'subcategoria_id' => $dados['subcategoria_id'],
+            'numero_contrato' => $dados['numero_contrato'] ?? null,
+            'local_manutencao' => $dados['local_manutencao'] ?? null,
             'descricao_problema' => $dados['descricao_problema'],
             'horarios_preferenciais' => $dados['horarios_preferenciais'] ?? [],
             'fotos' => $dados['fotos'] ?? [],

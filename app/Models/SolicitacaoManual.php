@@ -11,7 +11,7 @@ class SolicitacaoManual extends Model
     protected array $fillable = [
         'imobiliaria_id', 'nome_completo', 'cpf', 'whatsapp',
         'tipo_imovel', 'subtipo_imovel', 'cep', 'endereco', 'numero', 
-        'complemento', 'bairro', 'cidade', 'estado',
+        'complemento', 'bairro', 'cidade', 'estado', 'numero_contrato',
         'categoria_id', 'subcategoria_id', 'descricao_problema',
         'horarios_preferenciais', 'fotos', 'termos_aceitos',
         'status_id', 'migrada_para_solicitacao_id', 'migrada_em', 

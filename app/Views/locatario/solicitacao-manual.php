@@ -13,10 +13,10 @@ $etapaAtual = (int)$etapaAtual;
 
 // Definir steps
 $steps = [
-    1 => ['nome' => 'Dados Pessoais', 'icone' => 'fas fa-user'],
-    2 => ['nome' => 'Endereço', 'icone' => 'fas fa-map-marker-alt'],
-    3 => ['nome' => 'Serviço', 'icone' => 'fas fa-cog'],
-    4 => ['nome' => 'Fotos e Horários', 'icone' => 'fas fa-images'],
+    1 => ['nome' => 'Dados', 'icone' => 'fas fa-user'],
+    2 => ['nome' => 'Serviço', 'icone' => 'fas fa-cog'],
+    3 => ['nome' => 'Descrição', 'icone' => 'fas fa-file-alt'],
+    4 => ['nome' => 'Agendamento', 'icone' => 'fas fa-calendar-alt'],
     5 => ['nome' => 'Confirmação', 'icone' => 'fas fa-check']
 ];
 ?>
@@ -46,25 +46,28 @@ $steps = [
             <div class="mb-8">
                 <div class="flex items-center justify-between">
                     <?php foreach ($steps as $numero => $step): ?>
+                        <?php
+                        $status = $numero < $etapaAtual ? 'complete' : ($numero == $etapaAtual ? 'current' : 'upcoming');
+                        $circleClasses = [
+                            'complete' => 'bg-green-600 border-green-600 text-white',
+                            'current' => 'bg-green-600 border-green-600 text-white',
+                            'upcoming' => 'bg-transparent border-gray-500 text-gray-400'
+                        ][$status];
+                        $textClasses = $status === 'upcoming' ? 'text-gray-400' : 'text-green-500';
+                        ?>
                         <div class="flex items-center <?= $numero < count($steps) ? 'flex-1' : '' ?>">
-                            <!-- Step Circle -->
                             <div class="flex flex-col items-center">
-                                <div class="flex items-center justify-center w-12 h-12 rounded-full border-2 <?= $numero <= $etapaAtual ? 'bg-green-600 border-green-600 text-white' : 'border-gray-300 text-gray-400 bg-white' ?>">
-                                    <?php if ($numero < $etapaAtual): ?>
+                                <div class="flex items-center justify-center w-12 h-12 rounded-full border-2 <?= $circleClasses ?>">
+                                    <?php if ($status === 'complete'): ?>
                                         <i class="fas fa-check"></i>
                                     <?php else: ?>
-                                        <i class="<?= $step['icone'] ?>"></i>
+                                        <span class="font-semibold"><?= $numero ?></span>
                                     <?php endif; ?>
                                 </div>
-                                <p class="text-xs mt-2 font-medium <?= $numero <= $etapaAtual ? 'text-green-600' : 'text-gray-400' ?>">
+                                <p class="text-xs mt-2 font-medium <?= $textClasses ?>">
                                     <?= $step['nome'] ?>
                                 </p>
                             </div>
-                            
-                            <!-- Connector Line -->
-                            <?php if ($numero < count($steps)): ?>
-                                <div class="flex-1 h-0.5 mx-2 <?= $numero < $etapaAtual ? 'bg-green-600' : 'bg-gray-300' ?>"></div>
-                            <?php endif; ?>
                         </div>
                     <?php endforeach; ?>
                 </div>
@@ -101,6 +104,10 @@ $steps = [
                     <div class="p-6">
                         <form method="POST" action="<?= url($instancia . '/solicitacao-manual') ?>" class="space-y-6">
                             <?= \App\Core\View::csrfField() ?>
+                            <?php 
+                            $tipoAtual = $dados['tipo_imovel'] ?? 'RESIDENCIAL';
+                            $subtipoAtual = $dados['subtipo_imovel'] ?? '';
+                            ?>
                             
                             <!-- Nome Completo -->
                             <div>
@@ -138,6 +145,145 @@ $steps = [
                                 <p class="text-xs text-gray-500 mt-1">Informe um WhatsApp válido para contato</p>
                             </div>
                             
+                            <div class="pt-6 border-t border-gray-200">
+                                <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                                    <i class="fas fa-map-marker-alt text-green-600 mr-2"></i>
+                                    Endereço do Imóvel Alugado
+                                </h3>
+
+                                <!-- Finalidade da Locação -->
+                                <div class="mb-6">
+                                    <label for="finalidade_locacao" class="block text-sm font-medium text-gray-700 mb-2">
+                                        Finalidade da Locação <span class="text-red-500">*</span>
+                                    </label>
+                                    <select id="finalidade_locacao" name="tipo_imovel" required
+                                            class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500">
+                                        <option value="RESIDENCIAL" <?= $tipoAtual === 'RESIDENCIAL' ? 'selected' : '' ?>>Residencial</option>
+                                        <option value="COMERCIAL" <?= $tipoAtual === 'COMERCIAL' ? 'selected' : '' ?>>Comercial</option>
+                                    </select>
+                                </div>
+
+                                <!-- Tipo de Imóvel (Casa/Apartamento) - apenas para Residencial -->
+                                <div id="subtipo-container" class="<?= $tipoAtual === 'RESIDENCIAL' ? '' : 'hidden' ?> mb-6">
+                                    <label class="block text-sm font-medium text-gray-700 mb-3">
+                                        Tipo de Imóvel
+                                    </label>
+                                    <div class="flex items-center gap-6">
+                                        <label class="inline-flex items-center gap-2 cursor-pointer">
+                                            <input type="radio" name="subtipo_imovel" value="CASA"
+                                                   class="h-4 w-4 text-green-600 border-gray-300 subtipo-imovel-radio"
+                                                   <?= $subtipoAtual === 'CASA' ? 'checked' : '' ?>>
+                                            <i class="fas fa-home text-gray-700"></i>
+                                            <span class="text-sm text-gray-900">Casa</span>
+                                        </label>
+                                        <label class="inline-flex items-center gap-2 cursor-pointer">
+                                            <input type="radio" name="subtipo_imovel" value="APARTAMENTO"
+                                                   class="h-4 w-4 text-green-600 border-gray-300 subtipo-imovel-radio"
+                                                   <?= $subtipoAtual === 'APARTAMENTO' ? 'checked' : '' ?>>
+                                            <i class="fas fa-building text-gray-700"></i>
+                                            <span class="text-sm text-gray-900">Apartamento</span>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <!-- CEP -->
+                                <div class="mb-6">
+                                    <label for="cep" class="block text-sm font-medium text-gray-700 mb-2">
+                                        CEP <span class="text-red-500">*</span>
+                                    </label>
+                                    <div class="flex gap-2">
+                                        <input type="text" id="cep" name="cep" required
+                                               class="flex-1 border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
+                                               placeholder="00000-000"
+                                               maxlength="9"
+                                               value="<?= htmlspecialchars($dados['cep'] ?? '') ?>">
+                                        <button type="button" id="btn-buscar-cep"
+                                                class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+                                            <i class="fas fa-search mr-2"></i>Buscar
+                                        </button>
+                                    </div>
+                                    <p class="text-xs text-gray-500 mt-1">Informe o CEP para preenchimento automático</p>
+                                </div>
+
+                                <!-- Número do Contrato -->
+                                <div class="mb-6">
+                                    <label for="numero_contrato" class="block text-sm font-medium text-gray-700 mb-2">
+                                        Número do Contrato do Locatário
+                                    </label>
+                                    <input type="text" id="numero_contrato" name="numero_contrato"
+                                           class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
+                                           placeholder="Informe o número do contrato do locatário"
+                                           value="<?= htmlspecialchars($dados['numero_contrato'] ?? '') ?>">
+                                </div>
+
+                                <!-- Endereço -->
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                                    <div class="md:col-span-2">
+                                        <label for="endereco" class="block text-sm font-medium text-gray-700 mb-2">
+                                            Endereço <span class="text-red-500">*</span>
+                                        </label>
+                                        <input type="text" id="endereco" name="endereco" required
+                                               class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
+                                               placeholder="Rua, Avenida..."
+                                               value="<?= htmlspecialchars($dados['endereco'] ?? '') ?>">
+                                    </div>
+                                    <div>
+                                        <label for="numero" class="block text-sm font-medium text-gray-700 mb-2">
+                                            Número <span class="text-red-500">*</span>
+                                        </label>
+                                        <input type="text" id="numero" name="numero" required
+                                               class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
+                                               placeholder="Nº"
+                                               value="<?= htmlspecialchars($dados['numero'] ?? '') ?>">
+                                    </div>
+                                </div>
+
+                                <!-- Complemento -->
+                                <div class="mb-6">
+                                    <label for="complemento" class="block text-sm font-medium text-gray-700 mb-2">
+                                        Complemento
+                                    </label>
+                                    <input type="text" id="complemento" name="complemento"
+                                           class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
+                                           placeholder="Apto, Bloco, Sala..."
+                                           value="<?= htmlspecialchars($dados['complemento'] ?? '') ?>">
+                                </div>
+
+                                <!-- Bairro, Cidade, Estado -->
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div>
+                                        <label for="bairro" class="block text-sm font-medium text-gray-700 mb-2">
+                                            Bairro <span class="text-red-500">*</span>
+                                        </label>
+                                        <input type="text" id="bairro" name="bairro" required
+                                               class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
+                                               value="<?= htmlspecialchars($dados['bairro'] ?? '') ?>">
+                                    </div>
+                                    <div>
+                                        <label for="cidade" class="block text-sm font-medium text-gray-700 mb-2">
+                                            Cidade <span class="text-red-500">*</span>
+                                        </label>
+                                        <input type="text" id="cidade" name="cidade" required
+                                               class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
+                                               value="<?= htmlspecialchars($dados['cidade'] ?? '') ?>">
+                                    </div>
+                                    <div>
+                                        <label for="estado" class="block text-sm font-medium text-gray-700 mb-2">
+                                            Estado <span class="text-red-500">*</span>
+                                        </label>
+                                        <select id="estado" name="estado" required
+                                                class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500">
+                                            <option value="">Selecione</option>
+                                            <?php
+                                            $estados = ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'];
+                                            foreach ($estados as $uf): ?>
+                                                <option value="<?= $uf ?>" <?= ($dados['estado'] ?? '') === $uf ? 'selected' : '' ?>><?= $uf ?></option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
                             <!-- Navigation -->
                             <div class="flex justify-between pt-6">
                                 <a href="<?= url($instancia) ?>" 
@@ -153,187 +299,17 @@ $steps = [
                     </div>
                     
                 <?php elseif ($etapaAtual == 2): ?>
-                    <!-- ETAPA 2: ENDEREÇO -->
-                    <div class="px-6 py-4 border-b border-gray-200">
-                        <h2 class="text-xl font-semibold text-gray-900">
-                            <i class="fas fa-map-marker-alt mr-2 text-green-600"></i>
-                            Endereço do Imóvel
-                        </h2>
-                        <p class="text-sm text-gray-600 mt-1">Informe o endereço onde o serviço será realizado</p>
-                    </div>
-                    
-                    <div class="p-6">
-                        <form method="POST" action="<?= url($instancia . '/solicitacao-manual/etapa/2') ?>" class="space-y-6">
-                            <?= \App\Core\View::csrfField() ?>
-                            
-                            <!-- Tipo de Imóvel -->
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-3">
-                                    Tipo de Imóvel <span class="text-red-500">*</span>
-                                </label>
-                                <div class="grid grid-cols-2 gap-4">
-                                    <label class="relative">
-                                        <input type="radio" name="tipo_imovel" value="RESIDENCIAL" required 
-                                               class="sr-only tipo-imovel-radio"
-                                               <?= ($dados['tipo_imovel'] ?? '') === 'RESIDENCIAL' ? 'checked' : '' ?>>
-                                        <div class="border-2 rounded-lg p-4 cursor-pointer text-center transition-all tipo-imovel-card"
-                                             data-tipo="RESIDENCIAL">
-                                            <i class="fas fa-home text-2xl mb-2"></i>
-                                            <p class="font-medium">Residencial</p>
-                                        </div>
-                                    </label>
-                                    <label class="relative">
-                                        <input type="radio" name="tipo_imovel" value="COMERCIAL" required 
-                                               class="sr-only tipo-imovel-radio"
-                                               <?= ($dados['tipo_imovel'] ?? '') === 'COMERCIAL' ? 'checked' : '' ?>>
-                                        <div class="border-2 rounded-lg p-4 cursor-pointer text-center transition-all tipo-imovel-card"
-                                             data-tipo="COMERCIAL">
-                                            <i class="fas fa-building text-2xl mb-2"></i>
-                                            <p class="font-medium">Comercial</p>
-                                        </div>
-                                    </label>
-                                </div>
-                            </div>
-                            
-                            <!-- Subtipo (condicional para RESIDENCIAL) -->
-                            <div id="subtipo-container" class="hidden">
-                                <label class="block text-sm font-medium text-gray-700 mb-3">
-                                    Subtipo do Imóvel
-                                </label>
-                                <div class="grid grid-cols-2 gap-4">
-                                    <label class="relative">
-                                        <input type="radio" name="subtipo_imovel" value="CASA" 
-                                               class="sr-only subtipo-imovel-radio"
-                                               <?= ($dados['subtipo_imovel'] ?? '') === 'CASA' ? 'checked' : '' ?>>
-                                        <div class="border-2 rounded-lg p-4 cursor-pointer text-center transition-all subtipo-imovel-card">
-                                            <i class="fas fa-home text-xl mb-2"></i>
-                                            <p class="font-medium">Casa</p>
-                                        </div>
-                                    </label>
-                                    <label class="relative">
-                                        <input type="radio" name="subtipo_imovel" value="APARTAMENTO" 
-                                               class="sr-only subtipo-imovel-radio"
-                                               <?= ($dados['subtipo_imovel'] ?? '') === 'APARTAMENTO' ? 'checked' : '' ?>>
-                                        <div class="border-2 rounded-lg p-4 cursor-pointer text-center transition-all subtipo-imovel-card">
-                                            <i class="fas fa-building text-xl mb-2"></i>
-                                            <p class="font-medium">Apartamento</p>
-                                        </div>
-                                    </label>
-                                </div>
-                            </div>
-                            
-                            <!-- CEP -->
-                            <div>
-                                <label for="cep" class="block text-sm font-medium text-gray-700 mb-2">
-                                    CEP <span class="text-red-500">*</span>
-                                </label>
-                                <div class="flex gap-2">
-                                    <input type="text" id="cep" name="cep" required
-                                           class="flex-1 border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
-                                           placeholder="00000-000"
-                                           maxlength="9"
-                                           value="<?= htmlspecialchars($dados['cep'] ?? '') ?>">
-                                    <button type="button" id="btn-buscar-cep"
-                                            class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
-                                        <i class="fas fa-search mr-2"></i>Buscar
-                                    </button>
-                                </div>
-                                <p class="text-xs text-gray-500 mt-1">Informe o CEP para preenchimento automático</p>
-                            </div>
-                            
-                            <!-- Endereço -->
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <div class="md:col-span-2">
-                                    <label for="endereco" class="block text-sm font-medium text-gray-700 mb-2">
-                                        Endereço <span class="text-red-500">*</span>
-                                    </label>
-                                    <input type="text" id="endereco" name="endereco" required
-                                           class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
-                                           placeholder="Rua, Avenida..."
-                                           value="<?= htmlspecialchars($dados['endereco'] ?? '') ?>">
-                                </div>
-                                <div>
-                                    <label for="numero" class="block text-sm font-medium text-gray-700 mb-2">
-                                        Número <span class="text-red-500">*</span>
-                                    </label>
-                                    <input type="text" id="numero" name="numero" required
-                                           class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
-                                           placeholder="Nº"
-                                           value="<?= htmlspecialchars($dados['numero'] ?? '') ?>">
-                                </div>
-                            </div>
-                            
-                            <!-- Complemento -->
-                            <div>
-                                <label for="complemento" class="block text-sm font-medium text-gray-700 mb-2">
-                                    Complemento
-                                </label>
-                                <input type="text" id="complemento" name="complemento"
-                                       class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
-                                       placeholder="Apto, Bloco, Sala..."
-                                       value="<?= htmlspecialchars($dados['complemento'] ?? '') ?>">
-                            </div>
-                            
-                            <!-- Bairro, Cidade, Estado -->
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <div>
-                                    <label for="bairro" class="block text-sm font-medium text-gray-700 mb-2">
-                                        Bairro <span class="text-red-500">*</span>
-                                    </label>
-                                    <input type="text" id="bairro" name="bairro" required
-                                           class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
-                                           value="<?= htmlspecialchars($dados['bairro'] ?? '') ?>">
-                                </div>
-                                <div>
-                                    <label for="cidade" class="block text-sm font-medium text-gray-700 mb-2">
-                                        Cidade <span class="text-red-500">*</span>
-                                    </label>
-                                    <input type="text" id="cidade" name="cidade" required
-                                           class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
-                                           value="<?= htmlspecialchars($dados['cidade'] ?? '') ?>">
-                                </div>
-                                <div>
-                                    <label for="estado" class="block text-sm font-medium text-gray-700 mb-2">
-                                        Estado <span class="text-red-500">*</span>
-                                    </label>
-                                    <select id="estado" name="estado" required
-                                            class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500">
-                                        <option value="">Selecione</option>
-                                        <?php
-                                        $estados = ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'];
-                                        foreach ($estados as $uf): ?>
-                                            <option value="<?= $uf ?>" <?= ($dados['estado'] ?? '') === $uf ? 'selected' : '' ?>><?= $uf ?></option>
-                                        <?php endforeach; ?>
-                                    </select>
-                                </div>
-                            </div>
-                            
-                            <!-- Navigation -->
-                            <div class="flex justify-between pt-6">
-                                <a href="<?= url($instancia . '/solicitacao-manual') ?>" 
-                                   class="px-6 py-3 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors">
-                                    <i class="fas fa-arrow-left mr-2"></i>Voltar
-                                </a>
-                                <button type="submit"
-                                        class="px-6 py-3 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors">
-                                    Continuar <i class="fas fa-arrow-right ml-2"></i>
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                    
-                <?php elseif ($etapaAtual == 3): ?>
-                    <!-- ETAPA 3: SERVIÇO -->
+                    <!-- ETAPA 2: SERVIÇO -->
                     <div class="px-6 py-4 border-b border-gray-200">
                         <h2 class="text-xl font-semibold text-gray-900">
                             <i class="fas fa-cog mr-2 text-green-600"></i>
                             Serviço Necessário
                         </h2>
-                        <p class="text-sm text-gray-600 mt-1">Selecione o tipo de serviço que você precisa</p>
+                        <p class="text-sm text-gray-600 mt-1">Escolha a categoria do serviço que melhor representa sua necessidade</p>
                     </div>
                     
                     <div class="p-6">
-                        <form method="POST" action="<?= url($instancia . '/solicitacao-manual/etapa/3') ?>" class="space-y-6">
+                        <form method="POST" action="<?= url($instancia . '/solicitacao-manual/etapa/2') ?>" class="space-y-6">
                             <?= \App\Core\View::csrfField() ?>
                             
                             <!-- Categorias -->
@@ -342,7 +318,6 @@ $steps = [
                                 <div class="space-y-3">
                                     <?php if (!empty($categorias)): ?>
                                         <?php 
-                                        // Filtrar categorias pelo tipo de imóvel
                                         $tipoImovel = $dados['tipo_imovel'] ?? 'RESIDENCIAL';
                                         $categoriasFiltradas = array_filter($categorias, function($cat) use ($tipoImovel) {
                                             return empty($cat['tipo_assistencia']) || 
@@ -406,14 +381,70 @@ $steps = [
                                 </div>
                             </div>
                             
-                            <!-- Descrição do Problema -->
-                            <div>
-                                <label for="descricao_problema" class="block text-sm font-medium text-gray-700 mb-2">
-                                    Descrição do Problema <span class="text-red-500">*</span>
-                                </label>
-                                <textarea id="descricao_problema" name="descricao_problema" rows="6" required
-                                          class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
-                                          placeholder="Descreva detalhadamente o problema que precisa ser resolvido..."><?= htmlspecialchars($dados['descricao_problema'] ?? '') ?></textarea>
+                            <!-- Navigation -->
+                            <div class="flex justify-between pt-6">
+                                <a href="<?= url($instancia . '/solicitacao-manual') ?>" 
+                                   class="px-6 py-3 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors">
+                                    <i class="fas fa-arrow-left mr-2"></i>Voltar
+                                </a>
+                                <button type="submit"
+                                        class="px-6 py-3 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors">
+                                    Continuar <i class="fas fa-arrow-right ml-2"></i>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                    
+                <?php elseif ($etapaAtual == 3): ?>
+                    <!-- ETAPA 3: DESCRIÇÃO -->
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <h2 class="text-xl font-semibold text-gray-900">
+                            <i class="fas fa-file-alt mr-2 text-green-600"></i>
+                            Descrição do Problema
+                        </h2>
+                        <p class="text-sm text-gray-600 mt-1">Forneça detalhes sobre o serviço necessário. Essas informações nos ajudam a direcionar o técnico certo.</p>
+                    </div>
+                    
+                    <div class="p-6">
+                        <form method="POST" action="<?= url($instancia . '/solicitacao-manual/etapa/3') ?>" enctype="multipart/form-data" class="space-y-6">
+                            <?= \App\Core\View::csrfField() ?>
+                            
+                            <div class="space-y-5">
+                                <div>
+                                    <label for="local_manutencao" class="block text-sm font-medium text-gray-700 mb-2">
+                                        Local do imóvel onde será feita a manutenção
+                                    </label>
+                                    <input type="text" id="local_manutencao" name="local_manutencao"
+                                           class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
+                                           placeholder="Ex.: Fechadura do portão da rua, Banheiro social, Sala principal"
+                                           value="<?= htmlspecialchars($dados['local_manutencao'] ?? '') ?>">
+                                </div>
+
+                                <div>
+                                    <label for="descricao_problema" class="block text-sm font-medium text-gray-700 mb-2">
+                                        Descrição do Problema <span class="text-red-500">*</span>
+                                    </label>
+                                    <textarea id="descricao_problema" name="descricao_problema" rows="6" required
+                                              class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
+                                              placeholder="Descreva detalhadamente o problema que precisa ser resolvido..."><?= htmlspecialchars($dados['descricao_problema'] ?? '') ?></textarea>
+                                    <p class="text-xs text-gray-500 mt-2">Quanto mais detalhes você informar, mais rápido encontraremos a solução ideal.</p>
+                                </div>
+
+                                <!-- Upload de Fotos (Opcional) -->
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                                        Fotos (Opcional)
+                                    </label>
+                                    <p class="text-sm text-gray-500 mb-3">Adicione até 5 fotos (máx. 5MB cada)</p>
+                                    <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-green-400 transition-colors cursor-pointer" 
+                                         onclick="document.getElementById('fotos').click()">
+                                        <i class="fas fa-camera text-4xl text-gray-400 mb-3"></i>
+                                        <p class="text-sm text-gray-600 font-medium">Clique para adicionar uma foto</p>
+                                        <p class="text-xs text-gray-400 mt-1">PNG, JPG até 10MB</p>
+                                    </div>
+                                    <input type="file" id="fotos" name="fotos[]" multiple accept="image/*" class="hidden" onchange="previewPhotos(this)">
+                                    <div id="fotos-preview" class="mt-4 grid grid-cols-2 md:grid-cols-5 gap-4 hidden"></div>
+                                </div>
                             </div>
                             
                             <!-- Navigation -->
@@ -431,38 +462,44 @@ $steps = [
                     </div>
                     
                 <?php elseif ($etapaAtual == 4): ?>
-                    <!-- ETAPA 4: FOTOS E HORÁRIOS -->
+                    <!-- ETAPA 4: AGENDAMENTO -->
                     <div class="px-6 py-4 border-b border-gray-200">
                         <h2 class="text-xl font-semibold text-gray-900">
-                            <i class="fas fa-images mr-2 text-green-600"></i>
-                            Fotos e Horários
+                            <i class="fas fa-calendar-alt mr-2 text-green-600"></i>
+                            Agendamento
                         </h2>
-                        <p class="text-sm text-gray-600 mt-1">Adicione fotos (opcional) e selecione horários de sua preferência</p>
+                        <p class="text-sm text-gray-600 mt-1">Escolha até três horários de preferência para o atendimento</p>
                     </div>
                     
                     <div class="p-6">
-                        <form method="POST" action="<?= url($instancia . '/solicitacao-manual/etapa/4') ?>" enctype="multipart/form-data" class="space-y-6">
+                        <form method="POST" action="<?= url($instancia . '/solicitacao-manual/etapa/4') ?>" class="space-y-6">
                             <?= \App\Core\View::csrfField() ?>
                             
-                            <!-- Upload de Fotos -->
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">
-                                    Fotos do Problema (Opcional)
-                                </label>
-                                <p class="text-sm text-gray-500 mb-3">Adicione até 5 fotos (máx. 5MB cada)</p>
-                                
-                                <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-green-400 transition-colors cursor-pointer" 
-                                     onclick="document.getElementById('fotos').click()">
-                                    <i class="fas fa-camera text-4xl text-gray-400 mb-3"></i>
-                                    <p class="text-sm text-gray-600 font-medium">Clique para adicionar fotos</p>
-                                    <p class="text-xs text-gray-400 mt-1">PNG, JPG até 5MB por arquivo</p>
+                            <!-- Avisos -->
+                            <div class="space-y-4">
+                                <div class="bg-yellow-50 border border-yellow-200 text-yellow-800 rounded-lg p-4">
+                                    <div class="flex items-start">
+                                        <i class="fas fa-exclamation-triangle mt-1 mr-3"></i>
+                                        <div>
+                                            <p class="font-semibold">Condomínio</p>
+                                            <p class="text-sm">Se o serviço for realizado em apartamento ou condomínio, é obrigatório comunicar previamente a administração ou portaria sobre a visita técnica agendada.</p>
+                                        </div>
+                                    </div>
                                 </div>
-                                
-                                <input type="file" id="fotos" name="fotos[]" multiple accept="image/*" 
-                                       class="hidden" onchange="previewPhotos(this)">
-                                
-                                <!-- Preview -->
-                                <div id="fotos-preview" class="mt-4 grid grid-cols-2 md:grid-cols-5 gap-4 hidden"></div>
+                                <div class="bg-yellow-50 border border-yellow-200 text-yellow-800 rounded-lg p-4">
+                                    <div class="flex items-start">
+                                        <i class="fas fa-exclamation-triangle mt-1 mr-3"></i>
+                                        <div>
+                                            <p class="font-semibold">Responsável no Local</p>
+                                            <p class="text-sm">É obrigatória a presença de uma pessoa maior de 18 anos no local durante todo o período de execução do serviço para acompanhar e autorizar os trabalhos.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="bg-blue-50 border border-blue-200 text-blue-900 rounded-lg p-4">
+                                    <p class="font-semibold mb-2">Selecione até 3 datas e horários preferenciais</p>
+                                    <p class="text-sm mb-1">Após sua escolha, o prestador verificará a disponibilidade. Caso algum dos horários não esteja livre, poderão ser sugeridas novas opções.</p>
+                                    <p class="text-sm">Você receberá uma notificação confirmando a data e o horário final definidos (via WhatsApp e aplicativo).</p>
+                                </div>
                             </div>
                             
                             <!-- Horários Preferenciais -->
@@ -475,12 +512,18 @@ $steps = [
                                 <!-- Data -->
                                 <div class="mb-4">
                                     <label for="data_selecionada" class="block text-sm font-medium text-gray-700 mb-2">
-                                        Data
+                                        Selecione uma Data
                                     </label>
-                                    <input type="date" id="data_selecionada" 
-                                           class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
-                                           min="<?= date('Y-m-d', strtotime('+1 day')) ?>"
-                                           max="<?= date('Y-m-d', strtotime('+30 days')) ?>">
+                                    <div id="data-container" class="relative cursor-pointer">
+                                        <input type="date" id="data_selecionada"
+                                               class="block w-full border border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
+                                               min="<?= date('Y-m-d', strtotime('+1 day')) ?>"
+                                               max="<?= date('Y-m-d', strtotime('+30 days')) ?>">
+                                    </div>
+                                    <div class="mt-2 flex items-center text-xs text-gray-500">
+                                        <i class="fas fa-info-circle mr-1.5"></i>
+                                        <span>Atendimentos disponíveis apenas em dias úteis (segunda a sexta-feira)</span>
+                                    </div>
                                 </div>
                                 
                                 <!-- Horário -->
@@ -491,26 +534,26 @@ $steps = [
                                     <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
                                         <label class="relative">
                                             <input type="radio" name="horario_temp" value="08:00-11:00" class="sr-only horario-radio">
-                                            <div class="border-2 border-gray-200 rounded-lg p-3 text-center cursor-pointer hover:border-green-300 transition-colors horario-card">
-                                                <div class="text-sm font-medium text-gray-900">08h - 11h</div>
+                                            <div class="border-2 border-gray-200 rounded-lg p-3 text-center cursor-pointer hover:border-green-300 transition-all horario-card">
+                                        <div class="text-sm font-medium text-gray-900">08h00 às 11h00</div>
                                             </div>
                                         </label>
                                         <label class="relative">
                                             <input type="radio" name="horario_temp" value="11:00-14:00" class="sr-only horario-radio">
-                                            <div class="border-2 border-gray-200 rounded-lg p-3 text-center cursor-pointer hover:border-green-300 transition-colors horario-card">
-                                                <div class="text-sm font-medium text-gray-900">11h - 14h</div>
+                                            <div class="border-2 border-gray-200 rounded-lg p-3 text-center cursor-pointer hover:border-green-300 transition-all horario-card">
+                                        <div class="text-sm font-medium text-gray-900">11h00 às 14h00</div>
                                             </div>
                                         </label>
                                         <label class="relative">
                                             <input type="radio" name="horario_temp" value="14:00-17:00" class="sr-only horario-radio">
-                                            <div class="border-2 border-gray-200 rounded-lg p-3 text-center cursor-pointer hover:border-green-300 transition-colors horario-card">
-                                                <div class="text-sm font-medium text-gray-900">14h - 17h</div>
+                                            <div class="border-2 border-gray-200 rounded-lg p-3 text-center cursor-pointer hover:border-green-300 transition-all horario-card">
+                                        <div class="text-sm font-medium text-gray-900">14h00 às 17h00</div>
                                             </div>
                                         </label>
                                         <label class="relative">
                                             <input type="radio" name="horario_temp" value="17:00-20:00" class="sr-only horario-radio">
-                                            <div class="border-2 border-gray-200 rounded-lg p-3 text-center cursor-pointer hover:border-green-300 transition-colors horario-card">
-                                                <div class="text-sm font-medium text-gray-900">17h - 20h</div>
+                                            <div class="border-2 border-gray-200 rounded-lg p-3 text-center cursor-pointer hover:border-green-300 transition-all horario-card">
+                                        <div class="text-sm font-medium text-gray-900">17h00 às 20h00</div>
                                             </div>
                                         </label>
                                     </div>
@@ -593,6 +636,20 @@ $steps = [
                                         ?>
                                     </p>
                                 </div>
+
+                                <?php if (!empty($dados['numero_contrato'])): ?>
+                                    <div>
+                                        <span class="text-sm font-medium text-gray-500">Número do Contrato:</span>
+                                        <p class="text-sm text-gray-900"><?= htmlspecialchars($dados['numero_contrato']) ?></p>
+                                    </div>
+                                <?php endif; ?>
+
+                                <?php if (!empty($dados['local_manutencao'])): ?>
+                                    <div>
+                                        <span class="text-sm font-medium text-gray-500">Local da Manutenção:</span>
+                                        <p class="text-sm text-gray-900"><?= htmlspecialchars($dados['local_manutencao']) ?></p>
+                                    </div>
+                                <?php endif; ?>
                                 
                                 <!-- Descrição -->
                                 <div>
@@ -748,53 +805,27 @@ $steps = [
         }
     });
     
-    // Tipo de imóvel - mostrar/ocultar subtipo
-    document.querySelectorAll('.tipo-imovel-radio').forEach(radio => {
-        radio.addEventListener('change', function() {
-            const subtipoContainer = document.getElementById('subtipo-container');
-            
-            // Visual dos cards
-            document.querySelectorAll('.tipo-imovel-card').forEach(card => {
-                card.classList.remove('border-green-500', 'bg-green-50');
-                card.classList.add('border-gray-200');
-            });
-            
-            const selectedCard = this.closest('label').querySelector('.tipo-imovel-card');
-            selectedCard.classList.remove('border-gray-200');
-            selectedCard.classList.add('border-green-500', 'bg-green-50');
-            
-            // Mostrar subtipo apenas para RESIDENCIAL
-            if (this.value === 'RESIDENCIAL') {
+    // Finalidade (RESIDENCIAL/COMERCIAL) - mostrar/ocultar "Tipo de Imóvel"
+    (function() {
+        const selectFinalidade = document.getElementById('finalidade_locacao');
+        const subtipoContainer = document.getElementById('subtipo-container');
+        if (!selectFinalidade) return;
+        function atualizarVisibilidadeSubtipo() {
+            if (selectFinalidade.value === 'RESIDENCIAL') {
                 subtipoContainer.classList.remove('hidden');
             } else {
                 subtipoContainer.classList.add('hidden');
-                // Limpar seleção de subtipo
                 document.querySelectorAll('.subtipo-imovel-radio').forEach(r => r.checked = false);
             }
-        });
-    });
-    
-    // Subtipo de imóvel - visual
-    document.querySelectorAll('.subtipo-imovel-radio').forEach(radio => {
-        radio.addEventListener('change', function() {
-            document.querySelectorAll('.subtipo-imovel-card').forEach(card => {
-                card.classList.remove('border-green-500', 'bg-green-50');
-                card.classList.add('border-gray-200');
-            });
-            
-            const selectedCard = this.closest('label').querySelector('.subtipo-imovel-card');
-            selectedCard.classList.remove('border-gray-200');
-            selectedCard.classList.add('border-green-500', 'bg-green-50');
-        });
-    });
-    
-    // Inicializar estados dos cards de tipo/subtipo se já tiver seleção
-    document.addEventListener('DOMContentLoaded', function() {
-        const tipoSelecionado = document.querySelector('.tipo-imovel-radio:checked');
-        if (tipoSelecionado) {
-            tipoSelecionado.dispatchEvent(new Event('change'));
         }
-        
+        selectFinalidade.addEventListener('change', atualizarVisibilidadeSubtipo);
+        atualizarVisibilidadeSubtipo();
+    })();
+    
+    // Subtipo de imóvel - radios simples (sem estilização de cards)
+    
+    // Inicializar estados visuais do subtipo e dos cards de subtipo
+    document.addEventListener('DOMContentLoaded', function() {
         const subtipoSelecionado = document.querySelector('.subtipo-imovel-radio:checked');
         if (subtipoSelecionado) {
             subtipoSelecionado.dispatchEvent(new Event('change'));
@@ -922,6 +953,44 @@ $steps = [
     // Sistema de horários
     let horariosEscolhidos = [];
     
+    const dataInput = document.getElementById('data_selecionada');
+    const dataContainer = document.getElementById('data-container');
+
+    const abrirCalendario = function() {
+        if (!dataInput) return;
+        try {
+            if (dataInput.showPicker) {
+                dataInput.showPicker();
+            } else {
+                dataInput.focus();
+                dataInput.click();
+            }
+        } catch (error) {
+            dataInput.focus();
+        }
+    };
+
+    dataContainer?.addEventListener('click', function(event) {
+        if (event.target !== dataInput) {
+            abrirCalendario();
+        }
+    });
+
+    dataInput?.addEventListener('click', abrirCalendario);
+
+    dataInput?.addEventListener('change', function() {
+        if (!this.value) return;
+
+        const dataSelecionada = new Date(this.value + 'T12:00:00');
+        const diaSemana = dataSelecionada.getDay();
+
+        if (diaSemana === 0 || diaSemana === 6) {
+            const nomeDia = diaSemana === 0 ? 'domingo' : 'sábado';
+            alert('⚠️ Atendimentos não são realizados aos fins de semana.\n\nA data selecionada é um ' + nomeDia + '.\nPor favor, selecione um dia útil (segunda a sexta-feira).');
+            this.value = '';
+        }
+    });
+
     document.querySelectorAll('.horario-radio').forEach(radio => {
         radio.addEventListener('change', function() {
             const data = document.getElementById('data_selecionada').value;
