@@ -192,12 +192,12 @@ $router->post('/admin/categorias/{id}/delete', 'CategoriasController@destroy', [
 $router->post('/admin/categorias/{id}/toggle-status', 'CategoriasController@toggleStatus', ['auth', 'admin']);
 
 // Subcategorias
-$router->get('/admin/categorias/{categoria_id}/subcategorias/create', 'CategoriasController@createSubcategoria', ['auth', 'admin']);
-$router->post('/admin/categorias/{categoria_id}/subcategorias', 'CategoriasController@storeSubcategoria', ['auth', 'admin']);
-$router->get('/admin/categorias/{categoria_id}/subcategorias/{subcategoria_id}/edit', 'CategoriasController@editSubcategoria', ['auth', 'admin']);
-$router->post('/admin/categorias/{categoria_id}/subcategorias/{subcategoria_id}', 'CategoriasController@updateSubcategoria', ['auth', 'admin']);
-$router->post('/admin/categorias/{categoria_id}/subcategorias/{subcategoria_id}/delete', 'CategoriasController@destroySubcategoria', ['auth', 'admin']);
-$router->post('/admin/categorias/{categoria_id}/subcategorias/{subcategoria_id}/toggle-status', 'CategoriasController@toggleStatusSubcategoria', ['auth', 'admin']);
+$router->get('/admin/categorias/{categoriaId}/subcategorias/create', 'CategoriasController@createSubcategoria', ['auth', 'admin']);
+$router->post('/admin/categorias/{categoriaId}/subcategorias', 'CategoriasController@storeSubcategoria', ['auth', 'admin']);
+$router->get('/admin/categorias/{categoriaId}/subcategorias/{subcategoriaId}/edit', 'CategoriasController@editSubcategoria', ['auth', 'admin']);
+$router->post('/admin/categorias/{categoriaId}/subcategorias/{subcategoriaId}', 'CategoriasController@updateSubcategoria', ['auth', 'admin']);
+$router->post('/admin/categorias/{categoriaId}/subcategorias/{subcategoriaId}/delete', 'CategoriasController@destroySubcategoria', ['auth', 'admin']);
+$router->post('/admin/categorias/{categoriaId}/subcategorias/{subcategoriaId}/toggle-status', 'CategoriasController@toggleStatusSubcategoria', ['auth', 'admin']);
 
 // Gerenciamento de Status
 $router->get('/admin/status', 'StatusController@index', ['auth', 'admin']);

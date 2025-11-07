@@ -14,7 +14,7 @@ ob_start();
         <h2 class="text-2xl font-bold text-gray-900">Categorias</h2>
         <p class="text-sm text-gray-600">Gerencie as categorias e subcategorias de assistência</p>
     </div>
-    <a href="<?= url('categorias/create') ?>" 
+    <a href="<?= url('admin/categorias/create') ?>" 
        class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
         <i class="fas fa-plus mr-2"></i>
         Nova Categoria
@@ -32,7 +32,7 @@ ob_start();
             <i class="fas fa-tags text-4xl text-gray-400 mb-4"></i>
             <h3 class="text-lg font-medium text-gray-900 mb-2">Nenhuma categoria encontrada</h3>
             <p class="text-gray-500 mb-4">Comece criando sua primeira categoria de assistência.</p>
-            <a href="<?= url('categorias/create') ?>" 
+            <a href="<?= url('admin/categorias/create') ?>" 
                class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700">
                 <i class="fas fa-plus mr-2"></i>
                 Criar Primeira Categoria
@@ -66,7 +66,7 @@ ob_start();
                                 
                                 <?php if ($categoria['descricao']): ?>
                                     <p class="text-sm text-gray-500 mt-1">
-                                        <?= htmlspecialchars($categoria['descricao']) ?>
+                                        <?= htmlspecialchars($categoria['descricao'] ?? '') ?>
                                     </p>
                                 <?php endif; ?>
                                 
@@ -89,13 +89,13 @@ ob_start();
                         
                         <!-- Ações -->
                         <div class="flex items-center space-x-2">
-                            <a href="<?= url('categorias/' . $categoria['id']) ?>" 
+                            <a href="<?= url('admin/categorias/' . $categoria['id']) ?>" 
                                class="inline-flex items-center px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                                 <i class="fas fa-eye mr-1"></i>
                                 Ver
                             </a>
                             
-                            <a href="<?= url('categorias/' . $categoria['id'] . '/edit') ?>" 
+                            <a href="<?= url('admin/categorias/' . $categoria['id'] . '/edit') ?>" 
                                class="inline-flex items-center px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                                 <i class="fas fa-edit mr-1"></i>
                                 Editar
@@ -132,6 +132,17 @@ ob_start();
                 <p class="text-sm text-gray-500" id="modal-message">
                     Tem certeza que deseja excluir esta categoria?
                 </p>
+                <div id="modal-confirm-wrapper" class="mt-4 hidden text-left">
+                    <label for="modal-confirm-input" class="block text-sm font-medium text-gray-700 mb-2">
+                        Digite <span class="font-semibold text-red-600">EXCLUIR</span> para confirmar
+                    </label>
+                    <input type="text" id="modal-confirm-input"
+                           class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                           placeholder="EXCLUIR" autocomplete="off">
+                    <p class="mt-2 text-xs text-gray-500">
+                        Esta ação removerá a categoria e todas as subcategorias vinculadas.
+                    </p>
+                </div>
             </div>
             <div class="items-center px-4 py-3">
                 <button id="confirm-button" 
@@ -148,12 +159,15 @@ ob_start();
 </div>
 
 <script>
+const confirmWrapper = document.getElementById('modal-confirm-wrapper');
+const confirmInput = document.getElementById('modal-confirm-input');
+
 function toggleStatus(id, currentStatus) {
     const newStatus = currentStatus === 'ATIVA' ? 'INATIVA' : 'ATIVA';
     const action = newStatus === 'ATIVA' ? 'ativar' : 'desativar';
     
     if (confirm(`Tem certeza que deseja ${action} esta categoria?`)) {
-        fetch(`<?= url('categorias') ?>/${id}/toggle-status`, {
+        fetch(`<?= url('admin/categorias') ?>/${id}/toggle-status`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -179,19 +193,30 @@ function toggleStatus(id, currentStatus) {
 function deleteCategoria(id, nome) {
     document.getElementById('modal-title').textContent = 'Confirmar Exclusão';
     document.getElementById('modal-message').textContent = `Tem certeza que deseja excluir a categoria "${nome}"? Esta ação não pode ser desfeita.`;
+    confirmWrapper.classList.remove('hidden');
+    confirmInput.value = '';
+    setTimeout(() => confirmInput.focus(), 50);
     
     document.getElementById('confirm-button').onclick = function() {
-        fetch(`<?= url('categorias') ?>/${id}`, {
+        const typed = confirmInput.value.trim().toUpperCase();
+        if (typed !== 'EXCLUIR') {
+            alert('Digite "EXCLUIR" para confirmar a exclusão.');
+            confirmInput.focus();
+            return;
+        }
+
+        fetch(`<?= url('admin/categorias') ?>/${id}/delete`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'X-Requested-With': 'XMLHttpRequest'
             },
-            body: JSON.stringify({})
+            body: JSON.stringify({ confirmacao: typed })
         })
         .then(response => response.json())
         .then(data => {
             if (data.success) {
+                closeModal();
                 location.reload();
             } else {
                 alert('Erro: ' + data.error);
@@ -210,6 +235,8 @@ function deleteCategoria(id, nome) {
 
 function closeModal() {
     document.getElementById('confirm-modal').classList.add('hidden');
+    confirmWrapper.classList.add('hidden');
+    confirmInput.value = '';
 }
 </script>
 

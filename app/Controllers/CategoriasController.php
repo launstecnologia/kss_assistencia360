@@ -41,7 +41,7 @@ class CategoriasController extends Controller
     public function store(): void
     {
         if (!$this->isPost()) {
-            $this->redirect(url('categorias'));
+            $this->redirect(url('admin/categorias'));
         }
 
         $data = [
@@ -69,7 +69,7 @@ class CategoriasController extends Controller
 
         try {
             $id = $this->categoriaModel->create($data);
-            $this->redirect(url('categorias/' . $id));
+            $this->redirect(url('admin/categorias/' . $id));
         } catch (\Exception $e) {
             $this->view('categorias.create', [
                 'error' => 'Erro ao criar categoria: ' . $e->getMessage(),
@@ -112,7 +112,7 @@ class CategoriasController extends Controller
     public function update(int $id): void
     {
         if (!$this->isPost()) {
-            $this->redirect(url('categorias/' . $id . '/edit'));
+            $this->redirect(url('admin/categorias/' . $id . '/edit'));
         }
 
         $data = [
@@ -142,7 +142,7 @@ class CategoriasController extends Controller
 
         try {
             $this->categoriaModel->update($id, $data);
-            $this->redirect(url('categorias/' . $id));
+            $this->redirect(url('admin/categorias/' . $id));
         } catch (\Exception $e) {
             $categoria = $this->categoriaModel->getById($id);
             $this->view('categorias.edit', [
@@ -159,19 +159,36 @@ class CategoriasController extends Controller
             return;
         }
 
-        try {
-            // Verificar se há subcategorias vinculadas
-            $subcategoriasCount = $this->subcategoriaModel->countByCategoria($id);
-            if ($subcategoriasCount > 0) {
-                $this->json(['error' => 'Não é possível excluir categoria com subcategorias vinculadas'], 400);
-                return;
-            }
+        $body = json_decode(file_get_contents('php://input'), true) ?? [];
+        $confirmacao = strtoupper(trim($body['confirmacao'] ?? ''));
 
+        if ($confirmacao !== 'EXCLUIR') {
+            $this->json(['error' => 'Confirmação inválida. Digite "EXCLUIR" para confirmar.'], 400);
+            return;
+        }
+
+        try {
             // Verificar se há solicitações vinculadas
             $solicitacoesCount = $this->categoriaModel->countSolicitacoes($id);
             if ($solicitacoesCount > 0) {
                 $this->json(['error' => 'Não é possível excluir categoria com solicitações vinculadas'], 400);
                 return;
+            }
+
+            // Excluir subcategorias vinculadas (se não houver solicitações)
+            $subcategorias = $this->subcategoriaModel->getByCategoria($id);
+            foreach ($subcategorias as $subcategoria) {
+                $subSolicitacoes = $this->subcategoriaModel->countSolicitacoes($subcategoria['id']);
+                if ($subSolicitacoes > 0) {
+                    $this->json([
+                        'error' => 'Não é possível excluir categoria. A subcategoria "' . ($subcategoria['nome'] ?? '') . '" possui solicitações vinculadas.'
+                    ], 400);
+                    return;
+                }
+            }
+
+            foreach ($subcategorias as $subcategoria) {
+                $this->subcategoriaModel->delete($subcategoria['id']);
             }
 
             $this->categoriaModel->delete($id);
@@ -226,7 +243,7 @@ class CategoriasController extends Controller
     public function storeSubcategoria(int $categoriaId): void
     {
         if (!$this->isPost()) {
-            $this->redirect(url('categorias/' . $categoriaId . '/subcategorias/create'));
+            $this->redirect(url('admin/categorias/' . $categoriaId . '/subcategorias/create'));
         }
 
         $data = [
@@ -257,7 +274,7 @@ class CategoriasController extends Controller
 
         try {
             $id = $this->subcategoriaModel->create($data);
-            $this->redirect(url('categorias/' . $categoriaId));
+            $this->redirect(url('admin/categorias/' . $categoriaId));
         } catch (\Exception $e) {
             $categoria = $this->categoriaModel->getById($categoriaId);
             $this->view('categorias.create-subcategoria', [
@@ -287,7 +304,7 @@ class CategoriasController extends Controller
     public function updateSubcategoria(int $categoriaId, int $subcategoriaId): void
     {
         if (!$this->isPost()) {
-            $this->redirect(url('categorias/' . $categoriaId . '/subcategorias/' . $subcategoriaId . '/edit'));
+            $this->redirect(url('admin/categorias/' . $categoriaId . '/subcategorias/' . $subcategoriaId . '/edit'));
         }
 
         $data = [
@@ -319,7 +336,7 @@ class CategoriasController extends Controller
 
         try {
             $this->subcategoriaModel->update($subcategoriaId, $data);
-            $this->redirect(url('categorias/' . $categoriaId));
+            $this->redirect(url('admin/categorias/' . $categoriaId));
         } catch (\Exception $e) {
             $categoria = $this->categoriaModel->getById($categoriaId);
             $subcategoria = $this->subcategoriaModel->getById($subcategoriaId);

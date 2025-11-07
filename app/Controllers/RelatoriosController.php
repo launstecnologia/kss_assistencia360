@@ -79,8 +79,16 @@ class RelatoriosController extends Controller
             }
         }
 
+        $limite = (int) ($this->input('limite') ?? 100);
+        if ($limite <= 0) {
+            $limite = 100;
+        }
+        if ($limite > 1000) {
+            $limite = 1000;
+        }
+
         $resumo = $this->solicitacaoModel->getRelatorioResumo($filtros);
-        $solicitacoes = $this->solicitacaoModel->getRelatorioSolicitacoes($filtros);
+        $solicitacoes = $this->solicitacaoModel->getRelatorioSolicitacoes($filtros, $limite);
 
         $this->view('relatorios.index', [
             'user' => $user,
@@ -93,7 +101,8 @@ class RelatoriosController extends Controller
             'suportaSla' => $suportaSla,
             'filtros' => $filtros,
             'resumo' => $resumo,
-            'solicitacoes' => $solicitacoes
+            'solicitacoes' => $solicitacoes,
+            'limiteAtual' => $limite
         ]);
     }
 }

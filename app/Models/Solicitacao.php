@@ -398,15 +398,17 @@ class Solicitacao extends Model
     {
         [$whereSql, $params] = $this->montarFiltrosRelatorio($filtros);
 
-        $limite = max(1, min($limite, 500));
+        $limite = max(1, min($limite, 1000));
         $paramsLista = array_merge($params, [$limite]);
 
         $temWhatsApp = $this->colunaExiste('whatsapp_enviado');
         $temReembolso = $this->colunaExiste('precisa_reembolso');
+        $temNumeroSolicitacao = $this->colunaExiste('numero_solicitacao');
 
         $sql = "
             SELECT
                 s.id,
+                " . ($temNumeroSolicitacao ? 's.numero_solicitacao' : 'NULL') . " as numero_solicitacao,
                 s.numero_contrato,
                 s.locatario_nome,
                 COALESCE(s.locatario_cpf, l.cpf) as locatario_cpf,
