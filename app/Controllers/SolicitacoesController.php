@@ -1713,22 +1713,10 @@ class SolicitacoesController extends Controller
                 return;
             }
 
-            // IMPORTANTE: Quando horarios_indisponiveis = 1, horarios_opcoes contém APENAS os horários da seguradora
-            // Os horários originais do locatário devem estar preservados em datas_opcoes
+            // IMPORTANTE: Quando admin adiciona horários da seguradora, deve SUBSTITUIR os horários do locatário
+            // horarios_opcoes passa a conter APENAS os horários da seguradora
             
-            // Se horarios_indisponiveis ainda não está marcado, preservar horários originais do locatário
-            if (empty($solicitacao['horarios_indisponiveis']) && !empty($solicitacao['horarios_opcoes'])) {
-                // Preservar horários originais do locatário em datas_opcoes
-                $horariosOriginaisLocatario = json_decode($solicitacao['horarios_opcoes'], true) ?? [];
-                if (!empty($horariosOriginaisLocatario)) {
-                    $this->solicitacaoModel->update($id, [
-                        'datas_opcoes' => json_encode($horariosOriginaisLocatario),
-                        'horarios_opcoes' => json_encode([]) // Limpar para receber horários da seguradora
-                    ]);
-                }
-            }
-            
-            // Buscar horários da seguradora existentes
+            // Buscar horários da seguradora existentes (se já houver)
             $horariosSeguradora = [];
             if (!empty($solicitacao['horarios_indisponiveis']) && !empty($solicitacao['horarios_opcoes'])) {
                 $horariosSeguradora = json_decode($solicitacao['horarios_opcoes'], true) ?? [];
@@ -1747,12 +1735,23 @@ class SolicitacoesController extends Controller
             $horariosSeguradora[] = $horario;
 
             // Atualizar solicitação
-            // IMPORTANTE: Quando horarios_indisponiveis = 1, horarios_opcoes contém APENAS horários da seguradora
-            // Não alterar datas_opcoes aqui, apenas horarios_opcoes
-            $this->solicitacaoModel->update($id, [
+            // IMPORTANTE: Quando admin adiciona horários, SUBSTITUI os horários do locatário
+            // Limpar confirmed_schedules e dados de agendamento quando admin substitui horários
+            $updateData = [
                 'horarios_opcoes' => json_encode($horariosSeguradora),
                 'horarios_indisponiveis' => 1
-            ]);
+            ];
+            
+            // Se é a primeira vez adicionando horários da seguradora, limpar confirmações anteriores
+            if (empty($solicitacao['horarios_indisponiveis'])) {
+                $updateData['confirmed_schedules'] = null;
+                $updateData['horario_confirmado'] = 0;
+                $updateData['horario_confirmado_raw'] = null;
+                $updateData['data_agendamento'] = null;
+                $updateData['horario_agendamento'] = null;
+            }
+            
+            $this->solicitacaoModel->update($id, $updateData);
 
             // Enviar notificação WhatsApp com horário sugerido
             try {
@@ -2008,30 +2007,10 @@ class SolicitacoesController extends Controller
             }
             
             // Adicionar campo de horários indisponíveis
-            // IMPORTANTE: Quando marcar horarios_indisponiveis pela primeira vez, preservar horários originais do locatário
+            // IMPORTANTE: Quando marcar horarios_indisponiveis, os horários do locatário são SUBSTITUÍDOS pelos da seguradora
             if ($horariosIndisponiveis === true || $horariosIndisponiveis === 'true' || $horariosIndisponiveis === 1) {
-                // Se está marcando pela primeira vez (antes era 0), preservar horários originais do locatário
-                if (empty($solicitacaoAtual['horarios_indisponiveis']) && !empty($solicitacaoAtual['horarios_opcoes'])) {
-                    // Preservar horários originais do locatário em datas_opcoes (que é um campo JSON)
-                    $horariosOriginaisLocatario = json_decode($solicitacaoAtual['horarios_opcoes'], true) ?? [];
-                    if (!empty($horariosOriginaisLocatario)) {
-                        // Salvar horários originais em datas_opcoes (que pode armazenar arrays JSON)
-                        $dados['datas_opcoes'] = json_encode($horariosOriginaisLocatario);
-                        // Limpar horarios_opcoes para que seja usado apenas para horários da seguradora
-                        $dados['horarios_opcoes'] = json_encode([]);
-                    }
-                }
                 $dados['horarios_indisponiveis'] = 1;
             } else {
-                // Se está desmarcando, restaurar horários originais do locatário
-                if (!empty($solicitacaoAtual['horarios_indisponiveis']) && !empty($solicitacaoAtual['datas_opcoes'])) {
-                    $horariosOriginaisLocatario = json_decode($solicitacaoAtual['datas_opcoes'], true) ?? [];
-                    if (!empty($horariosOriginaisLocatario)) {
-                        // Restaurar horários originais do locatário em horarios_opcoes
-                        $dados['horarios_opcoes'] = json_encode($horariosOriginaisLocatario);
-                        // Limpar datas_opcoes (ou manter, dependendo do uso)
-                    }
-                }
                 $dados['horarios_indisponiveis'] = 0;
             }
             
@@ -2040,19 +2019,21 @@ class SolicitacoesController extends Controller
             $enviarNotificacaoHorariosIndisponiveis = false;
             if ($horariosSeguradora !== null && is_array($horariosSeguradora) && !empty($horariosSeguradora)) {
                 try {
-                    // IMPORTANTE: Quando horarios_indisponiveis = 1, horarios_opcoes contém APENAS os horários da seguradora
-                    // Se horarios_indisponiveis ainda não está marcado, preservar horários originais do locatário primeiro
+                    // IMPORTANTE: Quando admin adiciona horários da seguradora, deve SUBSTITUIR os horários do locatário
+                    // horarios_opcoes passa a conter APENAS os horários da seguradora
                     $eraPrimeiraVez = empty($solicitacaoAtual['horarios_indisponiveis']);
-                    if ($eraPrimeiraVez && !empty($solicitacaoAtual['horarios_opcoes'])) {
-                        $horariosOriginaisLocatario = json_decode($solicitacaoAtual['horarios_opcoes'], true) ?? [];
-                        if (!empty($horariosOriginaisLocatario) && is_array($horariosOriginaisLocatario)) {
-                            $dados['datas_opcoes'] = json_encode($horariosOriginaisLocatario);
-                        }
-                    }
                     
-                    // Salvar horários da seguradora em horarios_opcoes
+                    // Salvar horários da seguradora em horarios_opcoes (SUBSTITUINDO os horários do locatário)
                     $dados['horarios_opcoes'] = json_encode($horariosSeguradora);
                     $dados['horarios_indisponiveis'] = 1;
+                    // Limpar confirmed_schedules e dados de agendamento quando admin substitui horários
+                    if ($eraPrimeiraVez) {
+                        $dados['confirmed_schedules'] = null;
+                        $dados['horario_confirmado'] = 0;
+                        $dados['horario_confirmado_raw'] = null;
+                        $dados['data_agendamento'] = null;
+                        $dados['horario_agendamento'] = null;
+                    }
                     $horariosSeguradoraSalvos = true;
                     
                     // Se é a primeira vez marcando "Nenhum horário disponível" e há horários, enviar notificação

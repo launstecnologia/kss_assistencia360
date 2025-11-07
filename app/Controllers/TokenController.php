@@ -999,17 +999,23 @@ class TokenController extends Controller
                 error_log('Reagendamento - Aviso: Erro ao marcar token como usado (continuando): ' . $e->getMessage());
             }
 
-            // Atualizar solicitação com novas datas (salvar no formato original para exibição)
+            // IMPORTANTE: Limitar a 3 horários máximo
+            if (count($novasDatas) > 3) {
+                $novasDatas = array_slice($novasDatas, 0, 3);
+            }
+            
+            // Atualizar solicitação com novas datas (SUBSTITUINDO os horários do admin)
+            // Quando locatário reageenda, deve SUBSTITUIR os horários do admin em horarios_opcoes
             $this->solicitacaoModel->update($solicitacao['id'], [
-                'datas_opcoes' => json_encode($novasDatas), // Salvar no formato original "dd/mm/yyyy - HH:MM-HH:MM"
-                'horarios_opcoes' => null, // Limpar horários antigos
+                'horarios_opcoes' => json_encode($novasDatas), // SUBSTITUIR horários do admin pelos do locatário
+                'datas_opcoes' => null, // Limpar datas_opcoes (não é mais necessário preservar)
                 'data_agendamento' => null,
                 'horario_agendamento' => null,
                 'horario_confirmado' => 0,
                 'horario_confirmado_raw' => null,
                 'data_confirmada' => null,
                 'confirmed_schedules' => null,
-                'horarios_indisponiveis' => 0, // Resetar flag de horários indisponíveis
+                'horarios_indisponiveis' => 0, // Resetar flag de horários indisponíveis (locatário substituiu)
                 'status_id' => $this->getStatusId('Buscando Prestador'),
                 'observacoes' => ($solicitacao['observacoes'] ?? '') . "\n\nREAGENDADO VIA TOKEN: Cliente solicitou reagendamento com novas datas: " . implode(', ', $novasDatas)
             ]);
