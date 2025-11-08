@@ -67,6 +67,12 @@ ob_start();
                                 <h4 class="font-semibold text-gray-900 text-sm">
                                     <?= htmlspecialchars($solicitacao['numero_solicitacao'] ?? 'KSI' . $solicitacao['id']) ?>
                                 </h4>
+                                <?php if (!empty($solicitacao['is_emergencial_fora_horario'])): ?>
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800" title="Emergencial fora do horário comercial">
+                                        <i class="fas fa-exclamation-triangle mr-1"></i>
+                                        Fora do Horário
+                                    </span>
+                                <?php endif; ?>
                                 <?php if (!empty($solicitacao['numero_contrato'])): ?>
                                     <span class="text-xs text-gray-500">
                                         Contrato: <?= htmlspecialchars($solicitacao['numero_contrato']) ?>

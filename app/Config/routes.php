@@ -76,6 +76,7 @@ $router->get('/admin/whatsapp-instances', 'WhatsappInstancesController@index', [
 $router->get('/admin/whatsapp-instances/create', 'WhatsappInstancesController@create', ['auth']);
 $router->post('/admin/whatsapp-instances', 'WhatsappInstancesController@store', ['auth']);
 $router->get('/admin/whatsapp-instances/{id}/qrcode', 'WhatsappInstancesController@qrcode', ['auth']);
+$router->post('/admin/whatsapp-instances/{id}/atualizar-qrcode', 'WhatsappInstancesController@atualizarQrcode', ['auth']);
 $router->get('/admin/whatsapp-instances/{id}/verificar-status', 'WhatsappInstancesController@verificarStatus', ['auth']);
 $router->post('/admin/whatsapp-instances/{id}/set-padrao', 'WhatsappInstancesController@setPadrao', ['auth']);
 $router->post('/admin/whatsapp-instances/{id}/desconectar', 'WhatsappInstancesController@desconectar', ['auth']);
@@ -141,6 +142,7 @@ $router->post('/{instancia}', 'LocatarioController@login');
 $router->get('/{instancia}/dashboard', 'LocatarioController@dashboard');
 $router->get('/{instancia}/solicitacoes', 'LocatarioController@solicitacoes');
 $router->get('/{instancia}/solicitacoes/{id}', 'LocatarioController@showSolicitacao');
+$router->get('/{instancia}/solicitacao-emergencial/{solicitacaoId}', 'LocatarioController@solicitacaoEmergencial');
 $router->get('/{instancia}/perfil', 'LocatarioController@perfil');
 $router->post('/{instancia}/atualizar-perfil', 'LocatarioController@atualizarPerfil');
 // Rotas de nova solicitação com steps (rotas específicas PRIMEIRO!)
@@ -216,6 +218,26 @@ $router->post('/admin/condicoes/reordenar', 'CondicoesController@reordenar', ['a
 $router->get('/admin/condicoes/{id}/edit', 'CondicoesController@edit', ['auth', 'admin']);
 $router->post('/admin/condicoes/{id}', 'CondicoesController@update', ['auth', 'admin']);
 $router->post('/admin/condicoes/{id}/delete', 'CondicoesController@delete', ['auth', 'admin']);
+
+// Gerenciamento de Telefones de Emergência
+$router->get('/admin/telefones-emergencia', 'TelefonesEmergenciaController@index', ['auth', 'admin']);
+$router->get('/admin/telefones-emergencia/create', 'TelefonesEmergenciaController@create', ['auth', 'admin']);
+$router->post('/admin/telefones-emergencia', 'TelefonesEmergenciaController@store', ['auth', 'admin']);
+$router->get('/admin/telefones-emergencia/{id}/edit', 'TelefonesEmergenciaController@edit', ['auth', 'admin']);
+$router->post('/admin/telefones-emergencia/{id}', 'TelefonesEmergenciaController@update', ['auth', 'admin']);
+$router->post('/admin/telefones-emergencia/{id}/delete', 'TelefonesEmergenciaController@destroy', ['auth', 'admin']);
+
+// Gerenciamento de Configurações
+$router->get('/admin/configuracoes', 'ConfiguracoesController@index', ['auth', 'admin']);
+$router->get('/admin/configuracoes/create', 'ConfiguracoesController@create', ['auth', 'admin']);
+$router->post('/admin/configuracoes', 'ConfiguracoesController@store', ['auth', 'admin']);
+// Rotas específicas PRIMEIRO (antes das rotas com {id})
+$router->get('/admin/configuracoes/emergencia', 'ConfiguracoesController@emergencia', ['auth', 'admin']);
+$router->post('/admin/configuracoes/emergencia', 'ConfiguracoesController@salvarEmergencia', ['auth', 'admin']);
+// Rotas genéricas DEPOIS
+$router->get('/admin/configuracoes/{id}/edit', 'ConfiguracoesController@edit', ['auth', 'admin']);
+$router->post('/admin/configuracoes/{id}', 'ConfiguracoesController@update', ['auth', 'admin']);
+$router->post('/admin/configuracoes/{id}/delete', 'ConfiguracoesController@destroy', ['auth', 'admin']);
 
 // Gerenciamento de Solicitações Manuais
 $router->get('/admin/solicitacoes-manuais', 'SolicitacoesController@solicitacoesManuais', ['auth']);

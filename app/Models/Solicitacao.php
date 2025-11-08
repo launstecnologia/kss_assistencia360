@@ -26,6 +26,8 @@ class Solicitacao extends Model
         'precisa_reembolso', 'valor_reembolso', 'protocolo_seguradora',
         // Campo de horários indisponíveis
         'horarios_indisponiveis',
+        // Campo de emergência fora do horário comercial
+        'is_emergencial_fora_horario',
         'created_at', 'updated_at'
     ];
     protected array $casts = [
@@ -119,6 +121,7 @@ class Solicitacao extends Model
                 sc.nome as subcategoria_nome,
                 i.nome as imobiliaria_nome,
                 i.logo as imobiliaria_logo,
+                s.is_emergencial_fora_horario,
                 CASE 
                     WHEN st.nome = 'Nova Solicitação' THEN 1
                     WHEN st.nome = 'Buscando Prestador' THEN 2

@@ -108,6 +108,12 @@ ob_start();
                                         <?= $subcategoria['status'] === 'ATIVA' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' ?>">
                                         <?= $subcategoria['status'] ?>
                                     </span>
+                                    <?php if (!empty($subcategoria['is_emergencial'])): ?>
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800" title="Subcategoria emergencial">
+                                            <i class="fas fa-exclamation-triangle mr-1"></i>
+                                            Emergencial
+                                        </span>
+                                    <?php endif; ?>
                                 </div>
                                 
                                 <?php if ($subcategoria['descricao']): ?>

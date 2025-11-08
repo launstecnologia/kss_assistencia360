@@ -165,6 +165,24 @@ ob_start();
                     <p class="mt-1 text-sm text-red-600"><?= htmlspecialchars($errors['ordem']) ?></p>
                 <?php endif; ?>
             </div>
+            
+            <!-- É Emergencial -->
+            <div class="md:col-span-2">
+                <div class="flex items-center">
+                    <input type="checkbox" 
+                           name="is_emergencial" 
+                           id="is_emergencial" 
+                           value="1"
+                           <?= ($data['is_emergencial'] ?? $subcategoria['is_emergencial'] ?? 0) ? 'checked' : '' ?>
+                           class="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded">
+                    <label for="is_emergencial" class="ml-2 block text-sm font-medium text-gray-700">
+                        É Emergencial
+                    </label>
+                </div>
+                <p class="mt-1 text-xs text-gray-500 ml-6">
+                    Marque esta opção se esta subcategoria representa uma emergência. Solicitações emergenciais serão processadas imediatamente sem agendamento.
+                </p>
+            </div>
         </div>
         
         <!-- Preview -->

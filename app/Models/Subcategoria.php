@@ -8,7 +8,7 @@ class Subcategoria extends Model
 {
     protected string $table = 'subcategorias';
     protected array $fillable = [
-        'categoria_id', 'nome', 'descricao', 'tempo_estimado', 'status', 'ordem', 'created_at', 'updated_at'
+        'categoria_id', 'nome', 'descricao', 'tempo_estimado', 'status', 'ordem', 'is_emergencial', 'created_at', 'updated_at'
     ];
     protected array $casts = [
         'categoria_id' => 'int',

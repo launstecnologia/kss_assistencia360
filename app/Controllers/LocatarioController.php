@@ -429,21 +429,36 @@ class LocatarioController extends Controller
                 break;
                 
             case 4:
-                // Receber horários enviados pelo JavaScript
-                $horariosRaw = $this->input('horarios_opcoes');
-                $horarios = [];
+                // Verificar se é emergencial
+                $isEmergencial = $this->input('is_emergencial', 0);
                 
-                if (!empty($horariosRaw)) {
-                    // Se for string JSON, decodificar
-                    $horarios = is_string($horariosRaw) ? json_decode($horariosRaw, true) : $horariosRaw;
+                // Calcular se está fora do horário comercial usando configurações
+                $configuracaoModel = new \App\Models\Configuracao();
+                $isForaHorario = $configuracaoModel->isForaHorarioComercial() ? 1 : 0;
+                
+                $_SESSION['nova_solicitacao']['is_emergencial'] = $isEmergencial;
+                $_SESSION['nova_solicitacao']['is_fora_horario'] = $isForaHorario;
+                
+                if ($isEmergencial) {
+                    // Emergencial: não precisa de horários
+                    $_SESSION['nova_solicitacao']['horarios_preferenciais'] = [];
+                } else {
+                    // Normal: receber horários enviados pelo JavaScript
+                    $horariosRaw = $this->input('horarios_opcoes');
+                    $horarios = [];
+                    
+                    if (!empty($horariosRaw)) {
+                        // Se for string JSON, decodificar
+                        $horarios = is_string($horariosRaw) ? json_decode($horariosRaw, true) : $horariosRaw;
+                    }
+                    
+                    // Log para debug
+                    file_put_contents('C:\xampp\htdocs\debug_kss.log', date('H:i:s') . " - Horários recebidos: " . print_r($horariosRaw, true) . "\n", FILE_APPEND);
+                    file_put_contents('C:\xampp\htdocs\debug_kss.log', date('H:i:s') . " - Horários processados: " . print_r($horarios, true) . "\n", FILE_APPEND);
+                    
+                    // Salvar horários formatados na sessão
+                    $_SESSION['nova_solicitacao']['horarios_preferenciais'] = $horarios;
                 }
-                
-                // Log para debug
-                file_put_contents('C:\xampp\htdocs\debug_kss.log', date('H:i:s') . " - Horários recebidos: " . print_r($horariosRaw, true) . "\n", FILE_APPEND);
-                file_put_contents('C:\xampp\htdocs\debug_kss.log', date('H:i:s') . " - Horários processados: " . print_r($horarios, true) . "\n", FILE_APPEND);
-                
-                // Salvar horários formatados na sessão
-                $_SESSION['nova_solicitacao']['horarios_preferenciais'] = $horarios;
                 break;
                 
             case 5:
@@ -592,6 +607,14 @@ class LocatarioController extends Controller
         $horarios = $dados['horarios_preferenciais'] ?? [];
         $horariosJson = !empty($horarios) ? json_encode($horarios) : null;
         
+        // Verificar se é emergencial e fora do horário comercial
+        $isEmergencial = !empty($dados['is_emergencial']);
+        $isForaHorario = !empty($dados['is_fora_horario']);
+        $isEmergencialForaHorario = $isEmergencial && $isForaHorario;
+        
+        // Se for emergencial, definir prioridade como ALTA
+        $prioridade = $isEmergencial ? 'ALTA' : 'NORMAL';
+        
         $data = [
             // IDs e relacionamentos
             'locatario_id' => $locatario['codigo_locatario'] ?? $locatario['id'],
@@ -605,8 +628,9 @@ class LocatarioController extends Controller
             
             // Descrição
             'descricao_problema' => $dados['descricao_problema'],
+            'prioridade' => $prioridade,
+            'is_emergencial_fora_horario' => $isEmergencialForaHorario ? 1 : 0,
             'observacoes' => ($dados['local_manutencao'] ?? '') . "\nFinalidade: " . ($dados['finalidade_locacao'] ?? 'RESIDENCIAL') . "\nTipo: " . ($dados['tipo_imovel'] ?? 'CASA'),
-            'prioridade' => 'NORMAL',
             
             // Horários preferenciais
             'horarios_opcoes' => $horariosJson,
@@ -665,8 +689,13 @@ class LocatarioController extends Controller
             // Limpar dados da sessão
             unset($_SESSION['nova_solicitacao']);
             
-            // Redirecionar para o dashboard com mensagem de sucesso
-            $this->redirect(url($instancia . '/dashboard?success=' . urlencode('Solicitação criada com sucesso! ID: #' . $solicitacaoId)));
+            // Se for emergencial e fora do horário comercial, mostrar tela com telefone
+            if ($isEmergencialForaHorario) {
+                $this->redirect(url($instancia . '/solicitacao-emergencial/' . $solicitacaoId));
+            } else {
+                // Redirecionar para o dashboard com mensagem de sucesso
+                $this->redirect(url($instancia . '/dashboard?success=' . urlencode('Solicitação criada com sucesso! ID: #' . $solicitacaoId)));
+            }
         } else {
             $this->redirect(url($instancia . '/nova-solicitacao?error=' . urlencode('Erro ao criar solicitação. Tente novamente.')));
         }
@@ -1335,6 +1364,42 @@ class LocatarioController extends Controller
         } else {
             $this->redirect(url($instancia . '/solicitacao-manual/etapa/5?error=' . urlencode('Erro ao salvar solicitação. Tente novamente.')));
         }
+    }
+    
+    /**
+     * Exibir tela de emergência com telefone 0800
+     */
+    public function solicitacaoEmergencial(string $instancia, int $solicitacaoId): void
+    {
+        $this->requireLocatarioAuth();
+        
+        $locatario = $_SESSION['locatario'];
+        
+        // Buscar solicitação
+        $solicitacao = $this->solicitacaoModel->getDetalhes($solicitacaoId);
+        
+        if (!$solicitacao) {
+            $this->redirect(url($instancia . '/dashboard?error=' . urlencode('Solicitação não encontrada')));
+            return;
+        }
+        
+        // Verificar se a solicitação pertence ao locatário
+        $locatarioIdComparar = $locatario['codigo_locatario'] ?? $locatario['id'];
+        if ($solicitacao['locatario_id'] != $locatarioIdComparar) {
+            $this->redirect(url($instancia . '/dashboard?error=' . urlencode('Solicitação não encontrada')));
+            return;
+        }
+        
+        // Buscar telefone de emergência
+        $telefoneEmergenciaModel = new \App\Models\TelefoneEmergencia();
+        $telefoneEmergencia = $telefoneEmergenciaModel->getPrincipal();
+        
+        $this->view('locatario.solicitacao-emergencial', [
+            'locatario' => $locatario,
+            'solicitacao' => $solicitacao,
+            'telefoneEmergencia' => $telefoneEmergencia,
+            'instancia' => $instancia
+        ]);
     }
     
     /**

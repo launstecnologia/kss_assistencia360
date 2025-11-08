@@ -441,16 +441,51 @@ $steps = [
     
     <?php elseif ($etapaAtual == 4): ?>
         <!-- ETAPA 4: AGENDAMENTO -->
+        <?php
+        // Verificar se a subcategoria é emergencial
+        $subcategoriaModel = new \App\Models\Subcategoria();
+        $subcategoriaId = $_SESSION['nova_solicitacao']['subcategoria_id'] ?? 0;
+        $subcategoria = $subcategoriaModel->find($subcategoriaId);
+        $isEmergencial = !empty($subcategoria['is_emergencial']);
+        
+        // Verificar se está fora do horário comercial usando configurações
+        $configuracaoModel = new \App\Models\Configuracao();
+        $isForaHorario = $configuracaoModel->isForaHorarioComercial();
+        
+        // Buscar telefone de emergência
+        $telefoneEmergenciaModel = new \App\Models\TelefoneEmergencia();
+        $telefoneEmergencia = $telefoneEmergenciaModel->getPrincipal();
+        ?>
+        
         <div class="px-6 py-4 border-b border-gray-200">
             <h2 class="text-lg font-medium text-gray-900">
                 <i class="fas fa-calendar mr-2"></i>
-                Quando você prefere o atendimento?
+                <?php if ($isEmergencial): ?>
+                    <i class="fas fa-exclamation-triangle text-red-600 mr-2"></i>
+                    Atendimento Emergencial
+                <?php else: ?>
+                    Quando você prefere o atendimento?
+                <?php endif; ?>
             </h2>
         </div>
         
         <div class="p-6">
             <!-- Avisos Importantes (não desaparecem mais) -->
             <div class="mb-6 space-y-3 relative z-0">
+                <?php if ($isEmergencial): ?>
+                    <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                        <div class="flex items-start">
+                            <i class="fas fa-exclamation-triangle text-red-600 mr-3 mt-0.5"></i>
+                            <div>
+                                <h4 class="text-sm font-medium text-red-800">Atendimento Emergencial</h4>
+                                <p class="text-sm text-red-700 mt-1">
+                                    Esta é uma solicitação de emergência. O atendimento será processado imediatamente sem necessidade de agendamento. Você receberá retorno em até 120 minutos.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                <?php endif; ?>
+                
                 <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                     <div class="flex items-start">
                         <i class="fas fa-exclamation-triangle text-yellow-600 mr-3 mt-0.5"></i>
@@ -478,82 +513,100 @@ $steps = [
             
             <form method="POST" action="<?= url($locatario['instancia'] . '/nova-solicitacao/etapa/4') ?>" class="space-y-6 relative z-10">
                 <?= \App\Core\View::csrfField() ?>
+                <input type="hidden" name="is_emergencial" value="<?= $isEmergencial ? '1' : '0' ?>">
                 
-                <!-- Instruções -->
-                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 relative z-0">
-                    <div class="text-sm text-blue-800">
-                        <p class="font-medium mb-2">Selecione até 3 datas e horários preferenciais</p>
-                        <p class="mb-2">Após sua escolha, o prestador verificará a disponibilidade. Caso algum dos horários não esteja livre, poderão ser sugeridas novas opções.</p>
-                        <p>Você receberá uma notificação confirmando a data e o horário final definidos (via WhatsApp e aplicativo).</p>
-                    </div>
-                </div>
-                
-                <!-- Seleção de Data -->
-                <div>
-                    <label for="data_selecionada" class="block text-sm font-medium text-gray-700 mb-3">
-                        Selecione uma Data
-                    </label>
-                    <div class="relative cursor-pointer">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <i class="fas fa-calendar-alt text-gray-400"></i>
+                <?php if ($isEmergencial): ?>
+                    <!-- Emergencial: Não mostrar opções de horário -->
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <div class="text-sm text-blue-800">
+                            <p class="font-medium mb-2">Sua solicitação será processada imediatamente</p>
+                            <p class="mb-2">Por ser uma emergência, não é necessário selecionar horário. O atendimento será agendado automaticamente e você receberá retorno em até 120 minutos.</p>
+                            <?php if ($isForaHorario && $telefoneEmergencia): ?>
+                                <p class="mt-3 font-medium">
+                                    <i class="fas fa-phone mr-2"></i>
+                                    Fora do horário comercial: Ligue para <strong><?= htmlspecialchars($telefoneEmergencia['numero']) ?></strong>
+                                </p>
+                            <?php endif; ?>
                         </div>
-                        <input type="date" id="data_selecionada" name="data_selecionada" 
-                               class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 text-sm text-gray-700 cursor-pointer transition-colors"
-                               placeholder="Selecione uma data"
-                               min="<?= date('Y-m-d', strtotime('+1 day')) ?>"
-                               max="<?= date('Y-m-d', strtotime('+30 days')) ?>">
                     </div>
-                    <div class="mt-2 flex items-center text-xs text-gray-500">
-                        <i class="fas fa-info-circle mr-1.5"></i>
-                        <span>Atendimentos disponíveis apenas em dias úteis (segunda a sexta-feira)</span>
+                <?php else: ?>
+                    <!-- Normal: Mostrar opções de horário -->
+                    <!-- Instruções -->
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 relative z-0">
+                        <div class="text-sm text-blue-800">
+                            <p class="font-medium mb-2">Selecione até 3 datas e horários preferenciais</p>
+                            <p class="mb-2">Após sua escolha, o prestador verificará a disponibilidade. Caso algum dos horários não esteja livre, poderão ser sugeridas novas opções.</p>
+                            <p>Você receberá uma notificação confirmando a data e o horário final definidos (via WhatsApp e aplicativo).</p>
+                        </div>
                     </div>
-                </div>
-                
-                <!-- Seleção de Horário -->
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-3">
-                        Selecione um Horário
-                    </label>
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-                        <label class="relative">
-                            <input type="radio" name="horario_selecionado" value="08:00-11:00" class="sr-only horario-radio">
-                            <div class="border-2 border-gray-200 rounded-lg p-3 text-center cursor-pointer hover:border-green-300 transition-colors horario-card">
-                                <div class="text-sm font-medium text-gray-900">08h00 às 11h00</div>
-                            </div>
+                    
+                    <!-- Seleção de Data -->
+                    <div>
+                        <label for="data_selecionada" class="block text-sm font-medium text-gray-700 mb-3">
+                            Selecione uma Data
                         </label>
-                        
-                        <label class="relative">
-                            <input type="radio" name="horario_selecionado" value="11:00-14:00" class="sr-only horario-radio">
-                            <div class="border-2 border-gray-200 rounded-lg p-3 text-center cursor-pointer hover:border-green-300 transition-colors horario-card">
-                                <div class="text-sm font-medium text-gray-900">11h00 às 14h00</div>
+                        <div class="relative cursor-pointer">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <i class="fas fa-calendar-alt text-gray-400"></i>
                             </div>
-                        </label>
-                        
-                        <label class="relative">
-                            <input type="radio" name="horario_selecionado" value="14:00-17:00" class="sr-only horario-radio">
-                            <div class="border-2 border-gray-200 rounded-lg p-3 text-center cursor-pointer hover:border-green-300 transition-colors horario-card">
-                                <div class="text-sm font-medium text-gray-900">14h00 às 17h00</div>
-                            </div>
-                        </label>
-                        
-                        <label class="relative">
-                            <input type="radio" name="horario_selecionado" value="17:00-20:00" class="sr-only horario-radio">
-                            <div class="border-2 border-gray-200 rounded-lg p-3 text-center cursor-pointer hover:border-green-300 transition-colors horario-card">
-                                <div class="text-sm font-medium text-gray-900">17h00 às 20h00</div>
-                            </div>
-                        </label>
+                            <input type="date" id="data_selecionada" name="data_selecionada" 
+                                   class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 text-sm text-gray-700 cursor-pointer transition-colors"
+                                   placeholder="Selecione uma data"
+                                   min="<?= date('Y-m-d', strtotime('+1 day')) ?>"
+                                   max="<?= date('Y-m-d', strtotime('+30 days')) ?>">
+                        </div>
+                        <div class="mt-2 flex items-center text-xs text-gray-500">
+                            <i class="fas fa-info-circle mr-1.5"></i>
+                            <span>Atendimentos disponíveis apenas em dias úteis (segunda a sexta-feira)</span>
+                        </div>
                     </div>
-                </div>
-                
-                <!-- Horários Selecionados -->
-                <div id="horarios-selecionados" class="hidden">
-                    <h4 class="text-sm font-medium text-gray-700 mb-3">
-                        Horários Selecionados (<span id="contador-horarios">0</span>/3)
-                    </h4>
-                    <div id="lista-horarios" class="space-y-2">
-                        <!-- Horários serão inseridos aqui via JavaScript -->
+                    
+                    <!-- Seleção de Horário -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-3">
+                            Selecione um Horário
+                        </label>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                            <label class="relative">
+                                <input type="radio" name="horario_selecionado" value="08:00-11:00" class="sr-only horario-radio">
+                                <div class="border-2 border-gray-200 rounded-lg p-3 text-center cursor-pointer hover:border-green-300 transition-colors horario-card">
+                                    <div class="text-sm font-medium text-gray-900">08h00 às 11h00</div>
+                                </div>
+                            </label>
+                            
+                            <label class="relative">
+                                <input type="radio" name="horario_selecionado" value="11:00-14:00" class="sr-only horario-radio">
+                                <div class="border-2 border-gray-200 rounded-lg p-3 text-center cursor-pointer hover:border-green-300 transition-colors horario-card">
+                                    <div class="text-sm font-medium text-gray-900">11h00 às 14h00</div>
+                                </div>
+                            </label>
+                            
+                            <label class="relative">
+                                <input type="radio" name="horario_selecionado" value="14:00-17:00" class="sr-only horario-radio">
+                                <div class="border-2 border-gray-200 rounded-lg p-3 text-center cursor-pointer hover:border-green-300 transition-colors horario-card">
+                                    <div class="text-sm font-medium text-gray-900">14h00 às 17h00</div>
+                                </div>
+                            </label>
+                            
+                            <label class="relative">
+                                <input type="radio" name="horario_selecionado" value="17:00-20:00" class="sr-only horario-radio">
+                                <div class="border-2 border-gray-200 rounded-lg p-3 text-center cursor-pointer hover:border-green-300 transition-colors horario-card">
+                                    <div class="text-sm font-medium text-gray-900">17h00 às 20h00</div>
+                                </div>
+                            </label>
+                        </div>
                     </div>
-                </div>
+                    
+                    <!-- Horários Selecionados -->
+                    <div id="horarios-selecionados" class="hidden">
+                        <h4 class="text-sm font-medium text-gray-700 mb-3">
+                            Horários Selecionados (<span id="contador-horarios">0</span>/3)
+                        </h4>
+                        <div id="lista-horarios" class="space-y-2">
+                            <!-- Horários serão inseridos aqui via JavaScript -->
+                        </div>
+                    </div>
+                <?php endif; ?>
                 
                 <!-- Navigation -->
                 <div class="flex justify-between pt-6">
@@ -561,8 +614,8 @@ $steps = [
                        class="px-6 py-3 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors">
                         Voltar
                     </a>
-                    <button type="submit" id="btn-continuar" disabled
-                            class="px-6 py-3 bg-gray-400 text-white font-medium rounded-lg cursor-not-allowed transition-colors">
+                    <button type="submit" id="btn-continuar" <?= $isEmergencial ? '' : 'disabled' ?>
+                            class="px-6 py-3 <?= $isEmergencial ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-400 cursor-not-allowed' ?> text-white font-medium rounded-lg transition-colors">
                         Continuar
                     </button>
                 </div>
@@ -674,6 +727,23 @@ $steps = [
         </div>
     </div>
     
+            <?php
+            // Verificar se é emergencial e fora do horário comercial
+            $dados = $_SESSION['nova_solicitacao'] ?? [];
+            $subcategoriaModel = new \App\Models\Subcategoria();
+            $subcategoriaId = $dados['subcategoria_id'] ?? 0;
+            $subcategoria = $subcategoriaModel->find($subcategoriaId);
+            $isEmergencial = !empty($subcategoria['is_emergencial']);
+            
+            // Verificar se está fora do horário comercial usando configurações
+            $configuracaoModel = new \App\Models\Configuracao();
+            $isForaHorario = $configuracaoModel->isForaHorarioComercial();
+            
+            // Buscar telefone de emergência
+            $telefoneEmergenciaModel = new \App\Models\TelefoneEmergencia();
+            $telefoneEmergencia = $telefoneEmergenciaModel->getPrincipal();
+            ?>
+            
             <!-- Termo de Aceite -->
             <form method="POST" action="<?= url($locatario['instancia'] . '/nova-solicitacao/etapa/5') ?>" class="space-y-6">
                 <?= \App\Core\View::csrfField() ?>
@@ -687,6 +757,27 @@ $steps = [
                         </span>
                     </label>
                 </div>
+                
+                <?php if ($isEmergencial && $isForaHorario && $telefoneEmergencia): ?>
+                    <!-- Botão para ligar 0800 (emergencial fora do horário comercial) -->
+                    <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                        <div class="flex items-start">
+                            <i class="fas fa-phone-alt text-red-600 mr-3 mt-0.5"></i>
+                            <div class="flex-1">
+                                <h4 class="text-sm font-medium text-red-800 mb-2">Atendimento Fora do Horário Comercial</h4>
+                                <p class="text-sm text-red-700 mb-3">
+                                    Como sua solicitação é emergencial e está sendo feita fora do horário comercial, ligue para o nosso telefone de emergência:
+                                </p>
+                                <a href="tel:<?= preg_replace('/[^0-9+]/', '', $telefoneEmergencia['numero']) ?>" 
+                                   class="inline-flex items-center px-6 py-3 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition-colors"
+                                   onclick="if(navigator.userAgent.match(/iPhone|iPad|iPod/i)) { window.location.href='tel:<?= preg_replace('/[^0-9+]/', '', $telefoneEmergencia['numero']) ?>'; return false; }">
+                                    <i class="fas fa-phone mr-2"></i>
+                                    Ligar <?= htmlspecialchars($telefoneEmergencia['numero']) ?>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                <?php endif; ?>
                 
                 <!-- Navigation -->
                 <div class="flex justify-between pt-6">
@@ -855,6 +946,28 @@ document.addEventListener('DOMContentLoaded', function() {
                     e.preventDefault();
                     alert('Por favor, aceite os termos para continuar.');
                     return;
+                }
+                
+                // Verificar se é emergencial e fora do horário
+                const telefoneEmergenciaLink = document.querySelector('a[href^="tel:"]');
+                if (telefoneEmergenciaLink) {
+                    const telefoneNumero = telefoneEmergenciaLink.textContent.replace('Ligar ', '').trim();
+                    const telefoneHref = telefoneEmergenciaLink.getAttribute('href');
+                    
+                    // Mostrar modal/confirmação com o número
+                    const confirmar = confirm(
+                        '⚠️ ATENÇÃO: Sua solicitação é emergencial e está sendo feita fora do horário comercial.\n\n' +
+                        '📞 Ligue para o nosso telefone de emergência:\n' +
+                        telefoneNumero + '\n\n' +
+                        'Deseja continuar com a finalização da solicitação?'
+                    );
+                    
+                    if (!confirmar) {
+                        e.preventDefault();
+                        // Abrir o link de telefone
+                        window.location.href = telefoneHref;
+                        return;
+                    }
                 }
                 
                 // Mostrar loading

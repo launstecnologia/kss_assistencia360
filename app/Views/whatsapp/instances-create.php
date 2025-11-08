@@ -54,14 +54,26 @@ ob_start();
             </div>
         </div>
 
-        <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">
-                Token (Opcional)
-            </label>
-            <input type="text" name="token"
-                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                   placeholder="Token Bearer (opcional)">
-            <p class="text-xs text-gray-500 mt-1">Token de autenticação Bearer, se necessário</p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Número do WhatsApp
+                </label>
+                <input type="text" name="numero_whatsapp"
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                       placeholder="Ex: 5511999998888">
+                <p class="text-xs text-gray-500 mt-1">Número para gerar QR code específico (opcional, sem + ou espaços)</p>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Token (Opcional)
+                </label>
+                <input type="text" name="token" id="token-field"
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                       placeholder="Token será gerado automaticamente se vazio">
+                <p class="text-xs text-gray-500 mt-1">Token de autenticação Bearer. Se deixar vazio, será gerado automaticamente (UUID).</p>
+            </div>
         </div>
 
         <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">

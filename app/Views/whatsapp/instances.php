@@ -21,6 +21,7 @@ ob_start();
                 <tr>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nome</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Instância</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Token Bearer</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Número</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Padrão</th>
@@ -35,6 +36,20 @@ ob_start();
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
                         <div class="text-sm text-gray-500"><?= htmlspecialchars($instance['instance_name']) ?></div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <?php if (!empty($instance['token'])): ?>
+                            <div class="flex items-center space-x-2">
+                                <code class="text-xs bg-gray-100 px-2 py-1 rounded font-mono"><?= htmlspecialchars($instance['token']) ?></code>
+                                <button onclick="copiarToken('<?= htmlspecialchars($instance['token']) ?>')" 
+                                        class="text-blue-600 hover:text-blue-800" 
+                                        title="Copiar token">
+                                    <i class="fas fa-copy text-xs"></i>
+                                </button>
+                            </div>
+                        <?php else: ?>
+                            <span class="text-gray-400 text-xs">-</span>
+                        <?php endif; ?>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
                         <div class="text-sm text-gray-500"><?= htmlspecialchars($instance['numero_whatsapp'] ?? '-') ?></div>
@@ -85,12 +100,10 @@ ob_start();
                                 </button>
                             <?php endif; ?>
                             
-                            <form method="POST" action="<?= url('admin/whatsapp-instances/' . $instance['id'] . '/delete') ?>" 
-                                  onsubmit="return confirm('Tem certeza que deseja deletar esta instância?');" class="inline">
-                                <button type="submit" class="text-red-600 hover:text-red-900" title="Deletar">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </form>
+                            <button onclick="deletar(<?= $instance['id'] ?>)" 
+                                    class="text-red-600 hover:text-red-900" title="Deletar">
+                                <i class="fas fa-trash"></i>
+                            </button>
                         </div>
                     </td>
                 </tr>
@@ -149,6 +162,58 @@ function desconectar(id) {
     .catch(err => {
         alert('Erro ao desconectar instância');
         console.error(err);
+    });
+}
+
+function deletar(id) {
+    if (!confirm('Tem certeza que deseja deletar esta instância?\n\nEsta ação não pode ser desfeita e a instância será removida da Evolution API.')) return;
+    
+    fetch('<?= url('admin/whatsapp-instances') ?>/' + id + '/delete', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(r => {
+        if (!r.ok) {
+            return r.json().then(data => {
+                throw new Error(data.error || 'Erro ao deletar instância');
+            });
+        }
+        return r.json();
+    })
+    .then(data => {
+        if (data.success || data.message) {
+            alert('Instância deletada com sucesso!');
+            location.reload();
+        } else {
+            alert('Erro: ' + (data.error || 'Erro desconhecido'));
+        }
+    })
+    .catch(err => {
+        alert('Erro ao deletar instância: ' + err.message);
+        console.error(err);
+    });
+}
+
+function copiarToken(token) {
+    navigator.clipboard.writeText(token).then(function() {
+        alert('Token copiado para a área de transferência!');
+    }, function(err) {
+        // Fallback para navegadores mais antigos
+        const textarea = document.createElement('textarea');
+        textarea.value = token;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        try {
+            document.execCommand('copy');
+            alert('Token copiado para a área de transferência!');
+        } catch (err) {
+            alert('Erro ao copiar token. Token: ' + token);
+        }
+        document.body.removeChild(textarea);
     });
 }
 </script>

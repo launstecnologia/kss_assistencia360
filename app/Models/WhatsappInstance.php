@@ -94,5 +94,14 @@ class WhatsappInstance extends Model
             return false;
         }
     }
+
+    /**
+     * Busca uma instância pelo nome da instância (instance_name)
+     */
+    public function findByInstanceName(string $instanceName): ?array
+    {
+        $instances = $this->findAll(['instance_name' => $instanceName], null, 1);
+        return !empty($instances) ? $instances[0] : null;
+    }
 }
 

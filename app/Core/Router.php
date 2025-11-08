@@ -166,7 +166,27 @@ class Router
                     if (class_exists($controllerClass)) {
                         $controller = new $controllerClass();
                         if (method_exists($controller, $methodName)) {
-                            call_user_func_array([$controller, $methodName], $params);
+                            // Usar Reflection para mapear parâmetros corretamente
+                            $reflection = new \ReflectionMethod($controllerClass, $methodName);
+                            $methodParams = $reflection->getParameters();
+                            $orderedParams = [];
+                            
+                            foreach ($methodParams as $param) {
+                                $paramName = $param->getName();
+                                // Tentar encontrar pelo nome do parâmetro
+                                if (isset($params[$paramName])) {
+                                    $orderedParams[] = $params[$paramName];
+                                } elseif (!empty($params)) {
+                                    // Se não encontrar pelo nome, usar valores na ordem
+                                    $orderedParams[] = array_shift($params);
+                                } elseif ($param->isDefaultValueAvailable()) {
+                                    $orderedParams[] = $param->getDefaultValue();
+                                } else {
+                                    $orderedParams[] = null;
+                                }
+                            }
+                            
+                            call_user_func_array([$controller, $methodName], $orderedParams);
                         } else {
                             throw new \Exception("Método $methodName não encontrado no controller $controllerName");
                         }

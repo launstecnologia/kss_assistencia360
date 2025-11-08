@@ -252,7 +252,8 @@ class CategoriasController extends Controller
             'descricao' => $this->input('descricao'),
             'tempo_estimado' => $this->input('tempo_estimado'),
             'status' => $this->input('status', 'ATIVA'),
-            'ordem' => $this->input('ordem', 0)
+            'ordem' => $this->input('ordem', 0),
+            'is_emergencial' => $this->input('is_emergencial', 0) ? 1 : 0
         ];
 
         $errors = $this->validate([
@@ -312,7 +313,8 @@ class CategoriasController extends Controller
             'descricao' => $this->input('descricao'),
             'tempo_estimado' => $this->input('tempo_estimado'),
             'status' => $this->input('status'),
-            'ordem' => $this->input('ordem', 0)
+            'ordem' => $this->input('ordem', 0),
+            'is_emergencial' => $this->input('is_emergencial', 0) ? 1 : 0
         ];
 
         $errors = $this->validate([
