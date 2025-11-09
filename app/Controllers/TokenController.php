@@ -315,7 +315,16 @@ class TokenController extends Controller
             // CICLO DE AGENDAMENTO: Atualizar condição para "Data Aceita pelo Locatário"
             // IMPORTANTE: Não atualizar status para "Serviço Agendado" aqui - isso só acontece na confirmação final pelo admin
             $condicaoModel = new \App\Models\Condicao();
+            $statusModel = new \App\Models\Status();
             $condicaoAceita = $condicaoModel->findByNome('Data Aceita pelo Locatário');
+            $statusAgendado = $statusModel->findByNome('Serviço Agendado');
+            if (!$statusAgendado) {
+                $statusAgendado = $statusModel->findByNome('Servico Agendado');
+            }
+            if (!$statusAgendado) {
+                $sqlStatus = "SELECT * FROM status WHERE (nome LIKE '%Serviço Agendado%' OR nome LIKE '%Servico Agendado%') AND status = 'ATIVO' LIMIT 1";
+                $statusAgendado = \App\Core\Database::fetch($sqlStatus);
+            }
             
             $dadosUpdate = [
                 'horario_confirmado' => 1
@@ -323,6 +332,9 @@ class TokenController extends Controller
             
             if ($condicaoAceita) {
                 $dadosUpdate['condicao_id'] = $condicaoAceita['id'];
+            }
+            if ($statusAgendado) {
+                $dadosUpdate['status_id'] = $statusAgendado['id'];
             }
             
             // Atualizar data e horário se foram selecionados
@@ -378,9 +390,9 @@ class TokenController extends Controller
             ";
             \App\Core\Database::query($sql, [
                 $solicitacao['id'],
-                $solicitacao['status_id'], // Manter status atual (não mudar para "Serviço Agendado" ainda)
+                $dadosUpdate['status_id'] ?? $solicitacao['status_id'],
                 null, // Usuário sistema (null = cliente)
-                'Horário aceito pelo locatário via link de confirmação. Aguardando confirmação final do admin.'
+                'Horário aceito pelo locatário via link de confirmação. Status atualizado para "Serviço Agendado".'
             ]);
 
             // Exibir página de sucesso
@@ -1155,10 +1167,24 @@ class TokenController extends Controller
                 'token_id' => $tokenData['id'] ?? null,
                 'solicitacao_id' => $solicitacao['id'] ?? null,
                 'novas_datas_sanitizadas' => $novasDatasSanitizadas,
+                'condicao_definida' => $condicaoId ?? null,
             ]);
             
             // Atualizar solicitação com novas datas (SUBSTITUINDO os horários do admin)
             // Quando locatário reageenda, deve SUBSTITUIR os horários do admin em horarios_opcoes
+            $condicaoModel = new \App\Models\Condicao();
+            $condicaoRecusada = $condicaoModel->findByNome('Datas recusadas pelo locatário');
+            if (!$condicaoRecusada) {
+                $condicaoId = $condicaoModel->create([
+                    'nome' => 'Datas recusadas pelo locatário',
+                    'cor' => '#f97316',
+                    'icone' => 'fa-calendar-times',
+                    'status' => 'ATIVO'
+                ]);
+            } else {
+                $condicaoId = $condicaoRecusada['id'];
+            }
+
             $updateData = [
                 'horarios_opcoes' => json_encode($novasDatasSanitizadas, JSON_UNESCAPED_UNICODE), // SUBSTITUIR horários do admin pelos do locatário
                 'datas_opcoes' => null, // Limpar datas_opcoes (não é mais necessário preservar)
@@ -1169,6 +1195,7 @@ class TokenController extends Controller
                 'confirmed_schedules' => null,
                 'horarios_indisponiveis' => 0, // Resetar flag de horários indisponíveis (locatário substituiu)
                 'status_id' => $this->getStatusId('Buscando Prestador'),
+                'condicao_id' => $condicaoId,
                 'observacoes' => ($solicitacao['observacoes'] ?? '') . "\n\nREAGENDADO VIA TOKEN: Cliente solicitou reagendamento com novas datas: " . implode(', ', $novasDatasSanitizadas),
                 'updated_at' => date('Y-m-d H:i:s')
             ];
@@ -1713,8 +1740,17 @@ class TokenController extends Controller
                     // Buscar status "Cancelado"
                     $statusCancelado = $statusModel->findByNome('Cancelado');
                     if (!$statusCancelado) {
+                        $statusCancelado = $statusModel->findByNome('Cancelada');
+                    }
+                    if (!$statusCancelado) {
+                        $statusCancelado = $statusModel->findByNome('Cancelado pelo Locatário');
+                    }
+                    if (!$statusCancelado) {
+                        $statusCancelado = $statusModel->findByNome('Cancelada pelo Locatário');
+                    }
+                    if (!$statusCancelado) {
                         // Tentar buscar qualquer status que contenha "Cancelado"
-                        $sql = "SELECT * FROM status WHERE (nome LIKE '%Cancelado%' OR nome LIKE '%Cancel%') AND status = 'ATIVO' LIMIT 1";
+                        $sql = "SELECT * FROM status WHERE (nome LIKE '%Cancelad%' OR nome LIKE '%Cancel%') AND status = 'ATIVO' LIMIT 1";
                         $statusCancelado = \App\Core\Database::fetch($sql);
                     }
                     
@@ -1722,12 +1758,23 @@ class TokenController extends Controller
                         $this->solicitacaoModel->update($solicitacaoId, [
                             'status_id' => $statusCancelado['id'],
                             'condicao_id' => $condicaoId,
+                            'horario_confirmado' => 0,
+                            'horario_confirmado_raw' => null,
                             'observacoes' => ($solicitacao['observacoes'] ?? '') . "\n\nLocatário se ausentou no horário agendado."
                         ]);
                     }
 
                     // Marcar token como usado
                     $this->tokenModel->markAsUsed($token);
+
+                    $this->logReagendamento([
+                        'status' => 'AUSENTE',
+                        'token' => $token,
+                        'token_id' => $tokenData['id'] ?? null,
+                        'solicitacao_id' => $solicitacaoId,
+                        'status_cancelado_id' => $statusCancelado['id'] ?? null,
+                        'condicao_id' => $condicaoId,
+                    ]);
 
                     $this->json([
                         'success' => true,
