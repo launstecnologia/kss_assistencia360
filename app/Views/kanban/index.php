@@ -537,6 +537,72 @@ function renderizarDetalhes(solicitacao) {
         horariosOpcoes = [];
     }
     
+    const escapeHtml = (texto = '') => String(texto)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+
+    const formatarObservacao = (texto) => escapeHtml(texto || '').replace(/\n/g, '<br>');
+
+    const historicoOrdenado = Array.isArray(solicitacao.historico_status)
+        ? [...solicitacao.historico_status].sort((a, b) => {
+            const dataA = new Date(a.created_at);
+            const dataB = new Date(b.created_at);
+            return dataA - dataB;
+        })
+        : [];
+
+    const timelineEventos = [];
+    if (solicitacao.created_at) {
+        timelineEventos.push({
+            titulo: 'Solicitação criada',
+            usuario: null,
+            observacoes: 'Registro inicial da solicitação.',
+            data: solicitacao.created_at
+        });
+    }
+
+    historicoOrdenado.forEach(evento => {
+        timelineEventos.push({
+            titulo: evento.status_nome ? `Status: ${evento.status_nome}` : 'Atualização de status',
+            usuario: evento.usuario_nome || null,
+            observacoes: evento.observacoes || null,
+            data: evento.created_at
+        });
+    });
+
+    const timelineHtml = timelineEventos.length
+        ? timelineEventos.map((evento, index) => {
+            const corPonto = index === timelineEventos.length - 1 ? 'bg-blue-500' : 'bg-gray-300';
+            const linhaHtml = index !== timelineEventos.length - 1
+                ? '<div class="w-0.5 flex-1 bg-gray-200 mt-1"></div>'
+                : '';
+            const usuarioLabel = evento.usuario
+                ? `Por ${escapeHtml(evento.usuario)}`
+                : 'Por Sistema';
+            const observacoesHtml = evento.observacoes
+                ? `<p class="text-xs text-gray-500 mt-1">${formatarObservacao(evento.observacoes)}</p>`
+                : '';
+
+            return `
+                <div class="flex gap-3 ${index !== timelineEventos.length - 1 ? 'pb-4' : ''}">
+                    <div class="flex flex-col items-center">
+                        <div class="w-3 h-3 rounded-full ${corPonto}"></div>
+                        ${linhaHtml}
+                    </div>
+                    <div class="flex-1">
+                        <p class="font-medium text-sm text-gray-900">${escapeHtml(evento.titulo)}</p>
+                        <p class="text-xs text-gray-500 mt-1">${usuarioLabel}</p>
+                        ${observacoesHtml}
+                        <p class="text-xs text-gray-400 mt-2">${formatarDataHora(evento.data)}</p>
+                    </div>
+                </div>
+            `;
+        }).join('')
+        : '<p class="text-sm text-gray-500">Nenhum evento de histórico registrado ainda.</p>';
+
     content.innerHTML = `
         <!-- Cabeçalho com ID e Data -->
         <div class="bg-white rounded-lg p-5 mb-4">
@@ -1083,18 +1149,7 @@ function renderizarDetalhes(solicitacao) {
                         <h3 class="font-semibold text-gray-900">Linha do Tempo</h3>
                     </div>
                     <div class="space-y-4">
-                        <div class="flex gap-3">
-                            <div class="flex flex-col items-center">
-                                <div class="w-3 h-3 rounded-full bg-yellow-400"></div>
-                                <div class="w-0.5 h-full bg-gray-200 mt-1"></div>
-                            </div>
-                            <div class="flex-1 pb-4">
-                                <p class="font-medium text-sm text-gray-900">${solicitacao.status_nome}</p>
-                                <p class="text-xs text-gray-500 mt-1">Por Sistema</p>
-                                <p class="text-xs text-gray-500">Solicitação criada</p>
-                                <p class="text-xs text-gray-400 mt-2">${formatarDataHora(solicitacao.created_at)}</p>
-                            </div>
-                        </div>
+                        ${timelineHtml}
                     </div>
                 </div>
                 

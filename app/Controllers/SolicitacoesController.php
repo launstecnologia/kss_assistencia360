@@ -145,6 +145,14 @@ class SolicitacoesController extends Controller
         $whatsappHistorico = $this->getWhatsAppHistorico($id);
         $solicitacao['whatsapp_historico'] = $whatsappHistorico;
         
+        // Buscar histórico de status (linha do tempo)
+        try {
+            $historicoStatus = $this->solicitacaoModel->getHistoricoStatus($id);
+        } catch (\Exception $e) {
+            $historicoStatus = [];
+        }
+        $solicitacao['historico_status'] = $historicoStatus;
+        
         // Debug: Log das fotos encontradas
         error_log("📸 API Solicitação #{$id} - Fotos encontradas: " . count($fotos));
         if (!empty($fotos)) {
