@@ -174,6 +174,27 @@ class Solicitacao extends Model
         return Database::fetch($sql, [$id]);
     }
 
+    /**
+     * Verifica se uma coluna existe na tabela (cacheada)
+     */
+    public function colunaExisteBanco(string $coluna): bool
+    {
+        if (!array_key_exists($coluna, self::$colunaCache)) {
+            $sql = "DESCRIBE {$this->table}";
+            $resultado = Database::fetchAll($sql);
+
+            self::$colunaCache = [];
+            foreach ($resultado as $colunaInfo) {
+                $nome = $colunaInfo['Field'] ?? '';
+                if ($nome !== '') {
+                    self::$colunaCache[$nome] = true;
+                }
+            }
+        }
+
+        return self::$colunaCache[$coluna] ?? false;
+    }
+
     public function getFotos(int $solicitacaoId): array
     {
         $sql = "SELECT * FROM fotos WHERE solicitacao_id = ? ORDER BY created_at ASC";

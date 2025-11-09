@@ -1159,20 +1159,25 @@ class TokenController extends Controller
             
             // Atualizar solicitação com novas datas (SUBSTITUINDO os horários do admin)
             // Quando locatário reageenda, deve SUBSTITUIR os horários do admin em horarios_opcoes
-            $this->solicitacaoModel->update($solicitacao['id'], [
+            $updateData = [
                 'horarios_opcoes' => json_encode($novasDatasSanitizadas, JSON_UNESCAPED_UNICODE), // SUBSTITUIR horários do admin pelos do locatário
                 'datas_opcoes' => null, // Limpar datas_opcoes (não é mais necessário preservar)
                 'data_agendamento' => null,
                 'horario_agendamento' => null,
                 'horario_confirmado' => 0,
                 'horario_confirmado_raw' => null,
-                'data_confirmada' => null,
                 'confirmed_schedules' => null,
                 'horarios_indisponiveis' => 0, // Resetar flag de horários indisponíveis (locatário substituiu)
                 'status_id' => $this->getStatusId('Buscando Prestador'),
                 'observacoes' => ($solicitacao['observacoes'] ?? '') . "\n\nREAGENDADO VIA TOKEN: Cliente solicitou reagendamento com novas datas: " . implode(', ', $novasDatasSanitizadas),
                 'updated_at' => date('Y-m-d H:i:s')
-            ]);
+            ];
+
+            if ($this->solicitacaoModel->colunaExisteBanco('data_confirmada')) {
+                $updateData['data_confirmada'] = null;
+            }
+
+            $this->solicitacaoModel->update($solicitacao['id'], $updateData);
 
             // Registrar no histórico
             $sql = "
