@@ -78,10 +78,12 @@ class Router
         
         $path = rtrim($path, '/') ?: '/';
 
+        $debugMode = defined('DEBUG') ? DEBUG : (bool)($_ENV['APP_DEBUG'] ?? true);
+
         foreach ($this->routes as $route) {
             if ($route['method'] === $method && $this->matchPath($route['path'], $path)) {
                 // Debug - remover em produção
-                if ($_ENV['APP_DEBUG'] ?? true) {
+                if ($debugMode) {
                     error_log("Router Debug - Route matched: {$route['method']} {$route['path']}");
                 }
                 
@@ -108,8 +110,10 @@ class Router
 
     private function matchPath(string $routePath, string $requestPath): bool
     {
+        $debugMode = defined('DEBUG') ? DEBUG : (bool)($_ENV['APP_DEBUG'] ?? true);
+
         // Debug específico para troubleshooting
-        if ($_ENV['APP_DEBUG'] ?? true) {
+        if ($debugMode) {
             error_log("matchPath: '$routePath' vs '$requestPath'");
         }
         
@@ -129,7 +133,7 @@ class Router
         
         $result = preg_match($routePattern, $requestPath);
         
-        if ($_ENV['APP_DEBUG'] ?? true) {
+        if ($debugMode) {
             error_log("matchPath result: " . ($result ? 'true' : 'false'));
         }
         

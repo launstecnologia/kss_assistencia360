@@ -16,11 +16,21 @@ define('DEBUG', env('APP_DEBUG', 'true') === 'true');
 define('FOLDER', env('APP_BASE_PATH', '/kss'));
 define('URL', env('APP_URL', 'http://localhost' . FOLDER));
 
+// Configurar diretório e arquivo de log do PHP
+$logDir = __DIR__ . '/storage/logs';
+if (!is_dir($logDir)) {
+    mkdir($logDir, 0755, true);
+}
+$phpErrorLog = $logDir . '/app.log';
+if (!file_exists($phpErrorLog)) {
+    touch($phpErrorLog);
+}
+ini_set('log_errors', '1');
+ini_set('error_log', $phpErrorLog);
+
 // Configuração de segurança
 if (ENVIRONMENT === 'production') {
     ini_set('display_errors', 0);
-    ini_set('log_errors', 1);
-    ini_set('error_log', __DIR__ . '/storage/logs/error.log');
 } else {
     ini_set('display_errors', 1);
     error_reporting(E_ALL);

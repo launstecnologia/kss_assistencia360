@@ -1013,6 +1013,15 @@ class TokenController extends Controller
                 $novasDatasInput
             ), fn($valor) => $valor !== ''));
 
+            $this->logReagendamento([
+                'status' => 'RECEBIDO',
+                'fase' => 'dados_brutos',
+                'token' => $token,
+                'token_id' => $tokenData['id'] ?? null,
+                'solicitacao_id' => $solicitacao['id'] ?? null,
+                'payload' => $novasDatasInput,
+            ]);
+
             if (empty($novasDatasInput)) {
                 error_log("DEBUG processarReagendamento - novas_datas está vazio após processamento");
                 $this->view('token.error', [
@@ -1081,6 +1090,16 @@ class TokenController extends Controller
             
             error_log("DEBUG processarReagendamento - Total de datas convertidas: " . count($datasConvertidas));
             
+            $this->logReagendamento([
+                'status' => 'SANITIZADO',
+                'fase' => 'datas_convertidas',
+                'token' => $token,
+                'token_id' => $tokenData['id'] ?? null,
+                'solicitacao_id' => $solicitacao['id'] ?? null,
+                'novas_datas_sanitizadas' => $novasDatasSanitizadas,
+                'datas_convertidas' => $datasConvertidas,
+            ]);
+
             if (empty($datasConvertidas)) {
                 error_log("DEBUG processarReagendamento - Nenhuma data foi convertida com sucesso");
                 $this->view('token.error', [
@@ -1123,18 +1142,20 @@ class TokenController extends Controller
                 return;
             }
 
-            // Marcar token como usado
-            try {
-                $this->tokenModel->markAsUsed($token, 'rescheduled');
-            } catch (\Exception $e) {
-                error_log('Reagendamento - Aviso: Erro ao marcar token como usado (continuando): ' . $e->getMessage());
-            }
-
             // IMPORTANTE: Limitar a 3 horários máximo (e manter arrays sincronizados)
             if (count($novasDatasSanitizadas) > 3) {
                 $novasDatasSanitizadas = array_slice($novasDatasSanitizadas, 0, 3);
                 $datasConvertidas = array_slice($datasConvertidas, 0, 3);
             }
+
+            $this->logReagendamento([
+                'status' => 'PROCESSANDO',
+                'fase' => 'atualizacao',
+                'token' => $token,
+                'token_id' => $tokenData['id'] ?? null,
+                'solicitacao_id' => $solicitacao['id'] ?? null,
+                'novas_datas_sanitizadas' => $novasDatasSanitizadas,
+            ]);
             
             // Atualizar solicitação com novas datas (SUBSTITUINDO os horários do admin)
             // Quando locatário reageenda, deve SUBSTITUIR os horários do admin em horarios_opcoes
@@ -1181,6 +1202,29 @@ class TokenController extends Controller
                 $solicitacao = array_merge($solicitacao, $solicitacaoAtualizada);
             }
 
+            try {
+                $this->tokenModel->markAsUsed($token, 'rescheduled');
+            } catch (\Exception $e) {
+                error_log('Reagendamento - Aviso: Erro ao marcar token como usado (continuando): ' . $e->getMessage());
+                $this->logReagendamento([
+                    'status' => 'AVISO',
+                    'fase' => 'marcar_token',
+                    'token' => $token,
+                    'token_id' => $tokenData['id'] ?? null,
+                    'solicitacao_id' => $solicitacao['id'] ?? null,
+                    'mensagem' => $e->getMessage(),
+                ]);
+            }
+
+            $this->logReagendamento([
+                'status' => 'SUCESSO',
+                'fase' => 'concluido',
+                'token' => $token,
+                'token_id' => $tokenData['id'] ?? null,
+                'solicitacao_id' => $solicitacao['id'] ?? null,
+                'novas_datas_salvas' => $novasDatasSanitizadas,
+            ]);
+
             // Exibir página de sucesso
             $this->view('token.sucesso', [
                 'title' => 'Horário Reagendado',
@@ -1193,11 +1237,47 @@ class TokenController extends Controller
         } catch (\Exception $e) {
             error_log('Erro ao processar reagendamento de horário: ' . $e->getMessage());
             error_log('Stack trace: ' . $e->getTraceAsString());
+            $this->logReagendamento([
+                'status' => 'ERRO',
+                'fase' => 'exception',
+                'token' => $token,
+                'token_id' => $tokenData['id'] ?? null,
+                'solicitacao_id' => $solicitacao['id'] ?? null,
+                'mensagem' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
             $this->view('token.error', [
                 'title' => 'Erro ao Reagendar',
                 'message' => 'Ocorreu um erro ao processar seu reagendamento. Por favor, tente novamente ou entre em contato conosco.',
                 'error_type' => 'processing_error'
             ]);
+        }
+    }
+
+    /**
+     * Registra logs detalhados do fluxo de reagendamento
+     */
+    private function logReagendamento(array $data): void
+    {
+        try {
+            $logDir = __DIR__ . '/../../storage/logs';
+            if (!is_dir($logDir)) {
+                mkdir($logDir, 0755, true);
+            }
+
+            $logFile = $logDir . '/reagendamento.log';
+            if (!file_exists($logFile)) {
+                touch($logFile);
+            }
+
+            $data = array_merge([
+                'timestamp' => date('Y-m-d H:i:s'),
+            ], $data);
+
+            $line = '[' . $data['timestamp'] . '] ' . json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . PHP_EOL;
+            file_put_contents($logFile, $line, FILE_APPEND | LOCK_EX);
+        } catch (\Throwable $e) {
+            error_log('Reagendamento Log - Falha ao escrever: ' . $e->getMessage());
         }
     }
 

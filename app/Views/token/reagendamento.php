@@ -328,6 +328,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         horariosEscolhidos.push(horarioCompleto);
+        console.log('[Reagendamento] Horário adicionado:', horarioCompleto, 'Lista atual:', horariosEscolhidos);
         atualizarListaHorarios();
 
         horarioSelecionadoAtual = '';
@@ -376,6 +377,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     window.removerHorario = function(index) {
         horariosEscolhidos.splice(index, 1);
+        console.log('[Reagendamento] Horário removido. Lista atual:', horariosEscolhidos);
         atualizarListaHorarios();
         atualizarEstiloCards();
         atualizarEstadoSalvar();
@@ -428,6 +430,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Atualizar campo hidden
             document.getElementById('novas_datas').value = JSON.stringify(horariosFormatados);
+            console.log('[Reagendamento] Horários enviados:', horariosFormatados);
             
             // Validar se há pelo menos 1 horário
             if (horariosFormatados.length === 0) {
