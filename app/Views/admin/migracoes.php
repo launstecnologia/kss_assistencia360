@@ -4,6 +4,11 @@ $currentPage = 'dashboard';
 $pageTitle = 'Executar Migrações';
 ob_start();
 ?>
+<?php
+$sqlScripts = $sqlScripts ?? [];
+$previousScriptFile = $previous_script_file ?? '';
+$previousSqlText = $previous_sql_text ?? '';
+?>
 
 <div class="max-w-3xl mx-auto">
     <?php if (!empty($error)): ?>
@@ -81,6 +86,43 @@ ob_start();
         <form method="POST" action="/admin/migracoes/run">
             <input type="hidden" name="csrf_token" value="<?= \App\Core\View::csrfToken() ?>">
             <button class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700" <?= (!empty($hasDescricaoCard) && !empty($hasHorarioConfirmado) && !empty($hasHorarioRaw) && !empty($hasConfirmedSchedules) && !empty($hasDatasOpcoes) && !empty($hasDataLimitePeca) && !empty($hasDataUltimoLembrete) && !empty($hasLembretesEnviados)) ? 'disabled' : '' ?>>Executar migração</button>
+        </form>
+    </div>
+
+    <div class="bg-white rounded-lg shadow p-6 mb-6">
+        <h2 class="text-xl font-semibold text-gray-900 mb-2">Executar script SQL</h2>
+        <p class="text-sm text-gray-600 mb-4">
+            Utilize esta ferramenta para rodar rapidamente scripts `.sql` já existentes na pasta <code>scripts/</code> ou colar comandos manuais.
+            Use com cautela: os comandos são executados diretamente no banco atual.
+        </p>
+        <form method="POST" action="/admin/migracoes/run-script" class="space-y-4">
+            <input type="hidden" name="csrf_token" value="<?= \App\Core\View::csrfToken() ?>">
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Selecionar arquivo .sql</label>
+                <select name="script_file" class="w-full border border-gray-300 rounded px-3 py-2">
+                    <option value="">-- Nenhum (usar apenas o SQL manual, se preenchido) --</option>
+                    <?php foreach ($sqlScripts as $path => $label): ?>
+                        <option value="<?= htmlspecialchars($path) ?>" <?= $previousScriptFile === $path ? 'selected' : '' ?>>
+                            <?= htmlspecialchars($label) ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+                <p class="text-xs text-gray-500 mt-1">Os scripts listados são lidos das pastas <code>scripts/</code> e <code>scripts/migrations/</code>.</p>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">SQL manual (opcional)</label>
+                <textarea name="sql_text" rows="6" class="w-full border border-gray-300 rounded px-3 py-2 font-mono text-sm"><?= htmlspecialchars($previousSqlText) ?></textarea>
+                <p class="text-xs text-gray-500 mt-1">Você pode colar comandos adicionais aqui. Eles serão executados após o arquivo selecionado (se houver).</p>
+            </div>
+
+            <div class="flex items-center justify-between">
+                <span class="text-xs text-gray-500">As instruções são executadas na ordem exibida e separadas por ponto e vírgula.</span>
+                <button class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">
+                    Executar script
+                </button>
+            </div>
         </form>
     </div>
 

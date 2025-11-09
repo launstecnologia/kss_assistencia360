@@ -17890,3 +17890,1864 @@
 [09-Nov-2025 17:18:34 America/Sao_Paulo] Router Debug - Route matched: GET /admin/solicitacoes/{id}/api
 [09-Nov-2025 17:18:34 America/Sao_Paulo] 📸 API Solicitação #45 - Fotos encontradas: 0
 [09-Nov-2025 17:18:34 America/Sao_Paulo]   ⚠️ Nenhuma foto encontrada na tabela 'fotos' para solicitação #45
+[09-Nov-2025 17:24:41 America/Sao_Paulo] matchPath: '/' vs '/admin/kanban'
+[09-Nov-2025 17:24:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:24:41 America/Sao_Paulo] matchPath: '/pwa' vs '/admin/kanban'
+[09-Nov-2025 17:24:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:24:41 America/Sao_Paulo] matchPath: '/pwa/login' vs '/admin/kanban'
+[09-Nov-2025 17:24:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:24:41 America/Sao_Paulo] matchPath: '/api/estados' vs '/admin/kanban'
+[09-Nov-2025 17:24:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:24:41 America/Sao_Paulo] matchPath: '/api/cidades' vs '/admin/kanban'
+[09-Nov-2025 17:24:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:24:41 America/Sao_Paulo] matchPath: '/api/imobiliarias' vs '/admin/kanban'
+[09-Nov-2025 17:24:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:24:41 America/Sao_Paulo] matchPath: '/confirmacao-horario' vs '/admin/kanban'
+[09-Nov-2025 17:24:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:24:41 America/Sao_Paulo] matchPath: '/cancelamento-horario' vs '/admin/kanban'
+[09-Nov-2025 17:24:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:24:41 America/Sao_Paulo] matchPath: '/cancelar-solicitacao' vs '/admin/kanban'
+[09-Nov-2025 17:24:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:24:41 America/Sao_Paulo] matchPath: '/reagendamento-horario' vs '/admin/kanban'
+[09-Nov-2025 17:24:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:24:41 America/Sao_Paulo] matchPath: '/status-servico' vs '/admin/kanban'
+[09-Nov-2025 17:24:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:24:41 America/Sao_Paulo] matchPath: '/acoes-servico' vs '/admin/kanban'
+[09-Nov-2025 17:24:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:24:41 America/Sao_Paulo] matchPath: '/admin' vs '/admin/kanban'
+[09-Nov-2025 17:24:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:24:41 America/Sao_Paulo] matchPath: '/operador' vs '/admin/kanban'
+[09-Nov-2025 17:24:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:24:41 America/Sao_Paulo] matchPath: '/login' vs '/admin/kanban'
+[09-Nov-2025 17:24:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:24:41 America/Sao_Paulo] matchPath: '/logout' vs '/admin/kanban'
+[09-Nov-2025 17:24:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:24:41 America/Sao_Paulo] matchPath: '/pwa/solicitar' vs '/admin/kanban'
+[09-Nov-2025 17:24:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:24:41 America/Sao_Paulo] matchPath: '/pwa/solicitacoes' vs '/admin/kanban'
+[09-Nov-2025 17:24:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:24:41 America/Sao_Paulo] matchPath: '/pwa/solicitacao/{id}' vs '/admin/kanban'
+[09-Nov-2025 17:24:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:24:41 America/Sao_Paulo] matchPath: '/admin/dashboard' vs '/admin/kanban'
+[09-Nov-2025 17:24:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:24:41 America/Sao_Paulo] matchPath: '/admin/relatorios' vs '/admin/kanban'
+[09-Nov-2025 17:24:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:24:41 America/Sao_Paulo] matchPath: '/admin/kanban' vs '/admin/kanban'
+[09-Nov-2025 17:24:41 America/Sao_Paulo] Router Debug - Route matched: GET /admin/kanban
+[09-Nov-2025 17:24:45 America/Sao_Paulo] matchPath: '/' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:24:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:24:45 America/Sao_Paulo] matchPath: '/pwa' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:24:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:24:45 America/Sao_Paulo] matchPath: '/pwa/login' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:24:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:24:45 America/Sao_Paulo] matchPath: '/api/estados' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:24:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:24:45 America/Sao_Paulo] matchPath: '/api/cidades' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:24:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:24:45 America/Sao_Paulo] matchPath: '/api/imobiliarias' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:24:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:24:45 America/Sao_Paulo] matchPath: '/confirmacao-horario' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:24:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:24:45 America/Sao_Paulo] matchPath: '/cancelamento-horario' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:24:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:24:45 America/Sao_Paulo] matchPath: '/cancelar-solicitacao' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:24:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:24:45 America/Sao_Paulo] matchPath: '/reagendamento-horario' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:24:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:24:45 America/Sao_Paulo] matchPath: '/status-servico' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:24:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:24:45 America/Sao_Paulo] matchPath: '/acoes-servico' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:24:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:24:45 America/Sao_Paulo] matchPath: '/admin' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:24:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:24:45 America/Sao_Paulo] matchPath: '/operador' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:24:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:24:45 America/Sao_Paulo] matchPath: '/login' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:24:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:24:45 America/Sao_Paulo] matchPath: '/logout' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:24:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:24:45 America/Sao_Paulo] matchPath: '/pwa/solicitar' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:24:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:24:45 America/Sao_Paulo] matchPath: '/pwa/solicitacoes' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:24:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:24:45 America/Sao_Paulo] matchPath: '/pwa/solicitacao/{id}' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:24:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:24:45 America/Sao_Paulo] matchPath: '/admin/dashboard' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:24:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:24:45 America/Sao_Paulo] matchPath: '/admin/relatorios' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:24:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:24:45 America/Sao_Paulo] matchPath: '/admin/kanban' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:24:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:24:45 America/Sao_Paulo] matchPath: '/admin/dashboard/solicitacoes-por-imobiliaria' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:24:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:24:45 America/Sao_Paulo] matchPath: '/admin/dashboard/solicitacoes-por-status' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:24:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:24:45 America/Sao_Paulo] matchPath: '/admin/templates-whatsapp' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:24:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:24:45 America/Sao_Paulo] matchPath: '/admin/templates-whatsapp/{id}/edit' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:24:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:24:45 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:24:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:24:45 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/create' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:24:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:24:45 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/qrcode' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:24:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:24:45 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/verificar-status' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:24:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:24:45 America/Sao_Paulo] matchPath: '/admin/solicitacoes' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:24:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:24:45 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/api' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:24:45 America/Sao_Paulo] matchPath result: true
+[09-Nov-2025 17:24:45 America/Sao_Paulo] Router Debug - Route matched: GET /admin/solicitacoes/{id}/api
+[09-Nov-2025 17:24:45 America/Sao_Paulo] 📸 API Solicitação #45 - Fotos encontradas: 0
+[09-Nov-2025 17:24:45 America/Sao_Paulo]   ⚠️ Nenhuma foto encontrada na tabela 'fotos' para solicitação #45
+[09-Nov-2025 17:26:17 America/Sao_Paulo] matchPath: '/' vs '/admin/migracoes'
+[09-Nov-2025 17:26:17 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:17 America/Sao_Paulo] matchPath: '/pwa' vs '/admin/migracoes'
+[09-Nov-2025 17:26:17 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:17 America/Sao_Paulo] matchPath: '/pwa/login' vs '/admin/migracoes'
+[09-Nov-2025 17:26:17 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:17 America/Sao_Paulo] matchPath: '/api/estados' vs '/admin/migracoes'
+[09-Nov-2025 17:26:17 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:17 America/Sao_Paulo] matchPath: '/api/cidades' vs '/admin/migracoes'
+[09-Nov-2025 17:26:17 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:17 America/Sao_Paulo] matchPath: '/api/imobiliarias' vs '/admin/migracoes'
+[09-Nov-2025 17:26:17 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:17 America/Sao_Paulo] matchPath: '/confirmacao-horario' vs '/admin/migracoes'
+[09-Nov-2025 17:26:17 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:17 America/Sao_Paulo] matchPath: '/cancelamento-horario' vs '/admin/migracoes'
+[09-Nov-2025 17:26:17 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:17 America/Sao_Paulo] matchPath: '/cancelar-solicitacao' vs '/admin/migracoes'
+[09-Nov-2025 17:26:17 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:17 America/Sao_Paulo] matchPath: '/reagendamento-horario' vs '/admin/migracoes'
+[09-Nov-2025 17:26:17 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:17 America/Sao_Paulo] matchPath: '/status-servico' vs '/admin/migracoes'
+[09-Nov-2025 17:26:17 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:17 America/Sao_Paulo] matchPath: '/acoes-servico' vs '/admin/migracoes'
+[09-Nov-2025 17:26:17 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:17 America/Sao_Paulo] matchPath: '/admin' vs '/admin/migracoes'
+[09-Nov-2025 17:26:17 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:17 America/Sao_Paulo] matchPath: '/operador' vs '/admin/migracoes'
+[09-Nov-2025 17:26:17 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:17 America/Sao_Paulo] matchPath: '/login' vs '/admin/migracoes'
+[09-Nov-2025 17:26:17 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:17 America/Sao_Paulo] matchPath: '/logout' vs '/admin/migracoes'
+[09-Nov-2025 17:26:17 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:17 America/Sao_Paulo] matchPath: '/pwa/solicitar' vs '/admin/migracoes'
+[09-Nov-2025 17:26:17 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:17 America/Sao_Paulo] matchPath: '/pwa/solicitacoes' vs '/admin/migracoes'
+[09-Nov-2025 17:26:17 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:17 America/Sao_Paulo] matchPath: '/pwa/solicitacao/{id}' vs '/admin/migracoes'
+[09-Nov-2025 17:26:17 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:17 America/Sao_Paulo] matchPath: '/admin/dashboard' vs '/admin/migracoes'
+[09-Nov-2025 17:26:17 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:17 America/Sao_Paulo] matchPath: '/admin/relatorios' vs '/admin/migracoes'
+[09-Nov-2025 17:26:17 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:17 America/Sao_Paulo] matchPath: '/admin/kanban' vs '/admin/migracoes'
+[09-Nov-2025 17:26:17 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:17 America/Sao_Paulo] matchPath: '/admin/dashboard/solicitacoes-por-imobiliaria' vs '/admin/migracoes'
+[09-Nov-2025 17:26:17 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:17 America/Sao_Paulo] matchPath: '/admin/dashboard/solicitacoes-por-status' vs '/admin/migracoes'
+[09-Nov-2025 17:26:17 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:17 America/Sao_Paulo] matchPath: '/admin/templates-whatsapp' vs '/admin/migracoes'
+[09-Nov-2025 17:26:17 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:17 America/Sao_Paulo] matchPath: '/admin/templates-whatsapp/{id}/edit' vs '/admin/migracoes'
+[09-Nov-2025 17:26:17 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:17 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances' vs '/admin/migracoes'
+[09-Nov-2025 17:26:17 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:17 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/create' vs '/admin/migracoes'
+[09-Nov-2025 17:26:17 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:17 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/qrcode' vs '/admin/migracoes'
+[09-Nov-2025 17:26:17 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:17 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/verificar-status' vs '/admin/migracoes'
+[09-Nov-2025 17:26:17 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:17 America/Sao_Paulo] matchPath: '/admin/solicitacoes' vs '/admin/migracoes'
+[09-Nov-2025 17:26:17 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:17 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/api' vs '/admin/migracoes'
+[09-Nov-2025 17:26:17 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:17 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}' vs '/admin/migracoes'
+[09-Nov-2025 17:26:17 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:17 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/edit' vs '/admin/migracoes'
+[09-Nov-2025 17:26:17 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:17 America/Sao_Paulo] matchPath: '/cron/notificacoes-pre-servico' vs '/admin/migracoes'
+[09-Nov-2025 17:26:17 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:17 America/Sao_Paulo] matchPath: '/cron/notificacoes-pos-servico' vs '/admin/migracoes'
+[09-Nov-2025 17:26:17 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:17 America/Sao_Paulo] matchPath: '/admin/cron-jobs' vs '/admin/migracoes'
+[09-Nov-2025 17:26:17 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:17 America/Sao_Paulo] matchPath: '/admin/cron-jobs/{id}/historico' vs '/admin/migracoes'
+[09-Nov-2025 17:26:17 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:17 America/Sao_Paulo] matchPath: '/admin/logs' vs '/admin/migracoes'
+[09-Nov-2025 17:26:17 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:17 America/Sao_Paulo] matchPath: '/admin/logs/download' vs '/admin/migracoes'
+[09-Nov-2025 17:26:17 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:17 America/Sao_Paulo] matchPath: '/admin/migracoes' vs '/admin/migracoes'
+[09-Nov-2025 17:26:17 America/Sao_Paulo] Router Debug - Route matched: GET /admin/migracoes
+[09-Nov-2025 17:26:19 America/Sao_Paulo] matchPath: '/' vs '/admin/migracoes'
+[09-Nov-2025 17:26:19 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:19 America/Sao_Paulo] matchPath: '/pwa' vs '/admin/migracoes'
+[09-Nov-2025 17:26:19 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:19 America/Sao_Paulo] matchPath: '/pwa/login' vs '/admin/migracoes'
+[09-Nov-2025 17:26:19 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:19 America/Sao_Paulo] matchPath: '/api/estados' vs '/admin/migracoes'
+[09-Nov-2025 17:26:19 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:19 America/Sao_Paulo] matchPath: '/api/cidades' vs '/admin/migracoes'
+[09-Nov-2025 17:26:19 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:19 America/Sao_Paulo] matchPath: '/api/imobiliarias' vs '/admin/migracoes'
+[09-Nov-2025 17:26:19 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:19 America/Sao_Paulo] matchPath: '/confirmacao-horario' vs '/admin/migracoes'
+[09-Nov-2025 17:26:19 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:19 America/Sao_Paulo] matchPath: '/cancelamento-horario' vs '/admin/migracoes'
+[09-Nov-2025 17:26:19 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:19 America/Sao_Paulo] matchPath: '/cancelar-solicitacao' vs '/admin/migracoes'
+[09-Nov-2025 17:26:19 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:19 America/Sao_Paulo] matchPath: '/reagendamento-horario' vs '/admin/migracoes'
+[09-Nov-2025 17:26:19 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:19 America/Sao_Paulo] matchPath: '/status-servico' vs '/admin/migracoes'
+[09-Nov-2025 17:26:19 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:19 America/Sao_Paulo] matchPath: '/acoes-servico' vs '/admin/migracoes'
+[09-Nov-2025 17:26:19 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:19 America/Sao_Paulo] matchPath: '/admin' vs '/admin/migracoes'
+[09-Nov-2025 17:26:19 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:19 America/Sao_Paulo] matchPath: '/operador' vs '/admin/migracoes'
+[09-Nov-2025 17:26:19 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:19 America/Sao_Paulo] matchPath: '/login' vs '/admin/migracoes'
+[09-Nov-2025 17:26:19 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:19 America/Sao_Paulo] matchPath: '/logout' vs '/admin/migracoes'
+[09-Nov-2025 17:26:19 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:19 America/Sao_Paulo] matchPath: '/pwa/solicitar' vs '/admin/migracoes'
+[09-Nov-2025 17:26:19 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:19 America/Sao_Paulo] matchPath: '/pwa/solicitacoes' vs '/admin/migracoes'
+[09-Nov-2025 17:26:19 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:19 America/Sao_Paulo] matchPath: '/pwa/solicitacao/{id}' vs '/admin/migracoes'
+[09-Nov-2025 17:26:19 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:19 America/Sao_Paulo] matchPath: '/admin/dashboard' vs '/admin/migracoes'
+[09-Nov-2025 17:26:19 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:19 America/Sao_Paulo] matchPath: '/admin/relatorios' vs '/admin/migracoes'
+[09-Nov-2025 17:26:19 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:19 America/Sao_Paulo] matchPath: '/admin/kanban' vs '/admin/migracoes'
+[09-Nov-2025 17:26:19 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:19 America/Sao_Paulo] matchPath: '/admin/dashboard/solicitacoes-por-imobiliaria' vs '/admin/migracoes'
+[09-Nov-2025 17:26:19 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:19 America/Sao_Paulo] matchPath: '/admin/dashboard/solicitacoes-por-status' vs '/admin/migracoes'
+[09-Nov-2025 17:26:19 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:19 America/Sao_Paulo] matchPath: '/admin/templates-whatsapp' vs '/admin/migracoes'
+[09-Nov-2025 17:26:19 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:19 America/Sao_Paulo] matchPath: '/admin/templates-whatsapp/{id}/edit' vs '/admin/migracoes'
+[09-Nov-2025 17:26:19 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:19 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances' vs '/admin/migracoes'
+[09-Nov-2025 17:26:19 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:19 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/create' vs '/admin/migracoes'
+[09-Nov-2025 17:26:19 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:19 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/qrcode' vs '/admin/migracoes'
+[09-Nov-2025 17:26:19 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:19 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/verificar-status' vs '/admin/migracoes'
+[09-Nov-2025 17:26:19 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:19 America/Sao_Paulo] matchPath: '/admin/solicitacoes' vs '/admin/migracoes'
+[09-Nov-2025 17:26:19 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:19 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/api' vs '/admin/migracoes'
+[09-Nov-2025 17:26:19 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:19 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}' vs '/admin/migracoes'
+[09-Nov-2025 17:26:19 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:19 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/edit' vs '/admin/migracoes'
+[09-Nov-2025 17:26:19 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:19 America/Sao_Paulo] matchPath: '/cron/notificacoes-pre-servico' vs '/admin/migracoes'
+[09-Nov-2025 17:26:19 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:19 America/Sao_Paulo] matchPath: '/cron/notificacoes-pos-servico' vs '/admin/migracoes'
+[09-Nov-2025 17:26:19 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:19 America/Sao_Paulo] matchPath: '/admin/cron-jobs' vs '/admin/migracoes'
+[09-Nov-2025 17:26:19 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:19 America/Sao_Paulo] matchPath: '/admin/cron-jobs/{id}/historico' vs '/admin/migracoes'
+[09-Nov-2025 17:26:19 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:19 America/Sao_Paulo] matchPath: '/admin/logs' vs '/admin/migracoes'
+[09-Nov-2025 17:26:19 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:19 America/Sao_Paulo] matchPath: '/admin/logs/download' vs '/admin/migracoes'
+[09-Nov-2025 17:26:19 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:19 America/Sao_Paulo] matchPath: '/admin/migracoes' vs '/admin/migracoes'
+[09-Nov-2025 17:26:19 America/Sao_Paulo] Router Debug - Route matched: GET /admin/migracoes
+[09-Nov-2025 17:26:20 America/Sao_Paulo] matchPath: '/' vs '/admin/migracoes'
+[09-Nov-2025 17:26:20 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:20 America/Sao_Paulo] matchPath: '/pwa' vs '/admin/migracoes'
+[09-Nov-2025 17:26:20 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:20 America/Sao_Paulo] matchPath: '/pwa/login' vs '/admin/migracoes'
+[09-Nov-2025 17:26:20 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:20 America/Sao_Paulo] matchPath: '/api/estados' vs '/admin/migracoes'
+[09-Nov-2025 17:26:20 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:20 America/Sao_Paulo] matchPath: '/api/cidades' vs '/admin/migracoes'
+[09-Nov-2025 17:26:20 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:20 America/Sao_Paulo] matchPath: '/api/imobiliarias' vs '/admin/migracoes'
+[09-Nov-2025 17:26:20 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:20 America/Sao_Paulo] matchPath: '/confirmacao-horario' vs '/admin/migracoes'
+[09-Nov-2025 17:26:20 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:20 America/Sao_Paulo] matchPath: '/cancelamento-horario' vs '/admin/migracoes'
+[09-Nov-2025 17:26:20 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:20 America/Sao_Paulo] matchPath: '/cancelar-solicitacao' vs '/admin/migracoes'
+[09-Nov-2025 17:26:20 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:20 America/Sao_Paulo] matchPath: '/reagendamento-horario' vs '/admin/migracoes'
+[09-Nov-2025 17:26:20 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:20 America/Sao_Paulo] matchPath: '/status-servico' vs '/admin/migracoes'
+[09-Nov-2025 17:26:20 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:20 America/Sao_Paulo] matchPath: '/acoes-servico' vs '/admin/migracoes'
+[09-Nov-2025 17:26:20 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:20 America/Sao_Paulo] matchPath: '/admin' vs '/admin/migracoes'
+[09-Nov-2025 17:26:20 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:20 America/Sao_Paulo] matchPath: '/operador' vs '/admin/migracoes'
+[09-Nov-2025 17:26:20 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:20 America/Sao_Paulo] matchPath: '/login' vs '/admin/migracoes'
+[09-Nov-2025 17:26:20 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:20 America/Sao_Paulo] matchPath: '/logout' vs '/admin/migracoes'
+[09-Nov-2025 17:26:20 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:20 America/Sao_Paulo] matchPath: '/pwa/solicitar' vs '/admin/migracoes'
+[09-Nov-2025 17:26:20 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:20 America/Sao_Paulo] matchPath: '/pwa/solicitacoes' vs '/admin/migracoes'
+[09-Nov-2025 17:26:20 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:20 America/Sao_Paulo] matchPath: '/pwa/solicitacao/{id}' vs '/admin/migracoes'
+[09-Nov-2025 17:26:20 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:20 America/Sao_Paulo] matchPath: '/admin/dashboard' vs '/admin/migracoes'
+[09-Nov-2025 17:26:20 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:20 America/Sao_Paulo] matchPath: '/admin/relatorios' vs '/admin/migracoes'
+[09-Nov-2025 17:26:20 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:20 America/Sao_Paulo] matchPath: '/admin/kanban' vs '/admin/migracoes'
+[09-Nov-2025 17:26:20 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:20 America/Sao_Paulo] matchPath: '/admin/dashboard/solicitacoes-por-imobiliaria' vs '/admin/migracoes'
+[09-Nov-2025 17:26:20 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:20 America/Sao_Paulo] matchPath: '/admin/dashboard/solicitacoes-por-status' vs '/admin/migracoes'
+[09-Nov-2025 17:26:20 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:20 America/Sao_Paulo] matchPath: '/admin/templates-whatsapp' vs '/admin/migracoes'
+[09-Nov-2025 17:26:20 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:20 America/Sao_Paulo] matchPath: '/admin/templates-whatsapp/{id}/edit' vs '/admin/migracoes'
+[09-Nov-2025 17:26:20 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:20 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances' vs '/admin/migracoes'
+[09-Nov-2025 17:26:20 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:20 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/create' vs '/admin/migracoes'
+[09-Nov-2025 17:26:20 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:20 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/qrcode' vs '/admin/migracoes'
+[09-Nov-2025 17:26:20 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:20 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/verificar-status' vs '/admin/migracoes'
+[09-Nov-2025 17:26:20 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:20 America/Sao_Paulo] matchPath: '/admin/solicitacoes' vs '/admin/migracoes'
+[09-Nov-2025 17:26:20 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:20 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/api' vs '/admin/migracoes'
+[09-Nov-2025 17:26:20 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:20 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}' vs '/admin/migracoes'
+[09-Nov-2025 17:26:20 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:20 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/edit' vs '/admin/migracoes'
+[09-Nov-2025 17:26:20 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:20 America/Sao_Paulo] matchPath: '/cron/notificacoes-pre-servico' vs '/admin/migracoes'
+[09-Nov-2025 17:26:20 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:20 America/Sao_Paulo] matchPath: '/cron/notificacoes-pos-servico' vs '/admin/migracoes'
+[09-Nov-2025 17:26:20 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:20 America/Sao_Paulo] matchPath: '/admin/cron-jobs' vs '/admin/migracoes'
+[09-Nov-2025 17:26:20 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:20 America/Sao_Paulo] matchPath: '/admin/cron-jobs/{id}/historico' vs '/admin/migracoes'
+[09-Nov-2025 17:26:20 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:20 America/Sao_Paulo] matchPath: '/admin/logs' vs '/admin/migracoes'
+[09-Nov-2025 17:26:20 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:20 America/Sao_Paulo] matchPath: '/admin/logs/download' vs '/admin/migracoes'
+[09-Nov-2025 17:26:20 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:20 America/Sao_Paulo] matchPath: '/admin/migracoes' vs '/admin/migracoes'
+[09-Nov-2025 17:26:20 America/Sao_Paulo] Router Debug - Route matched: GET /admin/migracoes
+[09-Nov-2025 17:26:23 America/Sao_Paulo] matchPath: '/' vs '/admin/migracoes'
+[09-Nov-2025 17:26:23 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:23 America/Sao_Paulo] matchPath: '/pwa' vs '/admin/migracoes'
+[09-Nov-2025 17:26:23 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:23 America/Sao_Paulo] matchPath: '/pwa/login' vs '/admin/migracoes'
+[09-Nov-2025 17:26:23 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:23 America/Sao_Paulo] matchPath: '/api/estados' vs '/admin/migracoes'
+[09-Nov-2025 17:26:23 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:23 America/Sao_Paulo] matchPath: '/api/cidades' vs '/admin/migracoes'
+[09-Nov-2025 17:26:23 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:23 America/Sao_Paulo] matchPath: '/api/imobiliarias' vs '/admin/migracoes'
+[09-Nov-2025 17:26:23 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:23 America/Sao_Paulo] matchPath: '/confirmacao-horario' vs '/admin/migracoes'
+[09-Nov-2025 17:26:23 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:23 America/Sao_Paulo] matchPath: '/cancelamento-horario' vs '/admin/migracoes'
+[09-Nov-2025 17:26:23 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:23 America/Sao_Paulo] matchPath: '/cancelar-solicitacao' vs '/admin/migracoes'
+[09-Nov-2025 17:26:23 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:23 America/Sao_Paulo] matchPath: '/reagendamento-horario' vs '/admin/migracoes'
+[09-Nov-2025 17:26:23 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:23 America/Sao_Paulo] matchPath: '/status-servico' vs '/admin/migracoes'
+[09-Nov-2025 17:26:23 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:23 America/Sao_Paulo] matchPath: '/acoes-servico' vs '/admin/migracoes'
+[09-Nov-2025 17:26:23 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:23 America/Sao_Paulo] matchPath: '/admin' vs '/admin/migracoes'
+[09-Nov-2025 17:26:23 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:23 America/Sao_Paulo] matchPath: '/operador' vs '/admin/migracoes'
+[09-Nov-2025 17:26:23 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:23 America/Sao_Paulo] matchPath: '/login' vs '/admin/migracoes'
+[09-Nov-2025 17:26:23 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:23 America/Sao_Paulo] matchPath: '/logout' vs '/admin/migracoes'
+[09-Nov-2025 17:26:23 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:23 America/Sao_Paulo] matchPath: '/pwa/solicitar' vs '/admin/migracoes'
+[09-Nov-2025 17:26:23 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:23 America/Sao_Paulo] matchPath: '/pwa/solicitacoes' vs '/admin/migracoes'
+[09-Nov-2025 17:26:23 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:23 America/Sao_Paulo] matchPath: '/pwa/solicitacao/{id}' vs '/admin/migracoes'
+[09-Nov-2025 17:26:23 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:23 America/Sao_Paulo] matchPath: '/admin/dashboard' vs '/admin/migracoes'
+[09-Nov-2025 17:26:23 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:23 America/Sao_Paulo] matchPath: '/admin/relatorios' vs '/admin/migracoes'
+[09-Nov-2025 17:26:23 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:23 America/Sao_Paulo] matchPath: '/admin/kanban' vs '/admin/migracoes'
+[09-Nov-2025 17:26:23 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:23 America/Sao_Paulo] matchPath: '/admin/dashboard/solicitacoes-por-imobiliaria' vs '/admin/migracoes'
+[09-Nov-2025 17:26:23 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:23 America/Sao_Paulo] matchPath: '/admin/dashboard/solicitacoes-por-status' vs '/admin/migracoes'
+[09-Nov-2025 17:26:23 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:23 America/Sao_Paulo] matchPath: '/admin/templates-whatsapp' vs '/admin/migracoes'
+[09-Nov-2025 17:26:23 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:23 America/Sao_Paulo] matchPath: '/admin/templates-whatsapp/{id}/edit' vs '/admin/migracoes'
+[09-Nov-2025 17:26:23 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:23 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances' vs '/admin/migracoes'
+[09-Nov-2025 17:26:23 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:23 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/create' vs '/admin/migracoes'
+[09-Nov-2025 17:26:23 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:23 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/qrcode' vs '/admin/migracoes'
+[09-Nov-2025 17:26:23 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:23 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/verificar-status' vs '/admin/migracoes'
+[09-Nov-2025 17:26:23 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:23 America/Sao_Paulo] matchPath: '/admin/solicitacoes' vs '/admin/migracoes'
+[09-Nov-2025 17:26:23 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:23 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/api' vs '/admin/migracoes'
+[09-Nov-2025 17:26:23 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:23 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}' vs '/admin/migracoes'
+[09-Nov-2025 17:26:23 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:23 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/edit' vs '/admin/migracoes'
+[09-Nov-2025 17:26:23 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:23 America/Sao_Paulo] matchPath: '/cron/notificacoes-pre-servico' vs '/admin/migracoes'
+[09-Nov-2025 17:26:23 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:23 America/Sao_Paulo] matchPath: '/cron/notificacoes-pos-servico' vs '/admin/migracoes'
+[09-Nov-2025 17:26:23 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:23 America/Sao_Paulo] matchPath: '/admin/cron-jobs' vs '/admin/migracoes'
+[09-Nov-2025 17:26:23 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:23 America/Sao_Paulo] matchPath: '/admin/cron-jobs/{id}/historico' vs '/admin/migracoes'
+[09-Nov-2025 17:26:23 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:23 America/Sao_Paulo] matchPath: '/admin/logs' vs '/admin/migracoes'
+[09-Nov-2025 17:26:23 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:23 America/Sao_Paulo] matchPath: '/admin/logs/download' vs '/admin/migracoes'
+[09-Nov-2025 17:26:23 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:23 America/Sao_Paulo] matchPath: '/admin/migracoes' vs '/admin/migracoes'
+[09-Nov-2025 17:26:23 America/Sao_Paulo] Router Debug - Route matched: GET /admin/migracoes
+[09-Nov-2025 17:26:24 America/Sao_Paulo] matchPath: '/' vs '/admin/migracoes'
+[09-Nov-2025 17:26:24 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:24 America/Sao_Paulo] matchPath: '/pwa' vs '/admin/migracoes'
+[09-Nov-2025 17:26:24 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:24 America/Sao_Paulo] matchPath: '/pwa/login' vs '/admin/migracoes'
+[09-Nov-2025 17:26:24 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:24 America/Sao_Paulo] matchPath: '/api/estados' vs '/admin/migracoes'
+[09-Nov-2025 17:26:24 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:24 America/Sao_Paulo] matchPath: '/api/cidades' vs '/admin/migracoes'
+[09-Nov-2025 17:26:24 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:24 America/Sao_Paulo] matchPath: '/api/imobiliarias' vs '/admin/migracoes'
+[09-Nov-2025 17:26:24 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:24 America/Sao_Paulo] matchPath: '/confirmacao-horario' vs '/admin/migracoes'
+[09-Nov-2025 17:26:24 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:24 America/Sao_Paulo] matchPath: '/cancelamento-horario' vs '/admin/migracoes'
+[09-Nov-2025 17:26:24 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:24 America/Sao_Paulo] matchPath: '/cancelar-solicitacao' vs '/admin/migracoes'
+[09-Nov-2025 17:26:24 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:24 America/Sao_Paulo] matchPath: '/reagendamento-horario' vs '/admin/migracoes'
+[09-Nov-2025 17:26:24 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:24 America/Sao_Paulo] matchPath: '/status-servico' vs '/admin/migracoes'
+[09-Nov-2025 17:26:24 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:24 America/Sao_Paulo] matchPath: '/acoes-servico' vs '/admin/migracoes'
+[09-Nov-2025 17:26:24 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:24 America/Sao_Paulo] matchPath: '/admin' vs '/admin/migracoes'
+[09-Nov-2025 17:26:24 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:24 America/Sao_Paulo] matchPath: '/operador' vs '/admin/migracoes'
+[09-Nov-2025 17:26:24 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:24 America/Sao_Paulo] matchPath: '/login' vs '/admin/migracoes'
+[09-Nov-2025 17:26:24 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:24 America/Sao_Paulo] matchPath: '/logout' vs '/admin/migracoes'
+[09-Nov-2025 17:26:24 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:24 America/Sao_Paulo] matchPath: '/pwa/solicitar' vs '/admin/migracoes'
+[09-Nov-2025 17:26:24 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:24 America/Sao_Paulo] matchPath: '/pwa/solicitacoes' vs '/admin/migracoes'
+[09-Nov-2025 17:26:24 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:24 America/Sao_Paulo] matchPath: '/pwa/solicitacao/{id}' vs '/admin/migracoes'
+[09-Nov-2025 17:26:24 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:24 America/Sao_Paulo] matchPath: '/admin/dashboard' vs '/admin/migracoes'
+[09-Nov-2025 17:26:24 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:24 America/Sao_Paulo] matchPath: '/admin/relatorios' vs '/admin/migracoes'
+[09-Nov-2025 17:26:24 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:24 America/Sao_Paulo] matchPath: '/admin/kanban' vs '/admin/migracoes'
+[09-Nov-2025 17:26:24 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:24 America/Sao_Paulo] matchPath: '/admin/dashboard/solicitacoes-por-imobiliaria' vs '/admin/migracoes'
+[09-Nov-2025 17:26:24 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:24 America/Sao_Paulo] matchPath: '/admin/dashboard/solicitacoes-por-status' vs '/admin/migracoes'
+[09-Nov-2025 17:26:24 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:24 America/Sao_Paulo] matchPath: '/admin/templates-whatsapp' vs '/admin/migracoes'
+[09-Nov-2025 17:26:24 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:24 America/Sao_Paulo] matchPath: '/admin/templates-whatsapp/{id}/edit' vs '/admin/migracoes'
+[09-Nov-2025 17:26:24 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:24 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances' vs '/admin/migracoes'
+[09-Nov-2025 17:26:24 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:24 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/create' vs '/admin/migracoes'
+[09-Nov-2025 17:26:24 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:24 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/qrcode' vs '/admin/migracoes'
+[09-Nov-2025 17:26:24 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:24 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/verificar-status' vs '/admin/migracoes'
+[09-Nov-2025 17:26:24 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:24 America/Sao_Paulo] matchPath: '/admin/solicitacoes' vs '/admin/migracoes'
+[09-Nov-2025 17:26:24 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:24 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/api' vs '/admin/migracoes'
+[09-Nov-2025 17:26:24 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:24 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}' vs '/admin/migracoes'
+[09-Nov-2025 17:26:24 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:24 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/edit' vs '/admin/migracoes'
+[09-Nov-2025 17:26:24 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:24 America/Sao_Paulo] matchPath: '/cron/notificacoes-pre-servico' vs '/admin/migracoes'
+[09-Nov-2025 17:26:24 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:24 America/Sao_Paulo] matchPath: '/cron/notificacoes-pos-servico' vs '/admin/migracoes'
+[09-Nov-2025 17:26:24 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:24 America/Sao_Paulo] matchPath: '/admin/cron-jobs' vs '/admin/migracoes'
+[09-Nov-2025 17:26:24 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:24 America/Sao_Paulo] matchPath: '/admin/cron-jobs/{id}/historico' vs '/admin/migracoes'
+[09-Nov-2025 17:26:24 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:24 America/Sao_Paulo] matchPath: '/admin/logs' vs '/admin/migracoes'
+[09-Nov-2025 17:26:24 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:24 America/Sao_Paulo] matchPath: '/admin/logs/download' vs '/admin/migracoes'
+[09-Nov-2025 17:26:24 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:26:24 America/Sao_Paulo] matchPath: '/admin/migracoes' vs '/admin/migracoes'
+[09-Nov-2025 17:26:24 America/Sao_Paulo] Router Debug - Route matched: GET /admin/migracoes
+[09-Nov-2025 17:28:23 America/Sao_Paulo] matchPath: '/' vs '/admin/migracoes'
+[09-Nov-2025 17:28:23 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:23 America/Sao_Paulo] matchPath: '/pwa' vs '/admin/migracoes'
+[09-Nov-2025 17:28:23 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:23 America/Sao_Paulo] matchPath: '/pwa/login' vs '/admin/migracoes'
+[09-Nov-2025 17:28:23 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:23 America/Sao_Paulo] matchPath: '/api/estados' vs '/admin/migracoes'
+[09-Nov-2025 17:28:23 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:23 America/Sao_Paulo] matchPath: '/api/cidades' vs '/admin/migracoes'
+[09-Nov-2025 17:28:23 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:23 America/Sao_Paulo] matchPath: '/api/imobiliarias' vs '/admin/migracoes'
+[09-Nov-2025 17:28:23 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:23 America/Sao_Paulo] matchPath: '/confirmacao-horario' vs '/admin/migracoes'
+[09-Nov-2025 17:28:23 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:23 America/Sao_Paulo] matchPath: '/cancelamento-horario' vs '/admin/migracoes'
+[09-Nov-2025 17:28:23 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:23 America/Sao_Paulo] matchPath: '/cancelar-solicitacao' vs '/admin/migracoes'
+[09-Nov-2025 17:28:23 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:23 America/Sao_Paulo] matchPath: '/reagendamento-horario' vs '/admin/migracoes'
+[09-Nov-2025 17:28:23 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:23 America/Sao_Paulo] matchPath: '/status-servico' vs '/admin/migracoes'
+[09-Nov-2025 17:28:23 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:23 America/Sao_Paulo] matchPath: '/acoes-servico' vs '/admin/migracoes'
+[09-Nov-2025 17:28:23 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:23 America/Sao_Paulo] matchPath: '/admin' vs '/admin/migracoes'
+[09-Nov-2025 17:28:23 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:23 America/Sao_Paulo] matchPath: '/operador' vs '/admin/migracoes'
+[09-Nov-2025 17:28:23 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:23 America/Sao_Paulo] matchPath: '/login' vs '/admin/migracoes'
+[09-Nov-2025 17:28:23 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:23 America/Sao_Paulo] matchPath: '/logout' vs '/admin/migracoes'
+[09-Nov-2025 17:28:23 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:23 America/Sao_Paulo] matchPath: '/pwa/solicitar' vs '/admin/migracoes'
+[09-Nov-2025 17:28:23 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:23 America/Sao_Paulo] matchPath: '/pwa/solicitacoes' vs '/admin/migracoes'
+[09-Nov-2025 17:28:23 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:23 America/Sao_Paulo] matchPath: '/pwa/solicitacao/{id}' vs '/admin/migracoes'
+[09-Nov-2025 17:28:23 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:23 America/Sao_Paulo] matchPath: '/admin/dashboard' vs '/admin/migracoes'
+[09-Nov-2025 17:28:23 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:23 America/Sao_Paulo] matchPath: '/admin/relatorios' vs '/admin/migracoes'
+[09-Nov-2025 17:28:23 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:23 America/Sao_Paulo] matchPath: '/admin/kanban' vs '/admin/migracoes'
+[09-Nov-2025 17:28:23 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:23 America/Sao_Paulo] matchPath: '/admin/dashboard/solicitacoes-por-imobiliaria' vs '/admin/migracoes'
+[09-Nov-2025 17:28:23 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:23 America/Sao_Paulo] matchPath: '/admin/dashboard/solicitacoes-por-status' vs '/admin/migracoes'
+[09-Nov-2025 17:28:23 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:23 America/Sao_Paulo] matchPath: '/admin/templates-whatsapp' vs '/admin/migracoes'
+[09-Nov-2025 17:28:23 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:23 America/Sao_Paulo] matchPath: '/admin/templates-whatsapp/{id}/edit' vs '/admin/migracoes'
+[09-Nov-2025 17:28:23 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:23 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances' vs '/admin/migracoes'
+[09-Nov-2025 17:28:23 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:23 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/create' vs '/admin/migracoes'
+[09-Nov-2025 17:28:23 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:23 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/qrcode' vs '/admin/migracoes'
+[09-Nov-2025 17:28:23 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:23 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/verificar-status' vs '/admin/migracoes'
+[09-Nov-2025 17:28:23 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:23 America/Sao_Paulo] matchPath: '/admin/solicitacoes' vs '/admin/migracoes'
+[09-Nov-2025 17:28:23 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:23 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/api' vs '/admin/migracoes'
+[09-Nov-2025 17:28:23 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:23 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}' vs '/admin/migracoes'
+[09-Nov-2025 17:28:23 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:23 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/edit' vs '/admin/migracoes'
+[09-Nov-2025 17:28:23 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:23 America/Sao_Paulo] matchPath: '/cron/notificacoes-pre-servico' vs '/admin/migracoes'
+[09-Nov-2025 17:28:23 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:23 America/Sao_Paulo] matchPath: '/cron/notificacoes-pos-servico' vs '/admin/migracoes'
+[09-Nov-2025 17:28:23 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:23 America/Sao_Paulo] matchPath: '/admin/cron-jobs' vs '/admin/migracoes'
+[09-Nov-2025 17:28:23 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:23 America/Sao_Paulo] matchPath: '/admin/cron-jobs/{id}/historico' vs '/admin/migracoes'
+[09-Nov-2025 17:28:23 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:23 America/Sao_Paulo] matchPath: '/admin/logs' vs '/admin/migracoes'
+[09-Nov-2025 17:28:23 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:23 America/Sao_Paulo] matchPath: '/admin/logs/download' vs '/admin/migracoes'
+[09-Nov-2025 17:28:23 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:23 America/Sao_Paulo] matchPath: '/admin/migracoes' vs '/admin/migracoes'
+[09-Nov-2025 17:28:23 America/Sao_Paulo] Router Debug - Route matched: GET /admin/migracoes
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath: '/pwa/login' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath: '/confirmacao-horario' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath: '/cancelamento-horario' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath: '/cancelar-solicitacao' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath: '/reagendamento-horario' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath: '/acoes-servico' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath: '/login' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath: '/pwa/solicitar' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath: '/admin/kanban/mover' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath: '/admin/kanban/atualizar-condicao' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath: '/admin/templates-whatsapp' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath: '/admin/templates-whatsapp/{id}' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath: '/admin/templates-whatsapp/{id}/delete' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/atualizar-qrcode' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/set-padrao' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/reiniciar' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/logout' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/desconectar' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/delete' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/status' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/confirmar-horario' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/desconfirmar-horario' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/horarios/bulk' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/confirmar-servico' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/solicitar-novos-horarios' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/adicionar-horario-seguradora' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/remover-horario-seguradora' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/atualizar' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/edit' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath: '/admin/solicitacoes/criar' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath: '/admin/solicitacoes/confirmar-datas' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath: '/admin/solicitacoes/cancelar' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/aceitar-data-prestador' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/recusar-propor-datas' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/aceitar-data-locatario' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/recusar-datas-locatario' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/confirmar-agendamento-final' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath: '/admin/solicitacoes/confirmar-atendimento' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath: '/admin/solicitacoes/informar-compra-peca' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath: '/admin/solicitacoes/enviar-lembretes' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath: '/admin/solicitacoes/expirar' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath: '/admin/solicitacoes/enviar-notificacoes-pre-servico' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath: '/admin/solicitacoes/enviar-notificacoes-pos-servico' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath: '/admin/cron-jobs/{id}/executar' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath: '/admin/cron-jobs/{id}/toggle-ativo' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath: '/admin/cron-jobs/{id}/atualizar-frequencia' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath: '/admin/cron-jobs/executar-pendentes' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath: '/admin/logs/limpar' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath: '/admin/migracoes/run' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath: '/admin/migracoes/purge' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath: '/admin/migracoes/limpar-disponibilidade' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath: '/{instancia}' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath: '/{instancia}/atualizar-perfil' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath: '/{instancia}/nova-solicitacao/etapa/{etapa}' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath: '/{instancia}/nova-solicitacao' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath: '/{instancia}/solicitacao-manual/etapa/{etapa}' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath: '/{instancia}/solicitacao-manual' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath: '/{instancia}/logout' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath: '/admin/imobiliarias' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath: '/admin/imobiliarias/buscar-cnpj' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath: '/admin/imobiliarias/{id}' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath: '/admin/imobiliarias/{id}/delete' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath: '/admin/imobiliarias/{id}/toggle-status' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath: '/admin/imobiliarias/{id}/test-connection' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath: '/admin/usuarios' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath: '/admin/usuarios/{id}' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath: '/admin/usuarios/{id}/delete' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath: '/admin/usuarios/{id}/toggle-status' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath: '/admin/usuarios/{id}/resetar-senha' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath: '/admin/categorias' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath: '/admin/categorias/{id}' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath: '/admin/categorias/{id}/delete' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath: '/admin/categorias/{id}/toggle-status' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath: '/admin/categorias/{categoriaId}/subcategorias' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath: '/admin/categorias/{categoriaId}/subcategorias/{subcategoriaId}' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath: '/admin/categorias/{categoriaId}/subcategorias/{subcategoriaId}/delete' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath: '/admin/categorias/{categoriaId}/subcategorias/{subcategoriaId}/toggle-status' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath: '/admin/status' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath: '/admin/status/reordenar' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath: '/admin/status/{id}' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath: '/admin/status/{id}/delete' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath: '/admin/condicoes' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath: '/admin/condicoes/reordenar' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath: '/admin/condicoes/{id}' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath: '/admin/condicoes/{id}/delete' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath: '/admin/telefones-emergencia' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath: '/admin/telefones-emergencia/{id}' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath: '/admin/telefones-emergencia/{id}/delete' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath: '/admin/configuracoes' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath: '/admin/configuracoes/emergencia' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath: '/admin/configuracoes/{id}' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath: '/admin/configuracoes/{id}/delete' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath: '/admin/solicitacoes-manuais/{id}/status' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath: '/admin/solicitacoes-manuais/{id}/migrar' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath: '/{instancia}/atualizar-perfil' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath: '/{instancia}/nova-solicitacao' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath: '/api/solicitacoes/{id}/status' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:28:45 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath: '/pwa/login' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath: '/confirmacao-horario' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath: '/cancelamento-horario' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath: '/cancelar-solicitacao' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath: '/reagendamento-horario' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath: '/acoes-servico' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath: '/login' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath: '/pwa/solicitar' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath: '/admin/kanban/mover' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath: '/admin/kanban/atualizar-condicao' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath: '/admin/templates-whatsapp' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath: '/admin/templates-whatsapp/{id}' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath: '/admin/templates-whatsapp/{id}/delete' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/atualizar-qrcode' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/set-padrao' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/reiniciar' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/logout' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/desconectar' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/delete' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/status' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/confirmar-horario' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/desconfirmar-horario' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/horarios/bulk' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/confirmar-servico' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/solicitar-novos-horarios' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/adicionar-horario-seguradora' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/remover-horario-seguradora' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/atualizar' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/edit' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath: '/admin/solicitacoes/criar' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath: '/admin/solicitacoes/confirmar-datas' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath: '/admin/solicitacoes/cancelar' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/aceitar-data-prestador' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/recusar-propor-datas' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/aceitar-data-locatario' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/recusar-datas-locatario' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/confirmar-agendamento-final' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath: '/admin/solicitacoes/confirmar-atendimento' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath: '/admin/solicitacoes/informar-compra-peca' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath: '/admin/solicitacoes/enviar-lembretes' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath: '/admin/solicitacoes/expirar' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath: '/admin/solicitacoes/enviar-notificacoes-pre-servico' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath: '/admin/solicitacoes/enviar-notificacoes-pos-servico' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath: '/admin/cron-jobs/{id}/executar' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath: '/admin/cron-jobs/{id}/toggle-ativo' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath: '/admin/cron-jobs/{id}/atualizar-frequencia' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath: '/admin/cron-jobs/executar-pendentes' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath: '/admin/logs/limpar' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath: '/admin/migracoes/run' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath: '/admin/migracoes/purge' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath: '/admin/migracoes/limpar-disponibilidade' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath: '/{instancia}' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath: '/{instancia}/atualizar-perfil' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath: '/{instancia}/nova-solicitacao/etapa/{etapa}' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath: '/{instancia}/nova-solicitacao' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath: '/{instancia}/solicitacao-manual/etapa/{etapa}' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath: '/{instancia}/solicitacao-manual' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath: '/{instancia}/logout' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath: '/admin/imobiliarias' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath: '/admin/imobiliarias/buscar-cnpj' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath: '/admin/imobiliarias/{id}' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath: '/admin/imobiliarias/{id}/delete' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath: '/admin/imobiliarias/{id}/toggle-status' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath: '/admin/imobiliarias/{id}/test-connection' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath: '/admin/usuarios' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath: '/admin/usuarios/{id}' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath: '/admin/usuarios/{id}/delete' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath: '/admin/usuarios/{id}/toggle-status' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath: '/admin/usuarios/{id}/resetar-senha' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath: '/admin/categorias' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath: '/admin/categorias/{id}' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath: '/admin/categorias/{id}/delete' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath: '/admin/categorias/{id}/toggle-status' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath: '/admin/categorias/{categoriaId}/subcategorias' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath: '/admin/categorias/{categoriaId}/subcategorias/{subcategoriaId}' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath: '/admin/categorias/{categoriaId}/subcategorias/{subcategoriaId}/delete' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath: '/admin/categorias/{categoriaId}/subcategorias/{subcategoriaId}/toggle-status' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath: '/admin/status' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath: '/admin/status/reordenar' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath: '/admin/status/{id}' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath: '/admin/status/{id}/delete' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath: '/admin/condicoes' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath: '/admin/condicoes/reordenar' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath: '/admin/condicoes/{id}' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath: '/admin/condicoes/{id}/delete' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath: '/admin/telefones-emergencia' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath: '/admin/telefones-emergencia/{id}' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath: '/admin/telefones-emergencia/{id}/delete' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath: '/admin/configuracoes' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath: '/admin/configuracoes/emergencia' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath: '/admin/configuracoes/{id}' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath: '/admin/configuracoes/{id}/delete' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath: '/admin/solicitacoes-manuais/{id}/status' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath: '/admin/solicitacoes-manuais/{id}/migrar' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath: '/{instancia}/atualizar-perfil' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath: '/{instancia}/nova-solicitacao' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath: '/api/solicitacoes/{id}/status' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:29:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath: '/pwa/login' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath: '/confirmacao-horario' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath: '/cancelamento-horario' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath: '/cancelar-solicitacao' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath: '/reagendamento-horario' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath: '/acoes-servico' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath: '/login' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath: '/pwa/solicitar' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath: '/admin/kanban/mover' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath: '/admin/kanban/atualizar-condicao' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath: '/admin/templates-whatsapp' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath: '/admin/templates-whatsapp/{id}' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath: '/admin/templates-whatsapp/{id}/delete' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/atualizar-qrcode' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/set-padrao' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/reiniciar' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/logout' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/desconectar' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/delete' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/status' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/confirmar-horario' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/desconfirmar-horario' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/horarios/bulk' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/confirmar-servico' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/solicitar-novos-horarios' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/adicionar-horario-seguradora' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/remover-horario-seguradora' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/atualizar' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/edit' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath: '/admin/solicitacoes/criar' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath: '/admin/solicitacoes/confirmar-datas' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath: '/admin/solicitacoes/cancelar' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/aceitar-data-prestador' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/recusar-propor-datas' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/aceitar-data-locatario' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/recusar-datas-locatario' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/confirmar-agendamento-final' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath: '/admin/solicitacoes/confirmar-atendimento' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath: '/admin/solicitacoes/informar-compra-peca' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath: '/admin/solicitacoes/enviar-lembretes' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath: '/admin/solicitacoes/expirar' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath: '/admin/solicitacoes/enviar-notificacoes-pre-servico' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath: '/admin/solicitacoes/enviar-notificacoes-pos-servico' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath: '/admin/cron-jobs/{id}/executar' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath: '/admin/cron-jobs/{id}/toggle-ativo' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath: '/admin/cron-jobs/{id}/atualizar-frequencia' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath: '/admin/cron-jobs/executar-pendentes' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath: '/admin/logs/limpar' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath: '/admin/migracoes/run' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath: '/admin/migracoes/purge' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath: '/admin/migracoes/limpar-disponibilidade' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath: '/{instancia}' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath: '/{instancia}/atualizar-perfil' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath: '/{instancia}/nova-solicitacao/etapa/{etapa}' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath: '/{instancia}/nova-solicitacao' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath: '/{instancia}/solicitacao-manual/etapa/{etapa}' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath: '/{instancia}/solicitacao-manual' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath: '/{instancia}/logout' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath: '/admin/imobiliarias' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath: '/admin/imobiliarias/buscar-cnpj' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath: '/admin/imobiliarias/{id}' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath: '/admin/imobiliarias/{id}/delete' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath: '/admin/imobiliarias/{id}/toggle-status' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath: '/admin/imobiliarias/{id}/test-connection' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath: '/admin/usuarios' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath: '/admin/usuarios/{id}' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath: '/admin/usuarios/{id}/delete' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath: '/admin/usuarios/{id}/toggle-status' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath: '/admin/usuarios/{id}/resetar-senha' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath: '/admin/categorias' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath: '/admin/categorias/{id}' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath: '/admin/categorias/{id}/delete' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath: '/admin/categorias/{id}/toggle-status' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath: '/admin/categorias/{categoriaId}/subcategorias' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath: '/admin/categorias/{categoriaId}/subcategorias/{subcategoriaId}' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath: '/admin/categorias/{categoriaId}/subcategorias/{subcategoriaId}/delete' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath: '/admin/categorias/{categoriaId}/subcategorias/{subcategoriaId}/toggle-status' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath: '/admin/status' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath: '/admin/status/reordenar' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath: '/admin/status/{id}' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath: '/admin/status/{id}/delete' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath: '/admin/condicoes' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath: '/admin/condicoes/reordenar' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath: '/admin/condicoes/{id}' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath: '/admin/condicoes/{id}/delete' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath: '/admin/telefones-emergencia' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath: '/admin/telefones-emergencia/{id}' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath: '/admin/telefones-emergencia/{id}/delete' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath: '/admin/configuracoes' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath: '/admin/configuracoes/emergencia' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath: '/admin/configuracoes/{id}' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath: '/admin/configuracoes/{id}/delete' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath: '/admin/solicitacoes-manuais/{id}/status' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath: '/admin/solicitacoes-manuais/{id}/migrar' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath: '/{instancia}/atualizar-perfil' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath: '/{instancia}/nova-solicitacao' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath: '/api/solicitacoes/{id}/status' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:09 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath: '/pwa/login' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath: '/confirmacao-horario' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath: '/cancelamento-horario' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath: '/cancelar-solicitacao' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath: '/reagendamento-horario' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath: '/acoes-servico' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath: '/login' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath: '/pwa/solicitar' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath: '/admin/kanban/mover' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath: '/admin/kanban/atualizar-condicao' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath: '/admin/templates-whatsapp' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath: '/admin/templates-whatsapp/{id}' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath: '/admin/templates-whatsapp/{id}/delete' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/atualizar-qrcode' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/set-padrao' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/reiniciar' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/logout' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/desconectar' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/delete' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/status' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/confirmar-horario' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/desconfirmar-horario' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/horarios/bulk' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/confirmar-servico' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/solicitar-novos-horarios' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/adicionar-horario-seguradora' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/remover-horario-seguradora' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/atualizar' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/edit' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath: '/admin/solicitacoes/criar' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath: '/admin/solicitacoes/confirmar-datas' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath: '/admin/solicitacoes/cancelar' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/aceitar-data-prestador' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/recusar-propor-datas' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/aceitar-data-locatario' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/recusar-datas-locatario' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/confirmar-agendamento-final' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath: '/admin/solicitacoes/confirmar-atendimento' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath: '/admin/solicitacoes/informar-compra-peca' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath: '/admin/solicitacoes/enviar-lembretes' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath: '/admin/solicitacoes/expirar' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath: '/admin/solicitacoes/enviar-notificacoes-pre-servico' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath: '/admin/solicitacoes/enviar-notificacoes-pos-servico' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath: '/admin/cron-jobs/{id}/executar' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath: '/admin/cron-jobs/{id}/toggle-ativo' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath: '/admin/cron-jobs/{id}/atualizar-frequencia' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath: '/admin/cron-jobs/executar-pendentes' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath: '/admin/logs/limpar' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath: '/admin/migracoes/run' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath: '/admin/migracoes/purge' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath: '/admin/migracoes/limpar-disponibilidade' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath: '/{instancia}' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath: '/{instancia}/atualizar-perfil' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath: '/{instancia}/nova-solicitacao/etapa/{etapa}' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath: '/{instancia}/nova-solicitacao' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath: '/{instancia}/solicitacao-manual/etapa/{etapa}' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath: '/{instancia}/solicitacao-manual' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath: '/{instancia}/logout' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath: '/admin/imobiliarias' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath: '/admin/imobiliarias/buscar-cnpj' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath: '/admin/imobiliarias/{id}' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath: '/admin/imobiliarias/{id}/delete' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath: '/admin/imobiliarias/{id}/toggle-status' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath: '/admin/imobiliarias/{id}/test-connection' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath: '/admin/usuarios' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath: '/admin/usuarios/{id}' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath: '/admin/usuarios/{id}/delete' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath: '/admin/usuarios/{id}/toggle-status' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath: '/admin/usuarios/{id}/resetar-senha' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath: '/admin/categorias' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath: '/admin/categorias/{id}' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath: '/admin/categorias/{id}/delete' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath: '/admin/categorias/{id}/toggle-status' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath: '/admin/categorias/{categoriaId}/subcategorias' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath: '/admin/categorias/{categoriaId}/subcategorias/{subcategoriaId}' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath: '/admin/categorias/{categoriaId}/subcategorias/{subcategoriaId}/delete' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath: '/admin/categorias/{categoriaId}/subcategorias/{subcategoriaId}/toggle-status' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath: '/admin/status' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath: '/admin/status/reordenar' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath: '/admin/status/{id}' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath: '/admin/status/{id}/delete' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath: '/admin/condicoes' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath: '/admin/condicoes/reordenar' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath: '/admin/condicoes/{id}' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath: '/admin/condicoes/{id}/delete' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath: '/admin/telefones-emergencia' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath: '/admin/telefones-emergencia/{id}' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath: '/admin/telefones-emergencia/{id}/delete' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath: '/admin/configuracoes' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath: '/admin/configuracoes/emergencia' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath: '/admin/configuracoes/{id}' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath: '/admin/configuracoes/{id}/delete' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath: '/admin/solicitacoes-manuais/{id}/status' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath: '/admin/solicitacoes-manuais/{id}/migrar' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath: '/{instancia}/atualizar-perfil' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath: '/{instancia}/nova-solicitacao' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath: '/api/solicitacoes/{id}/status' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:30:14 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:31:52 America/Sao_Paulo] matchPath: '/' vs '/admin/migracoes'
+[09-Nov-2025 17:31:52 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:31:52 America/Sao_Paulo] matchPath: '/pwa' vs '/admin/migracoes'
+[09-Nov-2025 17:31:52 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:31:52 America/Sao_Paulo] matchPath: '/pwa/login' vs '/admin/migracoes'
+[09-Nov-2025 17:31:52 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:31:52 America/Sao_Paulo] matchPath: '/api/estados' vs '/admin/migracoes'
+[09-Nov-2025 17:31:52 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:31:52 America/Sao_Paulo] matchPath: '/api/cidades' vs '/admin/migracoes'
+[09-Nov-2025 17:31:52 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:31:52 America/Sao_Paulo] matchPath: '/api/imobiliarias' vs '/admin/migracoes'
+[09-Nov-2025 17:31:52 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:31:52 America/Sao_Paulo] matchPath: '/confirmacao-horario' vs '/admin/migracoes'
+[09-Nov-2025 17:31:52 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:31:52 America/Sao_Paulo] matchPath: '/cancelamento-horario' vs '/admin/migracoes'
+[09-Nov-2025 17:31:52 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:31:52 America/Sao_Paulo] matchPath: '/cancelar-solicitacao' vs '/admin/migracoes'
+[09-Nov-2025 17:31:52 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:31:52 America/Sao_Paulo] matchPath: '/reagendamento-horario' vs '/admin/migracoes'
+[09-Nov-2025 17:31:52 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:31:52 America/Sao_Paulo] matchPath: '/status-servico' vs '/admin/migracoes'
+[09-Nov-2025 17:31:52 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:31:52 America/Sao_Paulo] matchPath: '/acoes-servico' vs '/admin/migracoes'
+[09-Nov-2025 17:31:52 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:31:52 America/Sao_Paulo] matchPath: '/admin' vs '/admin/migracoes'
+[09-Nov-2025 17:31:52 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:31:52 America/Sao_Paulo] matchPath: '/operador' vs '/admin/migracoes'
+[09-Nov-2025 17:31:52 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:31:52 America/Sao_Paulo] matchPath: '/login' vs '/admin/migracoes'
+[09-Nov-2025 17:31:52 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:31:52 America/Sao_Paulo] matchPath: '/logout' vs '/admin/migracoes'
+[09-Nov-2025 17:31:52 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:31:52 America/Sao_Paulo] matchPath: '/pwa/solicitar' vs '/admin/migracoes'
+[09-Nov-2025 17:31:52 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:31:52 America/Sao_Paulo] matchPath: '/pwa/solicitacoes' vs '/admin/migracoes'
+[09-Nov-2025 17:31:52 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:31:52 America/Sao_Paulo] matchPath: '/pwa/solicitacao/{id}' vs '/admin/migracoes'
+[09-Nov-2025 17:31:52 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:31:52 America/Sao_Paulo] matchPath: '/admin/dashboard' vs '/admin/migracoes'
+[09-Nov-2025 17:31:52 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:31:52 America/Sao_Paulo] matchPath: '/admin/relatorios' vs '/admin/migracoes'
+[09-Nov-2025 17:31:52 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:31:52 America/Sao_Paulo] matchPath: '/admin/kanban' vs '/admin/migracoes'
+[09-Nov-2025 17:31:52 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:31:52 America/Sao_Paulo] matchPath: '/admin/dashboard/solicitacoes-por-imobiliaria' vs '/admin/migracoes'
+[09-Nov-2025 17:31:52 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:31:52 America/Sao_Paulo] matchPath: '/admin/dashboard/solicitacoes-por-status' vs '/admin/migracoes'
+[09-Nov-2025 17:31:52 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:31:52 America/Sao_Paulo] matchPath: '/admin/templates-whatsapp' vs '/admin/migracoes'
+[09-Nov-2025 17:31:52 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:31:52 America/Sao_Paulo] matchPath: '/admin/templates-whatsapp/{id}/edit' vs '/admin/migracoes'
+[09-Nov-2025 17:31:52 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:31:52 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances' vs '/admin/migracoes'
+[09-Nov-2025 17:31:52 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:31:52 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/create' vs '/admin/migracoes'
+[09-Nov-2025 17:31:52 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:31:52 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/qrcode' vs '/admin/migracoes'
+[09-Nov-2025 17:31:52 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:31:52 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/verificar-status' vs '/admin/migracoes'
+[09-Nov-2025 17:31:52 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:31:52 America/Sao_Paulo] matchPath: '/admin/solicitacoes' vs '/admin/migracoes'
+[09-Nov-2025 17:31:52 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:31:52 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/api' vs '/admin/migracoes'
+[09-Nov-2025 17:31:52 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:31:52 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}' vs '/admin/migracoes'
+[09-Nov-2025 17:31:52 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:31:52 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/edit' vs '/admin/migracoes'
+[09-Nov-2025 17:31:52 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:31:52 America/Sao_Paulo] matchPath: '/cron/notificacoes-pre-servico' vs '/admin/migracoes'
+[09-Nov-2025 17:31:52 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:31:52 America/Sao_Paulo] matchPath: '/cron/notificacoes-pos-servico' vs '/admin/migracoes'
+[09-Nov-2025 17:31:52 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:31:52 America/Sao_Paulo] matchPath: '/admin/cron-jobs' vs '/admin/migracoes'
+[09-Nov-2025 17:31:52 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:31:52 America/Sao_Paulo] matchPath: '/admin/cron-jobs/{id}/historico' vs '/admin/migracoes'
+[09-Nov-2025 17:31:52 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:31:52 America/Sao_Paulo] matchPath: '/admin/logs' vs '/admin/migracoes'
+[09-Nov-2025 17:31:52 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:31:52 America/Sao_Paulo] matchPath: '/admin/logs/download' vs '/admin/migracoes'
+[09-Nov-2025 17:31:52 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:31:52 America/Sao_Paulo] matchPath: '/admin/migracoes' vs '/admin/migracoes'
+[09-Nov-2025 17:31:52 America/Sao_Paulo] Router Debug - Route matched: GET /admin/migracoes
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath: '/pwa/login' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath: '/confirmacao-horario' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath: '/cancelamento-horario' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath: '/cancelar-solicitacao' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath: '/reagendamento-horario' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath: '/acoes-servico' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath: '/login' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath: '/pwa/solicitar' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath: '/admin/kanban/mover' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath: '/admin/kanban/atualizar-condicao' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath: '/admin/templates-whatsapp' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath: '/admin/templates-whatsapp/{id}' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath: '/admin/templates-whatsapp/{id}/delete' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/atualizar-qrcode' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/set-padrao' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/reiniciar' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/logout' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/desconectar' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/delete' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/status' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/confirmar-horario' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/desconfirmar-horario' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/horarios/bulk' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/confirmar-servico' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/solicitar-novos-horarios' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/adicionar-horario-seguradora' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/remover-horario-seguradora' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/atualizar' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/edit' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath: '/admin/solicitacoes/criar' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath: '/admin/solicitacoes/confirmar-datas' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath: '/admin/solicitacoes/cancelar' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/aceitar-data-prestador' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/recusar-propor-datas' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/aceitar-data-locatario' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/recusar-datas-locatario' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/confirmar-agendamento-final' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath: '/admin/solicitacoes/confirmar-atendimento' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath: '/admin/solicitacoes/informar-compra-peca' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath: '/admin/solicitacoes/enviar-lembretes' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath: '/admin/solicitacoes/expirar' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath: '/admin/solicitacoes/enviar-notificacoes-pre-servico' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath: '/admin/solicitacoes/enviar-notificacoes-pos-servico' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath: '/admin/cron-jobs/{id}/executar' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath: '/admin/cron-jobs/{id}/toggle-ativo' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath: '/admin/cron-jobs/{id}/atualizar-frequencia' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath: '/admin/cron-jobs/executar-pendentes' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath: '/admin/logs/limpar' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath: '/admin/migracoes/run' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath: '/admin/migracoes/purge' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath: '/admin/migracoes/limpar-disponibilidade' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath: '/{instancia}' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath: '/{instancia}/atualizar-perfil' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath: '/{instancia}/nova-solicitacao/etapa/{etapa}' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath: '/{instancia}/nova-solicitacao' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath: '/{instancia}/solicitacao-manual/etapa/{etapa}' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath: '/{instancia}/solicitacao-manual' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath: '/{instancia}/logout' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath: '/admin/imobiliarias' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath: '/admin/imobiliarias/buscar-cnpj' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath: '/admin/imobiliarias/{id}' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath: '/admin/imobiliarias/{id}/delete' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath: '/admin/imobiliarias/{id}/toggle-status' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath: '/admin/imobiliarias/{id}/test-connection' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath: '/admin/usuarios' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath: '/admin/usuarios/{id}' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath: '/admin/usuarios/{id}/delete' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath: '/admin/usuarios/{id}/toggle-status' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath: '/admin/usuarios/{id}/resetar-senha' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath: '/admin/categorias' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath: '/admin/categorias/{id}' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath: '/admin/categorias/{id}/delete' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath: '/admin/categorias/{id}/toggle-status' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath: '/admin/categorias/{categoriaId}/subcategorias' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath: '/admin/categorias/{categoriaId}/subcategorias/{subcategoriaId}' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath: '/admin/categorias/{categoriaId}/subcategorias/{subcategoriaId}/delete' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath: '/admin/categorias/{categoriaId}/subcategorias/{subcategoriaId}/toggle-status' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath: '/admin/status' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath: '/admin/status/reordenar' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath: '/admin/status/{id}' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath: '/admin/status/{id}/delete' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath: '/admin/condicoes' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath: '/admin/condicoes/reordenar' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath: '/admin/condicoes/{id}' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath: '/admin/condicoes/{id}/delete' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath: '/admin/telefones-emergencia' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath: '/admin/telefones-emergencia/{id}' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath: '/admin/telefones-emergencia/{id}/delete' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath: '/admin/configuracoes' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath: '/admin/configuracoes/emergencia' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath: '/admin/configuracoes/{id}' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath: '/admin/configuracoes/{id}/delete' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath: '/admin/solicitacoes-manuais/{id}/status' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath: '/admin/solicitacoes-manuais/{id}/migrar' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath: '/{instancia}/atualizar-perfil' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath: '/{instancia}/nova-solicitacao' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath: '/api/solicitacoes/{id}/status' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:32:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/pwa/login' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/confirmacao-horario' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/cancelamento-horario' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/cancelar-solicitacao' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/reagendamento-horario' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/acoes-servico' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/login' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/pwa/solicitar' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/admin/kanban/mover' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/admin/kanban/atualizar-condicao' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/admin/templates-whatsapp' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/admin/templates-whatsapp/{id}' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/admin/templates-whatsapp/{id}/delete' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/atualizar-qrcode' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/set-padrao' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/reiniciar' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/logout' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/desconectar' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/delete' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/status' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/confirmar-horario' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/desconfirmar-horario' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/horarios/bulk' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/confirmar-servico' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/solicitar-novos-horarios' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/adicionar-horario-seguradora' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/remover-horario-seguradora' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/atualizar' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/edit' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/admin/solicitacoes/criar' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/admin/solicitacoes/confirmar-datas' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/admin/solicitacoes/cancelar' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/aceitar-data-prestador' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/recusar-propor-datas' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/aceitar-data-locatario' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/recusar-datas-locatario' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/confirmar-agendamento-final' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/admin/solicitacoes/confirmar-atendimento' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/admin/solicitacoes/informar-compra-peca' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/admin/solicitacoes/enviar-lembretes' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/admin/solicitacoes/expirar' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/admin/solicitacoes/enviar-notificacoes-pre-servico' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/admin/solicitacoes/enviar-notificacoes-pos-servico' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/admin/cron-jobs/{id}/executar' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/admin/cron-jobs/{id}/toggle-ativo' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/admin/cron-jobs/{id}/atualizar-frequencia' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/admin/cron-jobs/executar-pendentes' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/admin/logs/limpar' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/admin/migracoes/run' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/admin/migracoes/purge' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/admin/migracoes/limpar-disponibilidade' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/{instancia}' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/{instancia}/atualizar-perfil' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/{instancia}/nova-solicitacao/etapa/{etapa}' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/{instancia}/nova-solicitacao' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/{instancia}/solicitacao-manual/etapa/{etapa}' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/{instancia}/solicitacao-manual' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/{instancia}/logout' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/admin/imobiliarias' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/admin/imobiliarias/buscar-cnpj' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/admin/imobiliarias/{id}' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/admin/imobiliarias/{id}/delete' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/admin/imobiliarias/{id}/toggle-status' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/admin/imobiliarias/{id}/test-connection' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/admin/usuarios' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/admin/usuarios/{id}' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/admin/usuarios/{id}/delete' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/admin/usuarios/{id}/toggle-status' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/admin/usuarios/{id}/resetar-senha' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/admin/categorias' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/admin/categorias/{id}' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/admin/categorias/{id}/delete' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/admin/categorias/{id}/toggle-status' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/admin/categorias/{categoriaId}/subcategorias' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/admin/categorias/{categoriaId}/subcategorias/{subcategoriaId}' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/admin/categorias/{categoriaId}/subcategorias/{subcategoriaId}/delete' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/admin/categorias/{categoriaId}/subcategorias/{subcategoriaId}/toggle-status' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/admin/status' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/admin/status/reordenar' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/admin/status/{id}' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/admin/status/{id}/delete' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/admin/condicoes' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/admin/condicoes/reordenar' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/admin/condicoes/{id}' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/admin/condicoes/{id}/delete' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/admin/telefones-emergencia' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/admin/telefones-emergencia/{id}' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/admin/telefones-emergencia/{id}/delete' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/admin/configuracoes' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/admin/configuracoes/emergencia' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/admin/configuracoes/{id}' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/admin/configuracoes/{id}/delete' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/admin/solicitacoes-manuais/{id}/status' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/admin/solicitacoes-manuais/{id}/migrar' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/{instancia}/atualizar-perfil' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/{instancia}/nova-solicitacao' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/api/solicitacoes/{id}/status' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false

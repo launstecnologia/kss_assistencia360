@@ -15,10 +15,7 @@ class MaintenanceController extends Controller
             return;
         }
 
-        $this->view('admin.migracoes', array_merge(
-            ['title' => 'Migrações rápidas'],
-            $this->getMigrationStatus()
-        ));
+        $this->view('admin.migracoes', $this->getMigrationViewData());
     }
 
     public function runMigrations(): void
@@ -32,10 +29,9 @@ class MaintenanceController extends Controller
         // CSRF básico
         $token = $this->input('csrf_token');
         if (!$token || $token !== \App\Core\View::csrfToken()) {
-            $this->view('admin.migracoes', array_merge(
-                ['error' => 'CSRF inválido'],
-                $this->getMigrationStatus()
-            ));
+            $this->view('admin.migracoes', $this->getMigrationViewData([
+                'error' => 'CSRF inválido'
+            ]));
             return;
         }
 
@@ -69,16 +65,20 @@ class MaintenanceController extends Controller
             Database::query("ALTER TABLE solicitacoes ADD COLUMN IF NOT EXISTS lembretes_enviados INT NOT NULL DEFAULT 0 AFTER data_ultimo_lembrete");
             Database::query("UPDATE solicitacoes SET lembretes_enviados = 0 WHERE lembretes_enviados IS NULL");
 
-            $this->view('admin.migracoes', array_merge(
-                ['success' => 'Migrações executadas com sucesso.'],
-                $this->getMigrationStatus()
-            ));
+            $this->view('admin.migracoes', $this->getMigrationViewData([
+                'success' => 'Migrações executadas com sucesso.'
+            ]));
         } catch (\Exception $e) {
-            $this->view('admin.migracoes', array_merge(
-                ['error' => 'Falha ao executar: ' . $e->getMessage() ],
-                $this->getMigrationStatus()
-            ));
+            $this->view('admin.migracoes', $this->getMigrationViewData([
+                'error' => 'Falha ao executar: ' . $e->getMessage()
+            ]));
         }
+    }
+
+    public function redirectToMigrations(): void
+    {
+        $this->requireAuth();
+        header('Location: /admin/migracoes');
     }
 
     public function purgeSolicitacoes(): void
@@ -92,17 +92,15 @@ class MaintenanceController extends Controller
         $token = $this->input('csrf_token');
         $confirm = trim((string)$this->input('confirm_text'));
         if (!$token || $token !== \App\Core\View::csrfToken()) {
-            $this->view('admin.migracoes', array_merge(
-                ['error' => 'CSRF inválido'],
-                $this->getMigrationStatus()
-            ));
+            $this->view('admin.migracoes', $this->getMigrationViewData([
+                'error' => 'CSRF inválido'
+            ]));
             return;
         }
         if (strtoupper($confirm) !== 'LIMPAR') {
-            $this->view('admin.migracoes', array_merge(
-                ['error' => 'Para confirmar, digite LIMPAR.'],
-                $this->getMigrationStatus()
-            ));
+            $this->view('admin.migracoes', $this->getMigrationViewData([
+                'error' => 'Para confirmar, digite LIMPAR.'
+            ]));
             return;
         }
 
@@ -125,15 +123,13 @@ class MaintenanceController extends Controller
 
             Database::query('SET FOREIGN_KEY_CHECKS=1');
 
-            $this->view('admin.migracoes', array_merge(
-                ['success' => 'Todas as solicitações foram limpas.'],
-                $this->getMigrationStatus()
-            ));
+            $this->view('admin.migracoes', $this->getMigrationViewData([
+                'success' => 'Todas as solicitações foram limpas.'
+            ]));
         } catch (\Exception $e) {
-            $this->view('admin.migracoes', array_merge(
-                ['error' => 'Falha ao limpar: ' . $e->getMessage() ],
-                $this->getMigrationStatus()
-            ));
+            $this->view('admin.migracoes', $this->getMigrationViewData([
+                'error' => 'Falha ao limpar: ' . $e->getMessage()
+            ]));
         }
     }
 
@@ -239,6 +235,155 @@ class MaintenanceController extends Controller
             'hasDataUltimoLembrete' => $check('data_ultimo_lembrete'),
             'hasLembretesEnviados' => $check('lembretes_enviados'),
         ];
+    }
+
+    private function getSqlScripts(): array
+    {
+        $basePath = dirname(__DIR__, 2);
+        $directories = [
+            'scripts' => $basePath . DIRECTORY_SEPARATOR . 'scripts',
+            'scripts/migrations' => $basePath . DIRECTORY_SEPARATOR . 'scripts' . DIRECTORY_SEPARATOR . 'migrations',
+        ];
+
+        $scripts = [];
+        foreach ($directories as $relativeDir => $absoluteDir) {
+            if (!is_dir($absoluteDir)) {
+                continue;
+            }
+            $files = glob($absoluteDir . DIRECTORY_SEPARATOR . '*.sql');
+            if (!$files) {
+                continue;
+            }
+            sort($files);
+            foreach ($files as $file) {
+                $relativePath = $relativeDir . '/' . basename($file);
+                $scripts[$relativePath] = $relativePath;
+            }
+        }
+
+        ksort($scripts);
+        return $scripts;
+    }
+
+    private function getMigrationViewData(array $data = []): array
+    {
+        return array_merge(
+            ['title' => 'Migrações rápidas'],
+            $this->getMigrationStatus(),
+            ['sqlScripts' => $this->getSqlScripts()],
+            $data
+        );
+    }
+
+    public function runSqlScript(): void
+    {
+        $this->requireAuth();
+        if (($_SESSION['user_level'] ?? '') !== 'ADMINISTRADOR') {
+            header('Location: /admin/dashboard');
+            return;
+        }
+
+        $token = $this->input('csrf_token');
+        if (!$token || $token !== \App\Core\View::csrfToken()) {
+            $this->view('admin.migracoes', $this->getMigrationViewData([
+                'error' => 'CSRF inválido'
+            ]));
+            return;
+        }
+
+        $scriptFile = trim((string)$this->input('script_file'));
+        $sqlText = trim((string)$this->input('sql_text'));
+
+        if ($scriptFile === '' && $sqlText === '') {
+            $this->view('admin.migracoes', $this->getMigrationViewData([
+                'error' => 'Selecione um arquivo SQL ou informe o conteúdo manualmente.',
+                'previous_script_file' => $scriptFile,
+                'previous_sql_text' => $sqlText,
+            ]));
+            return;
+        }
+
+        try {
+            $executadas = 0;
+            $origens = [];
+
+            if ($scriptFile !== '') {
+                $path = $this->resolveSqlScriptPath($scriptFile);
+                if (!$path || !is_file($path)) {
+                    throw new \RuntimeException('Arquivo SQL selecionado não encontrado.');
+                }
+                $conteudoArquivo = file_get_contents($path);
+                if ($conteudoArquivo === false) {
+                    throw new \RuntimeException('Não foi possível ler o arquivo selecionado.');
+                }
+                $executadas += $this->executeSqlBatch($conteudoArquivo);
+                $origens[] = $scriptFile;
+            }
+
+            if ($sqlText !== '') {
+                $executadas += $this->executeSqlBatch($sqlText);
+                $origens[] = 'SQL manual';
+            }
+
+            $descricaoOrigem = implode(' + ', $origens);
+            if ($descricaoOrigem === '') {
+                $descricaoOrigem = 'Script';
+            }
+
+            $this->view('admin.migracoes', $this->getMigrationViewData([
+                'success' => sprintf('%s executado com sucesso (%d instrução(ões)).', $descricaoOrigem, $executadas)
+            ]));
+        } catch (\Throwable $e) {
+            $this->view('admin.migracoes', $this->getMigrationViewData([
+                'error' => 'Falha ao executar script: ' . $e->getMessage(),
+                'previous_script_file' => $scriptFile,
+                'previous_sql_text' => $sqlText,
+            ]));
+        }
+    }
+
+    private function resolveSqlScriptPath(string $relativePath): ?string
+    {
+        $basePath = dirname(__DIR__, 2);
+        $fullPath = realpath($basePath . DIRECTORY_SEPARATOR . $relativePath);
+        if ($fullPath === false) {
+            return null;
+        }
+
+        $allowedDirs = [
+            realpath($basePath . DIRECTORY_SEPARATOR . 'scripts'),
+            realpath($basePath . DIRECTORY_SEPARATOR . 'scripts' . DIRECTORY_SEPARATOR . 'migrations'),
+        ];
+
+        foreach ($allowedDirs as $allowedDir) {
+            if ($allowedDir && strncmp($fullPath, $allowedDir, strlen($allowedDir)) === 0) {
+                return $fullPath;
+            }
+        }
+
+        return null;
+    }
+
+    private function executeSqlBatch(string $sql): int
+    {
+        $pdo = Database::getInstance();
+
+        $clean = preg_replace('/^\s*(--|#).*$\r?$/m', '', $sql);
+        $clean = preg_replace('/\/\*.*?\*\//s', '', $clean);
+
+        $parts = preg_split('/;\s*(?:\r?\n|$)/', $clean);
+        $executadas = 0;
+
+        foreach ($parts as $statement) {
+            $stmt = trim($statement);
+            if ($stmt === '') {
+                continue;
+            }
+            $pdo->exec($stmt);
+            $executadas++;
+        }
+
+        return $executadas;
     }
 }
 
