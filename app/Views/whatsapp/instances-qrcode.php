@@ -85,8 +85,9 @@ let statusInterval = null;
 function atualizarQrcode() {
     const statusInfo = document.getElementById('status-info');
     const statusMessage = document.getElementById('status-message');
-    const qrcodeImg = document.getElementById('qrcode-img');
-    const qrcodeContainer = qrcodeImg ? qrcodeImg.closest('.mb-4') : null;
+    let qrcodeImg = document.getElementById('qrcode-img');
+    let qrcodeContainer = qrcodeImg ? qrcodeImg.closest('.mb-4') : null;
+    const qrcodeSection = document.querySelector('.bg-gray-50.rounded-lg');
     
     // Mostrar loading
     statusInfo.classList.remove('hidden');
@@ -99,7 +100,14 @@ function atualizarQrcode() {
             'Content-Type': 'application/json',
         }
     })
-    .then(r => r.json())
+    .then(r => {
+        if (!r.ok) {
+            return r.json().then(data => {
+                throw new Error(data.error || 'Erro ao atualizar QR code');
+            });
+        }
+        return r.json();
+    })
     .then(data => {
         if (data.success) {
             if (data.connected) {
@@ -112,18 +120,109 @@ function atualizarQrcode() {
                 }, 2000);
             } else if (data.qrcode) {
                 // QR Code gerado com sucesso
-                statusInfo.className = 'mt-4 p-4 rounded-lg bg-green-50 border border-green-200';
-                statusMessage.innerHTML = '<i class="fas fa-check-circle text-green-600 mr-2"></i>QR Code gerado com sucesso!';
+                // Limpar prefixo data:image se houver no QR code
+                let qrcodeBase64 = String(data.qrcode).trim();
                 
-                // Atualizar imagem do QR code
-                if (qrcodeImg) {
-                    qrcodeImg.src = 'data:image/png;base64,' + data.qrcode;
-                    qrcodeImg.style.display = 'block';
-                } else {
-                    // Se não existe, recarregar a página para mostrar o QR code
+                // Remover prefixo data:image de diferentes formas
+                if (qrcodeBase64.includes('data:image')) {
+                    // Se contém o prefixo, extrair tudo após a vírgula
+                    const parts = qrcodeBase64.split(',');
+                    if (parts.length > 1) {
+                        qrcodeBase64 = parts.slice(1).join(','); // Pega tudo após a primeira vírgula
+                    } else {
+                        // Se não tem vírgula, usar regex para remover
+                        qrcodeBase64 = qrcodeBase64.replace(/^data:image\/[^;]+;base64,?/i, '');
+                    }
+                }
+                
+                // Validar se o base64 não está vazio
+                qrcodeBase64 = qrcodeBase64.trim();
+                
+                if (!qrcodeBase64 || qrcodeBase64.length < 100) {
+                    // Base64 muito curto, provavelmente inválido
+                    console.error('QR code base64 inválido ou muito curto:', qrcodeBase64.substring(0, 50));
+                    statusInfo.className = 'mt-4 p-4 rounded-lg bg-red-50 border border-red-200';
+                    statusMessage.innerHTML = '<i class="fas fa-exclamation-circle text-red-600 mr-2"></i>QR code recebido está inválido. Tente novamente.';
+                    return;
+                }
+                
+                statusInfo.className = 'mt-4 p-4 rounded-lg bg-green-50 border border-green-200';
+                statusMessage.innerHTML = '<i class="fas fa-check-circle text-green-600 mr-2"></i>QR Code atualizado com sucesso!';
+                
+                // Verificar se o elemento de imagem existe
+                if (!qrcodeImg) {
+                    // Criar o container e a imagem se não existirem
+                    const containerDiv = document.createElement('div');
+                    containerDiv.className = 'mb-4';
+                    
+                    qrcodeImg = document.createElement('img');
+                    qrcodeImg.id = 'qrcode-img';
+                    qrcodeImg.alt = 'QR Code WhatsApp';
+                    qrcodeImg.className = 'mx-auto border-4 border-white shadow-lg';
+                    
+                    containerDiv.appendChild(qrcodeImg);
+                    
+                    // Inserir antes do parágrafo de instruções ou no início da seção
+                    if (qrcodeSection) {
+                        const instructionP = qrcodeSection.querySelector('p.text-sm.text-gray-600');
+                        if (instructionP) {
+                            qrcodeSection.insertBefore(containerDiv, instructionP);
+                        } else {
+                            qrcodeSection.insertBefore(containerDiv, qrcodeSection.firstChild);
+                        }
+                    }
+                    
+                    qrcodeContainer = containerDiv;
+                    
+                    // Remover a mensagem de "QR Code não disponível" se existir
+                    const noQrcodeDiv = qrcodeSection.querySelector('.text-center.py-8');
+                    if (noQrcodeDiv) {
+                        noQrcodeDiv.remove();
+                    }
+                    
+                    // Adicionar o parágrafo de instruções se não existir
+                    if (!qrcodeSection.querySelector('p.text-sm.text-gray-600')) {
+                        const instructionP = document.createElement('p');
+                        instructionP.className = 'text-sm text-gray-600 mb-4';
+                        instructionP.textContent = 'Escaneie este QR code com o WhatsApp para conectar a instância.';
+                        containerDiv.insertAdjacentElement('afterend', instructionP);
+                    }
+                }
+                
+                // Limpar event listeners anteriores para evitar múltiplos handlers
+                const newImg = qrcodeImg.cloneNode(true);
+                qrcodeImg.parentNode.replaceChild(newImg, qrcodeImg);
+                qrcodeImg = newImg;
+                
+                // Atualizar a imagem do QR code
+                const imageUrl = 'data:image/png;base64,' + qrcodeBase64 + '?t=' + new Date().getTime();
+                
+                qrcodeImg.onload = function() {
+                    // Garantir que o container está visível após carregar
+                    if (qrcodeContainer) {
+                        qrcodeContainer.style.display = 'block';
+                    }
+                    // Ocultar mensagem de status após sucesso
                     setTimeout(() => {
-                        location.reload();
-                    }, 1000);
+                        statusInfo.classList.add('hidden');
+                    }, 2000);
+                };
+                
+                qrcodeImg.onerror = function() {
+                    console.error('Erro ao carregar imagem do QR code');
+                    console.error('Base64 length:', qrcodeBase64.length);
+                    console.error('Base64 preview:', qrcodeBase64.substring(0, 100));
+                    statusInfo.className = 'mt-4 p-4 rounded-lg bg-red-50 border border-red-200';
+                    statusMessage.innerHTML = '<i class="fas fa-exclamation-circle text-red-600 mr-2"></i>Erro ao exibir QR code. O base64 pode estar inválido. Tente recarregar a página.';
+                };
+                
+                // Definir o src após configurar os event listeners
+                qrcodeImg.src = imageUrl;
+                qrcodeImg.style.display = 'block';
+                
+                // Garantir que o container está visível
+                if (qrcodeContainer) {
+                    qrcodeContainer.style.display = 'block';
                 }
             } else {
                 // Sucesso mas sem QR code (caso raro)
@@ -154,8 +253,8 @@ function atualizarQrcode() {
     })
     .catch(err => {
         statusInfo.className = 'mt-4 p-4 rounded-lg bg-red-50 border border-red-200';
-        statusMessage.innerHTML = '<i class="fas fa-exclamation-circle text-red-600 mr-2"></i>Erro ao gerar QR Code';
-        console.error(err);
+        statusMessage.innerHTML = '<i class="fas fa-exclamation-circle text-red-600 mr-2"></i>Erro ao gerar QR Code: ' + err.message;
+        console.error('Erro completo:', err);
     });
 }
 

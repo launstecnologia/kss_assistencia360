@@ -121,8 +121,29 @@ class WhatsappInstancesController extends Controller
                     $instance['token']
                 );
                 
+                // Buscar informações completas da instância para sincronizar dados
+                try {
+                    $instanceInfo = $evolutionService->obterInfoInstancia($instance['instance_name']);
+                    
+                    // A API retorna apikey, não token. O token UUID é apenas para identificação interna.
+                    // Se necessário, podemos atualizar outros dados da instância aqui
+                    if (!empty($instanceInfo)) {
+                        // Log para debug
+                        $this->writeInstanceLog([
+                            'status' => 'INFO',
+                            'operation' => 'Informações da instância obtidas',
+                            'instance_name' => $instance['instance_name'],
+                            'has_instance_data' => isset($instanceInfo['instance'])
+                        ]);
+                    }
+                } catch (\Exception $e) {
+                    // Se não conseguir buscar informações, continuar com verificação de status
+                    error_log("Aviso: Não foi possível buscar informações da instância {$instance['instance_name']}: " . $e->getMessage());
+                }
+                
                 $statusInfo = $evolutionService->verificarStatus($instance['instance_name']);
-                $state = strtoupper($statusInfo['state'] ?? $statusInfo['status'] ?? '');
+                // A resposta pode ter 'instance.state' ou 'state' diretamente
+                $state = strtoupper($statusInfo['instance']['state'] ?? $statusInfo['state'] ?? $statusInfo['status'] ?? '');
                 
                 // Atualizar status no banco se diferente
                 if ($state === 'OPEN' || $state === 'CONNECTED') {
@@ -232,13 +253,12 @@ class WhatsappInstancesController extends Controller
             $evolutionService = new EvolutionApiService($apiUrl, $apiKey, $token);
             
             // Preparar opções para criação (incluindo número se fornecido)
-            // O token UUID gerado é salvo no banco, mas a API Key vai no campo 'token' do payload
+            // Conforme documentação Evolution API v2, o payload não inclui 'token'
+            // A API Key é enviada apenas no header 'apikey'
             $createOptions = [];
             if (!empty($numeroWhatsapp)) {
                 $createOptions['number'] = $numeroWhatsapp;
             }
-            // Passar a API Key no campo token do payload (conforme documentação da Evolution API)
-            $createOptions['token'] = $apiKey;
             
             $result = $evolutionService->criarInstancia($instanceName, $createOptions);
 
@@ -258,18 +278,20 @@ class WhatsappInstancesController extends Controller
             }
 
             // Verificar se a instância foi criada
-            // A Evolution API retorna diferentes formatos de resposta
+            // Conforme documentação Evolution API v2, a resposta tem:
+            // { "instance": { "instanceName": "...", "instanceId": "...", "status": "..." }, "hash": {...}, "webhook": {...} }
             $instanceCreated = false;
             
-            // Formato 1: { "instance": { "instanceName": "...", "status": "created" } }
+            // Formato da documentação: { "instance": { "instanceName": "...", "status": "close" ou "connecting" } }
             if (isset($result['instance'])) {
                 $instanceData = $result['instance'];
                 if (isset($instanceData['instanceName']) && $instanceData['instanceName'] === $instanceName) {
                     $instanceCreated = true;
+                    // O status pode ser "close", "connecting", "open", etc.
                 }
             }
             
-            // Formato 2: { "status": "SUCCESS" ou "created" }
+            // Formato alternativo: { "status": "SUCCESS" ou "created" }
             if (!$instanceCreated && isset($result['status'])) {
                 $status = strtolower($result['status']);
                 if ($status === 'success' || $status === 'created' || $status === 'ok') {
@@ -277,7 +299,7 @@ class WhatsappInstancesController extends Controller
                 }
             }
             
-            // Formato 3: { "instanceName": "..." } diretamente
+            // Formato alternativo: { "instanceName": "..." } diretamente
             if (!$instanceCreated && isset($result['instanceName']) && $result['instanceName'] === $instanceName) {
                 $instanceCreated = true;
             }
@@ -304,13 +326,17 @@ class WhatsappInstancesController extends Controller
                 'instance_name' => $instanceName
             ]);
 
+            // O token UUID gerado é usado apenas para identificação interna
+            // A API retorna 'apikey' no hash ou na instância, mas não é um token separado
+            $tokenParaSalvar = $token; // Usar o UUID gerado como padrão
+
             // SÓ AGORA salvar no banco, após confirmar que foi criada na API
             $instanceId = $this->model->create([
                 'nome' => $nome,
                 'instance_name' => $instanceName,
                 'api_url' => $apiUrl,
                 'api_key' => $apiKey,
-                'token' => $token ?: null,
+                'token' => $tokenParaSalvar ?: null,
                 'numero_whatsapp' => $numeroWhatsapp ?: null,
                 'status' => 'CONECTANDO',
                 'is_ativo' => 1,
@@ -320,36 +346,35 @@ class WhatsappInstancesController extends Controller
             ]);
 
             // Extrair QR code da resposta de criação (se disponível)
+            // Conforme documentação, a resposta pode ter 'qrcode' com 'base64', 'code', 'pairingCode', 'count'
             $qrcode = null;
             
-            // Primeiro, verificar se retornou base64 diretamente (formato mais comum da API)
-            if (isset($result['base64'])) {
-                $qrcodeBase64 = $result['base64'];
-                // Se vier com prefixo data:image, extrair só o base64
-                if (strpos($qrcodeBase64, 'data:image') === 0) {
-                    $qrcode = explode(',', $qrcodeBase64)[1] ?? $qrcodeBase64;
-                } else {
-                    $qrcode = $qrcodeBase64;
+            // Função auxiliar para limpar prefixo data:image
+            $limparPrefixDataImage = function($value) {
+                if (empty($value)) return null;
+                // Remover qualquer prefixo data:image
+                if (strpos($value, 'data:image') !== false) {
+                    $parts = explode(',', $value, 2);
+                    $value = isset($parts[1]) ? $parts[1] : '';
+                    // Se ainda contém o prefixo, usar regex para remover
+                    if (empty($value) || strpos($value, 'data:image') !== false) {
+                        $value = preg_replace('/^data:image\/[^;]+;base64,?/', '', $value);
+                    }
+                }
+                return trim($value);
+            };
+            
+            // Verificar se retornou qrcode na resposta (formato da documentação)
+            if (isset($result['qrcode'])) {
+                if (is_array($result['qrcode']) && isset($result['qrcode']['base64'])) {
+                    $qrcode = $limparPrefixDataImage($result['qrcode']['base64']);
+                } elseif (is_string($result['qrcode'])) {
+                    $qrcode = $limparPrefixDataImage($result['qrcode']);
                 }
             }
-            // Se não encontrou em base64, verificar em qrcode
-            elseif (isset($result['qrcode'])) {
-                if (is_array($result['qrcode']) && isset($result['qrcode']['base64'])) {
-                    $qrcodeBase64 = $result['qrcode']['base64'];
-                    // Se vier com prefixo data:image, extrair só o base64
-                    if (strpos($qrcodeBase64, 'data:image') === 0) {
-                        $qrcode = explode(',', $qrcodeBase64)[1] ?? $qrcodeBase64;
-                    } else {
-                        $qrcode = $qrcodeBase64;
-                    }
-                } elseif (is_string($result['qrcode'])) {
-                    // Se for string direta
-                    if (strpos($result['qrcode'], 'data:image') === 0) {
-                        $qrcode = explode(',', $result['qrcode'])[1] ?? $result['qrcode'];
-                    } else {
-                        $qrcode = $result['qrcode'];
-                    }
-                }
+            // Se não encontrou em qrcode, verificar em base64 diretamente
+            elseif (isset($result['base64'])) {
+                $qrcode = $limparPrefixDataImage($result['base64']);
             }
 
             // Se não veio na resposta, tentar obter separadamente
@@ -363,9 +388,14 @@ class WhatsappInstancesController extends Controller
                     );
                     $qrcode = $qrcodeData['qrcode'] ?? $qrcodeData['base64'] ?? null;
                     
-                    // Se ainda vier com prefixo, extrair
-                    if ($qrcode && strpos($qrcode, 'data:image') === 0) {
-                        $qrcode = explode(',', $qrcode)[1] ?? $qrcode;
+                    // Limpar prefixo data:image se houver
+                    if ($qrcode && strpos($qrcode, 'data:image') !== false) {
+                        $parts = explode(',', $qrcode, 2);
+                        $qrcode = isset($parts[1]) ? $parts[1] : '';
+                        if (empty($qrcode) || strpos($qrcode, 'data:image') !== false) {
+                            $qrcode = preg_replace('/^data:image\/[^;]+;base64,?/', '', $qrcode);
+                        }
+                        $qrcode = trim($qrcode);
                     }
                 } catch (\Exception $e) {
                     // Se não conseguir obter QR code, logar mas não falhar a criação
@@ -438,9 +468,30 @@ class WhatsappInstancesController extends Controller
                 $instance['token']
             );
             
+            // Buscar informações completas da instância para sincronizar dados
+            try {
+                $instanceInfo = $evolutionService->obterInfoInstancia($instance['instance_name']);
+                
+                // A API retorna apikey, não token. O token UUID é apenas para identificação interna.
+                // Se necessário, podemos atualizar outros dados da instância aqui
+                if (!empty($instanceInfo)) {
+                    // Log para debug
+                    $this->writeInstanceLog([
+                        'status' => 'INFO',
+                        'operation' => 'Informações da instância obtidas',
+                        'instance_name' => $instance['instance_name'],
+                        'has_instance_data' => isset($instanceInfo['instance'])
+                    ]);
+                }
+            } catch (\Exception $e) {
+                // Se não conseguir buscar informações, continuar com verificação de status
+                error_log("Aviso: Não foi possível buscar informações da instância {$instance['instance_name']}: " . $e->getMessage());
+            }
+            
             // Primeiro, verificar o status de conexão
             $statusInfo = $evolutionService->verificarStatus($instance['instance_name']);
-            $state = strtoupper($statusInfo['state'] ?? $statusInfo['status'] ?? '');
+            // A resposta pode ter 'instance.state' ou 'state' diretamente
+            $state = strtoupper($statusInfo['instance']['state'] ?? $statusInfo['state'] ?? $statusInfo['status'] ?? '');
             
             // Se estiver conectado, atualizar status no banco
             if ($state === 'OPEN' || $state === 'CONNECTED') {
@@ -461,6 +512,16 @@ class WhatsappInstancesController extends Controller
                 } else {
                     // Extrair QR code dos diferentes formatos possíveis
                     $qrcode = $qrcodeData['qrcode'] ?? $qrcodeData['base64'] ?? null;
+                    
+                    // Limpar prefixo data:image se houver
+                    if ($qrcode && strpos($qrcode, 'data:image') !== false) {
+                        $parts = explode(',', $qrcode, 2);
+                        $qrcode = isset($parts[1]) ? $parts[1] : '';
+                        if (empty($qrcode) || strpos($qrcode, 'data:image') !== false) {
+                            $qrcode = preg_replace('/^data:image\/[^;]+;base64,?/', '', $qrcode);
+                        }
+                        $qrcode = trim($qrcode);
+                    }
                     
                     if ($qrcode) {
                         $this->model->atualizarQrcode($id, $qrcode);
@@ -517,14 +578,36 @@ class WhatsappInstancesController extends Controller
                 $instance['token']
             );
             
-            // Obter QR code (não tentar criar, apenas obter)
+            // Primeiro, verificar o status da instância
+            try {
+                $statusInfo = $evolutionService->verificarStatus($instance['instance_name']);
+                $state = strtoupper($statusInfo['instance']['state'] ?? $statusInfo['state'] ?? $statusInfo['status'] ?? '');
+                
+                // Se já está conectado, não precisa de QR code
+                if ($state === 'OPEN' || $state === 'CONNECTED') {
+                    $this->model->atualizarStatus($id, 'CONECTADO');
+                    $this->model->atualizarQrcode($id, null); // Limpar QR code
+                    $this->json([
+                        'success' => true,
+                        'connected' => true,
+                        'message' => 'Instância já está conectada'
+                    ]);
+                    return;
+                }
+            } catch (\Exception $e) {
+                // Se não conseguir verificar status, continuar para obter QR code
+                error_log("Aviso: Não foi possível verificar status antes de obter QR code: " . $e->getMessage());
+            }
+            
+            // Obter QR code (permitir criar se não existir, pois pode ter sido deletada)
             // Passar o número se disponível na instância
             $numero = $instance['numero_whatsapp'] ?? null;
-            $qrcodeData = $evolutionService->obterQrcode($instance['instance_name'], false, $numero); // false = não criar se não existir
+            $qrcodeData = $evolutionService->obterQrcode($instance['instance_name'], true, $numero); // true = criar se não existir
             
-            // Verificar se já está conectado
+            // Verificar se já está conectado na resposta
             if (isset($qrcodeData['connected']) && $qrcodeData['connected']) {
                 $this->model->atualizarStatus($id, 'CONECTADO');
+                $this->model->atualizarQrcode($id, null); // Limpar QR code
                 $this->json([
                     'success' => true,
                     'connected' => true,
@@ -533,19 +616,46 @@ class WhatsappInstancesController extends Controller
                 return;
             }
             
-            // Extrair QR code
-            $qrcode = $qrcodeData['qrcode'] ?? $qrcodeData['base64'] ?? null;
+            // Extrair QR code de diferentes formatos possíveis
+            $qrcode = null;
+            
+            // Formato 1: qrcode direto
+            if (isset($qrcodeData['qrcode'])) {
+                $qrcode = $qrcodeData['qrcode'];
+            }
+            // Formato 2: base64 direto
+            elseif (isset($qrcodeData['base64'])) {
+                $qrcode = $qrcodeData['base64'];
+            }
+            
+            // Limpar prefixo data:image se houver (pode vir em diferentes formatos)
+            if ($qrcode) {
+                // Remover qualquer prefixo data:image (com ou sem vírgula)
+                if (strpos($qrcode, 'data:image') !== false) {
+                    // Se contém o prefixo, extrair tudo após a vírgula
+                    $parts = explode(',', $qrcode, 2);
+                    $qrcode = isset($parts[1]) ? $parts[1] : '';
+                    // Se ainda contém o prefixo, usar regex para remover
+                    if (empty($qrcode) || strpos($qrcode, 'data:image') !== false) {
+                        $qrcode = preg_replace('/^data:image\/[^;]+;base64,?/', '', $qrcode);
+                    }
+                }
+                // Remover espaços em branco e quebras de linha
+                $qrcode = trim($qrcode);
+            }
             
             if ($qrcode) {
+                // Salvar QR code no banco
                 $this->model->atualizarQrcode($id, $qrcode);
                 $this->model->atualizarStatus($id, 'CONECTANDO');
                 
                 $this->json([
                     'success' => true,
                     'qrcode' => $qrcode,
-                    'message' => 'QR Code gerado com sucesso'
+                    'message' => 'QR Code atualizado com sucesso'
                 ]);
             } else {
+                // Se não retornou QR code, pode ser que a instância não exista ou esteja em estado inválido
                 $this->json([
                     'success' => false,
                     'error' => 'QR Code não disponível. A instância pode não existir na Evolution API ou estar em estado inválido.',
@@ -555,9 +665,23 @@ class WhatsappInstancesController extends Controller
             
         } catch (\Exception $e) {
             error_log("Erro ao atualizar QR code: " . $e->getMessage());
+            error_log("Stack trace: " . $e->getTraceAsString());
+            
+            // Mensagem de erro mais amigável
+            $errorMsg = $e->getMessage();
+            
+            // Verificar se é erro de instância não encontrada
+            $errorMsgLower = strtolower($errorMsg);
+            if (strpos($errorMsgLower, 'não encontrada') !== false || 
+                strpos($errorMsgLower, 'not found') !== false ||
+                strpos($errorMsgLower, '404') !== false) {
+                $errorMsg = "A instância '{$instance['instance_name']}' não foi encontrada na Evolution API. Verifique se o nome da instância está correto e se a instância foi criada.";
+            }
+            
             $this->json([
                 'success' => false,
-                'error' => $e->getMessage()
+                'error' => $errorMsg,
+                'instance_name' => $instance['instance_name'] ?? null
             ], 500);
         }
     }
@@ -588,7 +712,8 @@ class WhatsappInstancesController extends Controller
             $numeroWhatsapp = null;
             
             // Interpretar resposta da Evolution API
-            $state = strtoupper($statusData['state'] ?? $statusData['status'] ?? '');
+            // A resposta pode ter 'instance.state' ou 'state' diretamente
+            $state = strtoupper($statusData['instance']['state'] ?? $statusData['state'] ?? $statusData['status'] ?? '');
             
             if ($state === 'OPEN' || $state === 'CONNECTED') {
                 $status = 'CONECTADO';
@@ -641,6 +766,74 @@ class WhatsappInstancesController extends Controller
         $this->model->setPadrao($id);
         
         $this->json(['success' => true, 'message' => 'Instância definida como padrão']);
+    }
+
+    /**
+     * Reinicia uma instância
+     */
+    public function reiniciar(int $id): void
+    {
+        if (!$this->isPost()) {
+            $this->json(['error' => 'Método não permitido'], 405);
+            return;
+        }
+
+        $instance = $this->model->find($id);
+        
+        if (!$instance) {
+            $this->json(['error' => 'Instância não encontrada'], 404);
+            return;
+        }
+
+        try {
+            $evolutionService = new EvolutionApiService(
+                $instance['api_url'],
+                $instance['api_key'],
+                $instance['token']
+            );
+            
+            $evolutionService->reiniciarInstancia($instance['instance_name']);
+            $this->model->atualizarStatus($id, 'CONECTANDO');
+            
+            $this->json(['success' => true, 'message' => 'Instância reiniciada com sucesso']);
+            
+        } catch (\Exception $e) {
+            $this->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Faz logout de uma instância
+     */
+    public function logout(int $id): void
+    {
+        if (!$this->isPost()) {
+            $this->json(['error' => 'Método não permitido'], 405);
+            return;
+        }
+
+        $instance = $this->model->find($id);
+        
+        if (!$instance) {
+            $this->json(['error' => 'Instância não encontrada'], 404);
+            return;
+        }
+
+        try {
+            $evolutionService = new EvolutionApiService(
+                $instance['api_url'],
+                $instance['api_key'],
+                $instance['token']
+            );
+            
+            $evolutionService->desconectarInstancia($instance['instance_name']);
+            $this->model->atualizarStatus($id, 'DESCONECTADO');
+            
+            $this->json(['success' => true, 'message' => 'Logout realizado com sucesso']);
+            
+        } catch (\Exception $e) {
+            $this->json(['error' => $e->getMessage()], 500);
+        }
     }
 
     /**

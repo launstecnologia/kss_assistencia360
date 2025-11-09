@@ -79,6 +79,8 @@ $router->get('/admin/whatsapp-instances/{id}/qrcode', 'WhatsappInstancesControll
 $router->post('/admin/whatsapp-instances/{id}/atualizar-qrcode', 'WhatsappInstancesController@atualizarQrcode', ['auth']);
 $router->get('/admin/whatsapp-instances/{id}/verificar-status', 'WhatsappInstancesController@verificarStatus', ['auth']);
 $router->post('/admin/whatsapp-instances/{id}/set-padrao', 'WhatsappInstancesController@setPadrao', ['auth']);
+$router->post('/admin/whatsapp-instances/{id}/reiniciar', 'WhatsappInstancesController@reiniciar', ['auth']);
+$router->post('/admin/whatsapp-instances/{id}/logout', 'WhatsappInstancesController@logout', ['auth']);
 $router->post('/admin/whatsapp-instances/{id}/desconectar', 'WhatsappInstancesController@desconectar', ['auth']);
 $router->post('/admin/whatsapp-instances/{id}/delete', 'WhatsappInstancesController@destroy', ['auth']);
 $router->get('/admin/solicitacoes', 'SolicitacoesController@index', ['auth']);

@@ -119,20 +119,45 @@ class EvolutionApiService
         $startTime = microtime(true);
         $url = "{$this->apiUrl}/instance/create";
         
-        // Na Evolution API, o campo 'token' no payload deve receber a API Key
-        // O token UUID gerado é usado apenas para identificação interna
-        $tokenToUse = $options['token'] ?? $this->apiKey;
-        
+        // Conforme documentação Evolution API v2, o payload não inclui 'token'
+        // A API Key é enviada apenas no header 'apikey'
         $payload = [
             'instanceName' => $instanceName,
-            'token' => $tokenToUse, // API Key vai no campo token do payload
             'qrcode' => true,
             'integration' => 'WHATSAPP-BAILEYS',
         ];
         
-        // Adicionar webhook se fornecido
+        // Adicionar webhook se fornecido (formato da documentação)
         if (isset($options['webhook']) && !empty($options['webhook'])) {
-            $payload['webhook'] = $options['webhook'];
+            if (is_array($options['webhook'])) {
+                $payload['webhook'] = $options['webhook'];
+            } else {
+                // Se for string, converter para formato da API
+                $payload['webhook'] = [
+                    'url' => $options['webhook'],
+                    'enabled' => true,
+                    'events' => [
+                        'MESSAGES_UPSERT',
+                        'MESSAGES_UPDATE',
+                        'MESSAGES_DELETE',
+                        'SEND_MESSAGE',
+                        'CONTACTS_SET',
+                        'CONTACTS_UPSERT',
+                        'CONTACTS_UPDATE',
+                        'PRESENCE_UPDATE',
+                        'CHATS_SET',
+                        'CHATS_UPSERT',
+                        'CHATS_UPDATE',
+                        'CHATS_DELETE',
+                        'GROUPS_UPSERT',
+                        'GROUPS_UPDATE',
+                        'GROUP_PARTICIPANTS_UPDATE',
+                        'CONNECTION_UPDATE',
+                        'CALL',
+                        'NEW_JWT_TOKEN'
+                    ]
+                ];
+            }
         }
         
         // Se foi fornecido um número, adicionar ao payload
@@ -226,123 +251,10 @@ class EvolutionApiService
      */
     public function obterQrcode(string $instanceName, bool $criarSeNaoExistir = true, ?string $number = null): array
     {
-        // Primeiro, verificar se a instância existe
-        $instanciaExiste = false;
-        try {
-            $infoUrl = "{$this->apiUrl}/instance/fetchInstance/{$instanceName}";
-            $infoResponse = $this->fazerRequisicao('GET', $infoUrl);
-            
-            // Se a instância não existe, a API pode retornar erro ou objeto vazio
-            if (!empty($infoResponse) && !isset($infoResponse['error'])) {
-                $instanciaExiste = true;
-            }
-        } catch (\Exception $e) {
-            // Verificar se é erro 404 ou "not found"
-            $httpCode = 0;
-            if ($e instanceof EvolutionApiException) {
-                $httpCode = $e->getHttpStatusCode();
-            } else {
-                $httpCode = $e->getCode() ?? 0;
-            }
-            
-            $errorMsg = strtolower($e->getMessage());
-            
-            if ($httpCode === 404 || 
-                strpos($errorMsg, 'not found') !== false || 
-                strpos($errorMsg, '404') !== false ||
-                strpos($errorMsg, 'não encontrada') !== false ||
-                strpos($errorMsg, 'não foi encontrada') !== false) {
-                $instanciaExiste = false;
-            } else {
-                // Para outros erros, apenas logar e continuar
-                error_log("Aviso ao verificar se instância existe: " . $e->getMessage());
-                // Se não for 404, assumir que existe para continuar o fluxo
-                $instanciaExiste = true;
-            }
-        }
+        // Tentar obter QR code diretamente primeiro, sem verificar existência
+        // Isso evita problemas de verificação prévia que podem falhar incorretamente
         
-        // Se a instância não existe e podemos criar, tentar criar
-        if (!$instanciaExiste && $criarSeNaoExistir) {
-            try {
-                error_log("Instância '{$instanceName}' não encontrada. Tentando criar automaticamente...");
-                
-                // Preparar opções para criação (incluindo número se fornecido)
-                $createOptions = [];
-                if ($number !== null && !empty($number)) {
-                    $createOptions['number'] = $number;
-                }
-                
-                $createResponse = $this->criarInstancia($instanceName, $createOptions);
-                
-                // Verificar se a criação retornou QR code diretamente
-                if (isset($createResponse['qrcode'])) {
-                    if (is_array($createResponse['qrcode']) && isset($createResponse['qrcode']['base64'])) {
-                        return [
-                            'qrcode' => $createResponse['qrcode']['base64'],
-                            'base64' => $createResponse['qrcode']['base64']
-                        ];
-                    }
-                    if (is_string($createResponse['qrcode'])) {
-                        if (strpos($createResponse['qrcode'], 'data:image') === 0) {
-                            $base64 = explode(',', $createResponse['qrcode'])[1] ?? $createResponse['qrcode'];
-                        } else {
-                            $base64 = $createResponse['qrcode'];
-                        }
-                        return [
-                            'qrcode' => $base64,
-                            'base64' => $base64
-                        ];
-                    }
-                }
-                
-                if (isset($createResponse['base64'])) {
-                    return [
-                        'qrcode' => $createResponse['base64'],
-                        'base64' => $createResponse['base64']
-                    ];
-                }
-                
-                $instanciaExiste = true;
-            } catch (EvolutionApiException $e) {
-                error_log("Erro ao criar instância automaticamente: " . $e->getMessage());
-                $httpCode = $e->getHttpStatusCode();
-                
-                // Mensagens mais específicas baseadas no código HTTP
-                if ($httpCode === 403) {
-                    throw new \Exception("A instância '{$instanceName}' não foi encontrada e não foi possível criá-la automaticamente. Erro de permissão (403 Forbidden). Verifique se a API Key está correta e tem permissão para criar instâncias.");
-                } elseif ($httpCode === 401) {
-                    throw new \Exception("A instância '{$instanceName}' não foi encontrada e não foi possível criá-la automaticamente. Erro de autenticação (401 Unauthorized). Verifique se a API Key está correta.");
-                } else {
-                    throw new \Exception("A instância '{$instanceName}' não foi encontrada na Evolution API e não foi possível criá-la automaticamente. Erro: " . $e->getMessage());
-                }
-            } catch (\Exception $e) {
-                error_log("Erro ao criar instância automaticamente: " . $e->getMessage());
-                throw new \Exception("A instância '{$instanceName}' não foi encontrada na Evolution API e não foi possível criá-la automaticamente. Erro: " . $e->getMessage());
-            }
-        } elseif (!$instanciaExiste) {
-            throw new \Exception("A instância '{$instanceName}' não foi encontrada na Evolution API. Verifique se o nome da instância está correto e se a instância foi criada.");
-        }
-        
-        // Verificar o status da conexão
-        try {
-            $statusUrl = "{$this->apiUrl}/instance/connectionState/{$instanceName}";
-            $statusResponse = $this->fazerRequisicao('GET', $statusUrl);
-            
-            // Se já estiver conectado, não há QR code
-            $state = strtoupper($statusResponse['state'] ?? $statusResponse['status'] ?? '');
-            if ($state === 'OPEN' || $state === 'CONNECTED') {
-                return [
-                    'connected' => true,
-                    'state' => $state,
-                    'qrcode' => null
-                ];
-            }
-        } catch (\Exception $e) {
-            // Continuar tentando obter QR code mesmo se verificação de status falhar
-            error_log("Aviso ao verificar status antes de obter QR code: " . $e->getMessage());
-        }
-        
-        // Tentar conectar a instância (isso pode gerar um novo QR code)
+        // Primeiro, tentar obter QR code via /instance/connect
         try {
             $connectUrl = "{$this->apiUrl}/instance/connect/{$instanceName}";
             
@@ -389,73 +301,130 @@ class EvolutionApiService
                 }
             }
             
-            // Verificar se retornou base64 diretamente (formato mais comum)
+            // Verificar se retornou base64 diretamente (formato da documentação)
+            // A resposta pode ter: base64, code, pairingCode, count
             if (isset($connectResponse['base64'])) {
                 $base64Value = $connectResponse['base64'];
                 // Se vier com prefixo data:image, extrair só o base64
-                if (strpos($base64Value, 'data:image') === 0) {
-                    $base64Value = explode(',', $base64Value)[1] ?? $base64Value;
+                // Pode vir como "data:image/png;base64,iVBORw0KG..." ou apenas "data:image/png;base64,"
+                if (strpos($base64Value, 'data:image') !== false) {
+                    // Se contém o prefixo, extrair tudo após a vírgula
+                    $parts = explode(',', $base64Value, 2);
+                    $base64Value = isset($parts[1]) ? $parts[1] : '';
+                    // Se ainda estiver vazio ou contiver apenas o prefixo, tentar remover de outra forma
+                    if (empty($base64Value) || strpos($base64Value, 'data:image') !== false) {
+                        $base64Value = preg_replace('/^data:image\/[^;]+;base64,/', '', $base64Value);
+                    }
                 }
-                return [
-                    'qrcode' => $base64Value,
-                    'base64' => $base64Value
-                ];
+                // Garantir que não está vazio
+                if (!empty($base64Value)) {
+                    return [
+                        'qrcode' => $base64Value,
+                        'base64' => $base64Value,
+                        'code' => $connectResponse['code'] ?? null,
+                        'pairingCode' => $connectResponse['pairingCode'] ?? null,
+                        'count' => $connectResponse['count'] ?? null
+                    ];
+                }
+            }
+            
+            // Se não retornou base64 mas retornou code, a instância pode estar conectada
+            if (isset($connectResponse['code']) && empty($connectResponse['base64'])) {
+                // Verificar status para confirmar se está conectado
+                try {
+                    $statusInfo = $this->verificarStatus($instanceName);
+                    $state = strtoupper($statusInfo['instance']['state'] ?? $statusInfo['state'] ?? '');
+                    if ($state === 'OPEN' || $state === 'CONNECTED') {
+                        return [
+                            'connected' => true,
+                            'state' => $state,
+                            'qrcode' => null
+                        ];
+                    }
+                } catch (\Exception $e) {
+                    // Continuar
+                }
+            }
+            
+            // Se não retornou QR code mas a requisição foi bem-sucedida (200), 
+            // pode ser que a instância esteja conectada ou em outro estado
+            // Verificar status antes de lançar erro
+            try {
+                $statusInfo = $this->verificarStatus($instanceName);
+                $state = strtoupper($statusInfo['instance']['state'] ?? $statusInfo['state'] ?? '');
+                if ($state === 'OPEN' || $state === 'CONNECTED') {
+                    return [
+                        'connected' => true,
+                        'state' => $state,
+                        'qrcode' => null
+                    ];
+                }
+            } catch (\Exception $e) {
+                // Se não conseguir verificar status, continuar
             }
         } catch (\Exception $e) {
-            error_log("Erro ao conectar instância para obter QR code: " . $e->getMessage());
+            // Se falhar, continuar para outras tentativas
+            $httpCode = 0;
+            if ($e instanceof EvolutionApiException) {
+                $httpCode = $e->getHttpStatusCode();
+            }
+            
+            // Se for 404, a instância pode não existir
+            if ($httpCode === 404 && $criarSeNaoExistir) {
+                // Tentar criar a instância
+                try {
+                    error_log("Instância '{$instanceName}' não encontrada. Tentando criar automaticamente...");
+                    
+                    // Preparar opções para criação (incluindo número se fornecido)
+                    $createOptions = [];
+                    if ($number !== null && !empty($number)) {
+                        $createOptions['number'] = $number;
+                    }
+                    
+                    $createResponse = $this->criarInstancia($instanceName, $createOptions);
+                    
+                    // Verificar se a criação retornou QR code diretamente
+                    if (isset($createResponse['qrcode'])) {
+                        if (is_array($createResponse['qrcode']) && isset($createResponse['qrcode']['base64'])) {
+                            return [
+                                'qrcode' => $createResponse['qrcode']['base64'],
+                                'base64' => $createResponse['qrcode']['base64']
+                            ];
+                        }
+                        if (is_string($createResponse['qrcode'])) {
+                            if (strpos($createResponse['qrcode'], 'data:image') === 0) {
+                                $base64 = explode(',', $createResponse['qrcode'])[1] ?? $createResponse['qrcode'];
+                            } else {
+                                $base64 = $createResponse['qrcode'];
+                            }
+                            return [
+                                'qrcode' => $base64,
+                                'base64' => $base64
+                            ];
+                        }
+                    }
+                    
+                    if (isset($createResponse['base64'])) {
+                        return [
+                            'qrcode' => $createResponse['base64'],
+                            'base64' => $createResponse['base64']
+                        ];
+                    }
+                    
+                    // Se criou mas não retornou QR code, tentar obter novamente
+                    return $this->obterQrcode($instanceName, false, $number);
+                } catch (\Exception $createError) {
+                    error_log("Erro ao criar instância automaticamente: " . $createError->getMessage());
+                    // Continuar para tentar fetchQrCode
+                }
+            } else {
+                error_log("Erro ao conectar instância para obter QR code: " . $e->getMessage());
+            }
         }
         
-        // Se não retornou QR code na conexão, buscar diretamente
-        try {
-            $fetchUrl = "{$this->apiUrl}/instance/fetchQrCode/{$instanceName}";
-            
-            // Se foi fornecido um número, adicionar como query parameter
-            if ($number !== null && !empty($number)) {
-                $fetchUrl .= "?number=" . urlencode($number);
-            }
-            
-            $fetchResponse = $this->fazerRequisicao('GET', $fetchUrl);
-            
-            // Verificar diferentes formatos de resposta
-            if (isset($fetchResponse['qrcode'])) {
-                if (is_array($fetchResponse['qrcode']) && isset($fetchResponse['qrcode']['base64'])) {
-                    return [
-                        'qrcode' => $fetchResponse['qrcode']['base64'],
-                        'base64' => $fetchResponse['qrcode']['base64']
-                    ];
-                }
-                if (is_string($fetchResponse['qrcode'])) {
-                    if (strpos($fetchResponse['qrcode'], 'data:image') === 0) {
-                        $base64 = explode(',', $fetchResponse['qrcode'])[1] ?? $fetchResponse['qrcode'];
-                    } else {
-                        $base64 = $fetchResponse['qrcode'];
-                    }
-                    return [
-                        'qrcode' => $base64,
-                        'base64' => $base64
-                    ];
-                }
-            }
-            
-            if (isset($fetchResponse['base64'])) {
-                $base64Value = $fetchResponse['base64'];
-                // Se vier com prefixo data:image, extrair só o base64
-                if (strpos($base64Value, 'data:image') === 0) {
-                    $base64Value = explode(',', $base64Value)[1] ?? $base64Value;
-                }
-                return [
-                    'qrcode' => $base64Value,
-                    'base64' => $base64Value
-                ];
-            }
-            
-            // Se retornou a resposta completa mas sem qrcode/base64, retornar como está
-            return $fetchResponse;
-            
-        } catch (\Exception $e) {
-            error_log("Erro ao buscar QR code diretamente: " . $e->getMessage());
-            throw new \Exception("Não foi possível obter o QR code. Verifique se a instância existe na Evolution API. Erro: " . $e->getMessage());
-        }
+        // Se não conseguiu via connect, lançar erro
+        // Conforme documentação, o QR code é obtido apenas via /instance/connect
+        throw new \Exception("A instância '{$instanceName}' não foi encontrada na Evolution API. Verifique se o nome da instância está correto e se a instância foi criada.");
     }
 
     /**
@@ -463,14 +432,26 @@ class EvolutionApiService
      */
     public function verificarStatus(string $instanceName): array
     {
-        // Buscar status de conexão diretamente
+        // Buscar status de conexão diretamente conforme documentação
         $url = "{$this->apiUrl}/instance/connectionState/{$instanceName}";
         $response = $this->fazerRequisicao('GET', $url);
         
-        // Se não retornou dados, buscar informações da instância
+        // Se não retornou dados, buscar informações da instância via fetchInstances
         if (empty($response)) {
-            $url = "{$this->apiUrl}/instance/fetchInstance/{$instanceName}";
-            $response = $this->fazerRequisicao('GET', $url);
+            $url = "{$this->apiUrl}/instance/fetchInstances?instanceName=" . urlencode($instanceName);
+            $instances = $this->fazerRequisicao('GET', $url);
+            
+            // A API retorna um array, buscar a instância específica
+            if (is_array($instances) && !empty($instances)) {
+                foreach ($instances as $instanceData) {
+                    if (isset($instanceData['instance']['instanceName']) && 
+                        $instanceData['instance']['instanceName'] === $instanceName) {
+                        return $instanceData;
+                    }
+                }
+                // Se encontrou instâncias mas não a específica, retornar a primeira
+                return $instances[0];
+            }
         }
         
         return $response;
@@ -486,6 +467,15 @@ class EvolutionApiService
     }
 
     /**
+     * Reinicia uma instância
+     */
+    public function reiniciarInstancia(string $instanceName): array
+    {
+        $url = "{$this->apiUrl}/instance/restart/{$instanceName}";
+        return $this->fazerRequisicao('PUT', $url);
+    }
+
+    /**
      * Deleta uma instância
      */
     public function deletarInstancia(string $instanceName): array
@@ -496,11 +486,26 @@ class EvolutionApiService
 
     /**
      * Obtém informações de uma instância
+     * Conforme documentação: GET /instance/fetchInstances?instanceName={instanceName}
      */
     public function obterInfoInstancia(string $instanceName): array
     {
-        $url = "{$this->apiUrl}/instance/fetchInstance/{$instanceName}";
-        return $this->fazerRequisicao('GET', $url);
+        $url = "{$this->apiUrl}/instance/fetchInstances?instanceName=" . urlencode($instanceName);
+        $instances = $this->fazerRequisicao('GET', $url);
+        
+        // A API retorna um array, buscar a instância específica
+        if (is_array($instances) && !empty($instances)) {
+            foreach ($instances as $instanceData) {
+                if (isset($instanceData['instance']['instanceName']) && 
+                    $instanceData['instance']['instanceName'] === $instanceName) {
+                    return $instanceData;
+                }
+            }
+            // Se encontrou instâncias mas não a específica, retornar a primeira
+            return $instances[0];
+        }
+        
+        return [];
     }
 
     /**
@@ -529,6 +534,11 @@ class EvolutionApiService
         if ($method === 'POST') {
             curl_setopt($ch, CURLOPT_POST, true);
             curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
+        } elseif ($method === 'PUT') {
+            curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'PUT');
+            if (!empty($payload)) {
+                curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
+            }
         } elseif ($method === 'DELETE') {
             curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'DELETE');
         }

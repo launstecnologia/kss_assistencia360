@@ -10,7 +10,7 @@ ob_start();
         </a>
     </div>
 
-    <form method="POST" action="<?= url('admin/whatsapp-instances') ?>" class="space-y-6">
+    <form method="POST" action="<?= url('admin/whatsapp-instances') ?>" class="space-y-6" id="create-instance-form">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">
@@ -95,6 +95,57 @@ ob_start();
         </div>
     </form>
 </div>
+
+<!-- Modal de Loading -->
+<div id="loading-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+    <div class="bg-white rounded-lg shadow-xl p-8 max-w-md w-full mx-4">
+        <div class="text-center">
+            <div class="mb-4">
+                <i class="fas fa-spinner fa-spin text-blue-600 text-5xl"></i>
+            </div>
+            <h3 class="text-xl font-semibold text-gray-800 mb-2">Criando Instância</h3>
+            <p class="text-gray-600 mb-4">Aguarde enquanto a instância está sendo criada na Evolution API...</p>
+            <div class="w-full bg-gray-200 rounded-full h-2">
+                <div class="bg-blue-600 h-2 rounded-full animate-pulse" style="width: 100%"></div>
+            </div>
+            <p class="text-sm text-gray-500 mt-4">Isso pode levar alguns segundos</p>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('create-instance-form');
+    const loadingModal = document.getElementById('loading-modal');
+    
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            // Validar campos obrigatórios antes de mostrar o modal
+            const nome = form.querySelector('input[name="nome"]').value.trim();
+            const instanceName = form.querySelector('input[name="instance_name"]').value.trim();
+            const apiUrl = form.querySelector('input[name="api_url"]').value.trim();
+            const apiKey = form.querySelector('input[name="api_key"]').value.trim();
+            
+            if (!nome || !instanceName || !apiUrl || !apiKey) {
+                // Se faltar campos obrigatórios, deixar o HTML5 validation funcionar
+                return;
+            }
+            
+            // Mostrar modal de loading
+            loadingModal.classList.remove('hidden');
+            
+            // Desabilitar o botão de submit para evitar múltiplos envios
+            const submitButton = form.querySelector('button[type="submit"]');
+            if (submitButton) {
+                submitButton.disabled = true;
+                submitButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Criando...';
+            }
+            
+            // O formulário será enviado normalmente após mostrar o modal
+        });
+    }
+});
+</script>
 
 <?php
 $content = ob_get_clean();

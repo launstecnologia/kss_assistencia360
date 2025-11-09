@@ -10,8 +10,14 @@ ob_start();
         </a>
     </div>
 
-    <div class="mb-4 text-sm text-gray-600">
-        <p>Gerencie as instâncias da Evolution API para envio de notificações WhatsApp.</p>
+    <div class="mb-4">
+        <p class="text-sm text-gray-600">Gerencie as instâncias da Evolution API para envio de notificações WhatsApp.</p>
+        <div class="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <p class="text-sm text-blue-800">
+                <i class="fas fa-info-circle mr-2"></i>
+                <strong>Instância Padrão:</strong> A instância marcada como "Padrão" será usada automaticamente para enviar todas as notificações WhatsApp do sistema.
+            </p>
+        </div>
     </div>
 
     <?php if (!empty($instances)): ?>
@@ -94,6 +100,14 @@ ob_start();
                             <?php endif; ?>
                             
                             <?php if ($instance['status'] === 'CONECTADO'): ?>
+                                <button onclick="reiniciar(<?= $instance['id'] ?>)" 
+                                        class="text-purple-600 hover:text-purple-900" title="Reiniciar instância">
+                                    <i class="fas fa-redo"></i>
+                                </button>
+                                <button onclick="logout(<?= $instance['id'] ?>)" 
+                                        class="text-orange-600 hover:text-orange-900" title="Logout (desconectar)">
+                                    <i class="fas fa-sign-out-alt"></i>
+                                </button>
                                 <button onclick="desconectar(<?= $instance['id'] ?>)" 
                                         class="text-orange-600 hover:text-orange-900" title="Desconectar">
                                     <i class="fas fa-unlink"></i>
@@ -138,6 +152,54 @@ function setPadrao(id) {
     })
     .catch(err => {
         alert('Erro ao definir instância padrão');
+        console.error(err);
+    });
+}
+
+function reiniciar(id) {
+    if (!confirm('Reiniciar esta instância?\n\nA instância será reiniciada e pode levar alguns segundos para reconectar.')) return;
+    
+    fetch('<?= url('admin/whatsapp-instances') ?>/' + id + '/reiniciar', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            alert('Instância reiniciada com sucesso!');
+            location.reload();
+        } else {
+            alert('Erro: ' + (data.error || 'Erro desconhecido'));
+        }
+    })
+    .catch(err => {
+        alert('Erro ao reiniciar instância');
+        console.error(err);
+    });
+}
+
+function logout(id) {
+    if (!confirm('Fazer logout desta instância?\n\nA instância será desconectada do WhatsApp.')) return;
+    
+    fetch('<?= url('admin/whatsapp-instances') ?>/' + id + '/logout', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            alert('Logout realizado com sucesso!');
+            location.reload();
+        } else {
+            alert('Erro: ' + (data.error || 'Erro desconhecido'));
+        }
+    })
+    .catch(err => {
+        alert('Erro ao fazer logout');
         console.error(err);
     });
 }
