@@ -1713,35 +1713,30 @@ class TokenController extends Controller
 
                     $dataLimite = date('Y-m-d', strtotime('+10 days'));
 
-                    // Preparar dados de atualização
+                    // Preparar dados de atualização com verificação de colunas existentes
                     $updateData = [
                         'status_id' => $statusPendente['id'] ?? $solicitacao['status_id'],
                         'condicao_id' => $condicaoId,
-                        'data_ultimo_lembrete' => null,
-                        'lembretes_enviados' => 0,
                         'observacoes' => ($solicitacao['observacoes'] ?? '') . "\n\nLocatário precisa comprar peças. Prazo: " . date('d/m/Y', strtotime($dataLimite))
                     ];
-                    
-                    // Adicionar data_limite_peca (o Model vai filtrar se não estiver no fillable)
-                    // Se a coluna não existir no banco, o erro será tratado no catch externo
-                    $updateData['data_limite_peca'] = $dataLimite;
 
-                    try {
-                        $this->solicitacaoModel->update($solicitacaoId, $updateData);
-                    } catch (\Exception $e) {
-                        // Se o erro for de coluna não encontrada, tentar novamente sem data_limite_peca
-                        if (strpos($e->getMessage(), 'data_limite_peca') !== false || 
-                            strpos($e->getMessage(), "Unknown column 'data_limite_peca'") !== false ||
-                            strpos($e->getMessage(), "Column 'data_limite_peca'") !== false) {
-                            error_log('Aviso: Coluna data_limite_peca não existe, salvando apenas na observação');
-                            unset($updateData['data_limite_peca']);
-                            $updateData['observacoes'] .= " (Data limite: " . date('d/m/Y', strtotime($dataLimite)) . ")";
-                            $this->solicitacaoModel->update($solicitacaoId, $updateData);
-                        } else {
-                            // Re-lançar se for outro tipo de erro
-                            throw $e;
-                        }
+                    if ($this->solicitacaoModel->colunaExisteBanco('data_limite_peca')) {
+                        $updateData['data_limite_peca'] = $dataLimite;
+                    } else {
+                        $updateData['observacoes'] .= " (Data limite: " . date('d/m/Y', strtotime($dataLimite)) . ")";
                     }
+
+                    if ($this->solicitacaoModel->colunaExisteBanco('data_ultimo_lembrete')) {
+                        $updateData['data_ultimo_lembrete'] = null;
+                    }
+                    if ($this->solicitacaoModel->colunaExisteBanco('lembretes_enviados')) {
+                        $updateData['lembretes_enviados'] = 0;
+                    }
+                    if ($this->solicitacaoModel->colunaExisteBanco('data_limite_cancelamento')) {
+                        $updateData['data_limite_cancelamento'] = $dataLimite;
+                    }
+
+                    $this->solicitacaoModel->update($solicitacaoId, $updateData);
 
                     // Marcar token como usado
                     $this->tokenModel->markAsUsed($token);
