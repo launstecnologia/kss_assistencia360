@@ -19751,3 +19751,1424 @@
 [09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
 [09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath: '/api/solicitacoes/{id}/status' vs '/admin/migracoes/run-script'
 [09-Nov-2025 17:34:25 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:36:57 America/Sao_Paulo] matchPath: '/' vs '/admin/migracoes'
+[09-Nov-2025 17:36:57 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:36:57 America/Sao_Paulo] matchPath: '/pwa' vs '/admin/migracoes'
+[09-Nov-2025 17:36:57 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:36:57 America/Sao_Paulo] matchPath: '/pwa/login' vs '/admin/migracoes'
+[09-Nov-2025 17:36:57 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:36:57 America/Sao_Paulo] matchPath: '/api/estados' vs '/admin/migracoes'
+[09-Nov-2025 17:36:57 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:36:57 America/Sao_Paulo] matchPath: '/api/cidades' vs '/admin/migracoes'
+[09-Nov-2025 17:36:57 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:36:57 America/Sao_Paulo] matchPath: '/api/imobiliarias' vs '/admin/migracoes'
+[09-Nov-2025 17:36:57 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:36:57 America/Sao_Paulo] matchPath: '/confirmacao-horario' vs '/admin/migracoes'
+[09-Nov-2025 17:36:57 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:36:57 America/Sao_Paulo] matchPath: '/cancelamento-horario' vs '/admin/migracoes'
+[09-Nov-2025 17:36:57 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:36:57 America/Sao_Paulo] matchPath: '/cancelar-solicitacao' vs '/admin/migracoes'
+[09-Nov-2025 17:36:57 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:36:57 America/Sao_Paulo] matchPath: '/reagendamento-horario' vs '/admin/migracoes'
+[09-Nov-2025 17:36:57 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:36:57 America/Sao_Paulo] matchPath: '/status-servico' vs '/admin/migracoes'
+[09-Nov-2025 17:36:57 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:36:57 America/Sao_Paulo] matchPath: '/acoes-servico' vs '/admin/migracoes'
+[09-Nov-2025 17:36:57 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:36:57 America/Sao_Paulo] matchPath: '/admin' vs '/admin/migracoes'
+[09-Nov-2025 17:36:57 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:36:57 America/Sao_Paulo] matchPath: '/operador' vs '/admin/migracoes'
+[09-Nov-2025 17:36:57 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:36:57 America/Sao_Paulo] matchPath: '/login' vs '/admin/migracoes'
+[09-Nov-2025 17:36:57 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:36:57 America/Sao_Paulo] matchPath: '/logout' vs '/admin/migracoes'
+[09-Nov-2025 17:36:57 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:36:57 America/Sao_Paulo] matchPath: '/pwa/solicitar' vs '/admin/migracoes'
+[09-Nov-2025 17:36:57 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:36:57 America/Sao_Paulo] matchPath: '/pwa/solicitacoes' vs '/admin/migracoes'
+[09-Nov-2025 17:36:57 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:36:57 America/Sao_Paulo] matchPath: '/pwa/solicitacao/{id}' vs '/admin/migracoes'
+[09-Nov-2025 17:36:57 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:36:57 America/Sao_Paulo] matchPath: '/admin/dashboard' vs '/admin/migracoes'
+[09-Nov-2025 17:36:57 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:36:57 America/Sao_Paulo] matchPath: '/admin/relatorios' vs '/admin/migracoes'
+[09-Nov-2025 17:36:57 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:36:57 America/Sao_Paulo] matchPath: '/admin/kanban' vs '/admin/migracoes'
+[09-Nov-2025 17:36:57 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:36:57 America/Sao_Paulo] matchPath: '/admin/dashboard/solicitacoes-por-imobiliaria' vs '/admin/migracoes'
+[09-Nov-2025 17:36:57 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:36:57 America/Sao_Paulo] matchPath: '/admin/dashboard/solicitacoes-por-status' vs '/admin/migracoes'
+[09-Nov-2025 17:36:57 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:36:57 America/Sao_Paulo] matchPath: '/admin/templates-whatsapp' vs '/admin/migracoes'
+[09-Nov-2025 17:36:57 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:36:57 America/Sao_Paulo] matchPath: '/admin/templates-whatsapp/{id}/edit' vs '/admin/migracoes'
+[09-Nov-2025 17:36:57 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:36:57 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances' vs '/admin/migracoes'
+[09-Nov-2025 17:36:57 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:36:57 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/create' vs '/admin/migracoes'
+[09-Nov-2025 17:36:57 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:36:57 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/qrcode' vs '/admin/migracoes'
+[09-Nov-2025 17:36:57 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:36:57 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/verificar-status' vs '/admin/migracoes'
+[09-Nov-2025 17:36:57 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:36:57 America/Sao_Paulo] matchPath: '/admin/solicitacoes' vs '/admin/migracoes'
+[09-Nov-2025 17:36:57 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:36:57 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/api' vs '/admin/migracoes'
+[09-Nov-2025 17:36:57 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:36:57 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}' vs '/admin/migracoes'
+[09-Nov-2025 17:36:57 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:36:57 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/edit' vs '/admin/migracoes'
+[09-Nov-2025 17:36:57 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:36:57 America/Sao_Paulo] matchPath: '/cron/notificacoes-pre-servico' vs '/admin/migracoes'
+[09-Nov-2025 17:36:57 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:36:57 America/Sao_Paulo] matchPath: '/cron/notificacoes-pos-servico' vs '/admin/migracoes'
+[09-Nov-2025 17:36:57 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:36:57 America/Sao_Paulo] matchPath: '/admin/cron-jobs' vs '/admin/migracoes'
+[09-Nov-2025 17:36:57 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:36:57 America/Sao_Paulo] matchPath: '/admin/cron-jobs/{id}/historico' vs '/admin/migracoes'
+[09-Nov-2025 17:36:57 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:36:57 America/Sao_Paulo] matchPath: '/admin/logs' vs '/admin/migracoes'
+[09-Nov-2025 17:36:57 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:36:57 America/Sao_Paulo] matchPath: '/admin/logs/download' vs '/admin/migracoes'
+[09-Nov-2025 17:36:57 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:36:57 America/Sao_Paulo] matchPath: '/admin/migracoes' vs '/admin/migracoes'
+[09-Nov-2025 17:36:57 America/Sao_Paulo] Router Debug - Route matched: GET /admin/migracoes
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath: '/pwa/login' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath: '/confirmacao-horario' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath: '/cancelamento-horario' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath: '/cancelar-solicitacao' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath: '/reagendamento-horario' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath: '/acoes-servico' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath: '/login' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath: '/pwa/solicitar' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath: '/admin/kanban/mover' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath: '/admin/kanban/atualizar-condicao' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath: '/admin/templates-whatsapp' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath: '/admin/templates-whatsapp/{id}' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath: '/admin/templates-whatsapp/{id}/delete' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/atualizar-qrcode' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/set-padrao' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/reiniciar' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/logout' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/desconectar' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/delete' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/status' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/confirmar-horario' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/desconfirmar-horario' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/horarios/bulk' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/confirmar-servico' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/solicitar-novos-horarios' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/adicionar-horario-seguradora' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/remover-horario-seguradora' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/atualizar' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/edit' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath: '/admin/solicitacoes/criar' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath: '/admin/solicitacoes/confirmar-datas' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath: '/admin/solicitacoes/cancelar' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/aceitar-data-prestador' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/recusar-propor-datas' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/aceitar-data-locatario' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/recusar-datas-locatario' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/confirmar-agendamento-final' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath: '/admin/solicitacoes/confirmar-atendimento' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath: '/admin/solicitacoes/informar-compra-peca' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath: '/admin/solicitacoes/enviar-lembretes' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath: '/admin/solicitacoes/expirar' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath: '/admin/solicitacoes/enviar-notificacoes-pre-servico' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath: '/admin/solicitacoes/enviar-notificacoes-pos-servico' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath: '/admin/cron-jobs/{id}/executar' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath: '/admin/cron-jobs/{id}/toggle-ativo' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath: '/admin/cron-jobs/{id}/atualizar-frequencia' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath: '/admin/cron-jobs/executar-pendentes' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath: '/admin/logs/limpar' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath: '/admin/migracoes/run' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath: '/admin/migracoes/purge' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath: '/admin/migracoes/limpar-disponibilidade' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath: '/{instancia}' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath: '/{instancia}/atualizar-perfil' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath: '/{instancia}/nova-solicitacao/etapa/{etapa}' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath: '/{instancia}/nova-solicitacao' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath: '/{instancia}/solicitacao-manual/etapa/{etapa}' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath: '/{instancia}/solicitacao-manual' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath: '/{instancia}/logout' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath: '/admin/imobiliarias' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath: '/admin/imobiliarias/buscar-cnpj' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath: '/admin/imobiliarias/{id}' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath: '/admin/imobiliarias/{id}/delete' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath: '/admin/imobiliarias/{id}/toggle-status' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath: '/admin/imobiliarias/{id}/test-connection' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath: '/admin/usuarios' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath: '/admin/usuarios/{id}' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath: '/admin/usuarios/{id}/delete' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath: '/admin/usuarios/{id}/toggle-status' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath: '/admin/usuarios/{id}/resetar-senha' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath: '/admin/categorias' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath: '/admin/categorias/{id}' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath: '/admin/categorias/{id}/delete' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath: '/admin/categorias/{id}/toggle-status' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath: '/admin/categorias/{categoriaId}/subcategorias' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath: '/admin/categorias/{categoriaId}/subcategorias/{subcategoriaId}' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath: '/admin/categorias/{categoriaId}/subcategorias/{subcategoriaId}/delete' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath: '/admin/categorias/{categoriaId}/subcategorias/{subcategoriaId}/toggle-status' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath: '/admin/status' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath: '/admin/status/reordenar' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath: '/admin/status/{id}' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath: '/admin/status/{id}/delete' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath: '/admin/condicoes' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath: '/admin/condicoes/reordenar' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath: '/admin/condicoes/{id}' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath: '/admin/condicoes/{id}/delete' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath: '/admin/telefones-emergencia' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath: '/admin/telefones-emergencia/{id}' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath: '/admin/telefones-emergencia/{id}/delete' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath: '/admin/configuracoes' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath: '/admin/configuracoes/emergencia' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath: '/admin/configuracoes/{id}' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath: '/admin/configuracoes/{id}/delete' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath: '/admin/solicitacoes-manuais/{id}/status' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath: '/admin/solicitacoes-manuais/{id}/migrar' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath: '/{instancia}/atualizar-perfil' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath: '/{instancia}/nova-solicitacao' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath: '/api/solicitacoes/{id}/status' vs '/admin/migracoes/run-script'
+[09-Nov-2025 17:37:01 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:38:42 America/Sao_Paulo] matchPath: '/' vs '/admin/kanban'
+[09-Nov-2025 17:38:42 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:38:42 America/Sao_Paulo] matchPath: '/pwa' vs '/admin/kanban'
+[09-Nov-2025 17:38:42 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:38:42 America/Sao_Paulo] matchPath: '/pwa/login' vs '/admin/kanban'
+[09-Nov-2025 17:38:42 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:38:43 America/Sao_Paulo] matchPath: '/api/estados' vs '/admin/kanban'
+[09-Nov-2025 17:38:43 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:38:43 America/Sao_Paulo] matchPath: '/api/cidades' vs '/admin/kanban'
+[09-Nov-2025 17:38:43 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:38:43 America/Sao_Paulo] matchPath: '/api/imobiliarias' vs '/admin/kanban'
+[09-Nov-2025 17:38:43 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:38:43 America/Sao_Paulo] matchPath: '/confirmacao-horario' vs '/admin/kanban'
+[09-Nov-2025 17:38:43 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:38:43 America/Sao_Paulo] matchPath: '/cancelamento-horario' vs '/admin/kanban'
+[09-Nov-2025 17:38:43 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:38:43 America/Sao_Paulo] matchPath: '/cancelar-solicitacao' vs '/admin/kanban'
+[09-Nov-2025 17:38:43 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:38:43 America/Sao_Paulo] matchPath: '/reagendamento-horario' vs '/admin/kanban'
+[09-Nov-2025 17:38:43 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:38:43 America/Sao_Paulo] matchPath: '/status-servico' vs '/admin/kanban'
+[09-Nov-2025 17:38:43 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:38:43 America/Sao_Paulo] matchPath: '/acoes-servico' vs '/admin/kanban'
+[09-Nov-2025 17:38:43 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:38:43 America/Sao_Paulo] matchPath: '/admin' vs '/admin/kanban'
+[09-Nov-2025 17:38:43 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:38:43 America/Sao_Paulo] matchPath: '/operador' vs '/admin/kanban'
+[09-Nov-2025 17:38:43 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:38:43 America/Sao_Paulo] matchPath: '/login' vs '/admin/kanban'
+[09-Nov-2025 17:38:43 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:38:43 America/Sao_Paulo] matchPath: '/logout' vs '/admin/kanban'
+[09-Nov-2025 17:38:43 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:38:43 America/Sao_Paulo] matchPath: '/pwa/solicitar' vs '/admin/kanban'
+[09-Nov-2025 17:38:43 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:38:43 America/Sao_Paulo] matchPath: '/pwa/solicitacoes' vs '/admin/kanban'
+[09-Nov-2025 17:38:43 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:38:43 America/Sao_Paulo] matchPath: '/pwa/solicitacao/{id}' vs '/admin/kanban'
+[09-Nov-2025 17:38:43 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:38:43 America/Sao_Paulo] matchPath: '/admin/dashboard' vs '/admin/kanban'
+[09-Nov-2025 17:38:43 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:38:43 America/Sao_Paulo] matchPath: '/admin/relatorios' vs '/admin/kanban'
+[09-Nov-2025 17:38:43 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:38:43 America/Sao_Paulo] matchPath: '/admin/kanban' vs '/admin/kanban'
+[09-Nov-2025 17:38:43 America/Sao_Paulo] Router Debug - Route matched: GET /admin/kanban
+[09-Nov-2025 17:38:44 America/Sao_Paulo] matchPath: '/' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:38:44 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:38:44 America/Sao_Paulo] matchPath: '/pwa' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:38:44 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:38:44 America/Sao_Paulo] matchPath: '/pwa/login' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:38:44 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:38:44 America/Sao_Paulo] matchPath: '/api/estados' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:38:44 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:38:44 America/Sao_Paulo] matchPath: '/api/cidades' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:38:44 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:38:44 America/Sao_Paulo] matchPath: '/api/imobiliarias' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:38:44 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:38:44 America/Sao_Paulo] matchPath: '/confirmacao-horario' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:38:44 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:38:44 America/Sao_Paulo] matchPath: '/cancelamento-horario' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:38:44 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:38:44 America/Sao_Paulo] matchPath: '/cancelar-solicitacao' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:38:44 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:38:44 America/Sao_Paulo] matchPath: '/reagendamento-horario' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:38:44 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:38:44 America/Sao_Paulo] matchPath: '/status-servico' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:38:44 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:38:44 America/Sao_Paulo] matchPath: '/acoes-servico' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:38:44 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:38:44 America/Sao_Paulo] matchPath: '/admin' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:38:44 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:38:44 America/Sao_Paulo] matchPath: '/operador' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:38:44 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:38:44 America/Sao_Paulo] matchPath: '/login' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:38:44 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:38:44 America/Sao_Paulo] matchPath: '/logout' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:38:44 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:38:44 America/Sao_Paulo] matchPath: '/pwa/solicitar' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:38:44 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:38:44 America/Sao_Paulo] matchPath: '/pwa/solicitacoes' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:38:44 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:38:44 America/Sao_Paulo] matchPath: '/pwa/solicitacao/{id}' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:38:44 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:38:44 America/Sao_Paulo] matchPath: '/admin/dashboard' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:38:44 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:38:44 America/Sao_Paulo] matchPath: '/admin/relatorios' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:38:44 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:38:44 America/Sao_Paulo] matchPath: '/admin/kanban' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:38:44 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:38:44 America/Sao_Paulo] matchPath: '/admin/dashboard/solicitacoes-por-imobiliaria' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:38:44 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:38:44 America/Sao_Paulo] matchPath: '/admin/dashboard/solicitacoes-por-status' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:38:44 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:38:44 America/Sao_Paulo] matchPath: '/admin/templates-whatsapp' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:38:44 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:38:44 America/Sao_Paulo] matchPath: '/admin/templates-whatsapp/{id}/edit' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:38:44 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:38:44 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:38:44 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:38:44 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/create' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:38:44 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:38:44 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/qrcode' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:38:44 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:38:44 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/verificar-status' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:38:44 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:38:44 America/Sao_Paulo] matchPath: '/admin/solicitacoes' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:38:44 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:38:44 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/api' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:38:44 America/Sao_Paulo] matchPath result: true
+[09-Nov-2025 17:38:44 America/Sao_Paulo] Router Debug - Route matched: GET /admin/solicitacoes/{id}/api
+[09-Nov-2025 17:38:44 America/Sao_Paulo] 📸 API Solicitação #45 - Fotos encontradas: 0
+[09-Nov-2025 17:38:44 America/Sao_Paulo]   ⚠️ Nenhuma foto encontrada na tabela 'fotos' para solicitação #45
+[09-Nov-2025 17:39:07 America/Sao_Paulo] matchPath: '/pwa/login' vs '/admin/solicitacoes/45/atualizar'
+[09-Nov-2025 17:39:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:07 America/Sao_Paulo] matchPath: '/confirmacao-horario' vs '/admin/solicitacoes/45/atualizar'
+[09-Nov-2025 17:39:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:07 America/Sao_Paulo] matchPath: '/cancelamento-horario' vs '/admin/solicitacoes/45/atualizar'
+[09-Nov-2025 17:39:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:07 America/Sao_Paulo] matchPath: '/cancelar-solicitacao' vs '/admin/solicitacoes/45/atualizar'
+[09-Nov-2025 17:39:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:07 America/Sao_Paulo] matchPath: '/reagendamento-horario' vs '/admin/solicitacoes/45/atualizar'
+[09-Nov-2025 17:39:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:07 America/Sao_Paulo] matchPath: '/acoes-servico' vs '/admin/solicitacoes/45/atualizar'
+[09-Nov-2025 17:39:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:07 America/Sao_Paulo] matchPath: '/login' vs '/admin/solicitacoes/45/atualizar'
+[09-Nov-2025 17:39:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:07 America/Sao_Paulo] matchPath: '/pwa/solicitar' vs '/admin/solicitacoes/45/atualizar'
+[09-Nov-2025 17:39:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:07 America/Sao_Paulo] matchPath: '/admin/kanban/mover' vs '/admin/solicitacoes/45/atualizar'
+[09-Nov-2025 17:39:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:07 America/Sao_Paulo] matchPath: '/admin/kanban/atualizar-condicao' vs '/admin/solicitacoes/45/atualizar'
+[09-Nov-2025 17:39:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:07 America/Sao_Paulo] matchPath: '/admin/templates-whatsapp' vs '/admin/solicitacoes/45/atualizar'
+[09-Nov-2025 17:39:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:07 America/Sao_Paulo] matchPath: '/admin/templates-whatsapp/{id}' vs '/admin/solicitacoes/45/atualizar'
+[09-Nov-2025 17:39:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:07 America/Sao_Paulo] matchPath: '/admin/templates-whatsapp/{id}/delete' vs '/admin/solicitacoes/45/atualizar'
+[09-Nov-2025 17:39:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:07 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances' vs '/admin/solicitacoes/45/atualizar'
+[09-Nov-2025 17:39:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:07 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/atualizar-qrcode' vs '/admin/solicitacoes/45/atualizar'
+[09-Nov-2025 17:39:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:07 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/set-padrao' vs '/admin/solicitacoes/45/atualizar'
+[09-Nov-2025 17:39:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:07 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/reiniciar' vs '/admin/solicitacoes/45/atualizar'
+[09-Nov-2025 17:39:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:07 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/logout' vs '/admin/solicitacoes/45/atualizar'
+[09-Nov-2025 17:39:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:07 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/desconectar' vs '/admin/solicitacoes/45/atualizar'
+[09-Nov-2025 17:39:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:07 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/delete' vs '/admin/solicitacoes/45/atualizar'
+[09-Nov-2025 17:39:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:07 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/status' vs '/admin/solicitacoes/45/atualizar'
+[09-Nov-2025 17:39:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:07 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/confirmar-horario' vs '/admin/solicitacoes/45/atualizar'
+[09-Nov-2025 17:39:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:07 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/desconfirmar-horario' vs '/admin/solicitacoes/45/atualizar'
+[09-Nov-2025 17:39:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:07 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/horarios/bulk' vs '/admin/solicitacoes/45/atualizar'
+[09-Nov-2025 17:39:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:07 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/confirmar-servico' vs '/admin/solicitacoes/45/atualizar'
+[09-Nov-2025 17:39:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:07 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/solicitar-novos-horarios' vs '/admin/solicitacoes/45/atualizar'
+[09-Nov-2025 17:39:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:07 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/adicionar-horario-seguradora' vs '/admin/solicitacoes/45/atualizar'
+[09-Nov-2025 17:39:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:07 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/remover-horario-seguradora' vs '/admin/solicitacoes/45/atualizar'
+[09-Nov-2025 17:39:07 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:07 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/atualizar' vs '/admin/solicitacoes/45/atualizar'
+[09-Nov-2025 17:39:07 America/Sao_Paulo] matchPath result: true
+[09-Nov-2025 17:39:07 America/Sao_Paulo] Router Debug - Route matched: POST /admin/solicitacoes/{id}/atualizar
+[09-Nov-2025 17:39:07 America/Sao_Paulo] Dados recebidos: {"id":45,"precisa_reembolso":false,"valor_reembolso_raw":"0","valor_reembolso_convertido":"null","horarios_seguradora":"null","dados_keys":["observacoes","status_id","protocolo_seguradora","precisa_reembolso","valor_reembolso","horarios_indisponiveis"]}
+[09-Nov-2025 17:39:07 America/Sao_Paulo] DEBUG atualizarDetalhes [ID:45] - schedulesFromJson recebido: [{"date":"2025-11-25","time":"00:00-20:00","raw":"25\/11\/2025 - 17:00:00-20:00:00"}]
+[09-Nov-2025 17:39:07 America/Sao_Paulo] DEBUG atualizarDetalhes [ID:45] - confirmedExistentes: []
+[09-Nov-2025 17:39:07 America/Sao_Paulo] DEBUG atualizarDetalhes [ID:45] - rawsSelecionados (após remover duplicatas): ["25\/11\/2025 - 17:00:00-20:00:00"]
+[09-Nov-2025 17:39:07 America/Sao_Paulo] DEBUG atualizarDetalhes [ID:45] - ✅ Novo horário confirmado criado: 25/11/2025 - 17:00:00-20:00:00
+[09-Nov-2025 17:39:07 America/Sao_Paulo] DEBUG atualizarDetalhes [ID:45] - confirmedFinal (antes de salvar): [{"date":"2025-11-25","time":"00:00-20:00","raw":"25\/11\/2025 - 17:00:00-20:00:00","source":"operator","confirmed_at":"2025-11-09T17:39:07-03:00"}]
+[09-Nov-2025 17:39:07 America/Sao_Paulo] DEBUG atualizarDetalhes [ID:45] - Total de horários confirmados: 1
+[09-Nov-2025 17:39:07 America/Sao_Paulo] DEBUG atualizarDetalhes [ID:45] - Status mantido pelo usuário: 3
+[09-Nov-2025 17:39:09 America/Sao_Paulo] DEBUG atualizarDetalhes [ID:45] - ✅ Notificação 'Horário Sugerido' enviada para telefone: (16) 99242-2354
+[09-Nov-2025 17:39:09 America/Sao_Paulo] DEBUG atualizarDetalhes [ID:45] - Horários novos adicionados pelo admin: [{"date":"2025-11-25","time":"00:00-20:00","raw":"25\/11\/2025 - 17:00:00-20:00:00","source":"operator","confirmed_at":"2025-11-09T17:39:07-03:00"}]
+[09-Nov-2025 17:39:09 America/Sao_Paulo] Dados finais antes de atualizar: {"observacoes":"Teste\nFinalidade: RESIDENCIAL\nTipo: CASA","status_id":"3","protocolo_seguradora":"789","precisa_reembolso":0,"valor_reembolso":null,"horarios_indisponiveis":0,"data_agendamento":"2025-11-25","horario_agendamento":"00:00:00","horario_confirmado":1,"horario_confirmado_raw":"25\/11\/2025 - 17:00:00-20:00:00","confirmed_schedules":"[{\"date\":\"2025-11-25\",\"time\":\"00:00-20:00\",\"raw\":\"25\\\/11\\\/2025 - 17:00:00-20:00:00\",\"source\":\"operator\",\"confirmed_at\":\"2025-11-09T17:39:07-03:00\"}]"}
+[09-Nov-2025 17:39:10 America/Sao_Paulo] WhatsApp de horário confirmado enviado [ID:45] - Status: Serviço Agendado
+[09-Nov-2025 17:39:11 America/Sao_Paulo] matchPath: '/' vs '/admin/kanban'
+[09-Nov-2025 17:39:11 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:11 America/Sao_Paulo] matchPath: '/pwa' vs '/admin/kanban'
+[09-Nov-2025 17:39:11 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:11 America/Sao_Paulo] matchPath: '/pwa/login' vs '/admin/kanban'
+[09-Nov-2025 17:39:11 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:11 America/Sao_Paulo] matchPath: '/api/estados' vs '/admin/kanban'
+[09-Nov-2025 17:39:11 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:11 America/Sao_Paulo] matchPath: '/api/cidades' vs '/admin/kanban'
+[09-Nov-2025 17:39:11 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:11 America/Sao_Paulo] matchPath: '/api/imobiliarias' vs '/admin/kanban'
+[09-Nov-2025 17:39:11 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:11 America/Sao_Paulo] matchPath: '/confirmacao-horario' vs '/admin/kanban'
+[09-Nov-2025 17:39:11 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:11 America/Sao_Paulo] matchPath: '/cancelamento-horario' vs '/admin/kanban'
+[09-Nov-2025 17:39:11 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:11 America/Sao_Paulo] matchPath: '/cancelar-solicitacao' vs '/admin/kanban'
+[09-Nov-2025 17:39:11 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:11 America/Sao_Paulo] matchPath: '/reagendamento-horario' vs '/admin/kanban'
+[09-Nov-2025 17:39:11 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:11 America/Sao_Paulo] matchPath: '/status-servico' vs '/admin/kanban'
+[09-Nov-2025 17:39:11 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:11 America/Sao_Paulo] matchPath: '/acoes-servico' vs '/admin/kanban'
+[09-Nov-2025 17:39:11 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:11 America/Sao_Paulo] matchPath: '/admin' vs '/admin/kanban'
+[09-Nov-2025 17:39:11 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:11 America/Sao_Paulo] matchPath: '/operador' vs '/admin/kanban'
+[09-Nov-2025 17:39:11 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:11 America/Sao_Paulo] matchPath: '/login' vs '/admin/kanban'
+[09-Nov-2025 17:39:11 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:11 America/Sao_Paulo] matchPath: '/logout' vs '/admin/kanban'
+[09-Nov-2025 17:39:11 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:11 America/Sao_Paulo] matchPath: '/pwa/solicitar' vs '/admin/kanban'
+[09-Nov-2025 17:39:11 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:11 America/Sao_Paulo] matchPath: '/pwa/solicitacoes' vs '/admin/kanban'
+[09-Nov-2025 17:39:11 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:11 America/Sao_Paulo] matchPath: '/pwa/solicitacao/{id}' vs '/admin/kanban'
+[09-Nov-2025 17:39:11 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:11 America/Sao_Paulo] matchPath: '/admin/dashboard' vs '/admin/kanban'
+[09-Nov-2025 17:39:11 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:11 America/Sao_Paulo] matchPath: '/admin/relatorios' vs '/admin/kanban'
+[09-Nov-2025 17:39:11 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:11 America/Sao_Paulo] matchPath: '/admin/kanban' vs '/admin/kanban'
+[09-Nov-2025 17:39:11 America/Sao_Paulo] Router Debug - Route matched: GET /admin/kanban
+[09-Nov-2025 17:39:12 America/Sao_Paulo] matchPath: '/' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:39:12 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:12 America/Sao_Paulo] matchPath: '/pwa' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:39:12 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:12 America/Sao_Paulo] matchPath: '/pwa/login' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:39:12 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:12 America/Sao_Paulo] matchPath: '/api/estados' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:39:12 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:12 America/Sao_Paulo] matchPath: '/api/cidades' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:39:12 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:12 America/Sao_Paulo] matchPath: '/api/imobiliarias' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:39:12 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:12 America/Sao_Paulo] matchPath: '/confirmacao-horario' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:39:12 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:12 America/Sao_Paulo] matchPath: '/cancelamento-horario' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:39:12 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:12 America/Sao_Paulo] matchPath: '/cancelar-solicitacao' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:39:12 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:12 America/Sao_Paulo] matchPath: '/reagendamento-horario' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:39:12 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:12 America/Sao_Paulo] matchPath: '/status-servico' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:39:12 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:12 America/Sao_Paulo] matchPath: '/acoes-servico' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:39:12 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:12 America/Sao_Paulo] matchPath: '/admin' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:39:12 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:12 America/Sao_Paulo] matchPath: '/operador' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:39:12 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:12 America/Sao_Paulo] matchPath: '/login' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:39:12 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:12 America/Sao_Paulo] matchPath: '/logout' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:39:12 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:12 America/Sao_Paulo] matchPath: '/pwa/solicitar' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:39:12 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:12 America/Sao_Paulo] matchPath: '/pwa/solicitacoes' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:39:12 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:12 America/Sao_Paulo] matchPath: '/pwa/solicitacao/{id}' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:39:12 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:12 America/Sao_Paulo] matchPath: '/admin/dashboard' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:39:12 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:12 America/Sao_Paulo] matchPath: '/admin/relatorios' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:39:12 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:12 America/Sao_Paulo] matchPath: '/admin/kanban' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:39:12 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:12 America/Sao_Paulo] matchPath: '/admin/dashboard/solicitacoes-por-imobiliaria' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:39:12 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:12 America/Sao_Paulo] matchPath: '/admin/dashboard/solicitacoes-por-status' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:39:12 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:12 America/Sao_Paulo] matchPath: '/admin/templates-whatsapp' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:39:12 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:12 America/Sao_Paulo] matchPath: '/admin/templates-whatsapp/{id}/edit' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:39:12 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:12 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:39:12 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:12 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/create' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:39:12 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:12 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/qrcode' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:39:12 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:12 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/verificar-status' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:39:12 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:12 America/Sao_Paulo] matchPath: '/admin/solicitacoes' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:39:12 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:12 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/api' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:39:12 America/Sao_Paulo] matchPath result: true
+[09-Nov-2025 17:39:12 America/Sao_Paulo] Router Debug - Route matched: GET /admin/solicitacoes/{id}/api
+[09-Nov-2025 17:39:12 America/Sao_Paulo] 📸 API Solicitação #45 - Fotos encontradas: 0
+[09-Nov-2025 17:39:12 America/Sao_Paulo]   ⚠️ Nenhuma foto encontrada na tabela 'fotos' para solicitação #45
+[09-Nov-2025 17:39:16 America/Sao_Paulo] matchPath: '/pwa/login' vs '/admin/solicitacoes/45/atualizar'
+[09-Nov-2025 17:39:16 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:16 America/Sao_Paulo] matchPath: '/confirmacao-horario' vs '/admin/solicitacoes/45/atualizar'
+[09-Nov-2025 17:39:16 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:16 America/Sao_Paulo] matchPath: '/cancelamento-horario' vs '/admin/solicitacoes/45/atualizar'
+[09-Nov-2025 17:39:16 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:16 America/Sao_Paulo] matchPath: '/cancelar-solicitacao' vs '/admin/solicitacoes/45/atualizar'
+[09-Nov-2025 17:39:16 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:16 America/Sao_Paulo] matchPath: '/reagendamento-horario' vs '/admin/solicitacoes/45/atualizar'
+[09-Nov-2025 17:39:16 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:16 America/Sao_Paulo] matchPath: '/acoes-servico' vs '/admin/solicitacoes/45/atualizar'
+[09-Nov-2025 17:39:16 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:16 America/Sao_Paulo] matchPath: '/login' vs '/admin/solicitacoes/45/atualizar'
+[09-Nov-2025 17:39:16 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:16 America/Sao_Paulo] matchPath: '/pwa/solicitar' vs '/admin/solicitacoes/45/atualizar'
+[09-Nov-2025 17:39:16 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:16 America/Sao_Paulo] matchPath: '/admin/kanban/mover' vs '/admin/solicitacoes/45/atualizar'
+[09-Nov-2025 17:39:16 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:16 America/Sao_Paulo] matchPath: '/admin/kanban/atualizar-condicao' vs '/admin/solicitacoes/45/atualizar'
+[09-Nov-2025 17:39:16 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:16 America/Sao_Paulo] matchPath: '/admin/templates-whatsapp' vs '/admin/solicitacoes/45/atualizar'
+[09-Nov-2025 17:39:16 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:16 America/Sao_Paulo] matchPath: '/admin/templates-whatsapp/{id}' vs '/admin/solicitacoes/45/atualizar'
+[09-Nov-2025 17:39:16 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:16 America/Sao_Paulo] matchPath: '/admin/templates-whatsapp/{id}/delete' vs '/admin/solicitacoes/45/atualizar'
+[09-Nov-2025 17:39:16 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:16 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances' vs '/admin/solicitacoes/45/atualizar'
+[09-Nov-2025 17:39:16 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:16 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/atualizar-qrcode' vs '/admin/solicitacoes/45/atualizar'
+[09-Nov-2025 17:39:16 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:16 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/set-padrao' vs '/admin/solicitacoes/45/atualizar'
+[09-Nov-2025 17:39:16 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:16 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/reiniciar' vs '/admin/solicitacoes/45/atualizar'
+[09-Nov-2025 17:39:16 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:16 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/logout' vs '/admin/solicitacoes/45/atualizar'
+[09-Nov-2025 17:39:16 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:16 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/desconectar' vs '/admin/solicitacoes/45/atualizar'
+[09-Nov-2025 17:39:16 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:16 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/delete' vs '/admin/solicitacoes/45/atualizar'
+[09-Nov-2025 17:39:16 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:16 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/status' vs '/admin/solicitacoes/45/atualizar'
+[09-Nov-2025 17:39:16 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:16 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/confirmar-horario' vs '/admin/solicitacoes/45/atualizar'
+[09-Nov-2025 17:39:16 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:16 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/desconfirmar-horario' vs '/admin/solicitacoes/45/atualizar'
+[09-Nov-2025 17:39:16 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:16 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/horarios/bulk' vs '/admin/solicitacoes/45/atualizar'
+[09-Nov-2025 17:39:16 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:16 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/confirmar-servico' vs '/admin/solicitacoes/45/atualizar'
+[09-Nov-2025 17:39:16 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:16 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/solicitar-novos-horarios' vs '/admin/solicitacoes/45/atualizar'
+[09-Nov-2025 17:39:16 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:16 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/adicionar-horario-seguradora' vs '/admin/solicitacoes/45/atualizar'
+[09-Nov-2025 17:39:16 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:16 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/remover-horario-seguradora' vs '/admin/solicitacoes/45/atualizar'
+[09-Nov-2025 17:39:16 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:16 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/atualizar' vs '/admin/solicitacoes/45/atualizar'
+[09-Nov-2025 17:39:16 America/Sao_Paulo] matchPath result: true
+[09-Nov-2025 17:39:16 America/Sao_Paulo] Router Debug - Route matched: POST /admin/solicitacoes/{id}/atualizar
+[09-Nov-2025 17:39:16 America/Sao_Paulo] Dados recebidos: {"id":45,"precisa_reembolso":false,"valor_reembolso_raw":"0","valor_reembolso_convertido":"null","horarios_seguradora":"null","dados_keys":["observacoes","status_id","protocolo_seguradora","precisa_reembolso","valor_reembolso","horarios_indisponiveis"]}
+[09-Nov-2025 17:39:16 America/Sao_Paulo] DEBUG atualizarDetalhes [ID:45] - schedulesFromJson recebido: [{"date":"2025-11-27","time":"08:00-11:00","raw":"27\/11\/2025 - 08:00-11:00"}]
+[09-Nov-2025 17:39:16 America/Sao_Paulo] DEBUG atualizarDetalhes [ID:45] - confirmedExistentes: [{"date":"2025-11-25","time":"00:00-20:00","raw":"25\/11\/2025 - 17:00:00-20:00:00","source":"operator","confirmed_at":"2025-11-09T17:39:07-03:00"}]
+[09-Nov-2025 17:39:16 America/Sao_Paulo] DEBUG atualizarDetalhes [ID:45] - rawsSelecionados (após remover duplicatas): ["27\/11\/2025 - 08:00-11:00"]
+[09-Nov-2025 17:39:16 America/Sao_Paulo] DEBUG atualizarDetalhes [ID:45] - ✅ Novo horário confirmado criado: 27/11/2025 - 08:00-11:00
+[09-Nov-2025 17:39:16 America/Sao_Paulo] DEBUG atualizarDetalhes [ID:45] - confirmedFinal (antes de salvar): [{"date":"2025-11-27","time":"08:00-11:00","raw":"27\/11\/2025 - 08:00-11:00","source":"operator","confirmed_at":"2025-11-09T17:39:16-03:00"}]
+[09-Nov-2025 17:39:16 America/Sao_Paulo] DEBUG atualizarDetalhes [ID:45] - Total de horários confirmados: 1
+[09-Nov-2025 17:39:16 America/Sao_Paulo] DEBUG atualizarDetalhes [ID:45] - Status mantido pelo usuário: 3
+[09-Nov-2025 17:39:17 America/Sao_Paulo] DEBUG atualizarDetalhes [ID:45] - ✅ Notificação 'Horário Sugerido' enviada para telefone: (16) 99242-2354
+[09-Nov-2025 17:39:17 America/Sao_Paulo] DEBUG atualizarDetalhes [ID:45] - Horários novos adicionados pelo admin: [{"date":"2025-11-27","time":"08:00-11:00","raw":"27\/11\/2025 - 08:00-11:00","source":"operator","confirmed_at":"2025-11-09T17:39:16-03:00"}]
+[09-Nov-2025 17:39:17 America/Sao_Paulo] Dados finais antes de atualizar: {"observacoes":"Teste\nFinalidade: RESIDENCIAL\nTipo: CASA","status_id":"3","protocolo_seguradora":"789","precisa_reembolso":0,"valor_reembolso":null,"horarios_indisponiveis":0,"data_agendamento":"2025-11-27","horario_agendamento":"08:00:00","horario_confirmado":1,"horario_confirmado_raw":"27\/11\/2025 - 08:00-11:00","confirmed_schedules":"[{\"date\":\"2025-11-27\",\"time\":\"08:00-11:00\",\"raw\":\"27\\\/11\\\/2025 - 08:00-11:00\",\"source\":\"operator\",\"confirmed_at\":\"2025-11-09T17:39:16-03:00\"}]"}
+[09-Nov-2025 17:39:18 America/Sao_Paulo] matchPath: '/' vs '/admin/kanban'
+[09-Nov-2025 17:39:18 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:18 America/Sao_Paulo] matchPath: '/pwa' vs '/admin/kanban'
+[09-Nov-2025 17:39:18 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:18 America/Sao_Paulo] matchPath: '/pwa/login' vs '/admin/kanban'
+[09-Nov-2025 17:39:18 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:18 America/Sao_Paulo] matchPath: '/api/estados' vs '/admin/kanban'
+[09-Nov-2025 17:39:18 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:18 America/Sao_Paulo] matchPath: '/api/cidades' vs '/admin/kanban'
+[09-Nov-2025 17:39:18 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:18 America/Sao_Paulo] matchPath: '/api/imobiliarias' vs '/admin/kanban'
+[09-Nov-2025 17:39:18 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:18 America/Sao_Paulo] matchPath: '/confirmacao-horario' vs '/admin/kanban'
+[09-Nov-2025 17:39:18 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:18 America/Sao_Paulo] matchPath: '/cancelamento-horario' vs '/admin/kanban'
+[09-Nov-2025 17:39:18 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:18 America/Sao_Paulo] matchPath: '/cancelar-solicitacao' vs '/admin/kanban'
+[09-Nov-2025 17:39:18 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:18 America/Sao_Paulo] matchPath: '/reagendamento-horario' vs '/admin/kanban'
+[09-Nov-2025 17:39:18 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:18 America/Sao_Paulo] matchPath: '/status-servico' vs '/admin/kanban'
+[09-Nov-2025 17:39:18 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:18 America/Sao_Paulo] matchPath: '/acoes-servico' vs '/admin/kanban'
+[09-Nov-2025 17:39:18 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:18 America/Sao_Paulo] matchPath: '/admin' vs '/admin/kanban'
+[09-Nov-2025 17:39:18 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:18 America/Sao_Paulo] matchPath: '/operador' vs '/admin/kanban'
+[09-Nov-2025 17:39:18 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:18 America/Sao_Paulo] matchPath: '/login' vs '/admin/kanban'
+[09-Nov-2025 17:39:18 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:18 America/Sao_Paulo] matchPath: '/logout' vs '/admin/kanban'
+[09-Nov-2025 17:39:18 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:18 America/Sao_Paulo] matchPath: '/pwa/solicitar' vs '/admin/kanban'
+[09-Nov-2025 17:39:18 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:18 America/Sao_Paulo] matchPath: '/pwa/solicitacoes' vs '/admin/kanban'
+[09-Nov-2025 17:39:18 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:18 America/Sao_Paulo] matchPath: '/pwa/solicitacao/{id}' vs '/admin/kanban'
+[09-Nov-2025 17:39:18 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:18 America/Sao_Paulo] matchPath: '/admin/dashboard' vs '/admin/kanban'
+[09-Nov-2025 17:39:18 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:18 America/Sao_Paulo] matchPath: '/admin/relatorios' vs '/admin/kanban'
+[09-Nov-2025 17:39:18 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:18 America/Sao_Paulo] matchPath: '/admin/kanban' vs '/admin/kanban'
+[09-Nov-2025 17:39:18 America/Sao_Paulo] Router Debug - Route matched: GET /admin/kanban
+[09-Nov-2025 17:39:19 America/Sao_Paulo] matchPath: '/' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:39:19 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:19 America/Sao_Paulo] matchPath: '/pwa' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:39:19 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:19 America/Sao_Paulo] matchPath: '/pwa/login' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:39:19 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:19 America/Sao_Paulo] matchPath: '/api/estados' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:39:19 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:19 America/Sao_Paulo] matchPath: '/api/cidades' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:39:19 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:19 America/Sao_Paulo] matchPath: '/api/imobiliarias' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:39:19 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:19 America/Sao_Paulo] matchPath: '/confirmacao-horario' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:39:19 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:19 America/Sao_Paulo] matchPath: '/cancelamento-horario' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:39:19 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:19 America/Sao_Paulo] matchPath: '/cancelar-solicitacao' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:39:19 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:19 America/Sao_Paulo] matchPath: '/reagendamento-horario' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:39:19 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:19 America/Sao_Paulo] matchPath: '/status-servico' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:39:19 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:19 America/Sao_Paulo] matchPath: '/acoes-servico' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:39:19 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:19 America/Sao_Paulo] matchPath: '/admin' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:39:19 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:19 America/Sao_Paulo] matchPath: '/operador' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:39:19 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:19 America/Sao_Paulo] matchPath: '/login' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:39:19 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:19 America/Sao_Paulo] matchPath: '/logout' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:39:19 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:19 America/Sao_Paulo] matchPath: '/pwa/solicitar' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:39:19 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:19 America/Sao_Paulo] matchPath: '/pwa/solicitacoes' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:39:19 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:19 America/Sao_Paulo] matchPath: '/pwa/solicitacao/{id}' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:39:19 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:19 America/Sao_Paulo] matchPath: '/admin/dashboard' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:39:19 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:19 America/Sao_Paulo] matchPath: '/admin/relatorios' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:39:19 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:19 America/Sao_Paulo] matchPath: '/admin/kanban' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:39:19 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:19 America/Sao_Paulo] matchPath: '/admin/dashboard/solicitacoes-por-imobiliaria' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:39:19 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:19 America/Sao_Paulo] matchPath: '/admin/dashboard/solicitacoes-por-status' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:39:19 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:19 America/Sao_Paulo] matchPath: '/admin/templates-whatsapp' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:39:19 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:19 America/Sao_Paulo] matchPath: '/admin/templates-whatsapp/{id}/edit' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:39:19 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:19 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:39:19 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:19 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/create' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:39:19 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:19 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/qrcode' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:39:19 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:19 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/verificar-status' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:39:19 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:19 America/Sao_Paulo] matchPath: '/admin/solicitacoes' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:39:19 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:19 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/api' vs '/admin/solicitacoes/45/api'
+[09-Nov-2025 17:39:19 America/Sao_Paulo] matchPath result: true
+[09-Nov-2025 17:39:19 America/Sao_Paulo] Router Debug - Route matched: GET /admin/solicitacoes/{id}/api
+[09-Nov-2025 17:39:19 America/Sao_Paulo] 📸 API Solicitação #45 - Fotos encontradas: 0
+[09-Nov-2025 17:39:19 America/Sao_Paulo]   ⚠️ Nenhuma foto encontrada na tabela 'fotos' para solicitação #45
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath: '/' vs '/admin/kanban'
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath: '/pwa' vs '/admin/kanban'
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath: '/pwa/login' vs '/admin/kanban'
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath: '/api/estados' vs '/admin/kanban'
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath: '/api/cidades' vs '/admin/kanban'
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath: '/api/imobiliarias' vs '/admin/kanban'
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath: '/confirmacao-horario' vs '/admin/kanban'
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath: '/cancelamento-horario' vs '/admin/kanban'
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath: '/cancelar-solicitacao' vs '/admin/kanban'
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath: '/reagendamento-horario' vs '/admin/kanban'
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath: '/status-servico' vs '/admin/kanban'
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath: '/acoes-servico' vs '/admin/kanban'
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath: '/admin' vs '/admin/kanban'
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath: '/operador' vs '/admin/kanban'
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath: '/login' vs '/admin/kanban'
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath: '/logout' vs '/admin/kanban'
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath: '/pwa/solicitar' vs '/admin/kanban'
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath: '/pwa/solicitacoes' vs '/admin/kanban'
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath: '/pwa/solicitacao/{id}' vs '/admin/kanban'
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath: '/admin/dashboard' vs '/admin/kanban'
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath: '/admin/relatorios' vs '/admin/kanban'
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath: '/admin/kanban' vs '/admin/kanban'
+[09-Nov-2025 17:39:35 America/Sao_Paulo] Router Debug - Route matched: GET /admin/kanban
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath: '/' vs '/admin/solicitacoes/54/api'
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath: '/pwa' vs '/admin/solicitacoes/54/api'
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath: '/pwa/login' vs '/admin/solicitacoes/54/api'
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath: '/api/estados' vs '/admin/solicitacoes/54/api'
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath: '/api/cidades' vs '/admin/solicitacoes/54/api'
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath: '/api/imobiliarias' vs '/admin/solicitacoes/54/api'
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath: '/confirmacao-horario' vs '/admin/solicitacoes/54/api'
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath: '/cancelamento-horario' vs '/admin/solicitacoes/54/api'
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath: '/cancelar-solicitacao' vs '/admin/solicitacoes/54/api'
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath: '/reagendamento-horario' vs '/admin/solicitacoes/54/api'
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath: '/status-servico' vs '/admin/solicitacoes/54/api'
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath: '/acoes-servico' vs '/admin/solicitacoes/54/api'
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath: '/admin' vs '/admin/solicitacoes/54/api'
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath: '/operador' vs '/admin/solicitacoes/54/api'
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath: '/login' vs '/admin/solicitacoes/54/api'
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath: '/logout' vs '/admin/solicitacoes/54/api'
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath: '/pwa/solicitar' vs '/admin/solicitacoes/54/api'
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath: '/pwa/solicitacoes' vs '/admin/solicitacoes/54/api'
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath: '/pwa/solicitacao/{id}' vs '/admin/solicitacoes/54/api'
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath: '/admin/dashboard' vs '/admin/solicitacoes/54/api'
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath: '/admin/relatorios' vs '/admin/solicitacoes/54/api'
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath: '/admin/kanban' vs '/admin/solicitacoes/54/api'
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath: '/admin/dashboard/solicitacoes-por-imobiliaria' vs '/admin/solicitacoes/54/api'
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath: '/admin/dashboard/solicitacoes-por-status' vs '/admin/solicitacoes/54/api'
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath: '/admin/templates-whatsapp' vs '/admin/solicitacoes/54/api'
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath: '/admin/templates-whatsapp/{id}/edit' vs '/admin/solicitacoes/54/api'
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances' vs '/admin/solicitacoes/54/api'
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/create' vs '/admin/solicitacoes/54/api'
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/qrcode' vs '/admin/solicitacoes/54/api'
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/verificar-status' vs '/admin/solicitacoes/54/api'
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath: '/admin/solicitacoes' vs '/admin/solicitacoes/54/api'
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/api' vs '/admin/solicitacoes/54/api'
+[09-Nov-2025 17:39:35 America/Sao_Paulo] matchPath result: true
+[09-Nov-2025 17:39:35 America/Sao_Paulo] Router Debug - Route matched: GET /admin/solicitacoes/{id}/api
+[09-Nov-2025 17:39:35 America/Sao_Paulo] 📸 API Solicitação #54 - Fotos encontradas: 1
+[09-Nov-2025 17:39:35 America/Sao_Paulo]   📸 Foto ID: 10, Nome: 6910a64a1eff4_1762698826.png, URL: Public/uploads/solicitacoes/6910a64a1eff4_1762698826.png
+[09-Nov-2025 17:39:35 America/Sao_Paulo]   ✅ Arquivo físico existe: C:\Users\Pedro Koagura\Documents\kss_assistencia360\app\Controllers/../../Public/uploads/solicitacoes/6910a64a1eff4_1762698826.png
+[09-Nov-2025 17:42:28 America/Sao_Paulo] matchPath: '/' vs '/admin/solicitacoes/47/api'
+[09-Nov-2025 17:42:28 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:28 America/Sao_Paulo] matchPath: '/pwa' vs '/admin/solicitacoes/47/api'
+[09-Nov-2025 17:42:28 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:28 America/Sao_Paulo] matchPath: '/pwa/login' vs '/admin/solicitacoes/47/api'
+[09-Nov-2025 17:42:28 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:28 America/Sao_Paulo] matchPath: '/api/estados' vs '/admin/solicitacoes/47/api'
+[09-Nov-2025 17:42:28 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:28 America/Sao_Paulo] matchPath: '/api/cidades' vs '/admin/solicitacoes/47/api'
+[09-Nov-2025 17:42:28 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:28 America/Sao_Paulo] matchPath: '/api/imobiliarias' vs '/admin/solicitacoes/47/api'
+[09-Nov-2025 17:42:28 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:28 America/Sao_Paulo] matchPath: '/confirmacao-horario' vs '/admin/solicitacoes/47/api'
+[09-Nov-2025 17:42:28 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:28 America/Sao_Paulo] matchPath: '/cancelamento-horario' vs '/admin/solicitacoes/47/api'
+[09-Nov-2025 17:42:28 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:28 America/Sao_Paulo] matchPath: '/cancelar-solicitacao' vs '/admin/solicitacoes/47/api'
+[09-Nov-2025 17:42:28 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:28 America/Sao_Paulo] matchPath: '/reagendamento-horario' vs '/admin/solicitacoes/47/api'
+[09-Nov-2025 17:42:28 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:28 America/Sao_Paulo] matchPath: '/status-servico' vs '/admin/solicitacoes/47/api'
+[09-Nov-2025 17:42:28 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:28 America/Sao_Paulo] matchPath: '/acoes-servico' vs '/admin/solicitacoes/47/api'
+[09-Nov-2025 17:42:28 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:28 America/Sao_Paulo] matchPath: '/admin' vs '/admin/solicitacoes/47/api'
+[09-Nov-2025 17:42:28 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:28 America/Sao_Paulo] matchPath: '/operador' vs '/admin/solicitacoes/47/api'
+[09-Nov-2025 17:42:28 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:28 America/Sao_Paulo] matchPath: '/login' vs '/admin/solicitacoes/47/api'
+[09-Nov-2025 17:42:28 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:28 America/Sao_Paulo] matchPath: '/logout' vs '/admin/solicitacoes/47/api'
+[09-Nov-2025 17:42:28 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:28 America/Sao_Paulo] matchPath: '/pwa/solicitar' vs '/admin/solicitacoes/47/api'
+[09-Nov-2025 17:42:28 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:28 America/Sao_Paulo] matchPath: '/pwa/solicitacoes' vs '/admin/solicitacoes/47/api'
+[09-Nov-2025 17:42:28 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:28 America/Sao_Paulo] matchPath: '/pwa/solicitacao/{id}' vs '/admin/solicitacoes/47/api'
+[09-Nov-2025 17:42:28 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:28 America/Sao_Paulo] matchPath: '/admin/dashboard' vs '/admin/solicitacoes/47/api'
+[09-Nov-2025 17:42:28 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:28 America/Sao_Paulo] matchPath: '/admin/relatorios' vs '/admin/solicitacoes/47/api'
+[09-Nov-2025 17:42:28 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:28 America/Sao_Paulo] matchPath: '/admin/kanban' vs '/admin/solicitacoes/47/api'
+[09-Nov-2025 17:42:28 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:28 America/Sao_Paulo] matchPath: '/admin/dashboard/solicitacoes-por-imobiliaria' vs '/admin/solicitacoes/47/api'
+[09-Nov-2025 17:42:28 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:28 America/Sao_Paulo] matchPath: '/admin/dashboard/solicitacoes-por-status' vs '/admin/solicitacoes/47/api'
+[09-Nov-2025 17:42:28 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:28 America/Sao_Paulo] matchPath: '/admin/templates-whatsapp' vs '/admin/solicitacoes/47/api'
+[09-Nov-2025 17:42:28 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:28 America/Sao_Paulo] matchPath: '/admin/templates-whatsapp/{id}/edit' vs '/admin/solicitacoes/47/api'
+[09-Nov-2025 17:42:28 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:28 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances' vs '/admin/solicitacoes/47/api'
+[09-Nov-2025 17:42:28 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:28 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/create' vs '/admin/solicitacoes/47/api'
+[09-Nov-2025 17:42:28 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:28 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/qrcode' vs '/admin/solicitacoes/47/api'
+[09-Nov-2025 17:42:28 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:28 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/verificar-status' vs '/admin/solicitacoes/47/api'
+[09-Nov-2025 17:42:28 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:28 America/Sao_Paulo] matchPath: '/admin/solicitacoes' vs '/admin/solicitacoes/47/api'
+[09-Nov-2025 17:42:28 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:28 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/api' vs '/admin/solicitacoes/47/api'
+[09-Nov-2025 17:42:28 America/Sao_Paulo] matchPath result: true
+[09-Nov-2025 17:42:28 America/Sao_Paulo] Router Debug - Route matched: GET /admin/solicitacoes/{id}/api
+[09-Nov-2025 17:42:28 America/Sao_Paulo] 📸 API Solicitação #47 - Fotos encontradas: 0
+[09-Nov-2025 17:42:28 America/Sao_Paulo]   ⚠️ Nenhuma foto encontrada na tabela 'fotos' para solicitação #47
+[09-Nov-2025 17:42:41 America/Sao_Paulo] matchPath: '/' vs '/admin/solicitacoes'
+[09-Nov-2025 17:42:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:41 America/Sao_Paulo] matchPath: '/pwa' vs '/admin/solicitacoes'
+[09-Nov-2025 17:42:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:41 America/Sao_Paulo] matchPath: '/pwa/login' vs '/admin/solicitacoes'
+[09-Nov-2025 17:42:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:41 America/Sao_Paulo] matchPath: '/api/estados' vs '/admin/solicitacoes'
+[09-Nov-2025 17:42:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:41 America/Sao_Paulo] matchPath: '/api/cidades' vs '/admin/solicitacoes'
+[09-Nov-2025 17:42:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:41 America/Sao_Paulo] matchPath: '/api/imobiliarias' vs '/admin/solicitacoes'
+[09-Nov-2025 17:42:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:41 America/Sao_Paulo] matchPath: '/confirmacao-horario' vs '/admin/solicitacoes'
+[09-Nov-2025 17:42:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:41 America/Sao_Paulo] matchPath: '/cancelamento-horario' vs '/admin/solicitacoes'
+[09-Nov-2025 17:42:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:41 America/Sao_Paulo] matchPath: '/cancelar-solicitacao' vs '/admin/solicitacoes'
+[09-Nov-2025 17:42:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:41 America/Sao_Paulo] matchPath: '/reagendamento-horario' vs '/admin/solicitacoes'
+[09-Nov-2025 17:42:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:41 America/Sao_Paulo] matchPath: '/status-servico' vs '/admin/solicitacoes'
+[09-Nov-2025 17:42:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:41 America/Sao_Paulo] matchPath: '/acoes-servico' vs '/admin/solicitacoes'
+[09-Nov-2025 17:42:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:41 America/Sao_Paulo] matchPath: '/admin' vs '/admin/solicitacoes'
+[09-Nov-2025 17:42:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:41 America/Sao_Paulo] matchPath: '/operador' vs '/admin/solicitacoes'
+[09-Nov-2025 17:42:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:41 America/Sao_Paulo] matchPath: '/login' vs '/admin/solicitacoes'
+[09-Nov-2025 17:42:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:41 America/Sao_Paulo] matchPath: '/logout' vs '/admin/solicitacoes'
+[09-Nov-2025 17:42:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:41 America/Sao_Paulo] matchPath: '/pwa/solicitar' vs '/admin/solicitacoes'
+[09-Nov-2025 17:42:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:41 America/Sao_Paulo] matchPath: '/pwa/solicitacoes' vs '/admin/solicitacoes'
+[09-Nov-2025 17:42:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:41 America/Sao_Paulo] matchPath: '/pwa/solicitacao/{id}' vs '/admin/solicitacoes'
+[09-Nov-2025 17:42:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:41 America/Sao_Paulo] matchPath: '/admin/dashboard' vs '/admin/solicitacoes'
+[09-Nov-2025 17:42:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:41 America/Sao_Paulo] matchPath: '/admin/relatorios' vs '/admin/solicitacoes'
+[09-Nov-2025 17:42:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:41 America/Sao_Paulo] matchPath: '/admin/kanban' vs '/admin/solicitacoes'
+[09-Nov-2025 17:42:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:41 America/Sao_Paulo] matchPath: '/admin/dashboard/solicitacoes-por-imobiliaria' vs '/admin/solicitacoes'
+[09-Nov-2025 17:42:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:41 America/Sao_Paulo] matchPath: '/admin/dashboard/solicitacoes-por-status' vs '/admin/solicitacoes'
+[09-Nov-2025 17:42:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:41 America/Sao_Paulo] matchPath: '/admin/templates-whatsapp' vs '/admin/solicitacoes'
+[09-Nov-2025 17:42:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:41 America/Sao_Paulo] matchPath: '/admin/templates-whatsapp/{id}/edit' vs '/admin/solicitacoes'
+[09-Nov-2025 17:42:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:41 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances' vs '/admin/solicitacoes'
+[09-Nov-2025 17:42:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:41 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/create' vs '/admin/solicitacoes'
+[09-Nov-2025 17:42:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:41 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/qrcode' vs '/admin/solicitacoes'
+[09-Nov-2025 17:42:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:41 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/verificar-status' vs '/admin/solicitacoes'
+[09-Nov-2025 17:42:41 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:41 America/Sao_Paulo] matchPath: '/admin/solicitacoes' vs '/admin/solicitacoes'
+[09-Nov-2025 17:42:41 America/Sao_Paulo] Router Debug - Route matched: GET /admin/solicitacoes
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath: '/' vs '/admin/solicitacoes-manuais'
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath: '/pwa' vs '/admin/solicitacoes-manuais'
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath: '/pwa/login' vs '/admin/solicitacoes-manuais'
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath: '/api/estados' vs '/admin/solicitacoes-manuais'
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath: '/api/cidades' vs '/admin/solicitacoes-manuais'
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath: '/api/imobiliarias' vs '/admin/solicitacoes-manuais'
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath: '/confirmacao-horario' vs '/admin/solicitacoes-manuais'
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath: '/cancelamento-horario' vs '/admin/solicitacoes-manuais'
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath: '/cancelar-solicitacao' vs '/admin/solicitacoes-manuais'
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath: '/reagendamento-horario' vs '/admin/solicitacoes-manuais'
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath: '/status-servico' vs '/admin/solicitacoes-manuais'
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath: '/acoes-servico' vs '/admin/solicitacoes-manuais'
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath: '/admin' vs '/admin/solicitacoes-manuais'
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath: '/operador' vs '/admin/solicitacoes-manuais'
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath: '/login' vs '/admin/solicitacoes-manuais'
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath: '/logout' vs '/admin/solicitacoes-manuais'
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath: '/pwa/solicitar' vs '/admin/solicitacoes-manuais'
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath: '/pwa/solicitacoes' vs '/admin/solicitacoes-manuais'
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath: '/pwa/solicitacao/{id}' vs '/admin/solicitacoes-manuais'
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath: '/admin/dashboard' vs '/admin/solicitacoes-manuais'
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath: '/admin/relatorios' vs '/admin/solicitacoes-manuais'
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath: '/admin/kanban' vs '/admin/solicitacoes-manuais'
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath: '/admin/dashboard/solicitacoes-por-imobiliaria' vs '/admin/solicitacoes-manuais'
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath: '/admin/dashboard/solicitacoes-por-status' vs '/admin/solicitacoes-manuais'
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath: '/admin/templates-whatsapp' vs '/admin/solicitacoes-manuais'
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath: '/admin/templates-whatsapp/{id}/edit' vs '/admin/solicitacoes-manuais'
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances' vs '/admin/solicitacoes-manuais'
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/create' vs '/admin/solicitacoes-manuais'
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/qrcode' vs '/admin/solicitacoes-manuais'
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/verificar-status' vs '/admin/solicitacoes-manuais'
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath: '/admin/solicitacoes' vs '/admin/solicitacoes-manuais'
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/api' vs '/admin/solicitacoes-manuais'
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}' vs '/admin/solicitacoes-manuais'
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/edit' vs '/admin/solicitacoes-manuais'
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath: '/cron/notificacoes-pre-servico' vs '/admin/solicitacoes-manuais'
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath: '/cron/notificacoes-pos-servico' vs '/admin/solicitacoes-manuais'
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath: '/admin/cron-jobs' vs '/admin/solicitacoes-manuais'
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath: '/admin/cron-jobs/{id}/historico' vs '/admin/solicitacoes-manuais'
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath: '/admin/logs' vs '/admin/solicitacoes-manuais'
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath: '/admin/logs/download' vs '/admin/solicitacoes-manuais'
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath: '/admin/migracoes' vs '/admin/solicitacoes-manuais'
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath: '/{instancia}' vs '/admin/solicitacoes-manuais'
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath: '/{instancia}/dashboard' vs '/admin/solicitacoes-manuais'
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath: '/{instancia}/solicitacoes' vs '/admin/solicitacoes-manuais'
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath: '/{instancia}/solicitacoes/{id}' vs '/admin/solicitacoes-manuais'
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath: '/{instancia}/solicitacao-emergencial/{solicitacaoId}' vs '/admin/solicitacoes-manuais'
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath: '/{instancia}/perfil' vs '/admin/solicitacoes-manuais'
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath: '/{instancia}/nova-solicitacao/etapa/{etapa}' vs '/admin/solicitacoes-manuais'
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath: '/{instancia}/nova-solicitacao' vs '/admin/solicitacoes-manuais'
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath: '/{instancia}/solicitacao-manual/etapa/{etapa}' vs '/admin/solicitacoes-manuais'
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath: '/{instancia}/solicitacao-manual' vs '/admin/solicitacoes-manuais'
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath: '/{instancia}/logout' vs '/admin/solicitacoes-manuais'
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath: '/api/subcategorias' vs '/admin/solicitacoes-manuais'
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath: '/admin/imobiliarias' vs '/admin/solicitacoes-manuais'
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath: '/admin/imobiliarias/create' vs '/admin/solicitacoes-manuais'
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath: '/admin/imobiliarias/{id}' vs '/admin/solicitacoes-manuais'
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath: '/admin/imobiliarias/{id}/edit' vs '/admin/solicitacoes-manuais'
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath: '/admin/usuarios' vs '/admin/solicitacoes-manuais'
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath: '/admin/usuarios/create' vs '/admin/solicitacoes-manuais'
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath: '/admin/usuarios/{id}/edit' vs '/admin/solicitacoes-manuais'
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath: '/admin/categorias' vs '/admin/solicitacoes-manuais'
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath: '/admin/categorias/create' vs '/admin/solicitacoes-manuais'
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath: '/admin/categorias/{id}' vs '/admin/solicitacoes-manuais'
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath: '/admin/categorias/{id}/edit' vs '/admin/solicitacoes-manuais'
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath: '/admin/categorias/{categoriaId}/subcategorias/create' vs '/admin/solicitacoes-manuais'
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath: '/admin/categorias/{categoriaId}/subcategorias/{subcategoriaId}/edit' vs '/admin/solicitacoes-manuais'
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath: '/admin/status' vs '/admin/solicitacoes-manuais'
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath: '/admin/status/create' vs '/admin/solicitacoes-manuais'
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath: '/admin/status/{id}/edit' vs '/admin/solicitacoes-manuais'
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath: '/admin/condicoes' vs '/admin/solicitacoes-manuais'
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath: '/admin/condicoes/create' vs '/admin/solicitacoes-manuais'
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath: '/admin/condicoes/{id}/edit' vs '/admin/solicitacoes-manuais'
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath: '/admin/telefones-emergencia' vs '/admin/solicitacoes-manuais'
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath: '/admin/telefones-emergencia/create' vs '/admin/solicitacoes-manuais'
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath: '/admin/telefones-emergencia/{id}/edit' vs '/admin/solicitacoes-manuais'
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath: '/admin/configuracoes' vs '/admin/solicitacoes-manuais'
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath: '/admin/configuracoes/create' vs '/admin/solicitacoes-manuais'
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath: '/admin/configuracoes/emergencia' vs '/admin/solicitacoes-manuais'
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath: '/admin/configuracoes/{id}/edit' vs '/admin/solicitacoes-manuais'
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:46 America/Sao_Paulo] matchPath: '/admin/solicitacoes-manuais' vs '/admin/solicitacoes-manuais'
+[09-Nov-2025 17:42:46 America/Sao_Paulo] Router Debug - Route matched: GET /admin/solicitacoes-manuais
+[09-Nov-2025 17:42:47 America/Sao_Paulo] matchPath: '/' vs '/admin/whatsapp-instances'
+[09-Nov-2025 17:42:47 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:47 America/Sao_Paulo] matchPath: '/pwa' vs '/admin/whatsapp-instances'
+[09-Nov-2025 17:42:47 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:47 America/Sao_Paulo] matchPath: '/pwa/login' vs '/admin/whatsapp-instances'
+[09-Nov-2025 17:42:47 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:47 America/Sao_Paulo] matchPath: '/api/estados' vs '/admin/whatsapp-instances'
+[09-Nov-2025 17:42:47 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:47 America/Sao_Paulo] matchPath: '/api/cidades' vs '/admin/whatsapp-instances'
+[09-Nov-2025 17:42:47 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:47 America/Sao_Paulo] matchPath: '/api/imobiliarias' vs '/admin/whatsapp-instances'
+[09-Nov-2025 17:42:47 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:47 America/Sao_Paulo] matchPath: '/confirmacao-horario' vs '/admin/whatsapp-instances'
+[09-Nov-2025 17:42:47 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:47 America/Sao_Paulo] matchPath: '/cancelamento-horario' vs '/admin/whatsapp-instances'
+[09-Nov-2025 17:42:47 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:47 America/Sao_Paulo] matchPath: '/cancelar-solicitacao' vs '/admin/whatsapp-instances'
+[09-Nov-2025 17:42:47 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:47 America/Sao_Paulo] matchPath: '/reagendamento-horario' vs '/admin/whatsapp-instances'
+[09-Nov-2025 17:42:47 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:47 America/Sao_Paulo] matchPath: '/status-servico' vs '/admin/whatsapp-instances'
+[09-Nov-2025 17:42:47 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:47 America/Sao_Paulo] matchPath: '/acoes-servico' vs '/admin/whatsapp-instances'
+[09-Nov-2025 17:42:47 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:47 America/Sao_Paulo] matchPath: '/admin' vs '/admin/whatsapp-instances'
+[09-Nov-2025 17:42:47 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:47 America/Sao_Paulo] matchPath: '/operador' vs '/admin/whatsapp-instances'
+[09-Nov-2025 17:42:47 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:47 America/Sao_Paulo] matchPath: '/login' vs '/admin/whatsapp-instances'
+[09-Nov-2025 17:42:47 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:47 America/Sao_Paulo] matchPath: '/logout' vs '/admin/whatsapp-instances'
+[09-Nov-2025 17:42:47 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:47 America/Sao_Paulo] matchPath: '/pwa/solicitar' vs '/admin/whatsapp-instances'
+[09-Nov-2025 17:42:47 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:47 America/Sao_Paulo] matchPath: '/pwa/solicitacoes' vs '/admin/whatsapp-instances'
+[09-Nov-2025 17:42:47 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:47 America/Sao_Paulo] matchPath: '/pwa/solicitacao/{id}' vs '/admin/whatsapp-instances'
+[09-Nov-2025 17:42:47 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:47 America/Sao_Paulo] matchPath: '/admin/dashboard' vs '/admin/whatsapp-instances'
+[09-Nov-2025 17:42:47 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:47 America/Sao_Paulo] matchPath: '/admin/relatorios' vs '/admin/whatsapp-instances'
+[09-Nov-2025 17:42:47 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:47 America/Sao_Paulo] matchPath: '/admin/kanban' vs '/admin/whatsapp-instances'
+[09-Nov-2025 17:42:47 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:47 America/Sao_Paulo] matchPath: '/admin/dashboard/solicitacoes-por-imobiliaria' vs '/admin/whatsapp-instances'
+[09-Nov-2025 17:42:47 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:47 America/Sao_Paulo] matchPath: '/admin/dashboard/solicitacoes-por-status' vs '/admin/whatsapp-instances'
+[09-Nov-2025 17:42:47 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:47 America/Sao_Paulo] matchPath: '/admin/templates-whatsapp' vs '/admin/whatsapp-instances'
+[09-Nov-2025 17:42:47 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:47 America/Sao_Paulo] matchPath: '/admin/templates-whatsapp/{id}/edit' vs '/admin/whatsapp-instances'
+[09-Nov-2025 17:42:47 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:47 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances' vs '/admin/whatsapp-instances'
+[09-Nov-2025 17:42:47 America/Sao_Paulo] Router Debug - Route matched: GET /admin/whatsapp-instances
+[09-Nov-2025 17:42:49 America/Sao_Paulo] matchPath: '/' vs '/admin/relatorios'
+[09-Nov-2025 17:42:49 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:49 America/Sao_Paulo] matchPath: '/pwa' vs '/admin/relatorios'
+[09-Nov-2025 17:42:49 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:49 America/Sao_Paulo] matchPath: '/pwa/login' vs '/admin/relatorios'
+[09-Nov-2025 17:42:49 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:49 America/Sao_Paulo] matchPath: '/api/estados' vs '/admin/relatorios'
+[09-Nov-2025 17:42:49 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:49 America/Sao_Paulo] matchPath: '/api/cidades' vs '/admin/relatorios'
+[09-Nov-2025 17:42:49 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:49 America/Sao_Paulo] matchPath: '/api/imobiliarias' vs '/admin/relatorios'
+[09-Nov-2025 17:42:49 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:49 America/Sao_Paulo] matchPath: '/confirmacao-horario' vs '/admin/relatorios'
+[09-Nov-2025 17:42:49 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:49 America/Sao_Paulo] matchPath: '/cancelamento-horario' vs '/admin/relatorios'
+[09-Nov-2025 17:42:49 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:49 America/Sao_Paulo] matchPath: '/cancelar-solicitacao' vs '/admin/relatorios'
+[09-Nov-2025 17:42:49 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:49 America/Sao_Paulo] matchPath: '/reagendamento-horario' vs '/admin/relatorios'
+[09-Nov-2025 17:42:49 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:49 America/Sao_Paulo] matchPath: '/status-servico' vs '/admin/relatorios'
+[09-Nov-2025 17:42:49 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:49 America/Sao_Paulo] matchPath: '/acoes-servico' vs '/admin/relatorios'
+[09-Nov-2025 17:42:49 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:49 America/Sao_Paulo] matchPath: '/admin' vs '/admin/relatorios'
+[09-Nov-2025 17:42:49 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:49 America/Sao_Paulo] matchPath: '/operador' vs '/admin/relatorios'
+[09-Nov-2025 17:42:49 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:49 America/Sao_Paulo] matchPath: '/login' vs '/admin/relatorios'
+[09-Nov-2025 17:42:49 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:49 America/Sao_Paulo] matchPath: '/logout' vs '/admin/relatorios'
+[09-Nov-2025 17:42:49 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:49 America/Sao_Paulo] matchPath: '/pwa/solicitar' vs '/admin/relatorios'
+[09-Nov-2025 17:42:49 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:49 America/Sao_Paulo] matchPath: '/pwa/solicitacoes' vs '/admin/relatorios'
+[09-Nov-2025 17:42:49 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:49 America/Sao_Paulo] matchPath: '/pwa/solicitacao/{id}' vs '/admin/relatorios'
+[09-Nov-2025 17:42:49 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:49 America/Sao_Paulo] matchPath: '/admin/dashboard' vs '/admin/relatorios'
+[09-Nov-2025 17:42:49 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:49 America/Sao_Paulo] matchPath: '/admin/relatorios' vs '/admin/relatorios'
+[09-Nov-2025 17:42:49 America/Sao_Paulo] Router Debug - Route matched: GET /admin/relatorios
+[09-Nov-2025 17:42:50 America/Sao_Paulo] matchPath: '/' vs '/admin/dashboard'
+[09-Nov-2025 17:42:50 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:50 America/Sao_Paulo] matchPath: '/pwa' vs '/admin/dashboard'
+[09-Nov-2025 17:42:50 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:50 America/Sao_Paulo] matchPath: '/pwa/login' vs '/admin/dashboard'
+[09-Nov-2025 17:42:50 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:50 America/Sao_Paulo] matchPath: '/api/estados' vs '/admin/dashboard'
+[09-Nov-2025 17:42:50 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:50 America/Sao_Paulo] matchPath: '/api/cidades' vs '/admin/dashboard'
+[09-Nov-2025 17:42:50 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:50 America/Sao_Paulo] matchPath: '/api/imobiliarias' vs '/admin/dashboard'
+[09-Nov-2025 17:42:50 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:50 America/Sao_Paulo] matchPath: '/confirmacao-horario' vs '/admin/dashboard'
+[09-Nov-2025 17:42:50 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:50 America/Sao_Paulo] matchPath: '/cancelamento-horario' vs '/admin/dashboard'
+[09-Nov-2025 17:42:50 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:50 America/Sao_Paulo] matchPath: '/cancelar-solicitacao' vs '/admin/dashboard'
+[09-Nov-2025 17:42:50 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:50 America/Sao_Paulo] matchPath: '/reagendamento-horario' vs '/admin/dashboard'
+[09-Nov-2025 17:42:50 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:50 America/Sao_Paulo] matchPath: '/status-servico' vs '/admin/dashboard'
+[09-Nov-2025 17:42:50 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:50 America/Sao_Paulo] matchPath: '/acoes-servico' vs '/admin/dashboard'
+[09-Nov-2025 17:42:50 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:50 America/Sao_Paulo] matchPath: '/admin' vs '/admin/dashboard'
+[09-Nov-2025 17:42:50 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:50 America/Sao_Paulo] matchPath: '/operador' vs '/admin/dashboard'
+[09-Nov-2025 17:42:50 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:50 America/Sao_Paulo] matchPath: '/login' vs '/admin/dashboard'
+[09-Nov-2025 17:42:50 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:50 America/Sao_Paulo] matchPath: '/logout' vs '/admin/dashboard'
+[09-Nov-2025 17:42:50 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:50 America/Sao_Paulo] matchPath: '/pwa/solicitar' vs '/admin/dashboard'
+[09-Nov-2025 17:42:50 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:50 America/Sao_Paulo] matchPath: '/pwa/solicitacoes' vs '/admin/dashboard'
+[09-Nov-2025 17:42:50 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:50 America/Sao_Paulo] matchPath: '/pwa/solicitacao/{id}' vs '/admin/dashboard'
+[09-Nov-2025 17:42:50 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:50 America/Sao_Paulo] matchPath: '/admin/dashboard' vs '/admin/dashboard'
+[09-Nov-2025 17:42:50 America/Sao_Paulo] Router Debug - Route matched: GET /admin/dashboard
+[09-Nov-2025 17:42:50 America/Sao_Paulo] matchPath: '/' vs '/admin/dashboard/solicitacoes-por-imobiliaria'
+[09-Nov-2025 17:42:50 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:50 America/Sao_Paulo] matchPath: '/pwa' vs '/admin/dashboard/solicitacoes-por-imobiliaria'
+[09-Nov-2025 17:42:50 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:50 America/Sao_Paulo] matchPath: '/pwa/login' vs '/admin/dashboard/solicitacoes-por-imobiliaria'
+[09-Nov-2025 17:42:50 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:50 America/Sao_Paulo] matchPath: '/api/estados' vs '/admin/dashboard/solicitacoes-por-imobiliaria'
+[09-Nov-2025 17:42:50 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:50 America/Sao_Paulo] matchPath: '/api/cidades' vs '/admin/dashboard/solicitacoes-por-imobiliaria'
+[09-Nov-2025 17:42:50 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:50 America/Sao_Paulo] matchPath: '/api/imobiliarias' vs '/admin/dashboard/solicitacoes-por-imobiliaria'
+[09-Nov-2025 17:42:50 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:50 America/Sao_Paulo] matchPath: '/confirmacao-horario' vs '/admin/dashboard/solicitacoes-por-imobiliaria'
+[09-Nov-2025 17:42:50 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:50 America/Sao_Paulo] matchPath: '/cancelamento-horario' vs '/admin/dashboard/solicitacoes-por-imobiliaria'
+[09-Nov-2025 17:42:50 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:50 America/Sao_Paulo] matchPath: '/cancelar-solicitacao' vs '/admin/dashboard/solicitacoes-por-imobiliaria'
+[09-Nov-2025 17:42:50 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:50 America/Sao_Paulo] matchPath: '/reagendamento-horario' vs '/admin/dashboard/solicitacoes-por-imobiliaria'
+[09-Nov-2025 17:42:50 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:50 America/Sao_Paulo] matchPath: '/status-servico' vs '/admin/dashboard/solicitacoes-por-imobiliaria'
+[09-Nov-2025 17:42:50 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:50 America/Sao_Paulo] matchPath: '/acoes-servico' vs '/admin/dashboard/solicitacoes-por-imobiliaria'
+[09-Nov-2025 17:42:50 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:50 America/Sao_Paulo] matchPath: '/admin' vs '/admin/dashboard/solicitacoes-por-imobiliaria'
+[09-Nov-2025 17:42:50 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:50 America/Sao_Paulo] matchPath: '/operador' vs '/admin/dashboard/solicitacoes-por-imobiliaria'
+[09-Nov-2025 17:42:50 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:50 America/Sao_Paulo] matchPath: '/login' vs '/admin/dashboard/solicitacoes-por-imobiliaria'
+[09-Nov-2025 17:42:50 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:50 America/Sao_Paulo] matchPath: '/logout' vs '/admin/dashboard/solicitacoes-por-imobiliaria'
+[09-Nov-2025 17:42:50 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:50 America/Sao_Paulo] matchPath: '/pwa/solicitar' vs '/admin/dashboard/solicitacoes-por-imobiliaria'
+[09-Nov-2025 17:42:50 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:50 America/Sao_Paulo] matchPath: '/pwa/solicitacoes' vs '/admin/dashboard/solicitacoes-por-imobiliaria'
+[09-Nov-2025 17:42:50 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:50 America/Sao_Paulo] matchPath: '/pwa/solicitacao/{id}' vs '/admin/dashboard/solicitacoes-por-imobiliaria'
+[09-Nov-2025 17:42:50 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:50 America/Sao_Paulo] matchPath: '/admin/dashboard' vs '/admin/dashboard/solicitacoes-por-imobiliaria'
+[09-Nov-2025 17:42:50 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:50 America/Sao_Paulo] matchPath: '/admin/relatorios' vs '/admin/dashboard/solicitacoes-por-imobiliaria'
+[09-Nov-2025 17:42:50 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:50 America/Sao_Paulo] matchPath: '/admin/kanban' vs '/admin/dashboard/solicitacoes-por-imobiliaria'
+[09-Nov-2025 17:42:50 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:50 America/Sao_Paulo] matchPath: '/admin/dashboard/solicitacoes-por-imobiliaria' vs '/admin/dashboard/solicitacoes-por-imobiliaria'
+[09-Nov-2025 17:42:50 America/Sao_Paulo] Router Debug - Route matched: GET /admin/dashboard/solicitacoes-por-imobiliaria
+[09-Nov-2025 17:42:57 America/Sao_Paulo] matchPath: '/' vs '/admin/relatorios'
+[09-Nov-2025 17:42:57 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:57 America/Sao_Paulo] matchPath: '/pwa' vs '/admin/relatorios'
+[09-Nov-2025 17:42:57 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:57 America/Sao_Paulo] matchPath: '/pwa/login' vs '/admin/relatorios'
+[09-Nov-2025 17:42:57 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:57 America/Sao_Paulo] matchPath: '/api/estados' vs '/admin/relatorios'
+[09-Nov-2025 17:42:57 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:57 America/Sao_Paulo] matchPath: '/api/cidades' vs '/admin/relatorios'
+[09-Nov-2025 17:42:57 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:57 America/Sao_Paulo] matchPath: '/api/imobiliarias' vs '/admin/relatorios'
+[09-Nov-2025 17:42:57 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:57 America/Sao_Paulo] matchPath: '/confirmacao-horario' vs '/admin/relatorios'
+[09-Nov-2025 17:42:57 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:57 America/Sao_Paulo] matchPath: '/cancelamento-horario' vs '/admin/relatorios'
+[09-Nov-2025 17:42:57 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:57 America/Sao_Paulo] matchPath: '/cancelar-solicitacao' vs '/admin/relatorios'
+[09-Nov-2025 17:42:57 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:57 America/Sao_Paulo] matchPath: '/reagendamento-horario' vs '/admin/relatorios'
+[09-Nov-2025 17:42:57 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:57 America/Sao_Paulo] matchPath: '/status-servico' vs '/admin/relatorios'
+[09-Nov-2025 17:42:57 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:57 America/Sao_Paulo] matchPath: '/acoes-servico' vs '/admin/relatorios'
+[09-Nov-2025 17:42:57 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:57 America/Sao_Paulo] matchPath: '/admin' vs '/admin/relatorios'
+[09-Nov-2025 17:42:57 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:57 America/Sao_Paulo] matchPath: '/operador' vs '/admin/relatorios'
+[09-Nov-2025 17:42:57 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:57 America/Sao_Paulo] matchPath: '/login' vs '/admin/relatorios'
+[09-Nov-2025 17:42:57 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:57 America/Sao_Paulo] matchPath: '/logout' vs '/admin/relatorios'
+[09-Nov-2025 17:42:57 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:57 America/Sao_Paulo] matchPath: '/pwa/solicitar' vs '/admin/relatorios'
+[09-Nov-2025 17:42:57 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:57 America/Sao_Paulo] matchPath: '/pwa/solicitacoes' vs '/admin/relatorios'
+[09-Nov-2025 17:42:57 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:57 America/Sao_Paulo] matchPath: '/pwa/solicitacao/{id}' vs '/admin/relatorios'
+[09-Nov-2025 17:42:57 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:57 America/Sao_Paulo] matchPath: '/admin/dashboard' vs '/admin/relatorios'
+[09-Nov-2025 17:42:57 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:57 America/Sao_Paulo] matchPath: '/admin/relatorios' vs '/admin/relatorios'
+[09-Nov-2025 17:42:57 America/Sao_Paulo] Router Debug - Route matched: GET /admin/relatorios
+[09-Nov-2025 17:42:58 America/Sao_Paulo] matchPath: '/' vs '/admin/kanban'
+[09-Nov-2025 17:42:58 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:58 America/Sao_Paulo] matchPath: '/pwa' vs '/admin/kanban'
+[09-Nov-2025 17:42:58 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:58 America/Sao_Paulo] matchPath: '/pwa/login' vs '/admin/kanban'
+[09-Nov-2025 17:42:58 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:58 America/Sao_Paulo] matchPath: '/api/estados' vs '/admin/kanban'
+[09-Nov-2025 17:42:58 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:58 America/Sao_Paulo] matchPath: '/api/cidades' vs '/admin/kanban'
+[09-Nov-2025 17:42:58 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:58 America/Sao_Paulo] matchPath: '/api/imobiliarias' vs '/admin/kanban'
+[09-Nov-2025 17:42:58 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:58 America/Sao_Paulo] matchPath: '/confirmacao-horario' vs '/admin/kanban'
+[09-Nov-2025 17:42:58 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:58 America/Sao_Paulo] matchPath: '/cancelamento-horario' vs '/admin/kanban'
+[09-Nov-2025 17:42:58 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:58 America/Sao_Paulo] matchPath: '/cancelar-solicitacao' vs '/admin/kanban'
+[09-Nov-2025 17:42:58 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:58 America/Sao_Paulo] matchPath: '/reagendamento-horario' vs '/admin/kanban'
+[09-Nov-2025 17:42:58 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:58 America/Sao_Paulo] matchPath: '/status-servico' vs '/admin/kanban'
+[09-Nov-2025 17:42:58 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:58 America/Sao_Paulo] matchPath: '/acoes-servico' vs '/admin/kanban'
+[09-Nov-2025 17:42:58 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:58 America/Sao_Paulo] matchPath: '/admin' vs '/admin/kanban'
+[09-Nov-2025 17:42:58 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:58 America/Sao_Paulo] matchPath: '/operador' vs '/admin/kanban'
+[09-Nov-2025 17:42:58 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:58 America/Sao_Paulo] matchPath: '/login' vs '/admin/kanban'
+[09-Nov-2025 17:42:58 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:58 America/Sao_Paulo] matchPath: '/logout' vs '/admin/kanban'
+[09-Nov-2025 17:42:58 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:58 America/Sao_Paulo] matchPath: '/pwa/solicitar' vs '/admin/kanban'
+[09-Nov-2025 17:42:58 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:58 America/Sao_Paulo] matchPath: '/pwa/solicitacoes' vs '/admin/kanban'
+[09-Nov-2025 17:42:58 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:58 America/Sao_Paulo] matchPath: '/pwa/solicitacao/{id}' vs '/admin/kanban'
+[09-Nov-2025 17:42:58 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:58 America/Sao_Paulo] matchPath: '/admin/dashboard' vs '/admin/kanban'
+[09-Nov-2025 17:42:58 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:58 America/Sao_Paulo] matchPath: '/admin/relatorios' vs '/admin/kanban'
+[09-Nov-2025 17:42:58 America/Sao_Paulo] matchPath result: false
+[09-Nov-2025 17:42:58 America/Sao_Paulo] matchPath: '/admin/kanban' vs '/admin/kanban'
+[09-Nov-2025 17:42:58 America/Sao_Paulo] Router Debug - Route matched: GET /admin/kanban

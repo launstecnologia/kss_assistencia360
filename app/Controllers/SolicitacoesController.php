@@ -852,8 +852,9 @@ class SolicitacoesController extends Controller
     }
 
     /**
-     * Processa notificações após o horário agendado
+     * Processa notificações após o horário agendado.
      * Envia "Confirmação de Serviço" com link para informar o que aconteceu
+     * exatamente 20 minutos após o término do período confirmado.
      */
     private function processarNotificacoesPosServico(): void
     {
@@ -880,21 +881,47 @@ class SolicitacoesController extends Controller
                 try {
                     $dataAgendamento = $solicitacao['data_agendamento'];
                     $horarioAgendamento = $solicitacao['horario_agendamento'];
-                    
-                    // Parsear horário
+                    $horarioRawConfirmado = trim((string)($solicitacao['horario_confirmado_raw'] ?? ''));
+
+                    // Parsear horário inicial
                     $horarioParts = explode(':', $horarioAgendamento);
-                    $hora = (int)($horarioParts[0] ?? 0);
-                    $minuto = (int)($horarioParts[1] ?? 0);
-                    
-                    // Criar DateTime para o horário agendado
-                    $dataHoraAgendamento = new \DateTime($dataAgendamento . ' ' . sprintf('%02d:%02d:00', $hora, $minuto));
+                    $horaInicio = (int)($horarioParts[0] ?? 0);
+                    $minutoInicio = (int)($horarioParts[1] ?? 0);
+
+                    $dataHoraInicio = new \DateTime($dataAgendamento . ' ' . sprintf('%02d:%02d:00', $horaInicio, $minutoInicio));
+
+                    // Determinar horário final a partir do raw (dd/mm/aaaa - HH:MM-HH:MM)
+                    $dataHoraFim = null;
+                    if ($horarioRawConfirmado !== '') {
+                        $regexRaw = '/^(?<data>\d{2}\/\d{2}\/\d{4})\s*-\s*(?<inicio>\d{2}:\d{2})(?::\d{2})?\s*-\s*(?<fim>\d{2}:\d{2})(?::\d{2})?$/';
+                        if (preg_match($regexRaw, $horarioRawConfirmado, $matches)) {
+                            $dataFim = \DateTime::createFromFormat('d/m/Y H:i', $matches['data'] . ' ' . $matches['fim']);
+                            if ($dataFim instanceof \DateTime) {
+                                $dataHoraFim = $dataFim;
+                            }
+                        }
+                    }
+
+                    if (!$dataHoraFim) {
+                        // Fallback: considerar duração padrão de 3h após horário inicial
+                        $dataHoraFim = clone $dataHoraInicio;
+                        $dataHoraFim->modify('+3 hours');
+                    }
+
                     $agora = new \DateTime();
-                    
-                    // Verificar se já passou do horário agendado (pelo menos 5 minutos depois)
-                    $diferencaMinutos = ($agora->getTimestamp() - $dataHoraAgendamento->getTimestamp()) / 60;
-                    
-                    // Só enviar se passou pelo menos 5 minutos do horário agendado
-                    if ($diferencaMinutos >= 5) {
+                    $momentoEnvio = (clone $dataHoraFim)->modify('+20 minutes');
+
+                    error_log(sprintf(
+                        "DEBUG Cron Pós-Serviço [ID:%d] - Início:%s Fim:%s Envio:%s Agora:%s",
+                        $solicitacao['id'],
+                        $dataHoraInicio->format('Y-m-d H:i:s'),
+                        $dataHoraFim->format('Y-m-d H:i:s'),
+                        $momentoEnvio->format('Y-m-d H:i:s'),
+                        $agora->format('Y-m-d H:i:s')
+                    ));
+
+                    // Só enviar se já passou 20 minutos do horário final
+                    if ($agora >= $momentoEnvio) {
                         // Criar token para a página de ações
                         $tokenModel = new \App\Models\ScheduleConfirmationToken();
                         $protocol = $solicitacao['numero_solicitacao'] ?? ('KS' . $solicitacao['id']);
@@ -927,6 +954,8 @@ class SolicitacoesController extends Controller
                         
                         $enviadas++;
                         error_log("✅ Notificação pós-serviço enviada para solicitação #{$solicitacao['id']}");
+                    } else {
+                        error_log("DEBUG Cron Pós-Serviço [ID:{$solicitacao['id']}] - Aguardando janela de +20min após término.");
                     }
                 } catch (\Exception $e) {
                     $erros[] = "Solicitação #{$solicitacao['id']}: " . $e->getMessage();
@@ -939,7 +968,8 @@ class SolicitacoesController extends Controller
                 'message' => 'Notificações pós-serviço processadas',
                 'enviadas' => $enviadas,
                 'total_verificadas' => count($solicitacoes),
-                'timestamp' => date('Y-m-d H:i:s')
+                'timestamp' => date('Y-m-d H:i:s'),
+                'criterio_envio' => '>= 20 minutos após término do período confirmado'
             ];
             
             if (!empty($erros)) {
