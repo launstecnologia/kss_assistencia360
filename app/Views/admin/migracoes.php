@@ -18,8 +18,8 @@ ob_start();
     <?php endif; ?>
 
     <div class="bg-white rounded-lg shadow p-6 mb-6">
-        <h2 class="text-xl font-semibold text-gray-900 mb-2">descricao_card + horario_confirmado</h2>
-        <p class="text-sm text-gray-600 mb-4">Adiciona as colunas e preenche valores iniciais.</p>
+        <h2 class="text-xl font-semibold text-gray-900 mb-2">Migração de colunas principais</h2>
+        <p class="text-sm text-gray-600 mb-4">Adiciona/atualiza colunas utilizadas pelo fluxo de agendamento e lembretes.</p>
         <ul class="text-sm mb-4">
             <li class="mb-1">descricao_card: 
                 <?php if (!empty($hasDescricaoCard)): ?>
@@ -56,10 +56,31 @@ ob_start();
                     <span class="text-red-700 font-semibold">Pendente</span>
                 <?php endif; ?>
             </li>
+            <li class="mb-1">data_limite_peca: 
+                <?php if (!empty($hasDataLimitePeca)): ?>
+                    <span class="text-green-700 font-semibold">Aplicada</span>
+                <?php else: ?>
+                    <span class="text-red-700 font-semibold">Pendente</span>
+                <?php endif; ?>
+            </li>
+            <li class="mb-1">data_ultimo_lembrete: 
+                <?php if (!empty($hasDataUltimoLembrete)): ?>
+                    <span class="text-green-700 font-semibold">Aplicada</span>
+                <?php else: ?>
+                    <span class="text-red-700 font-semibold">Pendente</span>
+                <?php endif; ?>
+            </li>
+            <li>lembretes_enviados: 
+                <?php if (!empty($hasLembretesEnviados)): ?>
+                    <span class="text-green-700 font-semibold">Aplicada</span>
+                <?php else: ?>
+                    <span class="text-red-700 font-semibold">Pendente</span>
+                <?php endif; ?>
+            </li>
         </ul>
         <form method="POST" action="/admin/migracoes/run">
             <input type="hidden" name="csrf_token" value="<?= \App\Core\View::csrfToken() ?>">
-            <button class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700" <?= (!empty($hasDescricaoCard) && !empty($hasHorarioConfirmado) && !empty($hasHorarioRaw) && !empty($hasConfirmedSchedules) && !empty($hasDatasOpcoes)) ? 'disabled' : '' ?>>Executar migração</button>
+            <button class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700" <?= (!empty($hasDescricaoCard) && !empty($hasHorarioConfirmado) && !empty($hasHorarioRaw) && !empty($hasConfirmedSchedules) && !empty($hasDatasOpcoes) && !empty($hasDataLimitePeca) && !empty($hasDataUltimoLembrete) && !empty($hasLembretesEnviados)) ? 'disabled' : '' ?>>Executar migração</button>
         </form>
     </div>
 

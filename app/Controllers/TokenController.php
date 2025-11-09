@@ -1736,7 +1736,31 @@ class TokenController extends Controller
                         $updateData['data_limite_cancelamento'] = $dataLimite;
                     }
 
-                    $this->solicitacaoModel->update($solicitacaoId, $updateData);
+                    try {
+                        $this->solicitacaoModel->update($solicitacaoId, $updateData);
+                    } catch (\Exception $e) {
+                        $mensagem = $e->getMessage();
+                        $optionalColumns = [
+                            'data_limite_peca',
+                            'data_ultimo_lembrete',
+                            'lembretes_enviados',
+                            'data_limite_cancelamento'
+                        ];
+                        $alterado = false;
+                        foreach ($optionalColumns as $coluna) {
+                            if (strpos($mensagem, $coluna) !== false && isset($updateData[$coluna])) {
+                                unset($updateData[$coluna]);
+                                $alterado = true;
+                            }
+                        }
+
+                        if ($alterado) {
+                            error_log('Aviso: removendo colunas opcionais inexistentes ao salvar "Precisa comprar peças".');
+                            $this->solicitacaoModel->update($solicitacaoId, $updateData);
+                        } else {
+                            throw $e;
+                        }
+                    }
 
                     // Marcar token como usado
                     $this->tokenModel->markAsUsed($token);

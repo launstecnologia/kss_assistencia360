@@ -15,27 +15,10 @@ class MaintenanceController extends Controller
             return;
         }
 
-        // Verificar status das colunas
-        $check = function(string $column): bool {
-            $sql = "SELECT COUNT(*) AS c FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'solicitacoes' AND COLUMN_NAME = ?";
-            $row = Database::fetch($sql, [$column]);
-            return (int)($row['c'] ?? 0) > 0;
-        };
-
-        $hasDescricaoCard = $check('descricao_card');
-        $hasHorarioConfirmado = $check('horario_confirmado');
-        $hasHorarioRaw = $check('horario_confirmado_raw');
-        $hasConfirmedSchedules = $check('confirmed_schedules');
-        $hasDatasOpcoes = $check('datas_opcoes');
-
-        $this->view('admin.migracoes', [
-            'title' => 'Migrações rápidas',
-            'hasDescricaoCard' => $hasDescricaoCard,
-            'hasHorarioConfirmado' => $hasHorarioConfirmado,
-            'hasHorarioRaw' => $hasHorarioRaw,
-            'hasConfirmedSchedules' => $hasConfirmedSchedules,
-            'hasDatasOpcoes' => $hasDatasOpcoes,
-        ]);
+        $this->view('admin.migracoes', array_merge(
+            ['title' => 'Migrações rápidas'],
+            $this->getMigrationStatus()
+        ));
     }
 
     public function runMigrations(): void
@@ -49,7 +32,10 @@ class MaintenanceController extends Controller
         // CSRF básico
         $token = $this->input('csrf_token');
         if (!$token || $token !== \App\Core\View::csrfToken()) {
-            $this->view('admin.migracoes', [ 'error' => 'CSRF inválido' ]);
+            $this->view('admin.migracoes', array_merge(
+                ['error' => 'CSRF inválido'],
+                $this->getMigrationStatus()
+            ));
             return;
         }
 
@@ -77,9 +63,21 @@ class MaintenanceController extends Controller
                 Database::query("ALTER TABLE solicitacoes ADD COLUMN datas_opcoes JSON NULL AFTER horarios_opcoes");
             }
 
-            $this->view('admin.migracoes', [ 'success' => 'Migrações executadas com sucesso.' ]);
+            // Campos de lembrete de peças
+            Database::query("ALTER TABLE solicitacoes ADD COLUMN IF NOT EXISTS data_limite_peca DATE NULL AFTER horarios_opcoes");
+            Database::query("ALTER TABLE solicitacoes ADD COLUMN IF NOT EXISTS data_ultimo_lembrete DATETIME NULL AFTER data_limite_peca");
+            Database::query("ALTER TABLE solicitacoes ADD COLUMN IF NOT EXISTS lembretes_enviados INT NOT NULL DEFAULT 0 AFTER data_ultimo_lembrete");
+            Database::query("UPDATE solicitacoes SET lembretes_enviados = 0 WHERE lembretes_enviados IS NULL");
+
+            $this->view('admin.migracoes', array_merge(
+                ['success' => 'Migrações executadas com sucesso.'],
+                $this->getMigrationStatus()
+            ));
         } catch (\Exception $e) {
-            $this->view('admin.migracoes', [ 'error' => 'Falha ao executar: ' . $e->getMessage() ]);
+            $this->view('admin.migracoes', array_merge(
+                ['error' => 'Falha ao executar: ' . $e->getMessage() ],
+                $this->getMigrationStatus()
+            ));
         }
     }
 
@@ -94,11 +92,17 @@ class MaintenanceController extends Controller
         $token = $this->input('csrf_token');
         $confirm = trim((string)$this->input('confirm_text'));
         if (!$token || $token !== \App\Core\View::csrfToken()) {
-            $this->view('admin.migracoes', [ 'error' => 'CSRF inválido' ]);
+            $this->view('admin.migracoes', array_merge(
+                ['error' => 'CSRF inválido'],
+                $this->getMigrationStatus()
+            ));
             return;
         }
         if (strtoupper($confirm) !== 'LIMPAR') {
-            $this->view('admin.migracoes', [ 'error' => 'Para confirmar, digite LIMPAR.' ]);
+            $this->view('admin.migracoes', array_merge(
+                ['error' => 'Para confirmar, digite LIMPAR.'],
+                $this->getMigrationStatus()
+            ));
             return;
         }
 
@@ -121,9 +125,15 @@ class MaintenanceController extends Controller
 
             Database::query('SET FOREIGN_KEY_CHECKS=1');
 
-            $this->view('admin.migracoes', [ 'success' => 'Todas as solicitações foram limpas.' ]);
+            $this->view('admin.migracoes', array_merge(
+                ['success' => 'Todas as solicitações foram limpas.'],
+                $this->getMigrationStatus()
+            ));
         } catch (\Exception $e) {
-            $this->view('admin.migracoes', [ 'error' => 'Falha ao limpar: ' . $e->getMessage() ]);
+            $this->view('admin.migracoes', array_merge(
+                ['error' => 'Falha ao limpar: ' . $e->getMessage() ],
+                $this->getMigrationStatus()
+            ));
         }
     }
 
@@ -209,6 +219,26 @@ class MaintenanceController extends Controller
             error_log('Erro ao limpar disponibilidade: ' . $e->getMessage());
             $this->json(['error' => 'Falha ao limpar: ' . $e->getMessage()], 500);
         }
+    }
+
+    private function getMigrationStatus(): array
+    {
+        $check = function(string $column): bool {
+            $sql = "SELECT COUNT(*) AS c FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'solicitacoes' AND COLUMN_NAME = ?";
+            $row = Database::fetch($sql, [$column]);
+            return (int)($row['c'] ?? 0) > 0;
+        };
+
+        return [
+            'hasDescricaoCard' => $check('descricao_card'),
+            'hasHorarioConfirmado' => $check('horario_confirmado'),
+            'hasHorarioRaw' => $check('horario_confirmado_raw'),
+            'hasConfirmedSchedules' => $check('confirmed_schedules'),
+            'hasDatasOpcoes' => $check('datas_opcoes'),
+            'hasDataLimitePeca' => $check('data_limite_peca'),
+            'hasDataUltimoLembrete' => $check('data_ultimo_lembrete'),
+            'hasLembretesEnviados' => $check('lembretes_enviados'),
+        ];
     }
 }
 
