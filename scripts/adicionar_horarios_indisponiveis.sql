@@ -8,3 +8,4 @@ ADD COLUMN IF NOT EXISTS horarios_indisponiveis TINYINT(1) DEFAULT 0 COMMENT 'In
 
 
 
+

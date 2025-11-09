@@ -19,10 +19,10 @@ class WhatsappInstance extends Model
     public function getPadrao(): ?array
     {
         $sql = "
-            SELECT * FROM {$this->table} 
-            WHERE is_padrao = 1 
-            AND is_ativo = 1 
-            AND status = 'CONECTADO'
+            SELECT * FROM {$this->table}
+            WHERE is_padrao = 1
+              AND is_ativo = 1
+            ORDER BY (status = 'CONECTADO') DESC, updated_at DESC
             LIMIT 1
         ";
         return Database::fetch($sql);

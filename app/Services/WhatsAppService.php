@@ -35,17 +35,23 @@ class WhatsAppService
         try {
             $instanceModel = new \App\Models\WhatsappInstance();
             $instancePadrao = $instanceModel->getPadrao();
-            
-            if ($instancePadrao && $instancePadrao['status'] === 'CONECTADO') {
-                // Usar instância do banco
+
+            if ($instancePadrao && (int)($instancePadrao['is_ativo'] ?? 0) === 1) {
+                // Usar instância marcada como padrão
                 $this->apiUrl = rtrim($instancePadrao['api_url'], '/');
                 $this->instance = $instancePadrao['instance_name'];
                 $this->apiKey = $instancePadrao['api_key'];
-                $this->enabled = true;
-                
-                // Armazenar token se disponível
                 $this->token = $instancePadrao['token'] ?? null;
-                
+                $this->enabled = true;
+
+                if (($instancePadrao['status'] ?? '') !== 'CONECTADO') {
+                    error_log(sprintf(
+                        'WhatsApp: Instância padrão "%s" está com status "%s". Tentando enviar assim mesmo.',
+                        $this->instance,
+                        $instancePadrao['status'] ?? 'desconhecido'
+                    ));
+                }
+
                 return;
             }
         } catch (\Exception $e) {

@@ -200,16 +200,31 @@ class TokenController extends Controller
             $horariosOpcoes = json_decode($solicitacao['horarios_opcoes'], true);
             if (is_array($horariosOpcoes) && !empty($horariosOpcoes)) {
                 foreach ($horariosOpcoes as $horario) {
-                    if (is_string($horario)) {
-                        // Formato: "dd/mm/yyyy - HH:MM-HH:MM"
-                        if (preg_match('/(\d{2})\/(\d{2})\/(\d{4})\s*-\s*(\d{2}):(\d{2})-(\d{2}):(\d{2})/', $horario, $matches)) {
-                            $dataFormatada = $matches[3] . '-' . $matches[2] . '-' . $matches[1];
-                            $horariosDisponiveis[] = [
-                                'raw' => $horario,
-                                'date' => $dataFormatada,
-                                'time' => $matches[4] . ':' . $matches[5] . '-' . $matches[6] . ':' . $matches[7]
-                            ];
-                        }
+                    if (!is_string($horario)) {
+                        continue;
+                    }
+
+                    // Formato: "dd/mm/yyyy - HH:MM-HH:MM" (segundos opcionais)
+                    if (preg_match('/(\d{2})\/(\d{2})\/(\d{4})\s*-\s*(\d{2}):(\d{2})(?::(\d{2}))?\s*-\s*(\d{2}):(\d{2})(?::(\d{2}))?/', $horario, $matches)) {
+                        $dia = (int) $matches[1];
+                        $mes = (int) $matches[2];
+                        $ano = (int) $matches[3];
+                        $horaInicio = (int) $matches[4];
+                        $minInicio = (int) $matches[5];
+                        $horaFim = (int) $matches[7];
+                        $minFim = (int) $matches[8];
+
+                        $dataFormatada = sprintf('%04d-%02d-%02d', $ano, $mes, $dia);
+                        $horaInicioFmt = sprintf('%02d:%02d', $horaInicio, $minInicio);
+                        $horaFimFmt = sprintf('%02d:%02d', $horaFim, $minFim);
+                        $rawNormalizado = sprintf('%02d/%02d/%04d - %s-%s', $dia, $mes, $ano, $horaInicioFmt, $horaFimFmt);
+
+                        $horariosDisponiveis[] = [
+                            'raw' => $rawNormalizado,
+                            'date' => $dataFormatada,
+                            'time' => $horaInicioFmt . '-' . $horaFimFmt
+                        ];
+                        error_log("DEBUG confirmacaoHorario [ID:{$tokenData['solicitacao_id']}] - ✅ Horário adicionado (locatário): {$rawNormalizado}");
                     }
                 }
             }
@@ -976,23 +991,29 @@ class TokenController extends Controller
     private function processarReagendamento(string $token, array $tokenData, array $solicitacao): void
     {
         try {
-            $novasDatas = $this->input('novas_datas', []);
-            
+            $novasDatasInput = $this->input('novas_datas', []);
+
             // Debug: Log do que está sendo recebido
-            error_log("DEBUG processarReagendamento - novas_datas recebido (tipo: " . gettype($novasDatas) . "): " . var_export($novasDatas, true));
-            
+            error_log("DEBUG processarReagendamento - novas_datas recebido (tipo: " . gettype($novasDatasInput) . "): " . var_export($novasDatasInput, true));
+
             // Se vier como string JSON, parsear
-            if (is_string($novasDatas)) {
-                $novasDatas = json_decode($novasDatas, true) ?? [];
-                error_log("DEBUG processarReagendamento - novas_datas parseado: " . var_export($novasDatas, true));
-            }
-            
-            // Se não for array, tentar converter
-            if (!is_array($novasDatas)) {
-                $novasDatas = [];
+            if (is_string($novasDatasInput)) {
+                $novasDatasInput = json_decode($novasDatasInput, true) ?? [];
+                error_log("DEBUG processarReagendamento - novas_datas parseado: " . var_export($novasDatasInput, true));
             }
 
-            if (empty($novasDatas)) {
+            // Se não for array, tentar converter
+            if (!is_array($novasDatasInput)) {
+                $novasDatasInput = [];
+            }
+
+            // Sanitizar valores recebidos
+            $novasDatasInput = array_values(array_filter(array_map(
+                fn($valor) => is_string($valor) || is_scalar($valor) ? trim((string)$valor) : '',
+                $novasDatasInput
+            ), fn($valor) => $valor !== ''));
+
+            if (empty($novasDatasInput)) {
                 error_log("DEBUG processarReagendamento - novas_datas está vazio após processamento");
                 $this->view('token.error', [
                     'title' => 'Dados Inválidos',
@@ -1002,35 +1023,59 @@ class TokenController extends Controller
                 return;
             }
 
-            // Converter datas do formato "dd/mm/yyyy - HH:MM-HH:MM" ou "dd/mm/yyyy - HH:MM:SS-HH:MM:SS" para DateTime
+            // Converter e padronizar datas do formato "dd/mm/yyyy - HH:MM-HH:MM" ou variantes com segundos
             $datasConvertidas = [];
-            foreach ($novasDatas as $index => $dataString) {
+            $novasDatasSanitizadas = [];
+
+            foreach ($novasDatasInput as $index => $dataString) {
                 error_log("DEBUG processarReagendamento - Processando data [{$index}]: " . var_export($dataString, true));
-                
-                // Formato esperado: "dd/mm/yyyy - HH:MM-HH:MM" ou "dd/mm/yyyy - HH:MM:SS-HH:MM:SS"
-                // Aceitar segundos opcionais - regex mais flexível
-                // Padrão: dd/mm/yyyy - HH:MM:SS-HH:MM:SS ou dd/mm/yyyy - HH:MM-HH:MM
-                if (preg_match('/(\d{2})\/(\d{2})\/(\d{4})\s*-\s*(\d{2}):(\d{2})(?::\d{2})?\s*-\s*(\d{2}):(\d{2})(?::\d{2})?/', $dataString, $matches)) {
-                    $dia = $matches[1];
-                    $mes = $matches[2];
-                    $ano = $matches[3];
-                    $hora = $matches[4];
-                    $minuto = $matches[5];
-                    
-                    // Converter para formato DateTime (Y-m-d H:i:s)
-                    $dataFormatada = sprintf('%s-%s-%s %s:%s:00', $ano, $mes, $dia, $hora, $minuto);
-                    $datasConvertidas[] = $dataFormatada;
-                    error_log("DEBUG processarReagendamento - ✅ Data convertida [{$index}]: {$dataFormatada} (de: {$dataString})");
+
+                $dataNormalizada = null;
+                $sanitizada = null;
+
+                // Formato esperado principal: "dd/mm/yyyy - HH:MM-HH:MM" com segundos opcionais
+                if (preg_match('/(\d{2})\/(\d{2})\/(\d{4})\s*-\s*(\d{2}):(\d{2})(?::(\d{2}))?\s*-\s*(\d{2}):(\d{2})(?::(\d{2}))?/', $dataString, $matches)) {
+                    $dia = (int) $matches[1];
+                    $mes = (int) $matches[2];
+                    $ano = (int) $matches[3];
+                    $horaInicio = (int) $matches[4];
+                    $minInicio = (int) $matches[5];
+                    $horaFim = (int) $matches[7];
+                    $minFim = (int) $matches[8];
+
+                    $dataNormalizada = sprintf('%04d-%02d-%02d %02d:%02d:00', $ano, $mes, $dia, $horaInicio, $minInicio);
+                    $sanitizada = sprintf('%02d/%02d/%04d - %02d:%02d-%02d:%02d', $dia, $mes, $ano, $horaInicio, $minInicio, $horaFim, $minFim);
+                    error_log("DEBUG processarReagendamento - ✅ Data convertida [{$index}] via padrão principal: {$dataNormalizada} | Sanitizada: {$sanitizada}");
+                }
+                // Formato alternativo: "YYYY-MM-DD HH:MM-HH:MM" (com T opcional e segundos opcionais)
+                elseif (preg_match('/(\d{4})-(\d{2})-(\d{2})[ T]?(\d{2}):(\d{2})(?::(\d{2}))?\s*-\s*(\d{2}):(\d{2})(?::(\d{2}))?/', $dataString, $matches)) {
+                    $ano = (int) $matches[1];
+                    $mes = (int) $matches[2];
+                    $dia = (int) $matches[3];
+                    $horaInicio = (int) $matches[4];
+                    $minInicio = (int) $matches[5];
+                    $horaFim = (int) $matches[7];
+                    $minFim = (int) $matches[8];
+
+                    $dataNormalizada = sprintf('%04d-%02d-%02d %02d:%02d:00', $ano, $mes, $dia, $horaInicio, $minInicio);
+                    $sanitizada = sprintf('%02d/%02d/%04d - %02d:%02d-%02d:%02d', $dia, $mes, $ano, $horaInicio, $minInicio, $horaFim, $minFim);
+                    error_log("DEBUG processarReagendamento - ✅ Data convertida [{$index}] via padrão ISO: {$dataNormalizada} | Sanitizada: {$sanitizada}");
                 } else {
                     error_log("DEBUG processarReagendamento - ⚠️ Regex não correspondeu para: {$dataString}");
-                    // Tentar parsear como data simples
+                    // Tentar parsear usando DateTime (assume início do período)
                     try {
                         $dt = new \DateTime($dataString);
-                        $datasConvertidas[] = $dt->format('Y-m-d H:i:s');
-                        error_log("DEBUG processarReagendamento - ✅ Data parseada como DateTime [{$index}]: " . $dt->format('Y-m-d H:i:s'));
+                        $dataNormalizada = $dt->format('Y-m-d H:i:s');
+                        $sanitizada = $dt->format('d/m/Y - H:i');
+                        error_log("DEBUG processarReagendamento - ✅ Data parseada como DateTime [{$index}]: " . $dataNormalizada);
                     } catch (\Exception $e) {
                         error_log("DEBUG processarReagendamento - ⚠️ Erro ao converter data [{$index}]: {$dataString} - " . $e->getMessage());
                     }
+                }
+
+                if ($dataNormalizada && $sanitizada) {
+                    $datasConvertidas[] = $dataNormalizada;
+                    $novasDatasSanitizadas[] = $sanitizada;
                 }
             }
             
@@ -1085,15 +1130,16 @@ class TokenController extends Controller
                 error_log('Reagendamento - Aviso: Erro ao marcar token como usado (continuando): ' . $e->getMessage());
             }
 
-            // IMPORTANTE: Limitar a 3 horários máximo
-            if (count($novasDatas) > 3) {
-                $novasDatas = array_slice($novasDatas, 0, 3);
+            // IMPORTANTE: Limitar a 3 horários máximo (e manter arrays sincronizados)
+            if (count($novasDatasSanitizadas) > 3) {
+                $novasDatasSanitizadas = array_slice($novasDatasSanitizadas, 0, 3);
+                $datasConvertidas = array_slice($datasConvertidas, 0, 3);
             }
             
             // Atualizar solicitação com novas datas (SUBSTITUINDO os horários do admin)
             // Quando locatário reageenda, deve SUBSTITUIR os horários do admin em horarios_opcoes
             $this->solicitacaoModel->update($solicitacao['id'], [
-                'horarios_opcoes' => json_encode($novasDatas), // SUBSTITUIR horários do admin pelos do locatário
+                'horarios_opcoes' => json_encode($novasDatasSanitizadas, JSON_UNESCAPED_UNICODE), // SUBSTITUIR horários do admin pelos do locatário
                 'datas_opcoes' => null, // Limpar datas_opcoes (não é mais necessário preservar)
                 'data_agendamento' => null,
                 'horario_agendamento' => null,
@@ -1103,7 +1149,8 @@ class TokenController extends Controller
                 'confirmed_schedules' => null,
                 'horarios_indisponiveis' => 0, // Resetar flag de horários indisponíveis (locatário substituiu)
                 'status_id' => $this->getStatusId('Buscando Prestador'),
-                'observacoes' => ($solicitacao['observacoes'] ?? '') . "\n\nREAGENDADO VIA TOKEN: Cliente solicitou reagendamento com novas datas: " . implode(', ', $novasDatas)
+                'observacoes' => ($solicitacao['observacoes'] ?? '') . "\n\nREAGENDADO VIA TOKEN: Cliente solicitou reagendamento com novas datas: " . implode(', ', $novasDatasSanitizadas),
+                'updated_at' => date('Y-m-d H:i:s')
             ]);
 
             // Registrar no histórico
@@ -1116,7 +1163,7 @@ class TokenController extends Controller
                 $solicitacao['id'],
                 $statusBuscandoPrestador,
                 null, // Usuário sistema (null = cliente)
-                'Solicitação reagendada pelo cliente via link de reagendamento. Novas datas: ' . implode(', ', $novasDatas)
+                'Solicitação reagendada pelo cliente via link de reagendamento. Novas datas: ' . implode(', ', $novasDatasSanitizadas)
             ]);
 
             // Buscar solicitação atualizada
