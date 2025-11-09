@@ -381,19 +381,33 @@ class TokenController extends Controller
             
             // NÃO atualizar status para "Serviço Agendado" aqui - aguardar confirmação final do admin
             
-            $this->solicitacaoModel->update($solicitacao['id'], $dadosUpdate);
+                $updateCallback = function() use ($dadosUpdate, $solicitacao) {
+                    $this->solicitacaoModel->update($solicitacao['id'], $dadosUpdate);
 
-            // Registrar no histórico diretamente
-            $sql = "
-                INSERT INTO historico_status (solicitacao_id, status_id, usuario_id, observacoes, created_at)
-                VALUES (?, ?, ?, ?, NOW())
-            ";
-            \App\Core\Database::query($sql, [
-                $solicitacao['id'],
-                $dadosUpdate['status_id'] ?? $solicitacao['status_id'],
-                null, // Usuário sistema (null = cliente)
-                'Horário aceito pelo locatário via link de confirmação. Status atualizado para "Serviço Agendado".'
-            ]);
+                    // Registrar no histórico diretamente
+                    $sql = "
+                        INSERT INTO historico_status (solicitacao_id, status_id, usuario_id, observacoes, created_at)
+                        VALUES (?, ?, ?, ?, NOW())
+                    ";
+                    \App\Core\Database::query($sql, [
+                        $solicitacao['id'],
+                        $dadosUpdate['status_id'] ?? $solicitacao['status_id'],
+                        null, // Usuário sistema (null = cliente)
+                        'Horário aceito pelo locatário via link de confirmação. Status atualizado para "Serviço Agendado".'
+                    ]);
+                };
+
+                if ($this->isStatusCancelado($solicitacao['status_id'])) {
+                    $this->logReagendamento([
+                        'status' => 'CONFIRMACAO_BLOQUEADA',
+                        'token' => $token,
+                        'token_id' => $tokenData['id'] ?? null,
+                        'solicitacao_id' => $solicitacao['id'],
+                        'motivo' => 'Solicitação cancelada, confirmação ignorada'
+                    ]);
+                } else {
+                    $updateCallback();
+                }
 
             // Exibir página de sucesso
             $this->view('token.sucesso', [
@@ -1313,6 +1327,22 @@ class TokenController extends Controller
         }
     }
 
+    private function isStatusCancelado(mixed $statusId): bool
+    {
+        if ($statusId === null) {
+            return false;
+        }
+
+        $statusModel = new \App\Models\Status();
+        $status = $statusModel->find((int)$statusId);
+        if (!$status) {
+            return false;
+        }
+
+        $nome = strtoupper($status['nome'] ?? '');
+        return str_contains($nome, 'CANCELAD');
+    }
+
     /**
      * Valida se ainda é possível cancelar (até 1 hora antes do horário confirmado)
      * @param array $solicitacao
@@ -1738,7 +1768,20 @@ class TokenController extends Controller
                     }
 
                     // Buscar status "Cancelado"
-                    $statusCancelado = $statusModel->findByNome('Cancelado');
+                    $statusCancelado = null;
+                    $statusCanceladoIdEnv = env('STATUS_CANCELADO_LOCATARIO_ID');
+                    if ($statusCanceladoIdEnv) {
+                        $statusCancelado = $statusModel->find((int)$statusCanceladoIdEnv);
+                    }
+                    if (!$statusCancelado) {
+                        $statusCanceladoNomeEnv = env('STATUS_CANCELADO_LOCATARIO');
+                        if (!empty($statusCanceladoNomeEnv)) {
+                            $statusCancelado = $statusModel->findByNome($statusCanceladoNomeEnv);
+                        }
+                    }
+                    if (!$statusCancelado) {
+                        $statusCancelado = $statusModel->findByNome('Cancelado');
+                    }
                     if (!$statusCancelado) {
                         $statusCancelado = $statusModel->findByNome('Cancelada');
                     }
@@ -1773,6 +1816,7 @@ class TokenController extends Controller
                         'token_id' => $tokenData['id'] ?? null,
                         'solicitacao_id' => $solicitacaoId,
                         'status_cancelado_id' => $statusCancelado['id'] ?? null,
+                        'status_cancelado_nome' => $statusCancelado['nome'] ?? null,
                         'condicao_id' => $condicaoId,
                     ]);
 
