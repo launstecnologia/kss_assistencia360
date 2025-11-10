@@ -1983,36 +1983,106 @@ class TokenController extends Controller
     private function processarCompraPeca(string $token, array $tokenData, array $solicitacao): void
     {
         try {
-            // Obter dados do formulário
-            $dataAgendamento = $this->input('data_agendamento');
-            $horarioSelecionado = $this->input('horario_selecionado');
-            
-            if (empty($dataAgendamento) || empty($horarioSelecionado)) {
+            // Obter dados do formulário (múltiplas datas)
+            $novasDatasInput = $this->input('novas_datas', []);
+
+            // Se vier como string JSON, parsear
+            if (is_string($novasDatasInput)) {
+                $novasDatasInput = json_decode($novasDatasInput, true) ?? [];
+            }
+
+            // Se não for array, tentar converter
+            if (!is_array($novasDatasInput)) {
+                $novasDatasInput = [];
+            }
+
+            // Sanitizar valores recebidos
+            $novasDatasInput = array_values(array_filter(array_map(
+                fn($valor) => is_string($valor) || is_scalar($valor) ? trim((string)$valor) : '',
+                $novasDatasInput
+            ), fn($valor) => $valor !== ''));
+
+            if (empty($novasDatasInput)) {
                 $this->view('token.compra-peca', [
                     'token' => $token,
                     'tokenData' => $tokenData,
                     'solicitacao' => $solicitacao,
                     'title' => 'Informar Compra de Peça e Selecionar Horários',
-                    'error' => 'Por favor, selecione uma data e um horário.'
+                    'error' => 'Por favor, selecione pelo menos uma data e horário.'
                 ]);
                 return;
             }
 
-            // Converter data para formato do banco (Y-m-d)
-            $dataFormatada = null;
-            if (preg_match('/^\d{2}\/\d{2}\/\d{4}$/', $dataAgendamento)) {
-                $dataFormatada = \DateTime::createFromFormat('d/m/Y', $dataAgendamento)->format('Y-m-d');
-            } elseif (preg_match('/^\d{4}-\d{2}-\d{2}$/', $dataAgendamento)) {
-                $dataFormatada = $dataAgendamento;
+            // Converter e padronizar datas do formato "dd/mm/yyyy - HH:MM-HH:MM"
+            $datasConvertidas = [];
+            $novasDatasSanitizadas = [];
+
+            foreach ($novasDatasInput as $index => $dataString) {
+                $dataNormalizada = null;
+                $sanitizada = null;
+
+                // Formato esperado: "dd/mm/yyyy - HH:MM-HH:MM"
+                if (preg_match('/(\d{2})\/(\d{2})\/(\d{4})\s*-\s*(\d{2}):(\d{2})(?::(\d{2}))?\s*-\s*(\d{2}):(\d{2})(?::(\d{2}))?/', $dataString, $matches)) {
+                    $dia = (int) $matches[1];
+                    $mes = (int) $matches[2];
+                    $ano = (int) $matches[3];
+                    $horaInicio = (int) $matches[4];
+                    $minInicio = (int) $matches[5];
+                    $horaFim = (int) $matches[7];
+                    $minFim = (int) $matches[8];
+
+                    $dataNormalizada = sprintf('%04d-%02d-%02d %02d:%02d:00', $ano, $mes, $dia, $horaInicio, $minInicio);
+                    $sanitizada = sprintf('%02d/%02d/%04d - %02d:%02d-%02d:%02d', $dia, $mes, $ano, $horaInicio, $minInicio, $horaFim, $minFim);
+                }
+                // Formato alternativo: "YYYY-MM-DD HH:MM-HH:MM"
+                elseif (preg_match('/(\d{4})-(\d{2})-(\d{2})[ T]?(\d{2}):(\d{2})(?::(\d{2}))?\s*-\s*(\d{2}):(\d{2})(?::(\d{2}))?/', $dataString, $matches)) {
+                    $ano = (int) $matches[1];
+                    $mes = (int) $matches[2];
+                    $dia = (int) $matches[3];
+                    $horaInicio = (int) $matches[4];
+                    $minInicio = (int) $matches[5];
+                    $horaFim = (int) $matches[7];
+                    $minFim = (int) $matches[8];
+
+                    $dataNormalizada = sprintf('%04d-%02d-%02d %02d:%02d:00', $ano, $mes, $dia, $horaInicio, $minInicio);
+                    $sanitizada = sprintf('%02d/%02d/%04d - %02d:%02d-%02d:%02d', $dia, $mes, $ano, $horaInicio, $minInicio, $horaFim, $minFim);
+                } else {
+                    // Tentar parsear usando DateTime
+                    try {
+                        $dt = new \DateTime($dataString);
+                        $dataNormalizada = $dt->format('Y-m-d H:i:s');
+                        $sanitizada = $dt->format('d/m/Y - H:i');
+                    } catch (\Exception $e) {
+                        error_log("Erro ao converter data na compra de peça: {$dataString} - " . $e->getMessage());
+                    }
+                }
+
+                if ($dataNormalizada && $sanitizada) {
+                    $datasConvertidas[] = $dataNormalizada;
+                    $novasDatasSanitizadas[] = $sanitizada;
+                }
             }
 
-            if (!$dataFormatada) {
+            if (empty($datasConvertidas)) {
                 $this->view('token.compra-peca', [
                     'token' => $token,
                     'tokenData' => $tokenData,
                     'solicitacao' => $solicitacao,
                     'title' => 'Informar Compra de Peça e Selecionar Horários',
-                    'error' => 'Data inválida. Por favor, selecione uma data válida.'
+                    'error' => 'Por favor, selecione pelo menos uma data e horário válidos.'
+                ]);
+                return;
+            }
+
+            // Validar novas datas
+            $datasErrors = $this->solicitacaoModel->validarDatasOpcoes($datasConvertidas);
+            if (!empty($datasErrors)) {
+                $this->view('token.compra-peca', [
+                    'token' => $token,
+                    'tokenData' => $tokenData,
+                    'solicitacao' => $solicitacao,
+                    'title' => 'Informar Compra de Peça e Selecionar Horários',
+                    'error' => 'As datas selecionadas não são válidas: ' . implode(', ', $datasErrors)
                 ]);
                 return;
             }
@@ -2020,42 +2090,44 @@ class TokenController extends Controller
             // Marcar token como usado
             $this->tokenModel->markAsUsed($token, 'compra_peca');
 
-            // Atualizar solicitação: marcar peça como comprada e definir novos horários
-            $updateData = [
-                'data_agendamento' => $dataFormatada,
-                'horario_agendamento' => $horarioSelecionado,
-                'data_limite_peca' => null,
-                'data_ultimo_lembrete' => null,
-                'lembretes_enviados' => 0
-            ];
-
             // Remover condição "Comprar peças" se existir
             $condicaoModel = new \App\Models\Condicao();
             $condicaoComprarPecas = $condicaoModel->findByNome('Comprar peças');
-            if ($condicaoComprarPecas) {
-                $updateData['condicao_id'] = null;
-            }
-
+            
             // Atualizar status para "Buscando Prestador" ou "Nova Solicitação"
             $statusModel = new \App\Models\Status();
             $statusBuscando = $statusModel->findByNome('Buscando Prestador');
             if (!$statusBuscando) {
                 $statusBuscando = $statusModel->findByNome('Nova Solicitação');
             }
+
+            // Atualizar solicitação: marcar peça como comprada e definir novos horários
+            $updateData = [
+                'horarios_opcoes' => json_encode($novasDatasSanitizadas, JSON_UNESCAPED_UNICODE),
+                'data_limite_peca' => null,
+                'data_ultimo_lembrete' => null,
+                'lembretes_enviados' => 0
+            ];
+
+            if ($condicaoComprarPecas) {
+                $updateData['condicao_id'] = null;
+            }
+
             if ($statusBuscando) {
                 $updateData['status_id'] = $statusBuscando['id'];
             }
 
             // Adicionar observação sobre compra de peça
             $observacoes = $solicitacao['observacoes'] ?? '';
-            $observacoes .= "\n\n✅ Locatário informou que comprou a peça em " . date('d/m/Y H:i') . " e selecionou novo horário: " . date('d/m/Y', strtotime($dataFormatada)) . " - " . $horarioSelecionado;
+            $horariosTexto = implode(', ', $novasDatasSanitizadas);
+            $observacoes .= "\n\n✅ Locatário informou que comprou a peça em " . date('d/m/Y H:i') . " e selecionou novos horários: " . $horariosTexto;
             $updateData['observacoes'] = $observacoes;
 
             // Atualizar solicitação
             $this->solicitacaoModel->update($solicitacao['id'], $updateData);
 
             // Adicionar ao histórico
-            $historico = "✅ Locatário informou que comprou a peça e selecionou novo horário: " . date('d/m/Y', strtotime($dataFormatada)) . " - " . $horarioSelecionado;
+            $historico = "✅ Locatário informou que comprou a peça e selecionou novos horários: " . $horariosTexto;
             $sqlHistorico = "
                 INSERT INTO solicitacoes_historico (solicitacao_id, usuario_id, acao, descricao, created_at)
                 VALUES (?, NULL, 'compra_peca', ?, NOW())
@@ -2081,6 +2153,7 @@ class TokenController extends Controller
             
         } catch (\Exception $e) {
             error_log('Erro ao processar compra de peça: ' . $e->getMessage());
+            error_log('Stack trace: ' . $e->getTraceAsString());
             $this->view('token.compra-peca', [
                 'token' => $token,
                 'tokenData' => $tokenData,
