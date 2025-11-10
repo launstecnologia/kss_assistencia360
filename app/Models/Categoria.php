@@ -8,7 +8,7 @@ class Categoria extends Model
 {
     protected string $table = 'categorias';
     protected array $fillable = [
-        'nome', 'descricao', 'icone', 'cor', 'status', 'ordem', 'created_at', 'updated_at'
+        'nome', 'descricao', 'icone', 'cor', 'status', 'ordem', 'tipo_imovel', 'tipo_assistencia', 'prazo_minimo', 'created_at', 'updated_at'
     ];
     protected array $casts = [
         'prazo_minimo' => 'int',
@@ -18,17 +18,29 @@ class Categoria extends Model
 
     public function getAtivas(): array
     {
-        return $this->findAll(['status' => 'ATIVA'], 'nome ASC');
+        return $this->findAll(['status' => 'ATIVA'], 'ordem ASC, nome ASC');
     }
 
     public function getByTipo(string $tipo): array
     {
-        return $this->findAll(['tipo_assistencia' => $tipo, 'status' => 'ATIVA'], 'nome ASC');
+        return $this->findAll(['tipo_assistencia' => $tipo, 'status' => 'ATIVA'], 'ordem ASC, nome ASC');
+    }
+
+    public function getByTipoImovel(string $tipoImovel): array
+    {
+        // Busca categorias que são do tipo especificado ou 'AMBOS'
+        $sql = "
+            SELECT * FROM {$this->table} 
+            WHERE status = 'ATIVA' 
+            AND (tipo_imovel = ? OR tipo_imovel = 'AMBOS')
+            ORDER BY ordem ASC, nome ASC
+        ";
+        return Database::fetchAll($sql, [$tipoImovel]);
     }
 
     public function getSubcategorias(int $categoriaId): array
     {
-        $sql = "SELECT * FROM subcategorias WHERE categoria_id = ? AND status = 'ATIVA' ORDER BY nome ASC";
+        $sql = "SELECT * FROM subcategorias WHERE categoria_id = ? AND status = 'ATIVA' ORDER BY ordem ASC, nome ASC";
         return Database::fetchAll($sql, [$categoriaId]);
     }
 
