@@ -98,38 +98,34 @@
         
         <nav class="mt-8 flex-1 overflow-y-auto">
             <div class="px-4 space-y-2 pb-4">
-                <a href="<?= url('admin/dashboard') ?>" class="flex items-center px-4 py-2 text-gray-700 rounded-lg hover:bg-gray-100 <?= $currentPage === 'dashboard' ? 'bg-blue-50 text-blue-700' : '' ?>">
-                    <i class="fas fa-tachometer-alt mr-3"></i>
+                <!-- GERAL -->
+                <div class="pt-2">
+                    <h3 class="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Geral</h3>
+                </div>
+                
+                <a href="<?= url('admin/dashboard') ?>" class="flex items-center px-4 py-2 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors <?= $currentPage === 'dashboard' ? 'bg-blue-50 text-blue-700 font-medium' : '' ?>">
+                    <i class="fas fa-tachometer-alt mr-3 w-5 text-center"></i>
                     Dashboard
                 </a>
 
-                <a href="<?= url('admin/relatorios') ?>" class="flex items-center px-4 py-2 text-gray-700 rounded-lg hover:bg-gray-100 <?= $currentPage === 'relatorios' ? 'bg-blue-50 text-blue-700' : '' ?>">
-                    <i class="fas fa-chart-line mr-3"></i>
+                <a href="<?= url('admin/relatorios') ?>" class="flex items-center px-4 py-2 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors <?= $currentPage === 'relatorios' ? 'bg-blue-50 text-blue-700 font-medium' : '' ?>">
+                    <i class="fas fa-chart-line mr-3 w-5 text-center"></i>
                     Relatórios
                 </a>
                 
-                <a href="<?= url('admin/kanban') ?>" class="flex items-center px-4 py-2 text-gray-700 rounded-lg hover:bg-gray-100 <?= $currentPage === 'kanban' ? 'bg-blue-50 text-blue-700' : '' ?>">
-                    <i class="fas fa-columns mr-3"></i>
+                <a href="<?= url('admin/kanban') ?>" class="flex items-center px-4 py-2 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors <?= $currentPage === 'kanban' ? 'bg-blue-50 text-blue-700 font-medium' : '' ?>">
+                    <i class="fas fa-columns mr-3 w-5 text-center"></i>
                     Kanban
                 </a>
                 
-                <a href="<?= url('admin/solicitacoes') ?>" class="flex items-center px-4 py-2 text-gray-700 rounded-lg hover:bg-gray-100 <?= $currentPage === 'solicitacoes' ? 'bg-blue-50 text-blue-700' : '' ?>">
-                    <i class="fas fa-clipboard-list mr-3"></i>
-                    Solicitações
-                </a>
+                <!-- OPERAÇÕES -->
+                <div class="pt-4">
+                    <h3 class="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Operações</h3>
+                </div>
                 
-                <a href="<?= url('admin/templates-whatsapp') ?>" class="flex items-center px-4 py-2 text-gray-700 rounded-lg hover:bg-gray-100 <?= $currentPage === 'templates-whatsapp' ? 'bg-blue-50 text-blue-700' : '' ?>">
-                    <i class="fas fa-file-code mr-3"></i>
-                    Templates WhatsApp
-                </a>
-                <a href="<?= url('admin/whatsapp-instances') ?>" class="flex items-center px-4 py-2 text-gray-700 rounded-lg hover:bg-gray-100 <?= $currentPage === 'whatsapp-instances' ? 'bg-blue-50 text-blue-700' : '' ?>">
-                    <i class="fas fa-mobile-alt mr-3"></i>
-                    Instâncias WhatsApp
-                </a>
-
-                <a href="<?= url('admin/solicitacoes-manuais') ?>" class="flex items-center px-4 py-2 text-gray-700 rounded-lg hover:bg-gray-100 <?= $currentPage === 'solicitacoes-manuais' ? 'bg-blue-50 text-blue-700' : '' ?>">
-                    <i class="fas fa-file-alt mr-3"></i>
-                    Solicitações Manuais
+                <a href="<?= url('admin/solicitacoes-manuais') ?>" class="flex items-center px-4 py-2 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors <?= $currentPage === 'solicitacoes-manuais' ? 'bg-blue-50 text-blue-700 font-medium' : '' ?>">
+                    <i class="fas fa-file-alt mr-3 w-5 text-center"></i>
+                    <span class="flex-1">Solicitações Manuais</span>
                     <?php
                     // Contador de solicitações manuais não migradas
                     try {
@@ -137,7 +133,7 @@
                         $naoMigradas = count($solicitacaoManualModel->getNaoMigradas(999));
                         if ($naoMigradas > 0):
                     ?>
-                        <span class="ml-auto inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-yellow-800 bg-yellow-200 rounded-full">
+                        <span class="inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-yellow-800 bg-yellow-200 rounded-full">
                             <?= $naoMigradas ?>
                         </span>
                     <?php 
@@ -148,47 +144,64 @@
                     ?>
                 </a>
                 
+                <a href="<?= url('admin/templates-whatsapp') ?>" class="flex items-center px-4 py-2 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors <?= $currentPage === 'templates-whatsapp' ? 'bg-blue-50 text-blue-700 font-medium' : '' ?>">
+                    <i class="fas fa-file-code mr-3 w-5 text-center"></i>
+                    Templates WhatsApp
+                </a>
+                
+                <a href="<?= url('admin/whatsapp-instances') ?>" class="flex items-center px-4 py-2 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors <?= $currentPage === 'whatsapp-instances' ? 'bg-blue-50 text-blue-700 font-medium' : '' ?>">
+                    <i class="fas fa-mobile-alt mr-3 w-5 text-center"></i>
+                    Instâncias WhatsApp
+                </a>
+                
                 <?php if ($user && $user['nivel_permissao'] === 'ADMINISTRADOR'): ?>
+                <!-- ADMINISTRAÇÃO -->
                 <div class="pt-4">
-                    <h3 class="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Administração</h3>
+                    <h3 class="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Administração</h3>
                 </div>
                 
-                <a href="<?= url('admin/imobiliarias') ?>" class="flex items-center px-4 py-2 text-gray-700 rounded-lg hover:bg-gray-100 <?= $currentPage === 'imobiliarias' ? 'bg-blue-50 text-blue-700' : '' ?>">
-                    <i class="fas fa-building mr-3"></i>
+                <a href="<?= url('admin/imobiliarias') ?>" class="flex items-center px-4 py-2 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors <?= $currentPage === 'imobiliarias' ? 'bg-blue-50 text-blue-700 font-medium' : '' ?>">
+                    <i class="fas fa-building mr-3 w-5 text-center"></i>
                     Imobiliárias
                 </a>
                 
-                <a href="<?= url('admin/usuarios') ?>" class="flex items-center px-4 py-2 text-gray-700 rounded-lg hover:bg-gray-100 <?= $currentPage === 'usuarios' ? 'bg-blue-50 text-blue-700' : '' ?>">
-                    <i class="fas fa-users mr-3"></i>
+                <a href="<?= url('admin/usuarios') ?>" class="flex items-center px-4 py-2 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors <?= $currentPage === 'usuarios' ? 'bg-blue-50 text-blue-700 font-medium' : '' ?>">
+                    <i class="fas fa-users mr-3 w-5 text-center"></i>
                     Usuários
                 </a>
                 
-                <a href="<?= url('admin/categorias') ?>" class="flex items-center px-4 py-2 text-gray-700 rounded-lg hover:bg-gray-100 <?= $currentPage === 'categorias' ? 'bg-blue-50 text-blue-700' : '' ?>">
-                    <i class="fas fa-tags mr-3"></i>
+                <a href="<?= url('admin/categorias') ?>" class="flex items-center px-4 py-2 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors <?= $currentPage === 'categorias' ? 'bg-blue-50 text-blue-700 font-medium' : '' ?>">
+                    <i class="fas fa-tags mr-3 w-5 text-center"></i>
                     Categorias
                 </a>
                 
-                <a href="<?= url('admin/status') ?>" class="flex items-center px-4 py-2 text-gray-700 rounded-lg hover:bg-gray-100 <?= $currentPage === 'status' ? 'bg-blue-50 text-blue-700' : '' ?>">
-                    <i class="fas fa-list mr-3"></i>
+                <a href="<?= url('admin/status') ?>" class="flex items-center px-4 py-2 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors <?= $currentPage === 'status' ? 'bg-blue-50 text-blue-700 font-medium' : '' ?>">
+                    <i class="fas fa-list mr-3 w-5 text-center"></i>
                     Status
                 </a>
                 
-                <a href="<?= url('admin/condicoes') ?>" class="flex items-center px-4 py-2 text-gray-700 rounded-lg hover:bg-gray-100 <?= $currentPage === 'condicoes' ? 'bg-blue-50 text-blue-700' : '' ?>">
-                    <i class="fas fa-tag mr-3"></i>
+                <a href="<?= url('admin/condicoes') ?>" class="flex items-center px-4 py-2 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors <?= $currentPage === 'condicoes' ? 'bg-blue-50 text-blue-700 font-medium' : '' ?>">
+                    <i class="fas fa-tag mr-3 w-5 text-center"></i>
                     Condições
                 </a>
                 
-                <a href="<?= url('admin/configuracoes') ?>" class="flex items-center px-4 py-2 text-gray-700 rounded-lg hover:bg-gray-100 <?= $currentPage === 'configuracoes' ? 'bg-blue-50 text-blue-700' : '' ?>">
-                    <i class="fas fa-cog mr-3"></i>
+                <!-- SISTEMA -->
+                <div class="pt-4">
+                    <h3 class="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Sistema</h3>
+                </div>
+                
+                <a href="<?= url('admin/configuracoes') ?>" class="flex items-center px-4 py-2 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors <?= $currentPage === 'configuracoes' ? 'bg-blue-50 text-blue-700 font-medium' : '' ?>">
+                    <i class="fas fa-cog mr-3 w-5 text-center"></i>
                     Configurações
                 </a>
                 
-                <a href="<?= url('admin/cron-jobs') ?>" class="flex items-center px-4 py-2 text-gray-700 rounded-lg hover:bg-gray-100 <?= $currentPage === 'cron-jobs' ? 'bg-blue-50 text-blue-700' : '' ?>">
-                    <i class="fas fa-clock mr-3"></i>
+                <a href="<?= url('admin/cron-jobs') ?>" class="flex items-center px-4 py-2 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors <?= $currentPage === 'cron-jobs' ? 'bg-blue-50 text-blue-700 font-medium' : '' ?>">
+                    <i class="fas fa-clock mr-3 w-5 text-center"></i>
                     Cron Jobs
                 </a>
-                <a href="<?= url('admin/logs') ?>" class="flex items-center px-4 py-2 text-gray-700 rounded-lg hover:bg-gray-100 <?= $currentPage === 'logs' ? 'bg-blue-50 text-blue-700' : '' ?>">
-                    <i class="fas fa-file-alt mr-3"></i>
+                
+                <a href="<?= url('admin/logs') ?>" class="flex items-center px-4 py-2 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors <?= $currentPage === 'logs' ? 'bg-blue-50 text-blue-700 font-medium' : '' ?>">
+                    <i class="fas fa-file-alt mr-3 w-5 text-center"></i>
                     Visualizador de Logs
                 </a>
                 <?php endif; ?>
