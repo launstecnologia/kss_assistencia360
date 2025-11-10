@@ -107,13 +107,8 @@ ob_start();
                     </div>
                     <p class="text-xs text-gray-500 mt-3 flex items-center gap-2">
                         <i class="fas fa-info-circle text-blue-500"></i>
-                        <span>Selecione uma data e um horário e clique em <strong>Salvar Horário</strong>. Você pode informar até 3 opções.</span>
+                        <span>Selecione uma data e um horário. Você pode informar até 3 opções.</span>
                     </p>
-                    <button type="button" id="btn-adicionar-horario"
-                            class="mt-4 inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg shadow-sm hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:text-gray-600 disabled:cursor-not-allowed"
-                            disabled>
-                        <i class="fas fa-plus mr-2 text-xs"></i>Salvar Horário
-                    </button>
                 </div>
                 
                 <!-- Horários Selecionados -->
@@ -182,10 +177,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const listaHorarios = document.getElementById('lista-horarios');
     const contadorHorarios = document.getElementById('contador-horarios');
     const btnContinuar = document.getElementById('btn-continuar');
-    const btnAdicionarHorario = document.getElementById('btn-adicionar-horario');
     
     let horariosEscolhidos = [];
-    let horarioSelecionadoAtual = '';
     let dataSelecionadaAtual = dataInput ? dataInput.value : '';
     
     // Abrir calendário ao clicar no campo de data
@@ -223,8 +216,11 @@ document.addEventListener('DOMContentLoaded', function() {
             const dataSelecionada = new Date(this.value + 'T12:00:00');
             const diaDaSemana = dataSelecionada.getDay(); // 0 = Domingo, 6 = Sábado
             dataSelecionadaAtual = this.value;
-            horarioSelecionadoAtual = '';
-            resetarRadios();
+            
+            // Resetar seleção de horários quando mudar a data
+            horarioRadios.forEach(r => {
+                r.checked = false;
+            });
             atualizarEstiloCards();
             
             if (diaDaSemana === 0 || diaDaSemana === 6) {
@@ -233,23 +229,38 @@ document.addEventListener('DOMContentLoaded', function() {
                 this.value = '';
                 dataSelecionadaAtual = '';
             }
-
-            atualizarEstadoSalvar();
         });
     }
     
-    // Seleção de horário
+    // Seleção de horário - adiciona automaticamente quando selecionado (igual nova solicitação)
     horarioRadios.forEach(radio => {
         radio.addEventListener('change', function() {
-            if (!dataSelecionadaAtual) {
+            const data = dataSelecionadaAtual;
+            const horario = this.value;
+            
+            if (!data) {
                 alert('Por favor, selecione uma data primeiro');
                 this.checked = false;
                 return;
             }
-
-            horarioSelecionadoAtual = this.value;
-            atualizarEstiloCards();
-            atualizarEstadoSalvar();
+            
+            if (data && horario) {
+                const horarioCompleto = `${formatarData(data)} - ${horario}`;
+                
+                if (!horariosEscolhidos.includes(horarioCompleto) && horariosEscolhidos.length < 3) {
+                    horariosEscolhidos.push(horarioCompleto);
+                    atualizarListaHorarios();
+                    // Resetar seleção após adicionar
+                    this.checked = false;
+                    atualizarEstiloCards();
+                } else if (horariosEscolhidos.includes(horarioCompleto)) {
+                    alert('Este horário já foi adicionado. Escolha outro.');
+                    this.checked = false;
+                } else if (horariosEscolhidos.length >= 3) {
+                    alert('Você pode selecionar no máximo 3 horários.');
+                    this.checked = false;
+                }
+            }
         });
     });
 
@@ -264,51 +275,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
-
-    if (btnAdicionarHorario) {
-        btnAdicionarHorario.addEventListener('click', function() {
-            if (this.disabled) {
-                return;
-            }
-            adicionarHorarioSelecionado(false);
-        });
-    }
-
-    function adicionarHorarioSelecionado(auto = false) {
-        const data = dataSelecionadaAtual;
-        const horario = horarioSelecionadoAtual;
-
-        if (!data || !horario) {
-            if (!auto) {
-                alert('Selecione uma data e um horário antes de salvar.');
-            }
-            return;
-        }
-
-        const horarioCompleto = `${formatarData(data)} - ${horario}`;
-
-        if (horariosEscolhidos.includes(horarioCompleto)) {
-            if (!auto) {
-                alert('Este horário já foi adicionado. Escolha outro.');
-            }
-            return;
-        }
-
-        if (horariosEscolhidos.length >= 3) {
-            if (!auto) {
-                alert('Você pode selecionar no máximo 3 horários.');
-            }
-            return;
-        }
-
-        horariosEscolhidos.push(horarioCompleto);
-        atualizarListaHorarios();
-
-        horarioSelecionadoAtual = '';
-        resetarRadios();
-        atualizarEstiloCards();
-        atualizarEstadoSalvar();
-    }
     
     function atualizarListaHorarios() {
         if (horariosEscolhidos.length > 0) {
@@ -344,45 +310,21 @@ document.addEventListener('DOMContentLoaded', function() {
             btnContinuar.classList.add('bg-gray-400', 'cursor-not-allowed');
             btnContinuar.classList.remove('bg-green-600', 'hover:bg-green-700');
         }
-
-        atualizarEstadoSalvar();
     }
     
     window.removerHorario = function(index) {
         horariosEscolhidos.splice(index, 1);
         atualizarListaHorarios();
-        atualizarEstiloCards();
-        atualizarEstadoSalvar();
     };
-
-    function resetarRadios() {
-        horarioRadios.forEach(r => {
-            r.checked = false;
-        });
-        horarioSelecionadoAtual = '';
-    }
 
     function atualizarEstiloCards() {
         horarioCards.forEach(card => {
             const radio = card.closest('label') ? card.closest('label').querySelector('.horario-radio') : null;
-            const ativo = radio && radio.value === horarioSelecionadoAtual;
+            const ativo = radio && radio.checked;
             card.classList.toggle('border-green-500', ativo);
             card.classList.toggle('bg-green-50', ativo);
             card.classList.toggle('border-gray-200', !ativo);
         });
-    }
-
-    function atualizarEstadoSalvar() {
-        const podeAdicionar = Boolean(dataSelecionadaAtual && horarioSelecionadoAtual && horariosEscolhidos.length < 3);
-        if (btnAdicionarHorario) {
-            btnAdicionarHorario.disabled = !podeAdicionar;
-            btnAdicionarHorario.classList.toggle('bg-blue-600', podeAdicionar);
-            btnAdicionarHorario.classList.toggle('hover:bg-blue-700', podeAdicionar);
-            btnAdicionarHorario.classList.toggle('text-white', podeAdicionar);
-            btnAdicionarHorario.classList.toggle('bg-gray-300', !podeAdicionar);
-            btnAdicionarHorario.classList.toggle('text-gray-600', !podeAdicionar);
-            btnAdicionarHorario.classList.toggle('cursor-not-allowed', !podeAdicionar);
-        }
     }
     
     function formatarData(data) {
@@ -390,15 +332,19 @@ document.addEventListener('DOMContentLoaded', function() {
         return `${dia}/${mes}/${ano}`;
     }
     
-    // Salvar horários no formulário antes de enviar
+    // Salvar horários no formulário antes de enviar (formato igual nova solicitação)
     const form = document.getElementById('formCompraPeca');
     if (form) {
         form.addEventListener('submit', function(e) {
+            // Converter: "29/10/2025 - 08:00-11:00" → "2025-10-29 08:00:00"
             const horariosFormatados = horariosEscolhidos.map(horario => {
-                return horario;
+                const [dataStr, faixaHorario] = horario.split(' - ');
+                const [dia, mes, ano] = dataStr.split('/');
+                const horarioInicial = faixaHorario.split('-')[0];
+                return `${ano}-${mes}-${dia} ${horarioInicial}:00`;
             });
             
-            // Atualizar campo hidden
+            // Enviar como JSON no formato esperado
             document.getElementById('novas_datas').value = JSON.stringify(horariosFormatados);
             
             // Validar se há pelo menos 1 horário
@@ -409,8 +355,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
-
-    atualizarEstadoSalvar();
 });
 </script>
 

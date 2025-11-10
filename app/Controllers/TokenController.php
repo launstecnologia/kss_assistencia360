@@ -2013,7 +2013,7 @@ class TokenController extends Controller
                 return;
             }
 
-            // Converter e padronizar datas do formato "dd/mm/yyyy - HH:MM-HH:MM"
+            // Converter e padronizar datas (formato igual nova solicitação: "YYYY-MM-DD HH:MM:SS")
             $datasConvertidas = [];
             $novasDatasSanitizadas = [];
 
@@ -2021,8 +2021,36 @@ class TokenController extends Controller
                 $dataNormalizada = null;
                 $sanitizada = null;
 
-                // Formato esperado: "dd/mm/yyyy - HH:MM-HH:MM"
-                if (preg_match('/(\d{2})\/(\d{2})\/(\d{4})\s*-\s*(\d{2}):(\d{2})(?::(\d{2}))?\s*-\s*(\d{2}):(\d{2})(?::(\d{2}))?/', $dataString, $matches)) {
+                // Formato da nova solicitação: "2025-10-29 08:00:00"
+                if (preg_match('/^(\d{4})-(\d{2})-(\d{2})\s+(\d{2}):(\d{2}):(\d{2})$/', $dataString, $matches)) {
+                    $ano = (int) $matches[1];
+                    $mes = (int) $matches[2];
+                    $dia = (int) $matches[3];
+                    $horaInicio = (int) $matches[4];
+                    $minInicio = (int) $matches[5];
+
+                    $dataNormalizada = sprintf('%04d-%02d-%02d %02d:%02d:00', $ano, $mes, $dia, $horaInicio, $minInicio);
+                    
+                    // Determinar faixa de horário baseado na hora inicial (igual nova solicitação)
+                    // 08:00 -> 08:00-11:00, 11:00 -> 11:00-14:00, 14:00 -> 14:00-17:00, 17:00 -> 17:00-20:00
+                    $horaFim = 0;
+                    if ($horaInicio == 8) {
+                        $horaFim = 11;
+                    } elseif ($horaInicio == 11) {
+                        $horaFim = 14;
+                    } elseif ($horaInicio == 14) {
+                        $horaFim = 17;
+                    } elseif ($horaInicio == 17) {
+                        $horaFim = 20;
+                    } else {
+                        // Fallback: adicionar 3 horas
+                        $horaFim = min($horaInicio + 3, 20);
+                    }
+                    
+                    $sanitizada = sprintf('%02d/%02d/%04d - %02d:%02d-%02d:%02d', $dia, $mes, $ano, $horaInicio, $minInicio, $horaFim, $minInicio);
+                }
+                // Formato alternativo: "dd/mm/yyyy - HH:MM-HH:MM"
+                elseif (preg_match('/(\d{2})\/(\d{2})\/(\d{4})\s*-\s*(\d{2}):(\d{2})(?::(\d{2}))?\s*-\s*(\d{2}):(\d{2})(?::(\d{2}))?/', $dataString, $matches)) {
                     $dia = (int) $matches[1];
                     $mes = (int) $matches[2];
                     $ano = (int) $matches[3];
@@ -2051,7 +2079,14 @@ class TokenController extends Controller
                     try {
                         $dt = new \DateTime($dataString);
                         $dataNormalizada = $dt->format('Y-m-d H:i:s');
-                        $sanitizada = $dt->format('d/m/Y - H:i');
+                        $horaInicio = (int) $dt->format('H');
+                        $minInicio = (int) $dt->format('i');
+                        $horaFim = min($horaInicio + 3, 20);
+                        $sanitizada = sprintf('%02d/%02d/%04d - %02d:%02d-%02d:%02d', 
+                            (int) $dt->format('d'), 
+                            (int) $dt->format('m'), 
+                            (int) $dt->format('Y'), 
+                            $horaInicio, $minInicio, $horaFim, $minInicio);
                     } catch (\Exception $e) {
                         error_log("Erro ao converter data na compra de peça: {$dataString} - " . $e->getMessage());
                     }
