@@ -96,6 +96,8 @@ ob_start();
                             'link_confirmacao' => 'Link Confirmação',
                             'link_cancelamento' => 'Link Cancelamento Horário',
                             'link_cancelamento_solicitacao' => 'Link Cancelar Solicitação',
+                            'link_compra_peca' => 'Link Compra Peça',
+                            'link_reagendamento' => 'Link Reagendamento',
                             'prestador_nome' => 'Prestador',
                         ];
                         foreach ($vars as $k => $label): ?>

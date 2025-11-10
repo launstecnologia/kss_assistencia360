@@ -412,6 +412,11 @@ class WhatsAppService
             'prestador_nome' => $extraData['prestador_nome'] ?? '',
             'prestador_telefone' => $extraData['prestador_telefone'] ?? '',
             
+            // Lembrete de peça
+            'data_limite' => $extraData['data_limite'] ?? 
+                ($solicitacao['data_limite_peca'] ? date('d/m/Y', strtotime($solicitacao['data_limite_peca'])) : ''),
+            'dias_restantes' => $extraData['dias_restantes'] ?? '',
+            
             // Links (sempre absolutos, sem barras invertidas)
             // Link de rastreamento: /{instancia}/solicitacoes/{id}
             'link_rastreamento' => $this->getRastreamentoLink($baseUrl, $solicitacao),
