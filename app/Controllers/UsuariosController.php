@@ -77,6 +77,16 @@ class UsuariosController extends Controller
         ], $data);
 
         if (!empty($errors)) {
+            // Se for requisição AJAX, retornar JSON com erros
+            if ($this->isAjax()) {
+                $this->json([
+                    'success' => false,
+                    'error' => 'Erros de validação',
+                    'errors' => $errors
+                ], 400);
+                return;
+            }
+            
             $this->view('usuarios.create', [
                 'errors' => $errors,
                 'data' => $data
@@ -86,6 +96,15 @@ class UsuariosController extends Controller
 
         // Verificar se email já existe
         if ($this->usuarioModel->findByEmail($data['email'])) {
+            // Se for requisição AJAX, retornar JSON com erro
+            if ($this->isAjax()) {
+                $this->json([
+                    'success' => false,
+                    'error' => 'Este email já está cadastrado'
+                ], 400);
+                return;
+            }
+            
             $this->view('usuarios.create', [
                 'error' => 'Este email já está cadastrado',
                 'data' => $data
@@ -95,6 +114,15 @@ class UsuariosController extends Controller
 
         // Verificar se CPF já existe
         if ($this->usuarioModel->findByCpf($data['cpf'])) {
+            // Se for requisição AJAX, retornar JSON com erro
+            if ($this->isAjax()) {
+                $this->json([
+                    'success' => false,
+                    'error' => 'Este CPF já está cadastrado'
+                ], 400);
+                return;
+            }
+            
             $this->view('usuarios.create', [
                 'error' => 'Este CPF já está cadastrado',
                 'data' => $data
@@ -104,8 +132,21 @@ class UsuariosController extends Controller
 
         try {
             $this->usuarioModel->create($data);
+            
+            // Se for requisição AJAX, retornar JSON
+            if ($this->isAjax()) {
+                $this->json(['success' => true, 'message' => 'Usuário criado com sucesso']);
+                return;
+            }
+            
             redirect(url('admin/usuarios'), 'Usuário criado com sucesso', 'success');
         } catch (\Exception $e) {
+            // Se for requisição AJAX, retornar JSON com erro
+            if ($this->isAjax()) {
+                $this->json(['success' => false, 'error' => 'Erro ao criar usuário: ' . $e->getMessage()], 500);
+                return;
+            }
+            
             $this->view('usuarios.create', [
                 'error' => 'Erro ao criar usuário: ' . $e->getMessage(),
                 'data' => $data
@@ -178,6 +219,16 @@ class UsuariosController extends Controller
         ], $data);
 
         if (!empty($errors)) {
+            // Se for requisição AJAX, retornar JSON com erros
+            if ($this->isAjax()) {
+                $this->json([
+                    'success' => false,
+                    'error' => 'Erros de validação',
+                    'errors' => $errors
+                ], 400);
+                return;
+            }
+            
             $this->view('usuarios.edit', [
                 'errors' => $errors,
                 'usuario' => array_merge($usuario, $data)
@@ -188,6 +239,15 @@ class UsuariosController extends Controller
         // Verificar se email já existe (exceto o próprio usuário)
         $usuarioComEmail = $this->usuarioModel->findByEmail($data['email']);
         if ($usuarioComEmail && $usuarioComEmail['id'] != $id) {
+            // Se for requisição AJAX, retornar JSON com erro
+            if ($this->isAjax()) {
+                $this->json([
+                    'success' => false,
+                    'error' => 'Este email já está cadastrado para outro usuário'
+                ], 400);
+                return;
+            }
+            
             $this->view('usuarios.edit', [
                 'error' => 'Este email já está cadastrado para outro usuário',
                 'usuario' => array_merge($usuario, $data)
@@ -198,6 +258,15 @@ class UsuariosController extends Controller
         // Verificar se CPF já existe (exceto o próprio usuário)
         $usuarioComCpf = $this->usuarioModel->findByCpf($data['cpf']);
         if ($usuarioComCpf && $usuarioComCpf['id'] != $id) {
+            // Se for requisição AJAX, retornar JSON com erro
+            if ($this->isAjax()) {
+                $this->json([
+                    'success' => false,
+                    'error' => 'Este CPF já está cadastrado para outro usuário'
+                ], 400);
+                return;
+            }
+            
             $this->view('usuarios.edit', [
                 'error' => 'Este CPF já está cadastrado para outro usuário',
                 'usuario' => array_merge($usuario, $data)
@@ -207,8 +276,21 @@ class UsuariosController extends Controller
 
         try {
             $this->usuarioModel->update($id, $data);
+            
+            // Se for requisição AJAX, retornar JSON
+            if ($this->isAjax()) {
+                $this->json(['success' => true, 'message' => 'Usuário atualizado com sucesso']);
+                return;
+            }
+            
             redirect(url('admin/usuarios'), 'Usuário atualizado com sucesso', 'success');
         } catch (\Exception $e) {
+            // Se for requisição AJAX, retornar JSON com erro
+            if ($this->isAjax()) {
+                $this->json(['success' => false, 'error' => 'Erro ao atualizar usuário: ' . $e->getMessage()], 500);
+                return;
+            }
+            
             $this->view('usuarios.edit', [
                 'error' => 'Erro ao atualizar usuário: ' . $e->getMessage(),
                 'usuario' => array_merge($usuario, $data)
@@ -293,6 +375,24 @@ class UsuariosController extends Controller
         } catch (\Exception $e) {
             $this->json(['error' => 'Erro ao resetar senha: ' . $e->getMessage()], 500);
         }
+    }
+
+    public function api(int $id): void
+    {
+        $usuario = $this->usuarioModel->find($id);
+
+        if (!$usuario) {
+            $this->json(['success' => false, 'message' => 'Usuário não encontrado'], 404);
+            return;
+        }
+
+        // Remover senha dos dados retornados
+        unset($usuario['senha']);
+
+        $this->json([
+            'success' => true,
+            'usuario' => $usuario
+        ]);
     }
 }
 

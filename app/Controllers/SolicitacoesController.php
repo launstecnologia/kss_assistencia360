@@ -19,7 +19,12 @@ class SolicitacoesController extends Controller
 
     public function __construct()
     {
-        $this->requireAuth();
+        // Não exigir autenticação para rotas de cron
+        $requestUri = $_SERVER['REQUEST_URI'] ?? '';
+        if (strpos($requestUri, '/cron/') === false) {
+            $this->requireAuth();
+        }
+        
         $this->solicitacaoModel = new Solicitacao();
         $this->statusModel = new Status();
         $this->categoriaModel = new Categoria();
@@ -691,21 +696,11 @@ class SolicitacoesController extends Controller
      * Verifica e envia notificações 1 hora antes do prestador chegar
      * Deve ser chamado via cron job periodicamente (ex: a cada 5 minutos)
      * 
-     * Endpoint público com autenticação via token secreto
-     * GET /cron/notificacoes-pre-servico?token=SECRET_TOKEN
+     * Endpoint público para cron job (sem autenticação)
+     * GET /cron/notificacoes-pre-servico
      */
     public function cronNotificacoesPreServico(): void
     {
-        // Verificar token secreto (pode ser configurado no .env)
-        $tokenSecreto = $_ENV['CRON_SECRET_TOKEN'] ?? 'kss_cron_secret_2024';
-        $tokenRecebido = $this->input('token');
-        
-        if ($tokenRecebido !== $tokenSecreto) {
-            http_response_code(401);
-            echo json_encode(['error' => 'Token inválido']);
-            exit;
-        }
-        
         $this->processarNotificacoesPreServico();
     }
 
@@ -862,7 +857,10 @@ class SolicitacoesController extends Controller
     /**
      * Processa notificações após o horário agendado.
      * Envia "Confirmação de Serviço" com link para informar o que aconteceu
-     * exatamente 20 minutos após o término do período confirmado.
+     * exatamente no horário final do agendamento.
+     * 
+     * Se o usuário já fez ação no link do pré-serviço, reutiliza o mesmo link.
+     * Caso contrário, cria um novo link.
      */
     private function processarNotificacoesPosServico(): void
     {
@@ -878,7 +876,6 @@ class SolicitacoesController extends Controller
                 AND s.notificacao_pos_servico_enviada = 0
                 AND s.data_agendamento IS NOT NULL
                 AND s.horario_agendamento IS NOT NULL
-                AND CONCAT(s.data_agendamento, ' ', s.horario_agendamento) <= NOW()
             ";
             
             $solicitacoes = \App\Core\Database::fetchAll($sql);
@@ -917,29 +914,63 @@ class SolicitacoesController extends Controller
                     }
 
                     $agora = new \DateTime();
-                    $momentoEnvio = (clone $dataHoraFim)->modify('+20 minutes');
-
+                    
+                    // Enviar exatamente no horário final (não mais 20 minutos depois)
                     error_log(sprintf(
-                        "DEBUG Cron Pós-Serviço [ID:%d] - Início:%s Fim:%s Envio:%s Agora:%s",
+                        "DEBUG Cron Pós-Serviço [ID:%d] - Início:%s Fim:%s Agora:%s",
                         $solicitacao['id'],
                         $dataHoraInicio->format('Y-m-d H:i:s'),
                         $dataHoraFim->format('Y-m-d H:i:s'),
-                        $momentoEnvio->format('Y-m-d H:i:s'),
                         $agora->format('Y-m-d H:i:s')
                     ));
 
-                    // Só enviar se já passou 20 minutos do horário final
-                    if ($agora >= $momentoEnvio) {
-                        // Criar token para a página de ações
+                    // Só enviar se já passou o horário final
+                    if ($agora >= $dataHoraFim) {
                         $tokenModel = new \App\Models\ScheduleConfirmationToken();
                         $protocol = $solicitacao['numero_solicitacao'] ?? ('KS' . $solicitacao['id']);
-                        $token = $tokenModel->createToken(
-                            $solicitacao['id'],
-                            $protocol,
-                            $dataAgendamento,
-                            $horarioAgendamento,
-                            'pos_servico'
-                        );
+                        
+                        // Verificar se houve ação no link do pré-serviço
+                        $tokenPreServico = $tokenModel->getTokenPreServico($solicitacao['id']);
+                        $houveAcaoPreServico = false;
+                        $token = null;
+                        
+                        if ($tokenPreServico) {
+                            // Verificar se o token ainda é válido (não expirou)
+                            $expiresAt = new \DateTime($tokenPreServico['expires_at']);
+                            $agora = new \DateTime();
+                            
+                            if ($agora < $expiresAt) {
+                                // Token ainda válido, reutilizar mesmo que tenha sido usado
+                                $houveAcaoPreServico = ($tokenPreServico['used_at'] !== null);
+                                $token = $tokenPreServico['token'];
+                                
+                                if ($houveAcaoPreServico) {
+                                    error_log("✅ Reutilizando token do pré-serviço para solicitação #{$solicitacao['id']} (já houve ação e token ainda válido)");
+                                } else {
+                                    error_log("✅ Reutilizando token do pré-serviço para solicitação #{$solicitacao['id']} (token criado mas sem ação ainda)");
+                                }
+                            } else {
+                                // Token expirado, criar novo
+                                $token = $tokenModel->createToken(
+                                    $solicitacao['id'],
+                                    $protocol,
+                                    $dataAgendamento,
+                                    $horarioAgendamento,
+                                    'pos_servico'
+                                );
+                                error_log("✅ Criado novo token pós-serviço para solicitação #{$solicitacao['id']} (token pré-serviço expirado)");
+                            }
+                        } else {
+                            // Não existe token do pré-serviço, criar novo
+                            $token = $tokenModel->createToken(
+                                $solicitacao['id'],
+                                $protocol,
+                                $dataAgendamento,
+                                $horarioAgendamento,
+                                'pos_servico'
+                            );
+                            error_log("✅ Criado novo token pós-serviço para solicitação #{$solicitacao['id']} (sem token pré-serviço)");
+                        }
                         
                         // Enviar notificação WhatsApp
                         // Usar URL base configurada para links WhatsApp
@@ -961,9 +992,9 @@ class SolicitacoesController extends Controller
                         ]);
                         
                         $enviadas++;
-                        error_log("✅ Notificação pós-serviço enviada para solicitação #{$solicitacao['id']}");
+                        error_log("✅ Notificação pós-serviço enviada para solicitação #{$solicitacao['id']} (houve ação pré-serviço: " . ($houveAcaoPreServico ? 'SIM' : 'NÃO') . ")");
                     } else {
-                        error_log("DEBUG Cron Pós-Serviço [ID:{$solicitacao['id']}] - Aguardando janela de +20min após término.");
+                        error_log("DEBUG Cron Pós-Serviço [ID:{$solicitacao['id']}] - Aguardando horário final do agendamento.");
                     }
                 } catch (\Exception $e) {
                     $erros[] = "Solicitação #{$solicitacao['id']}: " . $e->getMessage();
@@ -977,7 +1008,7 @@ class SolicitacoesController extends Controller
                 'enviadas' => $enviadas,
                 'total_verificadas' => count($solicitacoes),
                 'timestamp' => date('Y-m-d H:i:s'),
-                'criterio_envio' => '>= 20 minutos após término do período confirmado'
+                'criterio_envio' => 'No horário final do agendamento'
             ];
             
             if (!empty($erros)) {
@@ -1004,18 +1035,10 @@ class SolicitacoesController extends Controller
 
     /**
      * Endpoint público para cron job de notificações pós-serviço
+     * (sem autenticação - configurar proteção no servidor)
      */
     public function cronNotificacoesPosServico(): void
     {
-        $tokenSecreto = $_ENV['CRON_SECRET_TOKEN'] ?? 'kss_cron_secret_2024';
-        $tokenRecebido = $this->input('token');
-        
-        if ($tokenRecebido !== $tokenSecreto) {
-            http_response_code(401);
-            echo json_encode(['error' => 'Token inválido']);
-            exit;
-        }
-        
         $this->processarNotificacoesPosServico();
     }
 

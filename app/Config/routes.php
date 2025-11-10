@@ -115,7 +115,7 @@ $router->post('/admin/solicitacoes/enviar-lembretes', 'SolicitacoesController@en
 $router->post('/admin/solicitacoes/expirar', 'SolicitacoesController@expirarSolicitacoes', ['auth', 'admin']);
 $router->post('/admin/solicitacoes/enviar-notificacoes-pre-servico', 'SolicitacoesController@enviarNotificacoesPreServico', ['auth', 'admin']);
 $router->post('/admin/solicitacoes/enviar-notificacoes-pos-servico', 'SolicitacoesController@enviarNotificacoesPosServico', ['auth', 'admin']);
-// Rota pública para cron job (com autenticação via token secreto)
+// Rota pública para cron job (sem autenticação - configurar proteção no servidor)
 $router->get('/cron/notificacoes-pre-servico', 'SolicitacoesController@cronNotificacoesPreServico');
 $router->get('/cron/notificacoes-pos-servico', 'SolicitacoesController@cronNotificacoesPosServico');
 
@@ -184,6 +184,7 @@ $router->post('/admin/usuarios/{id}', 'UsuariosController@update', ['auth', 'adm
 $router->post('/admin/usuarios/{id}/delete', 'UsuariosController@delete', ['auth', 'admin']);
 $router->post('/admin/usuarios/{id}/toggle-status', 'UsuariosController@toggleStatus', ['auth', 'admin']);
 $router->post('/admin/usuarios/{id}/resetar-senha', 'UsuariosController@resetarSenha', ['auth', 'admin']);
+$router->get('/admin/usuarios/{id}/api', 'UsuariosController@api', ['auth', 'admin']);
 
 // Gerenciamento de Categorias
 $router->get('/admin/categorias', 'CategoriasController@index', ['auth', 'admin']);

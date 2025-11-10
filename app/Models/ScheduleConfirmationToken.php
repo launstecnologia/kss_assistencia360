@@ -139,5 +139,24 @@ class ScheduleConfirmationToken
         Database::query($sql, [$solicitacaoId]);
         return true;
     }
+    
+    /**
+     * Busca token do pré-serviço para uma solicitação
+     * 
+     * @param int $solicitacaoId ID da solicitação
+     * @return array|null Dados do token do pré-serviço
+     */
+    public function getTokenPreServico(int $solicitacaoId): ?array
+    {
+        $sql = "
+            SELECT * FROM schedule_confirmation_tokens
+            WHERE solicitacao_id = ?
+            AND action_type = 'pre_servico'
+            ORDER BY created_at DESC
+            LIMIT 1
+        ";
+        
+        return Database::fetch($sql, [$solicitacaoId]);
+    }
 }
 

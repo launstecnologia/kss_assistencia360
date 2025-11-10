@@ -137,4 +137,10 @@ abstract class Controller
 
         return $_SESSION['user'] ?? null;
     }
+
+    protected function isAjax(): bool
+    {
+        return isset($_SERVER['HTTP_X_REQUESTED_WITH']) && 
+               strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
+    }
 }

@@ -22,10 +22,12 @@ ob_start();
         </form>
     </div>
     
-    <a href="<?= url('admin/usuarios/create') ?>" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+    <button 
+        onclick="abrirOffcanvasNovoUsuario()" 
+        class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
         <i class="fas fa-plus mr-2"></i>
         Novo Usuário
-    </a>
+    </button>
 </div>
 
 <!-- Tabela de Usuários -->
@@ -91,16 +93,23 @@ ob_start();
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <div class="flex justify-end gap-2">
-                            <a href="<?= url("admin/usuarios/{$usuario['id']}/edit") ?>" 
-                               class="text-blue-600 hover:text-blue-900" 
-                               title="Editar">
-                                <i class="fas fa-edit"></i>
-                            </a>
                             <button 
-                                onclick="mostrarModalResetarSenha(<?= $usuario['id'] ?>)" 
+                                onclick="abrirOffcanvasEditar(<?= $usuario['id'] ?>)" 
+                                class="text-blue-600 hover:text-blue-900" 
+                                title="Editar">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button 
+                                onclick="abrirOffcanvasTrocarSenha(<?= $usuario['id'] ?>)" 
                                 class="text-yellow-600 hover:text-yellow-900" 
-                                title="Resetar Senha">
+                                title="Trocar Senha">
                                 <i class="fas fa-key"></i>
+                            </button>
+                            <button 
+                                onclick="abrirOffcanvasRestringir(<?= $usuario['id'] ?>)" 
+                                class="text-orange-600 hover:text-orange-900" 
+                                title="Restringir">
+                                <i class="fas fa-ban"></i>
                             </button>
                             <button 
                                 onclick="excluirUsuario(<?= $usuario['id'] ?>)" 
@@ -118,16 +127,55 @@ ob_start();
     </div>
 </div>
 
-<!-- Modal Resetar Senha -->
-<div id="modalResetarSenha" class="fixed inset-0 z-50 hidden">
-    <div class="fixed inset-0 bg-gray-600 bg-opacity-50 transition-opacity" onclick="fecharModalResetarSenha()"></div>
-    <div class="fixed inset-0 flex items-center justify-center p-4">
-        <div class="bg-white rounded-lg shadow-xl p-6 max-w-md w-full">
-            <h3 class="text-lg font-medium text-gray-900 mb-4">Resetar Senha</h3>
-            <form onsubmit="resetarSenha(event)">
-                <input type="hidden" id="resetarSenhaUsuarioId" name="usuario_id" value="">
-                <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Nova Senha</label>
+<!-- Offcanvas para Editar Usuário -->
+<div id="offcanvasEditar" class="fixed inset-0 z-50 hidden">
+    <div class="fixed inset-0 bg-gray-600 bg-opacity-50 transition-opacity" onclick="fecharOffcanvasEditar()"></div>
+    <div id="offcanvasEditarPanel" class="fixed right-0 top-0 h-full w-full md:w-[90%] lg:w-[900px] bg-gray-50 shadow-xl transform translate-x-full transition-transform duration-300 ease-in-out overflow-y-auto">
+        <div class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 z-10">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <i class="fas fa-user-edit text-gray-600"></i>
+                    <h2 class="text-xl font-bold text-gray-900">Editar Usuário</h2>
+                </div>
+                <button onclick="fecharOffcanvasEditar()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+        </div>
+        <div id="offcanvasEditarContent" class="p-6">
+            <div id="loadingEditar" class="flex items-center justify-center py-12">
+                <div class="text-center">
+                    <i class="fas fa-spinner fa-spin text-4xl text-blue-600 mb-4"></i>
+                    <p class="text-gray-600">Carregando dados do usuário...</p>
+                </div>
+            </div>
+            <div id="formEditar" class="hidden"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Offcanvas para Trocar Senha -->
+<div id="offcanvasTrocarSenha" class="fixed inset-0 z-50 hidden">
+    <div class="fixed inset-0 bg-gray-600 bg-opacity-50 transition-opacity" onclick="fecharOffcanvasTrocarSenha()"></div>
+    <div id="offcanvasTrocarSenhaPanel" class="fixed right-0 top-0 h-full w-full md:w-[90%] lg:w-[500px] bg-gray-50 shadow-xl transform translate-x-full transition-transform duration-300 ease-in-out overflow-y-auto">
+        <div class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 z-10">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <i class="fas fa-key text-gray-600"></i>
+                    <h2 class="text-xl font-bold text-gray-900">Trocar Senha</h2>
+                </div>
+                <button onclick="fecharOffcanvasTrocarSenha()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+        </div>
+        <div class="p-6">
+            <form id="formTrocarSenha" onsubmit="trocarSenha(event)">
+                <input type="hidden" id="trocarSenhaUsuarioId" name="usuario_id" value="">
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Nova Senha <span class="text-red-500">*</span>
+                    </label>
                     <input 
                         type="password" 
                         id="novaSenha" 
@@ -135,22 +183,324 @@ ob_start();
                         required 
                         minlength="6"
                         class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        placeholder="Mínimo de 6 caracteres"
                     >
+                    <p class="text-xs text-gray-500 mt-1">A senha deve ter pelo menos 6 caracteres</p>
                 </div>
-                <div class="flex justify-end gap-3">
+                <div class="flex justify-end gap-3 pt-6 border-t border-gray-200">
                     <button 
                         type="button" 
-                        onclick="fecharModalResetarSenha()" 
-                        class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
+                        onclick="fecharOffcanvasTrocarSenha()" 
+                        class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
                         Cancelar
                     </button>
                     <button 
                         type="submit" 
-                        class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-                        Resetar Senha
+                        class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                        <i class="fas fa-save mr-2"></i>
+                        Salvar Senha
                     </button>
                 </div>
             </form>
+        </div>
+    </div>
+</div>
+
+<!-- Offcanvas para Novo Usuário -->
+<div id="offcanvasNovoUsuario" class="fixed inset-0 z-50 hidden">
+    <div class="fixed inset-0 bg-gray-600 bg-opacity-50 transition-opacity" onclick="fecharOffcanvasNovoUsuario()"></div>
+    <div id="offcanvasNovoUsuarioPanel" class="fixed right-0 top-0 h-full w-full md:w-[90%] lg:w-[900px] bg-gray-50 shadow-xl transform translate-x-full transition-transform duration-300 ease-in-out overflow-y-auto">
+        <div class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 z-10">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <i class="fas fa-user-plus text-gray-600"></i>
+                    <h2 class="text-xl font-bold text-gray-900">Novo Usuário</h2>
+                </div>
+                <button onclick="fecharOffcanvasNovoUsuario()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+        </div>
+        <div class="p-6">
+            <form id="formNovoUsuario" onsubmit="salvarNovoUsuario(event)">
+                <!-- Dados Pessoais -->
+                <div class="mb-8">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Dados Pessoais</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Nome Completo <span class="text-red-500">*</span>
+                            </label>
+                            <input 
+                                type="text" 
+                                name="nome" 
+                                required
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            >
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                CPF <span class="text-red-500">*</span>
+                            </label>
+                            <input 
+                                type="text" 
+                                name="cpf" 
+                                required
+                                maxlength="14"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                placeholder="000.000.000-00"
+                                oninput="aplicarMascaraCPF(this)"
+                            >
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                E-mail <span class="text-red-500">*</span>
+                            </label>
+                            <input 
+                                type="email" 
+                                name="email" 
+                                required
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            >
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Telefone <span class="text-red-500">*</span>
+                            </label>
+                            <input 
+                                type="text" 
+                                name="telefone" 
+                                required
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                placeholder="(00) 00000-0000"
+                                oninput="aplicarMascaraTelefone(this)"
+                            >
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Senha <span class="text-red-500">*</span>
+                            </label>
+                            <input 
+                                type="password" 
+                                name="senha" 
+                                required
+                                minlength="6"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            >
+                            <p class="text-xs text-gray-500 mt-1">Mínimo de 6 caracteres</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Endereço -->
+                <div class="mb-8">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Endereço do Usuário</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                CEP <span class="text-red-500">*</span>
+                            </label>
+                            <input 
+                                type="text" 
+                                name="cep" 
+                                id="cepNovo"
+                                required
+                                maxlength="9"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                placeholder="00000-000"
+                                oninput="aplicarMascaraCEP(this)"
+                                onblur="buscarCEP(this.value, 'enderecoNovo', 'bairroNovo', 'cidadeNovo', 'ufNovo')"
+                            >
+                        </div>
+
+                        <div></div>
+
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Endereço <span class="text-red-500">*</span>
+                            </label>
+                            <input 
+                                type="text" 
+                                name="endereco" 
+                                id="enderecoNovo"
+                                required
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            >
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Número <span class="text-red-500">*</span>
+                            </label>
+                            <input 
+                                type="text" 
+                                name="numero" 
+                                required
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            >
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Complemento
+                            </label>
+                            <input 
+                                type="text" 
+                                name="complemento" 
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            >
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Bairro <span class="text-red-500">*</span>
+                            </label>
+                            <input 
+                                type="text" 
+                                name="bairro" 
+                                id="bairroNovo"
+                                required
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            >
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Cidade <span class="text-red-500">*</span>
+                            </label>
+                            <input 
+                                type="text" 
+                                name="cidade" 
+                                id="cidadeNovo"
+                                required
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            >
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                UF <span class="text-red-500">*</span>
+                            </label>
+                            <input 
+                                type="text" 
+                                name="uf" 
+                                id="ufNovo"
+                                required
+                                maxlength="2"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent uppercase"
+                            >
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Credenciais e Permissões -->
+                <div class="mb-8">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Credenciais e Permissões</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Nível de Acesso <span class="text-red-500">*</span>
+                            </label>
+                            <select 
+                                name="nivel_permissao" 
+                                required
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            >
+                                <option value="">Selecione...</option>
+                                <option value="OPERADOR">Operador</option>
+                                <option value="ADMINISTRADOR">Administrador</option>
+                            </select>
+                            <p class="text-xs text-gray-500 mt-1">Operador: acesso às solicitações | Administrador: acesso total</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Botões -->
+                <div class="flex justify-end gap-3 pt-6 border-t border-gray-200">
+                    <button 
+                        type="button" 
+                        onclick="fecharOffcanvasNovoUsuario()" 
+                        class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                        Cancelar
+                    </button>
+                    <button 
+                        type="submit" 
+                        class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                        <i class="fas fa-save mr-2"></i>
+                        Salvar Usuário
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Offcanvas para Restringir Usuário -->
+<div id="offcanvasRestringir" class="fixed inset-0 z-50 hidden">
+    <div class="fixed inset-0 bg-gray-600 bg-opacity-50 transition-opacity" onclick="fecharOffcanvasRestringir()"></div>
+    <div id="offcanvasRestringirPanel" class="fixed right-0 top-0 h-full w-full md:w-[90%] lg:w-[500px] bg-gray-50 shadow-xl transform translate-x-full transition-transform duration-300 ease-in-out overflow-y-auto">
+        <div class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 z-10">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <i class="fas fa-ban text-gray-600"></i>
+                    <h2 class="text-xl font-bold text-gray-900">Restringir Usuário</h2>
+                </div>
+                <button onclick="fecharOffcanvasRestringir()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+        </div>
+        <div class="p-6">
+            <div id="loadingRestringir" class="flex items-center justify-center py-12">
+                <div class="text-center">
+                    <i class="fas fa-spinner fa-spin text-4xl text-blue-600 mb-4"></i>
+                    <p class="text-gray-600">Carregando dados do usuário...</p>
+                </div>
+            </div>
+            <div id="formRestringir" class="hidden">
+                <div class="mb-6">
+                    <p class="text-gray-700 mb-4">Você está prestes a alterar o status deste usuário:</p>
+                    <div class="bg-white rounded-lg border border-gray-200 p-4 mb-4">
+                        <p class="text-sm text-gray-600 mb-1">Nome:</p>
+                        <p class="text-lg font-medium text-gray-900" id="restringirNome"></p>
+                        <p class="text-sm text-gray-600 mb-1 mt-3">Status Atual:</p>
+                        <p class="text-lg font-medium" id="restringirStatusAtual"></p>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Novo Status <span class="text-red-500">*</span>
+                        </label>
+                        <select 
+                            id="novoStatus" 
+                            name="status" 
+                            required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        >
+                            <option value="ATIVO">Ativo</option>
+                            <option value="INATIVO">Inativo</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="flex justify-end gap-3 pt-6 border-t border-gray-200">
+                    <button 
+                        type="button" 
+                        onclick="fecharOffcanvasRestringir()" 
+                        class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                        Cancelar
+                    </button>
+                    <button 
+                        type="button" 
+                        onclick="confirmarRestringir()" 
+                        class="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors">
+                        <i class="fas fa-save mr-2"></i>
+                        Confirmar Alteração
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -161,6 +511,466 @@ include 'app/Views/layouts/admin.php';
 ?>
 
 <script>
+let usuarioEditandoId = null;
+let usuarioRestringindoId = null;
+
+// ========== FUNÇÕES DE EDIÇÃO ==========
+function abrirOffcanvasEditar(usuarioId) {
+    const offcanvas = document.getElementById('offcanvasEditar');
+    const panel = document.getElementById('offcanvasEditarPanel');
+    const loadingEditar = document.getElementById('loadingEditar');
+    const formEditar = document.getElementById('formEditar');
+    
+    usuarioEditandoId = usuarioId;
+    
+    offcanvas.classList.remove('hidden');
+    setTimeout(() => panel.classList.remove('translate-x-full'), 10);
+    
+    loadingEditar.classList.remove('hidden');
+    formEditar.classList.add('hidden');
+    
+    fetch(`<?= url('admin/usuarios/') ?>${usuarioId}/api`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                renderizarFormularioEditar(data.usuario);
+            } else {
+                formEditar.innerHTML = `
+                    <div class="text-center py-12">
+                        <i class="fas fa-exclamation-triangle text-4xl text-red-600 mb-4"></i>
+                        <p class="text-gray-600">${data.message || 'Erro ao carregar dados do usuário'}</p>
+                    </div>
+                `;
+            }
+            loadingEditar.classList.add('hidden');
+            formEditar.classList.remove('hidden');
+        })
+        .catch(error => {
+            console.error('Erro:', error);
+            formEditar.innerHTML = `
+                <div class="text-center py-12">
+                    <i class="fas fa-exclamation-triangle text-4xl text-red-600 mb-4"></i>
+                    <p class="text-gray-600">Erro ao carregar dados do usuário</p>
+                </div>
+            `;
+            loadingEditar.classList.add('hidden');
+            formEditar.classList.remove('hidden');
+        });
+}
+
+function fecharOffcanvasEditar() {
+    const offcanvas = document.getElementById('offcanvasEditar');
+    const panel = document.getElementById('offcanvasEditarPanel');
+    
+    panel.classList.add('translate-x-full');
+    setTimeout(() => {
+        offcanvas.classList.add('hidden');
+        usuarioEditandoId = null;
+    }, 300);
+}
+
+function renderizarFormularioEditar(usuario) {
+    const formEditar = document.getElementById('formEditar');
+    
+    const html = `
+        <form id="formEditarUsuario" onsubmit="salvarEdicao(event)">
+            <!-- Dados Pessoais -->
+            <div class="mb-8">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Dados Pessoais</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Nome Completo <span class="text-red-500">*</span>
+                        </label>
+                        <input 
+                            type="text" 
+                            name="nome" 
+                            value="${escapeHtml(usuario.nome || '')}"
+                            required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        >
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            CPF <span class="text-red-500">*</span>
+                        </label>
+                        <input 
+                            type="text" 
+                            name="cpf" 
+                            value="${escapeHtml(usuario.cpf || '')}"
+                            required
+                            maxlength="14"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            placeholder="000.000.000-00"
+                            oninput="aplicarMascaraCPF(this)"
+                        >
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            E-mail <span class="text-red-500">*</span>
+                        </label>
+                        <input 
+                            type="email" 
+                            name="email" 
+                            value="${escapeHtml(usuario.email || '')}"
+                            required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        >
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Telefone <span class="text-red-500">*</span>
+                        </label>
+                        <input 
+                            type="text" 
+                            name="telefone" 
+                            value="${escapeHtml(usuario.telefone || '')}"
+                            required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            placeholder="(00) 00000-0000"
+                            oninput="aplicarMascaraTelefone(this)"
+                        >
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Nova Senha (deixe em branco para não alterar)
+                        </label>
+                        <input 
+                            type="password" 
+                            name="senha" 
+                            minlength="6"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        >
+                        <p class="text-xs text-gray-500 mt-1">Mínimo de 6 caracteres</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Endereço -->
+            <div class="mb-8">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Endereço do Usuário</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            CEP <span class="text-red-500">*</span>
+                        </label>
+                        <input 
+                            type="text" 
+                            name="cep" 
+                            id="cepEditar"
+                            value="${escapeHtml(usuario.cep || '')}"
+                            required
+                            maxlength="9"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            placeholder="00000-000"
+                            oninput="aplicarMascaraCEP(this)"
+                            onblur="buscarCEP(this.value, 'enderecoEditar', 'bairroEditar', 'cidadeEditar', 'ufEditar')"
+                        >
+                    </div>
+
+                    <div></div>
+
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Endereço <span class="text-red-500">*</span>
+                        </label>
+                        <input 
+                            type="text" 
+                            name="endereco" 
+                            id="enderecoEditar"
+                            value="${escapeHtml(usuario.endereco || '')}"
+                            required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        >
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Número <span class="text-red-500">*</span>
+                        </label>
+                        <input 
+                            type="text" 
+                            name="numero" 
+                            value="${escapeHtml(usuario.numero || '')}"
+                            required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        >
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Complemento
+                        </label>
+                        <input 
+                            type="text" 
+                            name="complemento" 
+                            value="${escapeHtml(usuario.complemento || '')}"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        >
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Bairro <span class="text-red-500">*</span>
+                        </label>
+                        <input 
+                            type="text" 
+                            name="bairro" 
+                            id="bairroEditar"
+                            value="${escapeHtml(usuario.bairro || '')}"
+                            required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        >
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Cidade <span class="text-red-500">*</span>
+                        </label>
+                        <input 
+                            type="text" 
+                            name="cidade" 
+                            id="cidadeEditar"
+                            value="${escapeHtml(usuario.cidade || '')}"
+                            required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        >
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            UF <span class="text-red-500">*</span>
+                        </label>
+                        <input 
+                            type="text" 
+                            name="uf" 
+                            id="ufEditar"
+                            value="${escapeHtml(usuario.uf || '')}"
+                            required
+                            maxlength="2"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent uppercase"
+                        >
+                    </div>
+                </div>
+            </div>
+
+            <!-- Credenciais e Permissões -->
+            <div class="mb-8">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Credenciais e Permissões</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Nível de Acesso <span class="text-red-500">*</span>
+                        </label>
+                        <select 
+                            name="nivel_permissao" 
+                            required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        >
+                            <option value="">Selecione...</option>
+                            <option value="OPERADOR" ${usuario.nivel_permissao === 'OPERADOR' ? 'selected' : ''}>Operador</option>
+                            <option value="ADMINISTRADOR" ${usuario.nivel_permissao === 'ADMINISTRADOR' ? 'selected' : ''}>Administrador</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Status <span class="text-red-500">*</span>
+                        </label>
+                        <select 
+                            name="status" 
+                            required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        >
+                            <option value="ATIVO" ${usuario.status === 'ATIVO' ? 'selected' : ''}>Ativo</option>
+                            <option value="INATIVO" ${usuario.status === 'INATIVO' ? 'selected' : ''}>Inativo</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Botões -->
+            <div class="flex justify-end gap-3 pt-6 border-t border-gray-200">
+                <button 
+                    type="button" 
+                    onclick="fecharOffcanvasEditar()" 
+                    class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                    Cancelar
+                </button>
+                <button 
+                    type="submit" 
+                    class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                    <i class="fas fa-save mr-2"></i>
+                    Salvar Alterações
+                </button>
+            </div>
+        </form>
+    `;
+    
+    formEditar.innerHTML = html;
+}
+
+function salvarEdicao(event) {
+    event.preventDefault();
+    
+    const form = event.target;
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData);
+    
+    fetch(`<?= url('admin/usuarios/') ?>${usuarioEditandoId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            alert(result.message || 'Usuário atualizado com sucesso');
+            fecharOffcanvasEditar();
+            location.reload();
+        } else {
+            alert(result.error || 'Erro ao atualizar usuário');
+        }
+    })
+    .catch(error => {
+        console.error('Erro:', error);
+        alert('Erro ao atualizar usuário');
+    });
+}
+
+// ========== FUNÇÕES DE TROCAR SENHA ==========
+function abrirOffcanvasTrocarSenha(usuarioId) {
+    const offcanvas = document.getElementById('offcanvasTrocarSenha');
+    const panel = document.getElementById('offcanvasTrocarSenhaPanel');
+    
+    document.getElementById('trocarSenhaUsuarioId').value = usuarioId;
+    document.getElementById('novaSenha').value = '';
+    
+    offcanvas.classList.remove('hidden');
+    setTimeout(() => panel.classList.remove('translate-x-full'), 10);
+    document.getElementById('novaSenha').focus();
+}
+
+function fecharOffcanvasTrocarSenha() {
+    const offcanvas = document.getElementById('offcanvasTrocarSenha');
+    const panel = document.getElementById('offcanvasTrocarSenhaPanel');
+    
+    panel.classList.add('translate-x-full');
+    setTimeout(() => offcanvas.classList.add('hidden'), 300);
+}
+
+function trocarSenha(event) {
+    event.preventDefault();
+    
+    const usuarioId = document.getElementById('trocarSenhaUsuarioId').value;
+    const novaSenha = document.getElementById('novaSenha').value;
+    
+    fetch(`<?= url('admin/usuarios/') ?>${usuarioId}/resetar-senha`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ nova_senha: novaSenha })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            fecharOffcanvasTrocarSenha();
+            location.reload();
+        } else {
+            alert(data.error || 'Erro ao trocar senha');
+        }
+    })
+    .catch(error => {
+        console.error('Erro:', error);
+        alert('Erro ao trocar senha');
+    });
+}
+
+// ========== FUNÇÕES DE RESTRINGIR ==========
+function abrirOffcanvasRestringir(usuarioId) {
+    const offcanvas = document.getElementById('offcanvasRestringir');
+    const panel = document.getElementById('offcanvasRestringirPanel');
+    const loadingRestringir = document.getElementById('loadingRestringir');
+    const formRestringir = document.getElementById('formRestringir');
+    
+    usuarioRestringindoId = usuarioId;
+    
+    offcanvas.classList.remove('hidden');
+    setTimeout(() => panel.classList.remove('translate-x-full'), 10);
+    
+    loadingRestringir.classList.remove('hidden');
+    formRestringir.classList.add('hidden');
+    
+    fetch(`<?= url('admin/usuarios/') ?>${usuarioId}/api`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('restringirNome').textContent = data.usuario.nome;
+                const statusAtual = data.usuario.status === 'ATIVO' ? 'Ativo' : 'Inativo';
+                const statusClass = data.usuario.status === 'ATIVO' ? 'text-green-600' : 'text-red-600';
+                document.getElementById('restringirStatusAtual').textContent = statusAtual;
+                document.getElementById('restringirStatusAtual').className = `text-lg font-medium ${statusClass}`;
+                document.getElementById('novoStatus').value = data.usuario.status === 'ATIVO' ? 'INATIVO' : 'ATIVO';
+            } else {
+                alert(data.message || 'Erro ao carregar dados do usuário');
+                fecharOffcanvasRestringir();
+            }
+            loadingRestringir.classList.add('hidden');
+            formRestringir.classList.remove('hidden');
+        })
+        .catch(error => {
+            console.error('Erro:', error);
+            alert('Erro ao carregar dados do usuário');
+            fecharOffcanvasRestringir();
+        });
+}
+
+function fecharOffcanvasRestringir() {
+    const offcanvas = document.getElementById('offcanvasRestringir');
+    const panel = document.getElementById('offcanvasRestringirPanel');
+    
+    panel.classList.add('translate-x-full');
+    setTimeout(() => {
+        offcanvas.classList.add('hidden');
+        usuarioRestringindoId = null;
+    }, 300);
+}
+
+function confirmarRestringir() {
+    const novoStatus = document.getElementById('novoStatus').value;
+    
+    fetch(`<?= url('admin/usuarios/') ?>${usuarioRestringindoId}/toggle-status`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            fecharOffcanvasRestringir();
+            location.reload();
+        } else {
+            alert(data.error || 'Erro ao alterar status');
+        }
+    })
+    .catch(error => {
+        console.error('Erro:', error);
+        alert('Erro ao alterar status');
+    });
+}
+
+// ========== FUNÇÕES AUXILIARES ==========
 function toggleStatus(usuarioId) {
     if (confirm('Deseja realmente alterar o status deste usuário?')) {
         fetch(`<?= url('admin/usuarios/') ?>${usuarioId}/toggle-status`, {
@@ -189,45 +999,6 @@ function toggleStatus(usuarioId) {
     }
 }
 
-function mostrarModalResetarSenha(usuarioId) {
-    document.getElementById('resetarSenhaUsuarioId').value = usuarioId;
-    document.getElementById('modalResetarSenha').classList.remove('hidden');
-    document.getElementById('novaSenha').value = '';
-    document.getElementById('novaSenha').focus();
-}
-
-function fecharModalResetarSenha() {
-    document.getElementById('modalResetarSenha').classList.add('hidden');
-}
-
-function resetarSenha(event) {
-    event.preventDefault();
-    
-    const usuarioId = document.getElementById('resetarSenhaUsuarioId').value;
-    const novaSenha = document.getElementById('novaSenha').value;
-    
-    fetch(`<?= url('admin/usuarios/') ?>${usuarioId}/resetar-senha`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ nova_senha: novaSenha })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            alert(data.message);
-            fecharModalResetarSenha();
-        } else {
-            alert(data.error || 'Erro ao resetar senha');
-        }
-    })
-    .catch(error => {
-        alert('Erro ao resetar senha');
-        console.error('Error:', error);
-    });
-}
-
 function excluirUsuario(usuarioId) {
     if (confirm('Deseja realmente excluir este usuário? Esta ação não pode ser desfeita.')) {
         fetch(`<?= url('admin/usuarios/') ?>${usuarioId}/delete`, {
@@ -252,10 +1023,119 @@ function excluirUsuario(usuarioId) {
     }
 }
 
-// Fechar modal com ESC
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function aplicarMascaraCPF(input) {
+    let value = input.value.replace(/\D/g, '');
+    value = value.replace(/(\d{3})(\d)/, '$1.$2');
+    value = value.replace(/(\d{3})(\d)/, '$1.$2');
+    value = value.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+    input.value = value;
+}
+
+function aplicarMascaraTelefone(input) {
+    let value = input.value.replace(/\D/g, '');
+    value = value.replace(/^(\d{2})(\d)/g, '($1) $2');
+    value = value.replace(/(\d)(\d{4})$/, '$1-$2');
+    input.value = value;
+}
+
+function aplicarMascaraCEP(input) {
+    let value = input.value.replace(/\D/g, '');
+    value = value.replace(/(\d{5})(\d)/, '$1-$2');
+    input.value = value;
+}
+
+function buscarCEP(cep, enderecoId, bairroId, cidadeId, ufId) {
+    const cepLimpo = cep.replace(/\D/g, '');
+    
+    if (cepLimpo.length === 8) {
+        fetch(`https://viacep.com.br/ws/${cepLimpo}/json/`)
+            .then(response => response.json())
+            .then(data => {
+                if (!data.erro) {
+                    document.getElementById(enderecoId).value = data.logradouro || '';
+                    document.getElementById(bairroId).value = data.bairro || '';
+                    document.getElementById(cidadeId).value = data.localidade || '';
+                    document.getElementById(ufId).value = data.uf || '';
+                }
+            })
+            .catch(error => console.error('Erro ao buscar CEP:', error));
+    }
+}
+
+// ========== FUNÇÕES DE NOVO USUÁRIO ==========
+function abrirOffcanvasNovoUsuario() {
+    const offcanvas = document.getElementById('offcanvasNovoUsuario');
+    const panel = document.getElementById('offcanvasNovoUsuarioPanel');
+    
+    // Limpar formulário
+    document.getElementById('formNovoUsuario').reset();
+    
+    offcanvas.classList.remove('hidden');
+    setTimeout(() => panel.classList.remove('translate-x-full'), 10);
+    
+    // Focar no primeiro campo
+    setTimeout(() => {
+        const primeiroCampo = document.querySelector('#formNovoUsuario input[name="nome"]');
+        if (primeiroCampo) primeiroCampo.focus();
+    }, 100);
+}
+
+function fecharOffcanvasNovoUsuario() {
+    const offcanvas = document.getElementById('offcanvasNovoUsuario');
+    const panel = document.getElementById('offcanvasNovoUsuarioPanel');
+    
+    panel.classList.add('translate-x-full');
+    setTimeout(() => {
+        offcanvas.classList.add('hidden');
+        // Limpar formulário ao fechar
+        document.getElementById('formNovoUsuario').reset();
+    }, 300);
+}
+
+function salvarNovoUsuario(event) {
+    event.preventDefault();
+    
+    const form = event.target;
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData);
+    
+    fetch(`<?= url('admin/usuarios') ?>`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            alert(result.message || 'Usuário criado com sucesso');
+            fecharOffcanvasNovoUsuario();
+            location.reload();
+        } else {
+            alert(result.error || 'Erro ao criar usuário');
+        }
+    })
+    .catch(error => {
+        console.error('Erro:', error);
+        alert('Erro ao criar usuário');
+    });
+}
+
+// Fechar offcanvas com ESC
 document.addEventListener('keydown', function(event) {
     if (event.key === 'Escape') {
-        fecharModalResetarSenha();
+        fecharOffcanvasEditar();
+        fecharOffcanvasTrocarSenha();
+        fecharOffcanvasRestringir();
+        fecharOffcanvasNovoUsuario();
     }
 });
 </script>
