@@ -247,18 +247,20 @@ document.addEventListener('DOMContentLoaded', function() {
             if (data && horario) {
                 const horarioCompleto = `${formatarData(data)} - ${horario}`;
                 
+                // Verificar se já existe (sem alerta, igual nova solicitação)
                 if (!horariosEscolhidos.includes(horarioCompleto) && horariosEscolhidos.length < 3) {
                     horariosEscolhidos.push(horarioCompleto);
                     atualizarListaHorarios();
                     // Resetar seleção após adicionar
                     this.checked = false;
                     atualizarEstiloCards();
-                } else if (horariosEscolhidos.includes(horarioCompleto)) {
-                    alert('Este horário já foi adicionado. Escolha outro.');
-                    this.checked = false;
                 } else if (horariosEscolhidos.length >= 3) {
                     alert('Você pode selecionar no máximo 3 horários.');
                     this.checked = false;
+                } else {
+                    // Horário já existe - apenas desmarcar sem alerta
+                    this.checked = false;
+                    atualizarEstiloCards();
                 }
             }
         });
@@ -266,10 +268,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Click no card de horário também seleciona o radio
     horarioCards.forEach(card => {
-        card.addEventListener('click', function() {
+        card.addEventListener('click', function(e) {
+            // Evitar duplo disparo se o click foi no radio
+            if (e.target.type === 'radio') {
+                return;
+            }
             const label = this.closest('label');
             const radio = label ? label.querySelector('.horario-radio') : null;
-            if (radio) {
+            if (radio && !radio.checked) {
                 radio.checked = true;
                 radio.dispatchEvent(new Event('change'));
             }
@@ -336,21 +342,45 @@ document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('formCompraPeca');
     if (form) {
         form.addEventListener('submit', function(e) {
+            // Validar se há pelo menos 1 horário
+            if (horariosEscolhidos.length === 0) {
+                e.preventDefault();
+                alert('Por favor, selecione pelo menos uma data e horário');
+                return false;
+            }
+            
             // Converter: "29/10/2025 - 08:00-11:00" → "2025-10-29 08:00:00"
             const horariosFormatados = horariosEscolhidos.map(horario => {
                 const [dataStr, faixaHorario] = horario.split(' - ');
+                if (!dataStr || !faixaHorario) {
+                    console.error('Erro ao processar horário:', horario);
+                    return null;
+                }
                 const [dia, mes, ano] = dataStr.split('/');
                 const horarioInicial = faixaHorario.split('-')[0];
+                if (!dia || !mes || !ano || !horarioInicial) {
+                    console.error('Erro ao processar componentes do horário:', { dataStr, faixaHorario, dia, mes, ano, horarioInicial });
+                    return null;
+                }
                 return `${ano}-${mes}-${dia} ${horarioInicial}:00`;
-            });
+            }).filter(h => h !== null);
             
-            // Enviar como JSON no formato esperado
-            document.getElementById('novas_datas').value = JSON.stringify(horariosFormatados);
-            
-            // Validar se há pelo menos 1 horário
+            // Validar novamente após conversão
             if (horariosFormatados.length === 0) {
                 e.preventDefault();
-                alert('Por favor, selecione pelo menos uma data e horário');
+                alert('Erro ao processar os horários selecionados. Por favor, tente novamente.');
+                return false;
+            }
+            
+            // Enviar como JSON no formato esperado
+            const novasDatasInput = document.getElementById('novas_datas');
+            if (novasDatasInput) {
+                novasDatasInput.value = JSON.stringify(horariosFormatados);
+                console.log('Horários enviados:', horariosFormatados);
+            } else {
+                console.error('Campo novas_datas não encontrado!');
+                e.preventDefault();
+                alert('Erro ao processar formulário. Por favor, recarregue a página e tente novamente.');
                 return false;
             }
         });

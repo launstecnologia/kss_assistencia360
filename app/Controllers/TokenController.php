@@ -2099,25 +2099,39 @@ class TokenController extends Controller
             }
 
             if (empty($datasConvertidas)) {
+                error_log('Compra de peça: Nenhuma data convertida. Input recebido: ' . var_export($novasDatasInput, true));
                 $this->view('token.compra-peca', [
                     'token' => $token,
                     'tokenData' => $tokenData,
                     'solicitacao' => $solicitacao,
                     'title' => 'Informar Compra de Peça e Selecionar Horários',
-                    'error' => 'Por favor, selecione pelo menos uma data e horário válidos.'
+                    'error' => 'Por favor, selecione pelo menos uma data e horário válidos. Se o problema persistir, tente selecionar novamente.'
                 ]);
                 return;
             }
 
             // Validar novas datas
-            $datasErrors = $this->solicitacaoModel->validarDatasOpcoes($datasConvertidas);
-            if (!empty($datasErrors)) {
+            try {
+                $datasErrors = $this->solicitacaoModel->validarDatasOpcoes($datasConvertidas);
+                if (!empty($datasErrors)) {
+                    error_log('Compra de peça: Erros de validação: ' . implode(', ', $datasErrors));
+                    $this->view('token.compra-peca', [
+                        'token' => $token,
+                        'tokenData' => $tokenData,
+                        'solicitacao' => $solicitacao,
+                        'title' => 'Informar Compra de Peça e Selecionar Horários',
+                        'error' => 'As datas selecionadas não são válidas: ' . implode(', ', $datasErrors) . '. Por favor, selecione datas futuras em dias úteis.'
+                    ]);
+                    return;
+                }
+            } catch (\Exception $e) {
+                error_log('Compra de peça: Erro ao validar datas: ' . $e->getMessage());
                 $this->view('token.compra-peca', [
                     'token' => $token,
                     'tokenData' => $tokenData,
                     'solicitacao' => $solicitacao,
                     'title' => 'Informar Compra de Peça e Selecionar Horários',
-                    'error' => 'As datas selecionadas não são válidas: ' . implode(', ', $datasErrors)
+                    'error' => 'Erro ao validar as datas selecionadas. Por favor, tente novamente.'
                 ]);
                 return;
             }
@@ -2189,12 +2203,23 @@ class TokenController extends Controller
         } catch (\Exception $e) {
             error_log('Erro ao processar compra de peça: ' . $e->getMessage());
             error_log('Stack trace: ' . $e->getTraceAsString());
+            error_log('Dados recebidos: ' . var_export($this->input('novas_datas'), true));
+            
+            $errorMessage = 'Erro ao processar. Por favor, tente novamente ou entre em contato conosco.';
+            
+            // Mensagens de erro mais específicas
+            if (strpos($e->getMessage(), 'validarDatasOpcoes') !== false) {
+                $errorMessage = 'As datas selecionadas não são válidas. Por favor, selecione datas futuras em dias úteis.';
+            } elseif (strpos($e->getMessage(), 'update') !== false || strpos($e->getMessage(), 'solicitacao') !== false) {
+                $errorMessage = 'Erro ao atualizar a solicitação. Por favor, tente novamente.';
+            }
+            
             $this->view('token.compra-peca', [
                 'token' => $token,
                 'tokenData' => $tokenData,
                 'solicitacao' => $solicitacao,
                 'title' => 'Informar Compra de Peça e Selecionar Horários',
-                'error' => 'Erro ao processar. Por favor, tente novamente ou entre em contato conosco.'
+                'error' => $errorMessage
             ]);
         }
     }
