@@ -158,6 +158,10 @@ class SolicitacoesController extends Controller
         }
         $solicitacao['historico_status'] = $historicoStatus;
         
+        // Buscar links de ações (tokens gerados)
+        $linksAcoes = $this->getLinksAcoes($id, $solicitacao);
+        $solicitacao['links_acoes'] = $linksAcoes;
+        
         // Debug: Log das fotos encontradas
         error_log("📸 API Solicitação #{$id} - Fotos encontradas: " . count($fotos));
         if (!empty($fotos)) {
@@ -3410,5 +3414,110 @@ class SolicitacoesController extends Controller
             error_log('Erro ao confirmar agendamento final: ' . $e->getMessage());
             $this->json(['error' => 'Erro ao processar: ' . $e->getMessage()], 500);
         }
+    }
+    
+    /**
+     * Busca todos os links de ações (tokens) gerados para uma solicitação
+     */
+    private function getLinksAcoes(int $solicitacaoId, array $solicitacao): array
+    {
+        $links = [];
+        
+        // Buscar URL base configurada
+        $config = require __DIR__ . '/../Config/config.php';
+        $baseUrl = $config['whatsapp']['links_base_url'] ?? $config['app']['url'] ?? 'https://kss.launs.com.br';
+        $baseUrl = rtrim($baseUrl, '/');
+        
+        // Buscar todos os tokens da solicitação
+        $sql = "
+            SELECT * FROM schedule_confirmation_tokens
+            WHERE solicitacao_id = ?
+            ORDER BY created_at DESC
+        ";
+        $tokens = \App\Core\Database::fetchAll($sql, [$solicitacaoId]);
+        
+        foreach ($tokens as $token) {
+            $actionType = $token['action_type'] ?? '';
+            $isUsed = !empty($token['used_at']);
+            $isExpired = strtotime($token['expires_at']) < time();
+            $status = $isUsed ? 'usado' : ($isExpired ? 'expirado' : 'ativo');
+            
+            // Determinar tipo de link baseado no action_type
+            $tipoLink = '';
+            $url = '';
+            
+            switch ($actionType) {
+                case 'confirm':
+                case 'confirmation':
+                    $tipoLink = 'Confirmação de Horário';
+                    $url = $baseUrl . '/confirmacao-horario?token=' . $token['token'];
+                    break;
+                case 'cancel':
+                case 'cancellation':
+                    $tipoLink = 'Cancelamento de Horário';
+                    $url = $baseUrl . '/cancelamento-horario?token=' . $token['token'];
+                    break;
+                case 'reschedule':
+                    $tipoLink = 'Reagendamento';
+                    $url = $baseUrl . '/reagendamento-horario?token=' . $token['token'];
+                    break;
+                case 'compra_peca':
+                    $tipoLink = 'Compra de Peça';
+                    $url = $baseUrl . '/compra-peca?token=' . $token['token'];
+                    break;
+                case 'pre_servico':
+                    $tipoLink = 'Ações Pré-Serviço';
+                    $url = $baseUrl . '/acoes-servico?token=' . $token['token'];
+                    break;
+                case 'pos_servico':
+                case 'service_status':
+                    $tipoLink = 'Ações Pós-Serviço';
+                    $url = $baseUrl . '/acoes-servico?token=' . $token['token'];
+                    break;
+                default:
+                    $tipoLink = 'Ação Genérica';
+                    $url = $baseUrl . '/confirmacao-horario?token=' . $token['token'];
+            }
+            
+            $links[] = [
+                'tipo' => $tipoLink,
+                'url' => $url,
+                'token' => $token['token'],
+                'status' => $status,
+                'criado_em' => $token['created_at'],
+                'expira_em' => $token['expires_at'],
+                'usado_em' => $token['used_at'] ?? null,
+                'action_type' => $actionType
+            ];
+        }
+        
+        // Adicionar link de status público (permanente)
+        $links[] = [
+            'tipo' => 'Status da Solicitação',
+            'url' => $baseUrl . '/status-servico?protocol=' . urlencode($solicitacao['numero_solicitacao'] ?? 'KS' . $solicitacaoId),
+            'token' => null,
+            'status' => 'permanente',
+            'criado_em' => null,
+            'expira_em' => null,
+            'usado_em' => null,
+            'action_type' => 'status_publico'
+        ];
+        
+        // Adicionar link de cancelamento de solicitação (permanente)
+        $instancia = $solicitacao['imobiliaria_instancia'] ?? '';
+        if (!empty($instancia)) {
+            $links[] = [
+                'tipo' => 'Cancelar Solicitação',
+                'url' => $baseUrl . '/' . $instancia . '/solicitacoes/' . $solicitacaoId . '/cancelar',
+                'token' => null,
+                'status' => 'permanente',
+                'criado_em' => null,
+                'expira_em' => null,
+                'usado_em' => null,
+                'action_type' => 'cancelar_solicitacao'
+            ];
+        }
+        
+        return $links;
     }
 }

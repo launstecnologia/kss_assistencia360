@@ -196,6 +196,10 @@ ob_start();
                         <i class="fas fa-copy mr-2"></i>
                         Copiar Informações
                     </button>
+                    <button onclick="abrirLinksAcoes()" class="px-4 py-2 bg-blue-100 hover:bg-blue-200 text-blue-700 text-sm font-medium rounded-lg transition-colors">
+                        <i class="fas fa-link mr-2"></i>
+                        Links de Ações
+                    </button>
                     <button onclick="fecharDetalhes()" class="text-gray-400 hover:text-gray-600 transition-colors">
                         <i class="fas fa-times text-xl"></i>
                     </button>
@@ -210,6 +214,35 @@ ob_start();
                 </div>
             </div>
             <div id="detalhesContent" class="hidden"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Links de Ações -->
+<div id="modalLinksAcoes" class="fixed inset-0 z-50 hidden">
+    <div class="fixed inset-0 bg-gray-600 bg-opacity-50 transition-opacity" onclick="fecharModalLinksAcoes()"></div>
+    <div class="fixed inset-0 flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+            <!-- Header do Modal -->
+            <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <i class="fas fa-link text-blue-600 text-xl"></i>
+                    <h3 class="text-lg font-semibold text-gray-900">Links de Ações</h3>
+                </div>
+                <button onclick="fecharModalLinksAcoes()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <!-- Conteúdo do Modal -->
+            <div class="flex-1 overflow-y-auto px-6 py-4">
+                <div id="linksAcoesContent" class="space-y-3">
+                    <div class="text-center py-8">
+                        <i class="fas fa-spinner fa-spin text-3xl text-gray-400 mb-3"></i>
+                        <p class="text-gray-600">Carregando links...</p>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -1410,6 +1443,212 @@ ${solicitacao.descricao_problema || 'Nenhuma descrição fornecida.'}`.trim();
         console.error('Erro ao copiar:', err);
         alert('Erro ao copiar informações. Por favor, tente novamente.');
     });
+}
+
+// Funções do Modal de Links de Ações
+function abrirLinksAcoes() {
+    if (!offcanvasSolicitacaoId) {
+        alert('Nenhuma solicitação selecionada');
+        return;
+    }
+    
+    const modal = document.getElementById('modalLinksAcoes');
+    const content = document.getElementById('linksAcoesContent');
+    
+    modal.classList.remove('hidden');
+    
+    // Mostrar loading
+    content.innerHTML = `
+        <div class="text-center py-8">
+            <i class="fas fa-spinner fa-spin text-3xl text-gray-400 mb-3"></i>
+            <p class="text-gray-600">Carregando links...</p>
+        </div>
+    `;
+    
+    // Buscar links da API
+    fetch(`<?= url('admin/solicitacoes/') ?>${offcanvasSolicitacaoId}/api`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.solicitacao.links_acoes) {
+                renderizarLinksAcoes(data.solicitacao.links_acoes);
+            } else {
+                content.innerHTML = `
+                    <div class="text-center py-8">
+                        <i class="fas fa-exclamation-triangle text-3xl text-yellow-400 mb-3"></i>
+                        <p class="text-gray-600">Nenhum link encontrado para esta solicitação.</p>
+                    </div>
+                `;
+            }
+        })
+        .catch(error => {
+            console.error('Erro ao carregar links:', error);
+            content.innerHTML = `
+                <div class="text-center py-8">
+                    <i class="fas fa-exclamation-triangle text-3xl text-red-400 mb-3"></i>
+                    <p class="text-gray-600">Erro ao carregar links. Por favor, tente novamente.</p>
+                </div>
+            `;
+        });
+}
+
+function fecharModalLinksAcoes() {
+    const modal = document.getElementById('modalLinksAcoes');
+    modal.classList.add('hidden');
+}
+
+function renderizarLinksAcoes(links) {
+    const content = document.getElementById('linksAcoesContent');
+    
+    if (!links || links.length === 0) {
+        content.innerHTML = `
+            <div class="text-center py-8">
+                <i class="fas fa-link text-3xl text-gray-300 mb-3"></i>
+                <p class="text-gray-600">Nenhum link de ação foi gerado para esta solicitação.</p>
+            </div>
+        `;
+        return;
+    }
+    
+    // Agrupar links por status
+    const linksAtivos = links.filter(l => l.status === 'ativo');
+    const linksUsados = links.filter(l => l.status === 'usado');
+    const linksExpirados = links.filter(l => l.status === 'expirado');
+    const linksPermanentes = links.filter(l => l.status === 'permanente');
+    
+    let html = '';
+    
+    // Função para renderizar um link
+    const renderizarLink = (link) => {
+        const statusBadge = {
+            'ativo': '<span class="px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full">Ativo</span>',
+            'usado': '<span class="px-2 py-1 bg-gray-100 text-gray-800 text-xs font-medium rounded-full">Usado</span>',
+            'expirado': '<span class="px-2 py-1 bg-red-100 text-red-800 text-xs font-medium rounded-full">Expirado</span>',
+            'permanente': '<span class="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">Permanente</span>'
+        };
+        
+        const iconMap = {
+            'Confirmação de Horário': 'fa-check-circle',
+            'Cancelamento de Horário': 'fa-times-circle',
+            'Reagendamento': 'fa-calendar-alt',
+            'Compra de Peça': 'fa-shopping-cart',
+            'Ações Pré-Serviço': 'fa-tools',
+            'Ações Pós-Serviço': 'fa-clipboard-check',
+            'Status da Solicitação': 'fa-info-circle',
+            'Cancelar Solicitação': 'fa-ban',
+            'Ação Genérica': 'fa-link'
+        };
+        
+        const icon = iconMap[link.tipo] || 'fa-link';
+        const statusHtml = statusBadge[link.status] || '';
+        
+        const dataInfo = link.criado_em 
+            ? `<div class="text-xs text-gray-500 mt-1">
+                Criado em: ${formatarDataHora(link.criado_em)}
+                ${link.expira_em ? ` | Expira em: ${formatarDataHora(link.expira_em)}` : ''}
+                ${link.usado_em ? ` | Usado em: ${formatarDataHora(link.usado_em)}` : ''}
+               </div>`
+            : '';
+        
+        return `
+            <div class="bg-gray-50 rounded-lg p-4 border border-gray-200 hover:border-blue-300 transition-colors">
+                <div class="flex items-start justify-between">
+                    <div class="flex-1">
+                        <div class="flex items-center gap-2 mb-2">
+                            <i class="fas ${icon} text-blue-600"></i>
+                            <h4 class="font-medium text-gray-900">${link.tipo}</h4>
+                            ${statusHtml}
+                        </div>
+                        <div class="flex items-center gap-2 mb-2">
+                            <input type="text" 
+                                   value="${link.url.replace(/"/g, '&quot;')}" 
+                                   readonly 
+                                   class="flex-1 px-3 py-2 bg-white border border-gray-300 rounded-md text-sm font-mono text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                   id="link-${(link.token || link.action_type || 'link').replace(/[^a-zA-Z0-9]/g, '_')}">
+                            <button onclick="copiarLink(this)" 
+                                    data-link-id="${(link.token || link.action_type || 'link').replace(/[^a-zA-Z0-9]/g, '_')}"
+                                    class="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-md transition-colors">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </div>
+                        ${dataInfo}
+                    </div>
+                </div>
+            </div>
+        `;
+    };
+    
+    // Renderizar seções
+    if (linksPermanentes.length > 0) {
+        html += '<div class="mb-4"><h4 class="text-sm font-semibold text-gray-700 mb-2">Links Permanentes</h4>';
+        linksPermanentes.forEach(link => {
+            html += renderizarLink(link);
+        });
+        html += '</div>';
+    }
+    
+    if (linksAtivos.length > 0) {
+        html += '<div class="mb-4"><h4 class="text-sm font-semibold text-gray-700 mb-2">Links Ativos</h4>';
+        linksAtivos.forEach(link => {
+            html += renderizarLink(link);
+        });
+        html += '</div>';
+    }
+    
+    if (linksUsados.length > 0) {
+        html += '<div class="mb-4"><h4 class="text-sm font-semibold text-gray-700 mb-2">Links Usados</h4>';
+        linksUsados.forEach(link => {
+            html += renderizarLink(link);
+        });
+        html += '</div>';
+    }
+    
+    if (linksExpirados.length > 0) {
+        html += '<div class="mb-4"><h4 class="text-sm font-semibold text-gray-700 mb-2">Links Expirados</h4>';
+        linksExpirados.forEach(link => {
+            html += renderizarLink(link);
+        });
+        html += '</div>';
+    }
+    
+    content.innerHTML = html;
+}
+
+function copiarLink(button) {
+    const linkId = button.getAttribute('data-link-id');
+    const input = document.getElementById(`link-${linkId}`);
+    if (input && input.value) {
+        navigator.clipboard.writeText(input.value).then(() => {
+            // Feedback visual
+            const originalHtml = button.innerHTML;
+            button.innerHTML = '<i class="fas fa-check"></i>';
+            button.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+            button.classList.add('bg-green-600');
+            
+            setTimeout(() => {
+                button.innerHTML = originalHtml;
+                button.classList.remove('bg-green-600');
+                button.classList.add('bg-blue-600', 'hover:bg-blue-700');
+            }, 2000);
+        }).catch(err => {
+            console.error('Erro ao copiar link:', err);
+            // Fallback para método antigo
+            input.select();
+            input.setSelectionRange(0, 99999);
+            document.execCommand('copy');
+            
+            // Feedback visual mesmo com fallback
+            const originalHtml = button.innerHTML;
+            button.innerHTML = '<i class="fas fa-check"></i>';
+            button.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+            button.classList.add('bg-green-600');
+            
+            setTimeout(() => {
+                button.innerHTML = originalHtml;
+                button.classList.remove('bg-green-600');
+                button.classList.add('bg-blue-600', 'hover:bg-blue-700');
+            }, 2000);
+        });
+    }
 }
 
 function toggleCampoReembolso() {
