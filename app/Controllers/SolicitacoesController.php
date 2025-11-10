@@ -2750,6 +2750,190 @@ class SolicitacoesController extends Controller
     }
     
     /**
+     * Exibir formulário para criar nova solicitação manual (admin)
+     */
+    public function novaSolicitacaoManual(): void
+    {
+        $this->requireAuth();
+        
+        // Buscar dados necessários para o formulário
+        $imobiliarias = $this->imobiliariaModel->getAll();
+        $categoriaModel = new \App\Models\Categoria();
+        $subcategoriaModel = new \App\Models\Subcategoria();
+        $categorias = $categoriaModel->getAtivas();
+        $subcategorias = $subcategoriaModel->getAtivas();
+        $statusList = $this->statusModel->getAll();
+        
+        // Organizar subcategorias por categoria
+        foreach ($categorias as $key => $categoria) {
+            $categorias[$key]['subcategorias'] = array_values(array_filter($subcategorias, function($sub) use ($categoria) {
+                return $sub['categoria_id'] == $categoria['id'];
+            }));
+        }
+        
+        $this->view('solicitacoes.nova-manual', [
+            'imobiliarias' => $imobiliarias,
+            'categorias' => $categorias,
+            'subcategorias' => $subcategorias,
+            'statusList' => $statusList
+        ]);
+    }
+    
+    /**
+     * Processar criação de nova solicitação manual (admin)
+     */
+    public function criarSolicitacaoManual(): void
+    {
+        $this->requireAuth();
+        
+        try {
+            // Validar dados obrigatórios
+            $dados = [
+                'imobiliaria_id' => $this->input('imobiliaria_id'),
+                'nome_completo' => trim($this->input('nome_completo')),
+                'cpf' => preg_replace('/\D/', '', $this->input('cpf')),
+                'whatsapp' => trim($this->input('whatsapp')),
+                'tipo_imovel' => $this->input('tipo_imovel'),
+                'subtipo_imovel' => $this->input('subtipo_imovel'),
+                'cep' => preg_replace('/\D/', '', $this->input('cep')),
+                'endereco' => trim($this->input('endereco')),
+                'numero' => trim($this->input('numero')),
+                'complemento' => trim($this->input('complemento')),
+                'bairro' => trim($this->input('bairro')),
+                'cidade' => trim($this->input('cidade')),
+                'estado' => trim($this->input('estado')),
+                'categoria_id' => $this->input('categoria_id'),
+                'subcategoria_id' => $this->input('subcategoria_id'),
+                'descricao_problema' => trim($this->input('descricao_problema')),
+                'numero_contrato' => trim($this->input('numero_contrato')),
+                'local_manutencao' => trim($this->input('local_manutencao')),
+                'status_id' => $this->input('status_id'),
+                'termos_aceitos' => true // Admin sempre aceita
+            ];
+            
+            // Validar campos obrigatórios
+            $camposObrigatorios = [
+                'imobiliaria_id' => 'Imobiliária',
+                'nome_completo' => 'Nome completo',
+                'cpf' => 'CPF',
+                'whatsapp' => 'WhatsApp',
+                'tipo_imovel' => 'Tipo de imóvel',
+                'cep' => 'CEP',
+                'endereco' => 'Endereço',
+                'numero' => 'Número',
+                'bairro' => 'Bairro',
+                'cidade' => 'Cidade',
+                'estado' => 'Estado',
+                'categoria_id' => 'Categoria',
+                'subcategoria_id' => 'Subcategoria',
+                'descricao_problema' => 'Descrição do problema'
+            ];
+            
+            $erros = [];
+            foreach ($camposObrigatorios as $campo => $label) {
+                if (empty($dados[$campo])) {
+                    $erros[] = "O campo '{$label}' é obrigatório";
+                }
+            }
+            
+            if (!empty($erros)) {
+                $this->redirect(url('admin/solicitacoes-manuais/nova?error=' . urlencode(implode('. ', $erros))));
+                return;
+            }
+            
+            // Validar CPF
+            $solicitacaoManualModel = new \App\Models\SolicitacaoManual();
+            if (!$solicitacaoManualModel->validarCPF($dados['cpf'])) {
+                $this->redirect(url('admin/solicitacoes-manuais/nova?error=' . urlencode('CPF inválido')));
+                return;
+            }
+            
+            // Validar WhatsApp
+            $whatsappLimpo = preg_replace('/\D/', '', $dados['whatsapp']);
+            if (strlen($whatsappLimpo) < 10 || strlen($whatsappLimpo) > 11) {
+                $this->redirect(url('admin/solicitacoes-manuais/nova?error=' . urlencode('WhatsApp inválido')));
+                return;
+            }
+            $dados['whatsapp'] = $whatsappLimpo;
+            
+            // Processar horários preferenciais
+            $horariosRaw = $this->input('horarios_opcoes');
+            if (!empty($horariosRaw)) {
+                $horarios = is_string($horariosRaw) ? json_decode($horariosRaw, true) : $horariosRaw;
+                $dados['horarios_preferenciais'] = $horarios;
+            } else {
+                $dados['horarios_preferenciais'] = [];
+            }
+            
+            // Processar upload de fotos
+            $fotos = [];
+            if (!empty($_FILES['fotos']['name'][0])) {
+                $fotos = $this->processarUploadFotosManual();
+            }
+            $dados['fotos'] = $fotos;
+            
+            // Definir status padrão se não informado
+            if (empty($dados['status_id'])) {
+                $statusPadrao = $this->statusModel->findByNome('Nova Solicitação');
+                $dados['status_id'] = $statusPadrao['id'] ?? 1;
+            }
+            
+            // Criar solicitação manual
+            $id = $solicitacaoManualModel->create($dados);
+            
+            if ($id) {
+                $this->redirect(url('admin/solicitacoes-manuais?success=' . urlencode('Solicitação manual criada com sucesso! ID: #' . $id)));
+            } else {
+                $this->redirect(url('admin/solicitacoes-manuais/nova?error=' . urlencode('Erro ao criar solicitação manual. Tente novamente.')));
+            }
+        } catch (\Exception $e) {
+            error_log('Erro ao criar solicitação manual: ' . $e->getMessage());
+            $this->redirect(url('admin/solicitacoes-manuais/nova?error=' . urlencode('Erro ao processar: ' . $e->getMessage())));
+        }
+    }
+    
+    /**
+     * Processar upload de fotos para solicitação manual
+     */
+    private function processarUploadFotosManual(): array
+    {
+        $fotos = [];
+        $uploadDir = __DIR__ . '/../../Public/uploads/solicitacoes-manuais/';
+        
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0755, true);
+        }
+        
+        if (!empty($_FILES['fotos']['name'][0])) {
+            $totalFiles = count($_FILES['fotos']['name']);
+            
+            for ($i = 0; $i < $totalFiles; $i++) {
+                if ($_FILES['fotos']['error'][$i] === UPLOAD_ERR_OK) {
+                    $tmpName = $_FILES['fotos']['tmp_name'][$i];
+                    $originalName = $_FILES['fotos']['name'][$i];
+                    $extension = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
+                    
+                    // Validar extensão
+                    $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+                    if (!in_array($extension, $allowedExtensions)) {
+                        continue;
+                    }
+                    
+                    // Gerar nome único
+                    $newName = uniqid('foto_', true) . '.' . $extension;
+                    $destination = $uploadDir . $newName;
+                    
+                    if (move_uploaded_file($tmpName, $destination)) {
+                        $fotos[] = '/uploads/solicitacoes-manuais/' . $newName;
+                    }
+                }
+            }
+        }
+        
+        return $fotos;
+    }
+    
+    /**
      * Ver detalhes de uma solicitação manual (JSON para modal)
      */
     public function verSolicitacaoManual(int $id): void
