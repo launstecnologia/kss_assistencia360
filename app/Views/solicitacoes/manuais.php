@@ -8,6 +8,9 @@ $currentPage = 'solicitacoes-manuais';
 ob_start();
 ?>
 
+<!-- Token CSRF (oculto) -->
+<?= \App\Core\View::csrfField() ?>
+
 <!-- Header -->
 <div class="mb-8">
     <div class="flex items-center justify-between">
@@ -21,11 +24,11 @@ ob_start();
             </p>
         </div>
         <div class="flex gap-3">
-            <a href="<?= url('admin/solicitacoes-manuais/nova') ?>" 
-               class="inline-flex items-center px-4 py-2 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors">
+            <button onclick="abrirOffcanvasNovaSolicitacaoManual()" 
+                    class="inline-flex items-center px-4 py-2 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors">
                 <i class="fas fa-plus mr-2"></i>
                 Nova Solicitação Manual
-            </a>
+            </button>
             <a href="<?= url('admin/kanban') ?>" 
                class="inline-flex items-center px-4 py-2 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors">
                 <i class="fas fa-columns mr-2"></i>
@@ -238,10 +241,10 @@ ob_start();
                                     <i class="fas fa-eye mr-1"></i> Ver
                                 </button>
                                 <?php if (!$solicitacao['migrada']): ?>
-                                    <a href="<?= url('admin/solicitacoes-manuais/' . $solicitacao['id'] . '/editar') ?>" 
-                                       class="text-yellow-600 hover:text-yellow-900 mr-3">
+                                    <button onclick="abrirOffcanvasEditarSolicitacaoManual(<?= $solicitacao['id'] ?>)" 
+                                            class="text-yellow-600 hover:text-yellow-900 mr-3">
                                         <i class="fas fa-edit mr-1"></i> Editar
-                                    </a>
+                                    </button>
                                     <button onclick="confirmarMigracao(<?= $solicitacao['id'] ?>)" 
                                             class="text-green-600 hover:text-green-900">
                                         <i class="fas fa-arrow-right mr-1"></i> Migrar
@@ -265,6 +268,33 @@ ob_start();
             <p class="text-gray-500">Não há solicitações manuais no momento.</p>
         </div>
     <?php endif; ?>
+</div>
+
+<!-- Offcanvas para Criar/Editar Solicitação Manual -->
+<div id="offcanvasSolicitacaoManual" class="fixed inset-0 z-50 hidden">
+    <div class="fixed inset-0 bg-gray-600 bg-opacity-50 transition-opacity" onclick="fecharOffcanvasSolicitacaoManual()"></div>
+    <div id="offcanvasSolicitacaoManualPanel" class="fixed right-0 top-0 h-full w-full md:w-[95%] lg:w-[1000px] bg-gray-50 shadow-xl transform translate-x-full transition-transform duration-300 ease-in-out overflow-y-auto">
+        <div class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 z-10">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <i class="fas fa-file-alt text-gray-600"></i>
+                    <h2 id="offcanvasSolicitacaoManualTitle" class="text-xl font-bold text-gray-900">Solicitação Manual</h2>
+                </div>
+                <button onclick="fecharOffcanvasSolicitacaoManual()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+        </div>
+        <div id="offcanvasSolicitacaoManualContent" class="p-6">
+            <div id="loadingSolicitacaoManual" class="flex items-center justify-center py-12">
+                <div class="text-center">
+                    <i class="fas fa-spinner fa-spin text-4xl text-blue-600 mb-4"></i>
+                    <p class="text-gray-600">Carregando...</p>
+                </div>
+            </div>
+            <div id="formSolicitacaoManual" class="hidden"></div>
+        </div>
+    </div>
 </div>
 
 <!-- Modal de Detalhes -->
@@ -563,6 +593,776 @@ document.getElementById('modal-detalhes')?.addEventListener('click', function(e)
         fecharModal();
     }
 });
+
+// ========== OFFCANVAS SOLICITAÇÃO MANUAL ==========
+let modoOffcanvasManual = null; // 'criar' ou 'editar'
+let solicitacaoManualEditandoId = null;
+
+function abrirOffcanvasNovaSolicitacaoManual() {
+    modoOffcanvasManual = 'criar';
+    solicitacaoManualEditandoId = null;
+    
+    const offcanvas = document.getElementById('offcanvasSolicitacaoManual');
+    const panel = document.getElementById('offcanvasSolicitacaoManualPanel');
+    const loading = document.getElementById('loadingSolicitacaoManual');
+    const form = document.getElementById('formSolicitacaoManual');
+    const title = document.getElementById('offcanvasSolicitacaoManualTitle');
+    
+    title.textContent = 'Nova Solicitação Manual';
+    
+    offcanvas.classList.remove('hidden');
+    setTimeout(() => panel.classList.remove('translate-x-full'), 10);
+    
+    loading.classList.remove('hidden');
+    form.classList.add('hidden');
+    
+    // Buscar dados via API
+    fetch('<?= url("admin/solicitacoes-manuais/nova/api") ?>', {
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            loading.classList.add('hidden');
+            form.classList.remove('hidden');
+            renderizarFormularioCriarManual(data);
+        } else {
+            alert('Erro ao carregar dados: ' + (data.error || 'Erro desconhecido'));
+            fecharOffcanvasSolicitacaoManual();
+        }
+    })
+    .catch(error => {
+        console.error('Erro:', error);
+        alert('Erro ao carregar dados do formulário');
+        fecharOffcanvasSolicitacaoManual();
+    });
+}
+
+function abrirOffcanvasEditarSolicitacaoManual(id) {
+    modoOffcanvasManual = 'editar';
+    solicitacaoManualEditandoId = id;
+    
+    const offcanvas = document.getElementById('offcanvasSolicitacaoManual');
+    const panel = document.getElementById('offcanvasSolicitacaoManualPanel');
+    const loading = document.getElementById('loadingSolicitacaoManual');
+    const form = document.getElementById('formSolicitacaoManual');
+    const title = document.getElementById('offcanvasSolicitacaoManualTitle');
+    
+    title.textContent = 'Editar Solicitação Manual';
+    
+    offcanvas.classList.remove('hidden');
+    setTimeout(() => panel.classList.remove('translate-x-full'), 10);
+    
+    loading.classList.remove('hidden');
+    form.classList.add('hidden');
+    
+    // Buscar dados via API
+    fetch(`<?= url("admin/solicitacoes-manuais") ?>/${id}/api`, {
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            loading.classList.add('hidden');
+            form.classList.remove('hidden');
+            renderizarFormularioEditarManual(data);
+        } else {
+            alert('Erro ao carregar dados: ' + (data.error || 'Erro desconhecido'));
+            fecharOffcanvasSolicitacaoManual();
+        }
+    })
+    .catch(error => {
+        console.error('Erro:', error);
+        alert('Erro ao carregar dados da solicitação');
+        fecharOffcanvasSolicitacaoManual();
+    });
+}
+
+function fecharOffcanvasSolicitacaoManual() {
+    const offcanvas = document.getElementById('offcanvasSolicitacaoManual');
+    const panel = document.getElementById('offcanvasSolicitacaoManualPanel');
+    
+    panel.classList.add('translate-x-full');
+    setTimeout(() => {
+        offcanvas.classList.add('hidden');
+        modoOffcanvasManual = null;
+        solicitacaoManualEditandoId = null;
+        document.getElementById('formSolicitacaoManual').innerHTML = '';
+    }, 300);
+}
+
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function formatarCPF(cpf) {
+    if (!cpf) return '';
+    const cpfLimpo = cpf.replace(/\D/g, '');
+    return cpfLimpo.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+}
+
+function formatarWhatsApp(whatsapp) {
+    if (!whatsapp) return '';
+    const wppLimpo = whatsapp.replace(/\D/g, '');
+    if (wppLimpo.length <= 10) {
+        return wppLimpo.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3');
+    } else {
+        return wppLimpo.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+    }
+}
+
+function formatarCEP(cep) {
+    if (!cep) return '';
+    const cepLimpo = cep.replace(/\D/g, '');
+    return cepLimpo.replace(/(\d{5})(\d{3})/, '$1-$2');
+}
+
+function renderizarFormularioCriarManual(data) {
+    const form = document.getElementById('formSolicitacaoManual');
+    const csrfToken = document.querySelector('input[name="_token"]')?.value || '';
+    
+    // Gerar options para imobiliárias
+    let imobiliariasOptions = '<option value="">Selecione...</option>';
+    data.imobiliarias.forEach(imob => {
+        imobiliariasOptions += `<option value="${imob.id}">${escapeHtml(imob.nome)}</option>`;
+    });
+    
+    // Gerar options para status
+    let statusOptions = '<option value="">Status Padrão (Nova Solicitação)</option>';
+    data.statusList.forEach(status => {
+        statusOptions += `<option value="${status.id}">${escapeHtml(status.nome)}</option>`;
+    });
+    
+    // Gerar options para categorias
+    let categoriasOptions = '<option value="">Selecione...</option>';
+    data.categorias.forEach(cat => {
+        categoriasOptions += `<option value="${cat.id}">${escapeHtml(cat.nome)}</option>`;
+    });
+    
+    // Estados
+    const estados = ['AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'];
+    let estadosOptions = '<option value="">Selecione...</option>';
+    estados.forEach(uf => {
+        estadosOptions += `<option value="${uf}">${uf}</option>`;
+    });
+    
+    form.innerHTML = `
+        <form id="formCriarEditarSolicitacaoManual" onsubmit="salvarSolicitacaoManual(event)" enctype="multipart/form-data" class="space-y-6">
+            <input type="hidden" name="_token" value="${csrfToken}">
+            
+            <!-- Dados Pessoais -->
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4">
+                    <i class="fas fa-user mr-2 text-blue-600"></i>
+                    Dados Pessoais
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Imobiliária *</label>
+                        <select name="imobiliaria_id" required class="block w-full px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all">
+                            ${imobiliariasOptions}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Nome Completo *</label>
+                        <input type="text" name="nome_completo" required class="block w-full px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">CPF *</label>
+                        <input type="text" name="cpf" id="cpf-offcanvas" required maxlength="14" class="block w-full px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all" placeholder="000.000.000-00">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">WhatsApp *</label>
+                        <input type="text" name="whatsapp" id="whatsapp-offcanvas" required class="block w-full px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all" placeholder="(00) 00000-0000">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Nº do Contrato</label>
+                        <input type="text" name="numero_contrato" class="block w-full px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                        <select name="status_id" class="block w-full px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all">
+                            ${statusOptions}
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Endereço -->
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4">
+                    <i class="fas fa-map-marker-alt mr-2 text-red-600"></i>
+                    Endereço do Imóvel
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Tipo de Imóvel *</label>
+                        <select name="tipo_imovel" required class="block w-full px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all">
+                            <option value="">Selecione...</option>
+                            <option value="Residencial">Residencial</option>
+                            <option value="Comercial">Comercial</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Subtipo</label>
+                        <input type="text" name="subtipo_imovel" class="block w-full px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all" placeholder="Ex: Apartamento, Casa, Loja...">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">CEP *</label>
+                        <div class="flex gap-2">
+                            <input type="text" name="cep" id="cep-offcanvas" required maxlength="9" class="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all" placeholder="00000-000">
+                            <button type="button" id="btn-buscar-cep-offcanvas" class="px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
+                                <i class="fas fa-search mr-2"></i>Buscar
+                            </button>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1">Digite o CEP e clique em buscar para preencher automaticamente</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Endereço *</label>
+                        <input type="text" name="endereco" id="endereco-offcanvas" required class="block w-full px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Número *</label>
+                        <input type="text" name="numero" id="numero-offcanvas" required class="block w-full px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Complemento</label>
+                        <input type="text" name="complemento" id="complemento-offcanvas" class="block w-full px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Bairro *</label>
+                        <input type="text" name="bairro" id="bairro-offcanvas" required class="block w-full px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Cidade *</label>
+                        <input type="text" name="cidade" id="cidade-offcanvas" required class="block w-full px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Estado *</label>
+                        <select name="estado" id="estado-offcanvas" required class="block w-full px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all">
+                            ${estadosOptions}
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Serviço -->
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4">
+                    <i class="fas fa-cog mr-2 text-purple-600"></i>
+                    Serviço Solicitado
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Categoria *</label>
+                        <select name="categoria_id" id="categoria_id-offcanvas" required class="block w-full px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all">
+                            ${categoriasOptions}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Subcategoria *</label>
+                        <select name="subcategoria_id" id="subcategoria_id-offcanvas" required class="block w-full px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all">
+                            <option value="">Selecione primeiro a categoria</option>
+                        </select>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Local da Manutenção</label>
+                        <input type="text" name="local_manutencao" class="block w-full px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all" placeholder="Ex: Sala, Cozinha, Quarto...">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Descrição do Problema *</label>
+                        <textarea name="descricao_problema" required rows="4" class="block w-full px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all" placeholder="Descreva detalhadamente o problema..."></textarea>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Horários Preferenciais -->
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4">
+                    <i class="fas fa-clock mr-2 text-orange-600"></i>
+                    Horários Preferenciais (Opcional)
+                </h2>
+                <p class="text-sm text-gray-600 mb-4">Selecione até 3 datas e horários preferenciais para o atendimento</p>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Data</label>
+                        <input type="date" id="data_selecionada-offcanvas" class="block w-full px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all" min="${new Date(Date.now() + 86400000).toISOString().split('T')[0]}" max="${new Date(Date.now() + 30*86400000).toISOString().split('T')[0]}">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Horário</label>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                            <label class="relative">
+                                <input type="radio" name="horario_selecionado" value="08:00-11:00" class="sr-only horario-radio-offcanvas">
+                                <div class="border-2 border-gray-200 rounded-lg p-3 text-center cursor-pointer hover:border-green-300 transition-colors horario-card-offcanvas">
+                                    <div class="text-sm font-medium text-gray-900">08h00 às 11h00</div>
+                                </div>
+                            </label>
+                            <label class="relative">
+                                <input type="radio" name="horario_selecionado" value="11:00-14:00" class="sr-only horario-radio-offcanvas">
+                                <div class="border-2 border-gray-200 rounded-lg p-3 text-center cursor-pointer hover:border-green-300 transition-colors horario-card-offcanvas">
+                                    <div class="text-sm font-medium text-gray-900">11h00 às 14h00</div>
+                                </div>
+                            </label>
+                            <label class="relative">
+                                <input type="radio" name="horario_selecionado" value="14:00-17:00" class="sr-only horario-radio-offcanvas">
+                                <div class="border-2 border-gray-200 rounded-lg p-3 text-center cursor-pointer hover:border-green-300 transition-colors horario-card-offcanvas">
+                                    <div class="text-sm font-medium text-gray-900">14h00 às 17h00</div>
+                                </div>
+                            </label>
+                            <label class="relative">
+                                <input type="radio" name="horario_selecionado" value="17:00-20:00" class="sr-only horario-radio-offcanvas">
+                                <div class="border-2 border-gray-200 rounded-lg p-3 text-center cursor-pointer hover:border-green-300 transition-colors horario-card-offcanvas">
+                                    <div class="text-sm font-medium text-gray-900">17h00 às 20h00</div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                    <div id="horarios-selecionados-offcanvas" class="hidden">
+                        <h4 class="text-sm font-medium text-gray-700 mb-3">
+                            Horários Selecionados (<span id="contador-horarios-offcanvas">0</span>/3)
+                        </h4>
+                        <div id="lista-horarios-offcanvas" class="space-y-2"></div>
+                    </div>
+                    <input type="hidden" name="horarios_opcoes" id="horarios_opcoes-offcanvas" value="[]">
+                </div>
+            </div>
+            
+            <!-- Fotos -->
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4">
+                    <i class="fas fa-images mr-2 text-green-600"></i>
+                    Fotos (Opcional)
+                </h2>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Anexar Fotos</label>
+                    <input type="file" name="fotos[]" multiple accept="image/*" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100 transition-all">
+                    <p class="text-xs text-gray-500 mt-2">Você pode selecionar múltiplas fotos (JPG, PNG, GIF, WEBP)</p>
+                </div>
+                <div id="fotos-existentes-container" class="hidden mt-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Fotos Existentes</label>
+                    <div id="fotos-existentes-grid" class="grid grid-cols-2 md:grid-cols-4 gap-3"></div>
+                    <input type="hidden" name="fotos_existentes" id="fotos_existentes-offcanvas" value="[]">
+                </div>
+            </div>
+            
+            <!-- Botões -->
+            <div class="flex justify-end gap-3">
+                <button type="button" onclick="fecharOffcanvasSolicitacaoManual()" class="px-6 py-3 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors">
+                    Cancelar
+                </button>
+                <button type="submit" class="px-6 py-3 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors">
+                    <i class="fas fa-save mr-2"></i>
+                    ${modoOffcanvasManual === 'criar' ? 'Salvar Solicitação' : 'Salvar Alterações'}
+                </button>
+            </div>
+        </form>
+    `;
+    
+    // Inicializar máscaras e funcionalidades
+    inicializarFormularioOffcanvas(data);
+}
+
+function renderizarFormularioEditarManual(data) {
+    const sol = data.solicitacao;
+    
+    // Formatar dados
+    const cpfFormatado = formatarCPF(sol.cpf || '');
+    const whatsappFormatado = formatarWhatsApp(sol.whatsapp || '');
+    const cepFormatado = formatarCEP(sol.cep || '');
+    
+    // Formatar horários preferenciais
+    let horariosExistentes = [];
+    if (sol.horarios_preferenciais && Array.isArray(sol.horarios_preferenciais)) {
+        sol.horarios_preferenciais.forEach(horario => {
+            if (typeof horario === 'string') {
+                // Converter formato "2025-10-29 08:00:00" para "29/10/2025 - 08:00-11:00"
+                if (horario.match(/^\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}$/)) {
+                    const [dataPart, horaPart] = horario.split(' ');
+                    const [ano, mes, dia] = dataPart.split('-');
+                    const [hora, min] = horaPart.split(':');
+                    const horaInt = parseInt(hora);
+                    let horaFim = 0;
+                    if (horaInt == 8) horaFim = 11;
+                    else if (horaInt == 11) horaFim = 14;
+                    else if (horaInt == 14) horaFim = 17;
+                    else if (horaInt == 17) horaFim = 20;
+                    else horaFim = horaInt + 3;
+                    horariosExistentes.push(`${dia}/${mes}/${ano} - ${hora}:${min}-${horaFim}:${min}`);
+                } else {
+                    horariosExistentes.push(horario);
+                }
+            }
+        });
+    }
+    
+    // Renderizar formulário (mesmo HTML do criar)
+    renderizarFormularioCriarManual(data);
+    
+    // Preencher campos com dados existentes
+    setTimeout(() => {
+        const form = document.getElementById('formCriarEditarSolicitacaoManual');
+        if (form) {
+            form.querySelector('[name="imobiliaria_id"]').value = sol.imobiliaria_id || '';
+            form.querySelector('[name="nome_completo"]').value = escapeHtml(sol.nome_completo || '');
+            form.querySelector('[name="cpf"]').value = cpfFormatado;
+            form.querySelector('[name="whatsapp"]').value = whatsappFormatado;
+            form.querySelector('[name="numero_contrato"]').value = escapeHtml(sol.numero_contrato || '');
+            form.querySelector('[name="status_id"]').value = sol.status_id || '';
+            form.querySelector('[name="tipo_imovel"]').value = sol.tipo_imovel || '';
+            form.querySelector('[name="subtipo_imovel"]').value = escapeHtml(sol.subtipo_imovel || '');
+            form.querySelector('[name="cep"]').value = cepFormatado;
+            form.querySelector('[name="endereco"]').value = escapeHtml(sol.endereco || '');
+            form.querySelector('[name="numero"]').value = escapeHtml(sol.numero || '');
+            form.querySelector('[name="complemento"]').value = escapeHtml(sol.complemento || '');
+            form.querySelector('[name="bairro"]').value = escapeHtml(sol.bairro || '');
+            form.querySelector('[name="cidade"]').value = escapeHtml(sol.cidade || '');
+            form.querySelector('[name="estado"]').value = sol.estado || '';
+            form.querySelector('[name="categoria_id"]').value = sol.categoria_id || '';
+            form.querySelector('[name="local_manutencao"]').value = escapeHtml(sol.local_manutencao || '');
+            form.querySelector('[name="descricao_problema"]').value = escapeHtml(sol.descricao_problema || '');
+            
+            // Atualizar subcategorias
+            const categoriaSelect = form.querySelector('[name="categoria_id"]');
+            if (categoriaSelect) {
+                categoriaSelect.dispatchEvent(new Event('change'));
+                setTimeout(() => {
+                    form.querySelector('[name="subcategoria_id"]').value = sol.subcategoria_id || '';
+                }, 100);
+            }
+            
+            // Preencher horários existentes
+            if (horariosExistentes.length > 0) {
+                window.horariosEscolhidosOffcanvas = horariosExistentes;
+                atualizarListaHorariosOffcanvas();
+            }
+            
+            // Preencher fotos existentes
+            if (sol.fotos && Array.isArray(sol.fotos) && sol.fotos.length > 0) {
+                const container = document.getElementById('fotos-existentes-container');
+                const grid = document.getElementById('fotos-existentes-grid');
+                const input = document.getElementById('fotos_existentes-offcanvas');
+                if (container && grid && input) {
+                    container.classList.remove('hidden');
+                    grid.innerHTML = '';
+                    sol.fotos.forEach((foto, index) => {
+                        const div = document.createElement('div');
+                        div.className = 'relative group';
+                        div.innerHTML = `
+                            <img src="${foto}" alt="Foto ${index + 1}" class="w-full h-24 object-cover rounded-lg border border-gray-200">
+                            <button type="button" onclick="removerFotoExistenteOffcanvas(${index})" class="absolute top-1 right-1 bg-red-600 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <i class="fas fa-times text-xs"></i>
+                            </button>
+                        `;
+                        grid.appendChild(div);
+                    });
+                    input.value = JSON.stringify(sol.fotos);
+                }
+            }
+        }
+    }, 100);
+}
+
+function inicializarFormularioOffcanvas(data) {
+    // Máscaras
+    const cpfInput = document.getElementById('cpf-offcanvas');
+    const whatsappInput = document.getElementById('whatsapp-offcanvas');
+    const cepInput = document.getElementById('cep-offcanvas');
+    
+    if (cpfInput) {
+        cpfInput.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length <= 11) {
+                value = value.replace(/(\d{3})(\d)/, '$1.$2');
+                value = value.replace(/(\d{3})(\d)/, '$1.$2');
+                value = value.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+                e.target.value = value;
+            }
+        });
+    }
+    
+    if (whatsappInput) {
+        whatsappInput.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length <= 11) {
+                if (value.length <= 10) {
+                    value = value.replace(/(\d{2})(\d)/, '($1) $2');
+                    value = value.replace(/(\d{4})(\d)/, '$1-$2');
+                } else {
+                    value = value.replace(/(\d{2})(\d)/, '($1) $2');
+                    value = value.replace(/(\d{5})(\d)/, '$1-$2');
+                }
+                e.target.value = value;
+            }
+        });
+    }
+    
+    if (cepInput) {
+        cepInput.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length <= 8) {
+                value = value.replace(/(\d{5})(\d)/, '$1-$2');
+                e.target.value = value;
+            }
+        });
+        
+        // Buscar CEP
+        const btnBuscarCep = document.getElementById('btn-buscar-cep-offcanvas');
+        if (btnBuscarCep) {
+            btnBuscarCep.addEventListener('click', async function() {
+                const cep = cepInput.value.replace(/\D/g, '');
+                if (cep.length !== 8) {
+                    alert('CEP inválido. Digite um CEP com 8 dígitos.');
+                    cepInput.focus();
+                    return;
+                }
+                
+                const btn = this;
+                const originalHtml = btn.innerHTML;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Buscando...';
+                btn.disabled = true;
+                
+                try {
+                    const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+                    const data = await response.json();
+                    
+                    if (data.erro) {
+                        alert('CEP não encontrado. Verifique o CEP digitado.');
+                        cepInput.focus();
+                    } else {
+                        document.getElementById('endereco-offcanvas').value = data.logradouro || '';
+                        document.getElementById('bairro-offcanvas').value = data.bairro || '';
+                        document.getElementById('cidade-offcanvas').value = data.localidade || '';
+                        document.getElementById('estado-offcanvas').value = data.uf || '';
+                        document.getElementById('numero-offcanvas').focus();
+                    }
+                } catch (error) {
+                    console.error('Erro ao buscar CEP:', error);
+                    alert('Erro ao buscar CEP. Tente novamente.');
+                } finally {
+                    btn.innerHTML = originalHtml;
+                    btn.disabled = false;
+                }
+            });
+        }
+        
+        cepInput.addEventListener('blur', async function() {
+            const cep = this.value.replace(/\D/g, '');
+            if (cep.length === 8 && btnBuscarCep) {
+                btnBuscarCep.click();
+            }
+        });
+    }
+    
+    // Atualizar subcategorias quando categoria mudar
+    const categoriaSelect = document.getElementById('categoria_id-offcanvas');
+    const subcategoriaSelect = document.getElementById('subcategoria_id-offcanvas');
+    
+    if (categoriaSelect && subcategoriaSelect) {
+        categoriaSelect.addEventListener('change', function() {
+            const categoriaId = this.value;
+            subcategoriaSelect.innerHTML = '<option value="">Selecione...</option>';
+            
+            if (categoriaId && data.categorias) {
+                const categoria = data.categorias.find(c => c.id == categoriaId);
+                if (categoria && categoria.subcategorias) {
+                    categoria.subcategorias.forEach(sub => {
+                        const option = document.createElement('option');
+                        option.value = sub.id;
+                        option.textContent = sub.nome;
+                        subcategoriaSelect.appendChild(option);
+                    });
+                }
+            }
+        });
+    }
+    
+    // Sistema de horários
+    inicializarSistemaHorariosOffcanvas();
+}
+
+let horariosEscolhidosOffcanvas = [];
+let dataSelecionadaAtualOffcanvas = '';
+
+function inicializarSistemaHorariosOffcanvas() {
+    const dataInput = document.getElementById('data_selecionada-offcanvas');
+    const horarioRadios = document.querySelectorAll('.horario-radio-offcanvas');
+    const horarioCards = document.querySelectorAll('.horario-card-offcanvas');
+    
+    if (dataInput) {
+        dataInput.addEventListener('change', function() {
+            if (!this.value) return;
+            const dataSelecionada = new Date(this.value + 'T12:00:00');
+            const diaDaSemana = dataSelecionada.getDay();
+            dataSelecionadaAtualOffcanvas = this.value;
+            
+            if (diaDaSemana === 0 || diaDaSemana === 6) {
+                alert('⚠️ Atendimentos não são realizados aos fins de semana.');
+                this.value = '';
+                dataSelecionadaAtualOffcanvas = '';
+                return;
+            }
+            
+            horarioRadios.forEach(r => r.checked = false);
+        });
+    }
+    
+    horarioRadios.forEach(radio => {
+        radio.addEventListener('change', function() {
+            const data = dataSelecionadaAtualOffcanvas;
+            const horario = this.value;
+            
+            if (!data) {
+                alert('Por favor, selecione uma data primeiro');
+                this.checked = false;
+                return;
+            }
+            
+            if (data && horario) {
+                const horarioCompleto = `${formatarData(data)} - ${horario}`;
+                
+                if (!horariosEscolhidosOffcanvas.includes(horarioCompleto) && horariosEscolhidosOffcanvas.length < 3) {
+                    horariosEscolhidosOffcanvas.push(horarioCompleto);
+                    atualizarListaHorariosOffcanvas();
+                    this.checked = false;
+                } else if (horariosEscolhidosOffcanvas.length >= 3) {
+                    alert('Você pode selecionar no máximo 3 horários.');
+                    this.checked = false;
+                } else {
+                    this.checked = false;
+                }
+            }
+        });
+    });
+    
+    horarioCards.forEach(card => {
+        card.addEventListener('click', function(e) {
+            if (e.target.type === 'radio') return;
+            const label = this.closest('label');
+            const radio = label?.querySelector('.horario-radio-offcanvas');
+            if (radio && !radio.checked) {
+                radio.checked = true;
+                radio.dispatchEvent(new Event('change'));
+            }
+        });
+    });
+}
+
+function atualizarListaHorariosOffcanvas() {
+    const container = document.getElementById('horarios-selecionados-offcanvas');
+    const lista = document.getElementById('lista-horarios-offcanvas');
+    const contador = document.getElementById('contador-horarios-offcanvas');
+    
+    if (horariosEscolhidosOffcanvas.length > 0) {
+        container.classList.remove('hidden');
+        contador.textContent = horariosEscolhidosOffcanvas.length;
+        
+        lista.innerHTML = '';
+        horariosEscolhidosOffcanvas.forEach((horario, index) => {
+            const div = document.createElement('div');
+            div.className = 'flex items-center justify-between bg-green-50 border border-green-200 rounded-lg p-3';
+            div.innerHTML = `
+                <div class="flex items-center">
+                    <i class="fas fa-clock text-green-600 mr-2"></i>
+                    <span class="text-sm text-green-800">${horario}</span>
+                </div>
+                <button type="button" onclick="removerHorarioOffcanvas(${index})" class="text-red-500 hover:text-red-700">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            lista.appendChild(div);
+        });
+    } else {
+        container.classList.add('hidden');
+    }
+}
+
+window.removerHorarioOffcanvas = function(index) {
+    horariosEscolhidosOffcanvas.splice(index, 1);
+    atualizarListaHorariosOffcanvas();
+};
+
+window.removerFotoExistenteOffcanvas = function(index) {
+    if (confirm('Deseja realmente remover esta foto?')) {
+        const input = document.getElementById('fotos_existentes-offcanvas');
+        if (input) {
+            const fotos = JSON.parse(input.value || '[]');
+            fotos.splice(index, 1);
+            input.value = JSON.stringify(fotos);
+            location.reload(); // Recarregar para atualizar a lista
+        }
+    }
+};
+
+function formatarData(data) {
+    const [ano, mes, dia] = data.split('-');
+    return `${dia}/${mes}/${ano}`;
+}
+
+async function salvarSolicitacaoManual(event) {
+    event.preventDefault();
+    
+    const form = event.target;
+    const formData = new FormData(form);
+    
+    // Converter horários para formato esperado
+    const horariosFormatados = horariosEscolhidosOffcanvas.map(horario => {
+        const [dataStr, faixaHorario] = horario.split(' - ');
+        const [dia, mes, ano] = dataStr.split('/');
+        const horarioInicial = faixaHorario.split('-')[0];
+        return `${ano}-${mes}-${dia} ${horarioInicial}:00`;
+    });
+    
+    formData.append('horarios_opcoes', JSON.stringify(horariosFormatados));
+    
+    // Adicionar header para identificar como AJAX
+    formData.append('X-Requested-With', 'XMLHttpRequest');
+    
+    const url = modoOffcanvasManual === 'criar' 
+        ? '<?= url("admin/solicitacoes-manuais/nova") ?>'
+        : `<?= url("admin/solicitacoes-manuais") ?>/${solicitacaoManualEditandoId}/editar`;
+    
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Salvando...';
+    
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            alert(data.message || 'Solicitação salva com sucesso!');
+            fecharOffcanvasSolicitacaoManual();
+            location.reload();
+        } else {
+            const errorMsg = data.error || (data.errors ? data.errors.join('. ') : 'Erro ao salvar solicitação');
+            alert('Erro: ' + errorMsg);
+        }
+    } catch (error) {
+        console.error('Erro:', error);
+        alert('Erro ao salvar solicitação: ' + error.message);
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalText;
+    }
+}
 </script>
 
 <?php

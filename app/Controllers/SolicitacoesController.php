@@ -2836,22 +2836,37 @@ class SolicitacoesController extends Controller
                 }
             }
             
+            // Verificar se é requisição AJAX
+            $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
+            
             if (!empty($erros)) {
-                $this->redirect(url('admin/solicitacoes-manuais/nova?error=' . urlencode(implode('. ', $erros))));
+                if ($isAjax) {
+                    $this->json(['success' => false, 'errors' => $erros], 400);
+                } else {
+                    $this->redirect(url('admin/solicitacoes-manuais/nova?error=' . urlencode(implode('. ', $erros))));
+                }
                 return;
             }
             
             // Validar CPF
             $solicitacaoManualModel = new \App\Models\SolicitacaoManual();
             if (!$solicitacaoManualModel->validarCPF($dados['cpf'])) {
-                $this->redirect(url('admin/solicitacoes-manuais/nova?error=' . urlencode('CPF inválido')));
+                if ($isAjax) {
+                    $this->json(['success' => false, 'error' => 'CPF inválido'], 400);
+                } else {
+                    $this->redirect(url('admin/solicitacoes-manuais/nova?error=' . urlencode('CPF inválido')));
+                }
                 return;
             }
             
             // Validar WhatsApp
             $whatsappLimpo = preg_replace('/\D/', '', $dados['whatsapp']);
             if (strlen($whatsappLimpo) < 10 || strlen($whatsappLimpo) > 11) {
-                $this->redirect(url('admin/solicitacoes-manuais/nova?error=' . urlencode('WhatsApp inválido')));
+                if ($isAjax) {
+                    $this->json(['success' => false, 'error' => 'WhatsApp inválido'], 400);
+                } else {
+                    $this->redirect(url('admin/solicitacoes-manuais/nova?error=' . urlencode('WhatsApp inválido')));
+                }
                 return;
             }
             $dados['whatsapp'] = $whatsappLimpo;
@@ -2882,13 +2897,26 @@ class SolicitacoesController extends Controller
             $id = $solicitacaoManualModel->create($dados);
             
             if ($id) {
-                $this->redirect(url('admin/solicitacoes-manuais?success=' . urlencode('Solicitação manual criada com sucesso! ID: #' . $id)));
+                if ($isAjax) {
+                    $this->json(['success' => true, 'message' => 'Solicitação manual criada com sucesso!', 'id' => $id]);
+                } else {
+                    $this->redirect(url('admin/solicitacoes-manuais?success=' . urlencode('Solicitação manual criada com sucesso! ID: #' . $id)));
+                }
             } else {
-                $this->redirect(url('admin/solicitacoes-manuais/nova?error=' . urlencode('Erro ao criar solicitação manual. Tente novamente.')));
+                if ($isAjax) {
+                    $this->json(['success' => false, 'error' => 'Erro ao criar solicitação manual. Tente novamente.'], 500);
+                } else {
+                    $this->redirect(url('admin/solicitacoes-manuais/nova?error=' . urlencode('Erro ao criar solicitação manual. Tente novamente.')));
+                }
             }
         } catch (\Exception $e) {
             error_log('Erro ao criar solicitação manual: ' . $e->getMessage());
-            $this->redirect(url('admin/solicitacoes-manuais/nova?error=' . urlencode('Erro ao processar: ' . $e->getMessage())));
+            $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
+            if ($isAjax) {
+                $this->json(['success' => false, 'error' => 'Erro ao processar: ' . $e->getMessage()], 500);
+            } else {
+                $this->redirect(url('admin/solicitacoes-manuais/nova?error=' . urlencode('Erro ao processar: ' . $e->getMessage())));
+            }
         }
     }
     
@@ -3131,6 +3159,97 @@ class SolicitacoesController extends Controller
         } catch (\Exception $e) {
             error_log('Erro ao atualizar solicitação manual: ' . $e->getMessage());
             $this->redirect(url('admin/solicitacoes-manuais/' . $id . '/editar?error=' . urlencode('Erro ao processar: ' . $e->getMessage())));
+        }
+    }
+    
+    /**
+     * API: Buscar dados de uma solicitação manual para edição
+     */
+    public function apiSolicitacaoManual(int $id): void
+    {
+        $this->requireAuth();
+        
+        try {
+            $solicitacaoManualModel = new \App\Models\SolicitacaoManual();
+            $solicitacao = $solicitacaoManualModel->find($id);
+            
+            if (!$solicitacao) {
+                $this->json(['error' => 'Solicitação não encontrada'], 404);
+                return;
+            }
+            
+            // Decodificar JSONs
+            if (!empty($solicitacao['horarios_preferenciais'])) {
+                $solicitacao['horarios_preferenciais'] = is_string($solicitacao['horarios_preferenciais']) 
+                    ? json_decode($solicitacao['horarios_preferenciais'], true) 
+                    : $solicitacao['horarios_preferenciais'];
+            }
+            
+            if (!empty($solicitacao['fotos'])) {
+                $solicitacao['fotos'] = is_string($solicitacao['fotos']) 
+                    ? json_decode($solicitacao['fotos'], true) 
+                    : $solicitacao['fotos'];
+            }
+            
+            // Buscar dados necessários para o formulário
+            $imobiliarias = $this->imobiliariaModel->getAll();
+            $categoriaModel = new \App\Models\Categoria();
+            $subcategoriaModel = new \App\Models\Subcategoria();
+            $categorias = $categoriaModel->getAtivas();
+            $subcategorias = $subcategoriaModel->getAtivas();
+            $statusList = $this->statusModel->getAll();
+            
+            // Organizar subcategorias por categoria
+            foreach ($categorias as $key => $categoria) {
+                $categorias[$key]['subcategorias'] = array_values(array_filter($subcategorias, function($sub) use ($categoria) {
+                    return $sub['categoria_id'] == $categoria['id'];
+                }));
+            }
+            
+            $this->json([
+                'success' => true,
+                'solicitacao' => $solicitacao,
+                'imobiliarias' => $imobiliarias,
+                'categorias' => $categorias,
+                'statusList' => $statusList
+            ]);
+        } catch (\Exception $e) {
+            error_log('Erro ao buscar solicitação manual via API: ' . $e->getMessage());
+            $this->json(['error' => 'Erro ao buscar dados da solicitação'], 500);
+        }
+    }
+    
+    /**
+     * API: Buscar dados para formulário de nova solicitação manual
+     */
+    public function apiNovaSolicitacaoManual(): void
+    {
+        $this->requireAuth();
+        
+        try {
+            $imobiliarias = $this->imobiliariaModel->getAll();
+            $categoriaModel = new \App\Models\Categoria();
+            $subcategoriaModel = new \App\Models\Subcategoria();
+            $categorias = $categoriaModel->getAtivas();
+            $subcategorias = $subcategoriaModel->getAtivas();
+            $statusList = $this->statusModel->getAll();
+            
+            // Organizar subcategorias por categoria
+            foreach ($categorias as $key => $categoria) {
+                $categorias[$key]['subcategorias'] = array_values(array_filter($subcategorias, function($sub) use ($categoria) {
+                    return $sub['categoria_id'] == $categoria['id'];
+                }));
+            }
+            
+            $this->json([
+                'success' => true,
+                'imobiliarias' => $imobiliarias,
+                'categorias' => $categorias,
+                'statusList' => $statusList
+            ]);
+        } catch (\Exception $e) {
+            error_log('Erro ao buscar dados para nova solicitação manual: ' . $e->getMessage());
+            $this->json(['error' => 'Erro ao buscar dados'], 500);
         }
     }
     
