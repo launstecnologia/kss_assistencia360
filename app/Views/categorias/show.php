@@ -42,6 +42,16 @@ ob_start();
                     <?= $categoria['status'] === 'ATIVA' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' ?>">
                     <?= $categoria['status'] ?>
                 </span>
+                <?php if (isset($categoria['tipo_imovel'])): ?>
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                        <?= $categoria['tipo_imovel'] === 'RESIDENCIAL' ? 'bg-blue-100 text-blue-800' : 
+                            ($categoria['tipo_imovel'] === 'COMERCIAL' ? 'bg-purple-100 text-purple-800' : 'bg-gray-100 text-gray-800') ?>">
+                        <i class="fas fa-<?= $categoria['tipo_imovel'] === 'RESIDENCIAL' ? 'home' : 
+                            ($categoria['tipo_imovel'] === 'COMERCIAL' ? 'building' : 'th') ?> mr-1"></i>
+                        <?= $categoria['tipo_imovel'] === 'RESIDENCIAL' ? 'Residencial' : 
+                            ($categoria['tipo_imovel'] === 'COMERCIAL' ? 'Comercial' : 'Ambos') ?>
+                    </span>
+                <?php endif; ?>
                 <span class="text-sm text-gray-500">
                     Ordem: <?= $categoria['ordem'] ?>
                 </span>
@@ -123,10 +133,10 @@ ob_start();
                                 <?php endif; ?>
                                 
                                 <div class="flex items-center space-x-4 mt-2 text-xs text-gray-500">
-                                    <?php if ($subcategoria['tempo_estimado']): ?>
+                                    <?php if (isset($subcategoria['prazo_minimo'])): ?>
                                         <span>
-                                            <i class="fas fa-clock mr-1"></i>
-                                            <?= $subcategoria['tempo_estimado'] ?>h estimadas
+                                            <i class="fas fa-calendar-day mr-1"></i>
+                                            Prazo mínimo: <?= $subcategoria['prazo_minimo'] ?> dia(s)
                                         </span>
                                     <?php endif; ?>
                                     <span>

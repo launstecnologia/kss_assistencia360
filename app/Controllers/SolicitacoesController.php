@@ -626,50 +626,6 @@ class SolicitacoesController extends Controller
         }
     }
 
-    public function enviarLembretes(): void
-    {
-        try {
-            $solicitacoes = $this->solicitacaoModel->getSolicitacoesParaLembrete();
-            
-            foreach ($solicitacoes as $solicitacao) {
-                // Verificar se ainda está dentro do prazo de 10 dias
-                if (!empty($solicitacao['data_limite_peca'])) {
-                    $dataLimite = new \DateTime($solicitacao['data_limite_peca']);
-                    $agora = new \DateTime();
-                    
-                    if ($agora > $dataLimite) {
-                        // Prazo expirado, não enviar mais lembretes
-                        continue;
-                    }
-                    
-                    // Calcular dias restantes
-                    $diasRestantes = $agora->diff($dataLimite)->days;
-                    
-                    // Enviar notificação com informações do prazo
-                    $this->enviarNotificacaoWhatsApp($solicitacao['id'], 'lembrete_peca', [
-                        'dias_restantes' => $diasRestantes,
-                        'data_limite' => date('d/m/Y', strtotime($solicitacao['data_limite_peca']))
-                    ]);
-                    
-                    $this->solicitacaoModel->atualizarLembrete($solicitacao['id']);
-                } else {
-                    // Sem data limite, enviar lembrete normal
-                    $this->enviarNotificacaoWhatsApp($solicitacao['id'], 'lembrete_peca');
-                    $this->solicitacaoModel->atualizarLembrete($solicitacao['id']);
-                }
-            }
-
-            $this->json([
-                'success' => true,
-                'message' => 'Lembretes enviados',
-                'count' => count($solicitacoes)
-            ]);
-            
-        } catch (\Exception $e) {
-            $this->json(['error' => 'Erro ao enviar lembretes: ' . $e->getMessage()], 500);
-        }
-    }
-
     public function expirarSolicitacoes(): void
     {
         try {
@@ -1051,6 +1007,111 @@ class SolicitacoesController extends Controller
         $this->processarNotificacoesPosServico();
     }
 
+    /**
+     * Verifica e envia lembretes de compra de peça
+     * Deve ser chamado via cron job periodicamente (ex: a cada 5 minutos)
+     * 
+     * Endpoint público para cron job (sem autenticação)
+     * GET /cron/lembretes-peca
+     */
+    public function cronLembretesPeca(): void
+    {
+        $this->processarLembretesPeca();
+    }
+
+    /**
+     * Processa os lembretes de compra de peça
+     * Método interno que pode ser chamado por cron ou manualmente
+     */
+    private function processarLembretesPeca(): void
+    {
+        try {
+            // Buscar solicitações que precisam de lembrete
+            $solicitacoes = $this->solicitacaoModel->getSolicitacoesParaLembrete();
+            $enviadas = 0;
+            $erros = [];
+            
+            foreach ($solicitacoes as $solicitacao) {
+                try {
+                    // Verificar se ainda está dentro do prazo de 10 dias
+                    if (!empty($solicitacao['data_limite_peca'])) {
+                        $dataLimite = new \DateTime($solicitacao['data_limite_peca']);
+                        $agora = new \DateTime();
+                        
+                        if ($agora > $dataLimite) {
+                            // Prazo expirado, não enviar mais lembretes
+                            continue;
+                        }
+                        
+                        // Calcular dias restantes
+                        $diasRestantes = $agora->diff($dataLimite)->days;
+                        
+                        // Enviar notificação com informações do prazo
+                        $this->enviarNotificacaoWhatsApp($solicitacao['id'], 'lembrete_peca', [
+                            'dias_restantes' => $diasRestantes,
+                            'data_limite' => date('d/m/Y', strtotime($solicitacao['data_limite_peca']))
+                        ]);
+                        
+                        $this->solicitacaoModel->atualizarLembrete($solicitacao['id']);
+                        $enviadas++;
+                        error_log("✅ Lembrete de peça enviado para solicitação #{$solicitacao['id']}");
+                    } else {
+                        // Sem data limite, enviar lembrete normal
+                        $this->enviarNotificacaoWhatsApp($solicitacao['id'], 'lembrete_peca');
+                        $this->solicitacaoModel->atualizarLembrete($solicitacao['id']);
+                        $enviadas++;
+                        error_log("✅ Lembrete de peça enviado para solicitação #{$solicitacao['id']}");
+                    }
+                } catch (\Exception $e) {
+                    $erros[] = "Solicitação #{$solicitacao['id']}: " . $e->getMessage();
+                    error_log("❌ Erro ao processar lembrete de peça para solicitação #{$solicitacao['id']}: " . $e->getMessage());
+                }
+            }
+            
+            $resultado = [
+                'success' => true,
+                'message' => 'Lembretes de peça processados',
+                'enviadas' => $enviadas,
+                'total_verificadas' => count($solicitacoes),
+                'timestamp' => date('Y-m-d H:i:s')
+            ];
+            
+            if (!empty($erros)) {
+                $resultado['erros'] = $erros;
+            }
+            
+            // Se chamado via HTTP, retornar JSON
+            if (php_sapi_name() !== 'cli') {
+                $this->json($resultado);
+            } else {
+                // Se chamado via CLI, apenas logar
+                error_log("CRON Lembretes Peça: " . json_encode($resultado));
+            }
+            
+        } catch (\Exception $e) {
+            $erro = [
+                'success' => false,
+                'error' => 'Erro ao processar lembretes de peça: ' . $e->getMessage(),
+                'timestamp' => date('Y-m-d H:i:s')
+            ];
+            
+            error_log("❌ Erro no CRON de lembretes de peça: " . $e->getMessage());
+            
+            if (php_sapi_name() !== 'cli') {
+                $this->json($erro, 500);
+            }
+        }
+    }
+
+    /**
+     * Endpoint para chamada manual (requer autenticação)
+     */
+    public function enviarLembretes(): void
+    {
+        $this->requireAuth();
+        $this->processarLembretesPeca();
+    }
+
     private function enviarNotificacaoWhatsApp(int $solicitacaoId, string $tipo, array $extraData = []): void
     {
         try {
@@ -1144,6 +1205,7 @@ class SolicitacoesController extends Controller
             
             // ✅ Aceitar horário do JSON ou do form
             $horario = $json['horario'] ?? $this->input('horario');
+            $protocoloSeguradora = $json['protocolo_seguradora'] ?? $this->input('protocolo_seguradora');
             $user = $this->getUser();
 
             if (!$horario) {
@@ -1157,6 +1219,12 @@ class SolicitacoesController extends Controller
             
             if (!$statusAgendado || !isset($statusAgendado['id'])) {
                 $retornarJson(false, '', 'Status "Serviço Agendado" não encontrado');
+                return;
+            }
+            
+            // ✅ Validação: Protocolo da seguradora é obrigatório para mudar para "Serviço Agendado"
+            if (empty($protocoloSeguradora) || trim($protocoloSeguradora) === '') {
+                $retornarJson(false, '', 'É obrigatório preencher o protocolo da seguradora para confirmar o horário e mudar para "Serviço Agendado"');
                 return;
             }
             
@@ -1295,7 +1363,8 @@ class SolicitacoesController extends Controller
                 'status_id' => $statusAgendado['id'],
                 'horario_confirmado' => 1,
                 'horario_confirmado_raw' => $horarioFormatadoNorm, // ✅ Usar formato normalizado
-                'confirmed_schedules' => json_encode($confirmedExistentes)
+                'confirmed_schedules' => json_encode($confirmedExistentes),
+                'protocolo_seguradora' => trim($protocoloSeguradora) // ✅ Salvar protocolo da seguradora
             ];
             
             // ✅ DEBUG: Log antes de remover duplicatas

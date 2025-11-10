@@ -62,6 +62,16 @@ ob_start();
                                         <?= $categoria['status'] === 'ATIVA' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' ?>">
                                         <?= $categoria['status'] ?>
                                     </span>
+                                    <?php if (isset($categoria['tipo_imovel'])): ?>
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                            <?= $categoria['tipo_imovel'] === 'RESIDENCIAL' ? 'bg-blue-100 text-blue-800' : 
+                                                ($categoria['tipo_imovel'] === 'COMERCIAL' ? 'bg-purple-100 text-purple-800' : 'bg-gray-100 text-gray-800') ?>">
+                                            <i class="fas fa-<?= $categoria['tipo_imovel'] === 'RESIDENCIAL' ? 'home' : 
+                                                ($categoria['tipo_imovel'] === 'COMERCIAL' ? 'building' : 'th') ?> mr-1"></i>
+                                            <?= $categoria['tipo_imovel'] === 'RESIDENCIAL' ? 'Residencial' : 
+                                                ($categoria['tipo_imovel'] === 'COMERCIAL' ? 'Comercial' : 'Ambos') ?>
+                                        </span>
+                                    <?php endif; ?>
                                 </div>
                                 
                                 <?php if ($categoria['descricao']): ?>

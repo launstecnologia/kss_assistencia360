@@ -49,6 +49,16 @@ class CondicoesController extends Controller
         ], $data);
 
         if (!empty($errors)) {
+            // Se for requisição AJAX, retornar JSON
+            if ($this->isAjax()) {
+                $this->json([
+                    'success' => false,
+                    'error' => 'Erro de validação',
+                    'errors' => $errors
+                ], 400);
+                return;
+            }
+            
             $this->view('condicoes.create', [
                 'errors' => $errors,
                 'data' => $data
@@ -57,9 +67,29 @@ class CondicoesController extends Controller
         }
 
         try {
-            $this->condicaoModel->create($data);
+            $condicaoId = $this->condicaoModel->create($data);
+            
+            // Se for requisição AJAX, retornar JSON
+            if ($this->isAjax()) {
+                $this->json([
+                    'success' => true,
+                    'message' => 'Condição criada com sucesso!',
+                    'id' => $condicaoId
+                ]);
+                return;
+            }
+            
             redirect(url('admin/condicoes'), 'Condição criada com sucesso', 'success');
         } catch (\Exception $e) {
+            // Se for requisição AJAX, retornar JSON
+            if ($this->isAjax()) {
+                $this->json([
+                    'success' => false,
+                    'error' => 'Erro ao criar condição: ' . $e->getMessage()
+                ], 500);
+                return;
+            }
+            
             $this->view('condicoes.create', [
                 'error' => 'Erro ao criar condição: ' . $e->getMessage(),
                 'data' => $data
@@ -109,6 +139,16 @@ class CondicoesController extends Controller
         ], $data);
 
         if (!empty($errors)) {
+            // Se for requisição AJAX, retornar JSON
+            if ($this->isAjax()) {
+                $this->json([
+                    'success' => false,
+                    'error' => 'Erro de validação',
+                    'errors' => $errors
+                ], 400);
+                return;
+            }
+            
             $this->view('condicoes.edit', [
                 'errors' => $errors,
                 'condicao' => array_merge($condicao, $data)
@@ -118,8 +158,27 @@ class CondicoesController extends Controller
 
         try {
             $this->condicaoModel->update($id, $data);
+            
+            // Se for requisição AJAX, retornar JSON
+            if ($this->isAjax()) {
+                $this->json([
+                    'success' => true,
+                    'message' => 'Condição atualizada com sucesso!'
+                ]);
+                return;
+            }
+            
             redirect(url('admin/condicoes'), 'Condição atualizada com sucesso', 'success');
         } catch (\Exception $e) {
+            // Se for requisição AJAX, retornar JSON
+            if ($this->isAjax()) {
+                $this->json([
+                    'success' => false,
+                    'error' => 'Erro ao atualizar condição: ' . $e->getMessage()
+                ], 500);
+                return;
+            }
+            
             $this->view('condicoes.edit', [
                 'error' => 'Erro ao atualizar condição: ' . $e->getMessage(),
                 'condicao' => array_merge($condicao, $data)
@@ -202,6 +261,24 @@ class CondicoesController extends Controller
             }
             $this->json(['error' => 'Exceção: ' . $e->getMessage(), 'trace' => $e->getTraceAsString()], 500);
         }
+    }
+    
+    /**
+     * API: Buscar dados da condição para exibir no offcanvas
+     */
+    public function api(int $id): void
+    {
+        $condicao = $this->condicaoModel->find($id);
+        
+        if (!$condicao) {
+            $this->json(['success' => false, 'message' => 'Condição não encontrada'], 404);
+            return;
+        }
+        
+        $this->json([
+            'success' => true,
+            'condicao' => $condicao
+        ]);
     }
 }
 

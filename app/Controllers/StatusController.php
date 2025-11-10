@@ -50,6 +50,16 @@ class StatusController extends Controller
         ], $data);
 
         if (!empty($errors)) {
+            // Se for requisição AJAX, retornar JSON
+            if ($this->isAjax()) {
+                $this->json([
+                    'success' => false,
+                    'error' => 'Erro de validação',
+                    'errors' => $errors
+                ], 400);
+                return;
+            }
+            
             $this->view('status.create', [
                 'errors' => $errors,
                 'data' => $data
@@ -58,9 +68,29 @@ class StatusController extends Controller
         }
 
         try {
-            $this->statusModel->create($data);
+            $statusId = $this->statusModel->create($data);
+            
+            // Se for requisição AJAX, retornar JSON
+            if ($this->isAjax()) {
+                $this->json([
+                    'success' => true,
+                    'message' => 'Status criado com sucesso!',
+                    'id' => $statusId
+                ]);
+                return;
+            }
+            
             redirect(url('admin/status'), 'Status criado com sucesso', 'success');
         } catch (\Exception $e) {
+            // Se for requisição AJAX, retornar JSON
+            if ($this->isAjax()) {
+                $this->json([
+                    'success' => false,
+                    'error' => 'Erro ao criar status: ' . $e->getMessage()
+                ], 500);
+                return;
+            }
+            
             $this->view('status.create', [
                 'error' => 'Erro ao criar status: ' . $e->getMessage(),
                 'data' => $data
@@ -111,6 +141,16 @@ class StatusController extends Controller
         ], $data);
 
         if (!empty($errors)) {
+            // Se for requisição AJAX, retornar JSON
+            if ($this->isAjax()) {
+                $this->json([
+                    'success' => false,
+                    'error' => 'Erro de validação',
+                    'errors' => $errors
+                ], 400);
+                return;
+            }
+            
             $this->view('status.edit', [
                 'errors' => $errors,
                 'status' => array_merge($status, $data)
@@ -120,8 +160,27 @@ class StatusController extends Controller
 
         try {
             $this->statusModel->update($id, $data);
+            
+            // Se for requisição AJAX, retornar JSON
+            if ($this->isAjax()) {
+                $this->json([
+                    'success' => true,
+                    'message' => 'Status atualizado com sucesso!'
+                ]);
+                return;
+            }
+            
             redirect(url('admin/status'), 'Status atualizado com sucesso', 'success');
         } catch (\Exception $e) {
+            // Se for requisição AJAX, retornar JSON
+            if ($this->isAjax()) {
+                $this->json([
+                    'success' => false,
+                    'error' => 'Erro ao atualizar status: ' . $e->getMessage()
+                ], 500);
+                return;
+            }
+            
             $this->view('status.edit', [
                 'error' => 'Erro ao atualizar status: ' . $e->getMessage(),
                 'status' => array_merge($status, $data)
@@ -204,6 +263,24 @@ class StatusController extends Controller
             }
             $this->json(['error' => 'Exceção: ' . $e->getMessage(), 'trace' => $e->getTraceAsString()], 500);
         }
+    }
+    
+    /**
+     * API: Buscar dados do status para exibir no offcanvas
+     */
+    public function api(int $id): void
+    {
+        $status = $this->statusModel->find($id);
+        
+        if (!$status) {
+            $this->json(['success' => false, 'message' => 'Status não encontrado'], 404);
+            return;
+        }
+        
+        $this->json([
+            'success' => true,
+            'status' => $status
+        ]);
     }
 }
 

@@ -91,6 +91,16 @@ class ImobiliariasController extends Controller
         ], $data);
 
         if (!empty($errors)) {
+            // Se for requisição AJAX, retornar JSON
+            if ($this->isAjax()) {
+                $this->json([
+                    'success' => false,
+                    'error' => 'Erro de validação',
+                    'errors' => $errors
+                ], 400);
+                return;
+            }
+            
             $this->view('imobiliarias.create', [
                 'errors' => $errors,
                 'data' => $data
@@ -106,6 +116,15 @@ class ImobiliariasController extends Controller
 
         // Verificar se CNPJ já existe
         if ($this->imobiliariaModel->findByCnpj($data['cnpj'])) {
+            // Se for requisição AJAX, retornar JSON
+            if ($this->isAjax()) {
+                $this->json([
+                    'success' => false,
+                    'error' => 'Este CNPJ já está sendo usado por outra imobiliária'
+                ], 400);
+                return;
+            }
+            
             $this->view('imobiliarias.create', [
                 'error' => 'Este CNPJ já está sendo usado por outra imobiliária',
                 'data' => $data
@@ -116,6 +135,15 @@ class ImobiliariasController extends Controller
 
         // Verificar se API instância já existe
         if ($this->imobiliariaModel->findByInstancia($data['instancia'])) {
+            // Se for requisição AJAX, retornar JSON
+            if ($this->isAjax()) {
+                $this->json([
+                    'success' => false,
+                    'error' => 'Esta API instância já está sendo usada por outra imobiliária'
+                ], 400);
+                return;
+            }
+            
             $this->view('imobiliarias.create', [
                 'error' => 'Esta API instância já está sendo usada por outra imobiliária',
                 'data' => $data
@@ -125,8 +153,28 @@ class ImobiliariasController extends Controller
 
         try {
             $imobiliariaId = $this->imobiliariaModel->create($data);
+            
+            // Se for requisição AJAX, retornar JSON
+            if ($this->isAjax()) {
+                $this->json([
+                    'success' => true,
+                    'message' => 'Imobiliária cadastrada com sucesso!',
+                    'id' => $imobiliariaId
+                ]);
+                return;
+            }
+            
             $this->redirect(url('admin/imobiliarias'));
         } catch (\Exception $e) {
+            // Se for requisição AJAX, retornar JSON
+            if ($this->isAjax()) {
+                $this->json([
+                    'success' => false,
+                    'error' => 'Erro ao criar imobiliária: ' . $e->getMessage()
+                ], 500);
+                return;
+            }
+            
             $this->view('imobiliarias.create', [
                 'error' => 'Erro ao criar imobiliária: ' . $e->getMessage(),
                 'data' => $data
@@ -227,6 +275,16 @@ class ImobiliariasController extends Controller
         ], $data);
 
         if (!empty($errors)) {
+            // Se for requisição AJAX, retornar JSON
+            if ($this->isAjax()) {
+                $this->json([
+                    'success' => false,
+                    'error' => 'Erro de validação',
+                    'errors' => $errors
+                ], 400);
+                return;
+            }
+            
             $this->view('imobiliarias.edit', [
                 'imobiliaria' => $imobiliaria,
                 'errors' => $errors,
@@ -238,6 +296,15 @@ class ImobiliariasController extends Controller
         // Verificar se CNPJ já existe em outra imobiliária
         $existingByCnpj = $this->imobiliariaModel->findByCnpj($data['cnpj']);
         if ($existingByCnpj && $existingByCnpj['id'] != $id) {
+            // Se for requisição AJAX, retornar JSON
+            if ($this->isAjax()) {
+                $this->json([
+                    'success' => false,
+                    'error' => 'Este CNPJ já está sendo usado por outra imobiliária'
+                ], 400);
+                return;
+            }
+            
             $this->view('imobiliarias.edit', [
                 'imobiliaria' => $imobiliaria,
                 'error' => 'Este CNPJ já está sendo usado por outra imobiliária',
@@ -250,6 +317,15 @@ class ImobiliariasController extends Controller
         // Verificar se API instância já existe em outra imobiliária
         $existingByInstancia = $this->imobiliariaModel->findByInstancia($data['instancia']);
         if ($existingByInstancia && $existingByInstancia['id'] != $id) {
+            // Se for requisição AJAX, retornar JSON
+            if ($this->isAjax()) {
+                $this->json([
+                    'success' => false,
+                    'error' => 'Esta API instância já está sendo usada por outra imobiliária'
+                ], 400);
+                return;
+            }
+            
             $this->view('imobiliarias.edit', [
                 'imobiliaria' => $imobiliaria,
                 'error' => 'Esta API instância já está sendo usada por outra imobiliária',
@@ -276,8 +352,27 @@ class ImobiliariasController extends Controller
 
         try {
             $this->imobiliariaModel->update($id, $data);
+            
+            // Se for requisição AJAX, retornar JSON
+            if ($this->isAjax()) {
+                $this->json([
+                    'success' => true,
+                    'message' => 'Imobiliária atualizada com sucesso!'
+                ]);
+                return;
+            }
+            
             $this->redirect(url('admin/imobiliarias'));
         } catch (\Exception $e) {
+            // Se for requisição AJAX, retornar JSON
+            if ($this->isAjax()) {
+                $this->json([
+                    'success' => false,
+                    'error' => 'Erro ao atualizar imobiliária: ' . $e->getMessage()
+                ], 500);
+                return;
+            }
+            
             $this->view('imobiliarias.edit', [
                 'imobiliaria' => $imobiliaria,
                 'error' => 'Erro ao atualizar imobiliária: ' . $e->getMessage(),
@@ -407,6 +502,24 @@ class ImobiliariasController extends Controller
 
         $estatisticas = $this->imobiliariaModel->getEstatisticas($id, $periodo);
         $this->json($estatisticas);
+    }
+    
+    /**
+     * API: Buscar dados da imobiliária para exibir no offcanvas
+     */
+    public function api(int $id): void
+    {
+        $imobiliaria = $this->imobiliariaModel->find($id);
+        
+        if (!$imobiliaria) {
+            $this->json(['success' => false, 'message' => 'Imobiliária não encontrada'], 404);
+            return;
+        }
+        
+        $this->json([
+            'success' => true,
+            'imobiliaria' => $imobiliaria
+        ]);
     }
 
     public function buscarCnpj(): void

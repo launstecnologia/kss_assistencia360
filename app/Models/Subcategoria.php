@@ -8,11 +8,12 @@ class Subcategoria extends Model
 {
     protected string $table = 'subcategorias';
     protected array $fillable = [
-        'categoria_id', 'nome', 'descricao', 'tempo_estimado', 'status', 'ordem', 'is_emergencial', 'created_at', 'updated_at'
+        'categoria_id', 'nome', 'descricao', 'prazo_minimo', 'status', 'ordem', 'is_emergencial', 'created_at', 'updated_at'
     ];
     protected array $casts = [
         'categoria_id' => 'int',
         'prazo_minimo' => 'int',
+        'is_emergencial' => 'bool',
         'created_at' => 'datetime',
         'updated_at' => 'datetime'
     ];
@@ -31,7 +32,7 @@ class Subcategoria extends Model
             FROM subcategorias sc
             LEFT JOIN categorias c ON sc.categoria_id = c.id
             WHERE sc.status = 'ATIVA'
-            ORDER BY c.nome ASC, sc.nome ASC
+            ORDER BY c.ordem ASC, c.nome ASC, sc.ordem ASC, sc.nome ASC
         ";
 
         $dados = Database::fetchAll($sql);
@@ -73,7 +74,7 @@ class Subcategoria extends Model
 
     public function getAtivas(): array
     {
-        return $this->findAll(['status' => 'ATIVA'], 'nome ASC');
+        return $this->findAll(['status' => 'ATIVA'], 'ordem ASC, nome ASC');
     }
 
     public function create(array $data): int
@@ -117,32 +118,79 @@ class Subcategoria extends Model
         return Database::fetch($sql, [$subcategoriaId, $periodo]) ?: [];
     }
 
+    /**
+     * Calcula a próxima data útil (exclui sábado e domingo)
+     */
+    private function proximoDiaUtil(\DateTime $data): \DateTime
+    {
+        while (in_array($data->format('N'), [6, 7])) { // 6 = Sábado, 7 = Domingo
+            $data->add(new \DateInterval('P1D'));
+        }
+        return $data;
+    }
+
+    /**
+     * Calcula a data mínima para agendamento baseado no prazo mínimo
+     * 
+     * Lógica:
+     * - Se prazo_minimo = 0: pode agendar hoje (se for dia útil, senão próximo dia útil)
+     * - Se prazo_minimo = 1: pode agendar a partir de amanhã (se for dia útil, senão próximo dia útil)
+     * - Se prazo_minimo = 2: conta hoje + amanhã, então pode agendar a partir de depois de amanhã
+     * 
+     * Exemplo: Se hoje é segunda e prazo_minimo = 2:
+     * - Conta hoje (segunda) + amanhã (terça) = 2 dias
+     * - Pode agendar a partir de quarta-feira (se for dia útil)
+     */
     public function calcularDataLimiteAgendamento(int $subcategoriaId): \DateTime
     {
         $subcategoria = $this->find($subcategoriaId);
-        $prazoMinimo = $subcategoria['prazo_minimo'] ?? 1;
         
-        $dataLimite = new \DateTime();
-        $dataLimite->add(new \DateInterval("P{$prazoMinimo}D"));
-        
-        // Não permitir agendamento em fins de semana
-        while (in_array($dataLimite->format('N'), [6, 7])) {
-            $dataLimite->add(new \DateInterval('P1D'));
+        // Se for emergencial, não precisa agendamento
+        if ($subcategoria['is_emergencial'] ?? 0) {
+            return new \DateTime(); // Pode agendar imediatamente
         }
         
-        return $dataLimite;
+        $prazoMinimo = (int)($subcategoria['prazo_minimo'] ?? 1);
+        
+        // Data base: hoje
+        $dataLimite = new \DateTime();
+        
+        // Se prazo_minimo = 0, pode agendar hoje (mas precisa ser dia útil)
+        if ($prazoMinimo === 0) {
+            return $this->proximoDiaUtil($dataLimite);
+        }
+        
+        // Adiciona o prazo mínimo (conta a partir de hoje)
+        // Exemplo: se prazo_minimo = 2, conta hoje + amanhã, então pode agendar depois de amanhã
+        $dataLimite->add(new \DateInterval("P{$prazoMinimo}D"));
+        
+        // Garantir que a data final seja um dia útil
+        return $this->proximoDiaUtil($dataLimite);
     }
 
     public function getHorariosDisponiveis(int $subcategoriaId, string $data): array
     {
         $subcategoria = $this->find($subcategoriaId);
-        $prazoMinimo = $subcategoria['prazo_minimo'] ?? 1;
+        
+        // Se for emergencial, não precisa agendamento
+        if ($subcategoria['is_emergencial'] ?? 0) {
+            return [];
+        }
         
         $dataSolicitada = new \DateTime($data);
-        $hoje = new \DateTime();
+        $dataLimite = $this->calcularDataLimiteAgendamento($subcategoriaId);
+        
+        // Comparar apenas a data (sem hora)
+        $dataSolicitada->setTime(0, 0, 0);
+        $dataLimite->setTime(0, 0, 0);
         
         // Verificar se a data está dentro do prazo mínimo
-        if ($dataSolicitada < $this->calcularDataLimiteAgendamento($subcategoriaId)) {
+        if ($dataSolicitada < $dataLimite) {
+            return [];
+        }
+        
+        // Verificar se a data solicitada é um dia útil
+        if (in_array($dataSolicitada->format('N'), [6, 7])) {
             return [];
         }
         

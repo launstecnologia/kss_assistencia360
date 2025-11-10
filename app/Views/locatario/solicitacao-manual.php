@@ -314,18 +314,21 @@ $steps = [
                             
                             <!-- Categorias -->
                             <div>
-                                <h3 class="text-sm font-medium text-gray-700 mb-3">Categoria do Serviço</h3>
+                                <?php
+                                $tipoImovel = $dados['tipo_imovel'] ?? 'RESIDENCIAL';
+                                $tipoTexto = $tipoImovel === 'RESIDENCIAL' ? 'Residencial' : 'Comercial';
+                                ?>
+                                <h3 class="text-sm font-medium text-gray-700 mb-3">
+                                    Categoria do Serviço
+                                    <?php if (!empty($tipoImovel) && $etapaAtual >= 2): ?>
+                                        <span class="text-xs text-gray-500 font-normal">
+                                            (Mostrando categorias para <?= strtolower($tipoTexto) ?>)
+                                        </span>
+                                    <?php endif; ?>
+                                </h3>
                                 <div class="space-y-3">
                                     <?php if (!empty($categorias)): ?>
-                                        <?php 
-                                        $tipoImovel = $dados['tipo_imovel'] ?? 'RESIDENCIAL';
-                                        $categoriasFiltradas = array_filter($categorias, function($cat) use ($tipoImovel) {
-                                            return empty($cat['tipo_assistencia']) || 
-                                                   $cat['tipo_assistencia'] === $tipoImovel || 
-                                                   $cat['tipo_assistencia'] === 'AMBOS';
-                                        });
-                                        ?>
-                                        <?php foreach ($categoriasFiltradas as $categoria): ?>
+                                        <?php foreach ($categorias as $categoria): ?>
                                             <label class="relative block">
                                                 <input type="radio" name="categoria_id" value="<?= $categoria['id'] ?>" 
                                                        class="sr-only categoria-radio" data-categoria="<?= $categoria['id'] ?>"
@@ -351,10 +354,18 @@ $steps = [
                                                                             <input type="radio" name="subcategoria_id" value="<?= $subcategoria['id'] ?>" 
                                                                                    class="sr-only subcategoria-radio"
                                                                                    <?= ($dados['subcategoria_id'] ?? '') == $subcategoria['id'] ? 'checked' : '' ?>>
-                                                                            <div class="border border-gray-200 rounded-lg p-3 hover:border-blue-300 transition-colors subcategoria-card">
+                                                                            <div class="border border-gray-200 rounded-lg p-3 hover:border-blue-300 transition-colors subcategoria-card <?= (!empty($subcategoria['is_emergencial']) && ($subcategoria['is_emergencial'] == 1 || $subcategoria['is_emergencial'] === true)) ? 'border-red-300 bg-red-50' : '' ?>">
                                                                                 <div class="flex items-start justify-between">
                                                                                     <div class="flex-1">
-                                                                                        <h5 class="text-sm font-medium text-gray-900"><?= htmlspecialchars($subcategoria['nome']) ?></h5>
+                                                                                        <div class="flex items-center gap-2">
+                                                                                            <h5 class="text-sm font-medium text-gray-900"><?= htmlspecialchars($subcategoria['nome']) ?></h5>
+                                                                                            <?php if (!empty($subcategoria['is_emergencial']) && ($subcategoria['is_emergencial'] == 1 || $subcategoria['is_emergencial'] === true)): ?>
+                                                                                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 border border-red-200">
+                                                                                                    <i class="fas fa-exclamation-triangle mr-1"></i>
+                                                                                                    Emergencial
+                                                                                                </span>
+                                                                                            <?php endif; ?>
+                                                                                        </div>
                                                                                         <?php if (!empty($subcategoria['descricao'])): ?>
                                                                                             <p class="text-xs text-gray-600 mt-1"><?= htmlspecialchars($subcategoria['descricao']) ?></p>
                                                                                         <?php endif; ?>
@@ -463,6 +474,18 @@ $steps = [
                     
                 <?php elseif ($etapaAtual == 4): ?>
                     <!-- ETAPA 4: AGENDAMENTO -->
+                    <?php
+                    // Calcular data mínima para agendamento baseado no prazo_minimo
+                    $dataMinimaAgendamento = null;
+                    $subcategoriaParaPrazo = null;
+                    if (!empty($dados['subcategoria_id'])) {
+                        $subcategoriaModel = new \App\Models\Subcategoria();
+                        $subcategoriaParaPrazo = $subcategoriaModel->find($dados['subcategoria_id']);
+                        if ($subcategoriaParaPrazo && empty($subcategoriaParaPrazo['is_emergencial'])) {
+                            $dataMinimaAgendamento = $subcategoriaModel->calcularDataLimiteAgendamento($dados['subcategoria_id']);
+                        }
+                    }
+                    ?>
                     <div class="px-6 py-4 border-b border-gray-200">
                         <h2 class="text-xl font-semibold text-gray-900">
                             <i class="fas fa-calendar-alt mr-2 text-green-600"></i>
@@ -517,12 +540,26 @@ $steps = [
                                     <div id="data-container" class="relative cursor-pointer">
                                         <input type="date" id="data_selecionada"
                                                class="block w-full border border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
-                                               min="<?= date('Y-m-d', strtotime('+1 day')) ?>"
-                                               max="<?= date('Y-m-d', strtotime('+30 days')) ?>">
+                                               min="<?= $dataMinimaAgendamento ? $dataMinimaAgendamento->format('Y-m-d') : date('Y-m-d', strtotime('+1 day')) ?>"
+                                               max="<?= date('Y-m-d', strtotime('+30 days')) ?>"
+                                               data-min-date="<?= $dataMinimaAgendamento ? $dataMinimaAgendamento->format('Y-m-d') : '' ?>">
                                     </div>
                                     <div class="mt-2 flex items-center text-xs text-gray-500">
                                         <i class="fas fa-info-circle mr-1.5"></i>
-                                        <span>Atendimentos disponíveis apenas em dias úteis (segunda a sexta-feira)</span>
+                                        <span>
+                                            Atendimentos disponíveis apenas em dias úteis (segunda a sexta-feira)
+                                            <?php if ($dataMinimaAgendamento && $subcategoriaParaPrazo): ?>
+                                                <?php
+                                                $prazoMinimo = $subcategoriaParaPrazo['prazo_minimo'] ?? 1;
+                                                $dataMinimaFormatada = $dataMinimaAgendamento->format('d/m/Y');
+                                                ?>
+                                                <br>
+                                                <strong>Data mínima para agendamento: <?= $dataMinimaFormatada ?></strong>
+                                                <?php if ($prazoMinimo > 0): ?>
+                                                    (prazo mínimo de <?= $prazoMinimo ?> dia<?= $prazoMinimo > 1 ? 's' : '' ?>)
+                                                <?php endif; ?>
+                                            <?php endif; ?>
+                                        </span>
                                     </div>
                                 </div>
                                 
@@ -984,10 +1021,24 @@ $steps = [
         const dataSelecionada = new Date(this.value + 'T12:00:00');
         const diaSemana = dataSelecionada.getDay();
 
+        // Verificar se é fim de semana
         if (diaSemana === 0 || diaSemana === 6) {
             const nomeDia = diaSemana === 0 ? 'domingo' : 'sábado';
             alert('⚠️ Atendimentos não são realizados aos fins de semana.\n\nA data selecionada é um ' + nomeDia + '.\nPor favor, selecione um dia útil (segunda a sexta-feira).');
             this.value = '';
+            return;
+        }
+        
+        // Verificar se a data está antes da data mínima permitida
+        const dataMinima = this.getAttribute('data-min-date');
+        if (dataMinima) {
+            const dataMinimaObj = new Date(dataMinima + 'T12:00:00');
+            if (dataSelecionada < dataMinimaObj) {
+                const dataMinimaFormatada = new Date(dataMinima).toLocaleDateString('pt-BR');
+                alert('⚠️ Data não disponível para agendamento.\n\nA data selecionada é anterior à data mínima permitida (' + dataMinimaFormatada + ').\nPor favor, selecione uma data válida.');
+                this.value = '';
+                return;
+            }
         }
     });
 

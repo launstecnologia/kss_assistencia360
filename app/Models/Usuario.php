@@ -140,4 +140,142 @@ class Usuario extends Model
 
         return false;
     }
+    
+    /**
+     * Salva token de "lembrar de mim"
+     */
+    public function saveRememberToken(int $userId, string $token, int $expires): void
+    {
+        // Criar tabela se não existir
+        $sql = "
+            CREATE TABLE IF NOT EXISTS remember_tokens (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                usuario_id INT NOT NULL,
+                token VARCHAR(64) NOT NULL UNIQUE,
+                expires_at INT NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                INDEX idx_token (token),
+                INDEX idx_usuario (usuario_id),
+                FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        ";
+        Database::query($sql);
+        
+        // Limpar tokens expirados
+        $this->cleanExpiredRememberTokens();
+        
+        // Salvar novo token
+        $sql = "INSERT INTO remember_tokens (usuario_id, token, expires_at) VALUES (?, ?, ?)";
+        Database::query($sql, [$userId, $token, $expires]);
+    }
+    
+    /**
+     * Busca usuário por token de "lembrar de mim"
+     */
+    public function findByRememberToken(string $token): ?array
+    {
+        $sql = "
+            SELECT u.* FROM {$this->table} u
+            INNER JOIN remember_tokens rt ON u.id = rt.usuario_id
+            WHERE rt.token = ? AND rt.expires_at > ? AND u.status = 'ATIVO'
+        ";
+        $user = Database::fetch($sql, [$token, time()]);
+        
+        if ($user) {
+            return $this->hide($user);
+        }
+        
+        return null;
+    }
+    
+    /**
+     * Remove token de "lembrar de mim"
+     */
+    public function deleteRememberToken(string $token): void
+    {
+        $sql = "DELETE FROM remember_tokens WHERE token = ?";
+        Database::query($sql, [$token]);
+    }
+    
+    /**
+     * Limpa tokens expirados
+     */
+    private function cleanExpiredRememberTokens(): void
+    {
+        $sql = "DELETE FROM remember_tokens WHERE expires_at < ?";
+        Database::query($sql, [time()]);
+    }
+    
+    /**
+     * Salva token de recuperação de senha
+     */
+    public function savePasswordResetToken(int $userId, string $token, int $expires): void
+    {
+        // Criar tabela se não existir
+        $sql = "
+            CREATE TABLE IF NOT EXISTS password_reset_tokens (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                usuario_id INT NOT NULL,
+                token VARCHAR(64) NOT NULL UNIQUE,
+                expires_at INT NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                INDEX idx_token (token),
+                INDEX idx_usuario (usuario_id),
+                FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        ";
+        Database::query($sql);
+        
+        // Limpar tokens expirados
+        $this->cleanExpiredPasswordResetTokens();
+        
+        // Remover tokens antigos do mesmo usuário
+        $sql = "DELETE FROM password_reset_tokens WHERE usuario_id = ?";
+        Database::query($sql, [$userId]);
+        
+        // Salvar novo token
+        $sql = "INSERT INTO password_reset_tokens (usuario_id, token, expires_at) VALUES (?, ?, ?)";
+        Database::query($sql, [$userId, $token, $expires]);
+    }
+    
+    /**
+     * Valida token de recuperação de senha
+     */
+    public function validatePasswordResetToken(string $token): ?array
+    {
+        $sql = "
+            SELECT * FROM password_reset_tokens
+            WHERE token = ? AND expires_at > ?
+            ORDER BY created_at DESC
+            LIMIT 1
+        ";
+        return Database::fetch($sql, [$token, time()]);
+    }
+    
+    /**
+     * Remove token de recuperação de senha
+     */
+    public function deletePasswordResetToken(string $token): void
+    {
+        $sql = "DELETE FROM password_reset_tokens WHERE token = ?";
+        Database::query($sql, [$token]);
+    }
+    
+    /**
+     * Limpa tokens de recuperação expirados
+     */
+    private function cleanExpiredPasswordResetTokens(): void
+    {
+        $sql = "DELETE FROM password_reset_tokens WHERE expires_at < ?";
+        Database::query($sql, [time()]);
+    }
+    
+    /**
+     * Atualiza senha do usuário
+     */
+    public function updatePassword(int $userId, string $newPassword): void
+    {
+        $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
+        $this->update($userId, ['senha' => $hashedPassword]);
+    }
 }

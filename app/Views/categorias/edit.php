@@ -6,26 +6,127 @@ $title = 'Editar ' . ($categoria['nome'] ?? 'Categoria');
 $currentPage = 'categorias';
 $pageTitle = 'Editar ' . ($categoria['nome'] ?? 'Categoria');
 $iconOptions = [
+    // Ferramentas e Manutenção
     'fas fa-tools',
-    'fas fa-bolt',
-    'fas fa-water',
-    'fas fa-home',
-    'fas fa-paint-roller',
     'fas fa-wrench',
     'fas fa-screwdriver',
     'fas fa-hammer',
-    'fas fa-shower',
-    'fas fa-broom',
-    'fas fa-fire-extinguisher',
+    'fas fa-cog',
+    'fas fa-cogs',
+    'fas fa-toolbox',
+    'fas fa-hard-hat',
+    
+    // Elétrica
+    'fas fa-bolt',
     'fas fa-plug',
+    'fas fa-lightbulb',
+    'fas fa-power-off',
+    'fas fa-microchip',
+    
+    // Hidráulica e Água
+    'fas fa-water',
+    'fas fa-shower',
+    'fas fa-sink',
+    'fas fa-faucet',
+    'fas fa-swimming-pool',
+    
+    // Pintura e Acabamento
+    'fas fa-paint-roller',
+    'fas fa-paint-brush',
+    'fas fa-palette',
+    'fas fa-spray-can',
+    
+    // Construção e Estrutura
+    'fas fa-home',
+    'fas fa-building',
+    'fas fa-warehouse',
+    'fas fa-drafting-compass',
+    'fas fa-ruler',
+    'fas fa-ruler-combined',
+    
+    // Limpeza
+    'fas fa-broom',
+    'fas fa-soap',
+    'fas fa-spray-can',
+    'fas fa-vacuum',
+    
+    // Segurança e Acesso
+    'fas fa-key',
+    'fas fa-lock',
+    'fas fa-lock-open',
+    'fas fa-door-closed',
+    'fas fa-door-open',
+    'fas fa-shield-alt',
+    'fas fa-fire-extinguisher',
+    
+    // Climatização
     'fas fa-sun',
     'fas fa-snowflake',
-    'fas fa-bug',
-    'fas fa-key',
-    'fas fa-sink',
+    'fas fa-wind',
+    'fas fa-fan',
+    'fas fa-thermometer-half',
+    'fas fa-thermometer-quarter',
+    
+    // Jardim e Externo
+    'fas fa-leaf',
+    'fas fa-tree',
+    'fas fa-seedling',
+    'fas fa-mountain',
+    'fas fa-fence',
+    
+    // Eletrônicos e Tecnologia
+    'fas fa-tv',
+    'fas fa-laptop',
+    'fas fa-phone',
+    'fas fa-wifi',
+    'fas fa-satellite-dish',
+    'fas fa-antenna',
+    
+    // Móveis e Decoração
     'fas fa-chair',
-    'fas fa-door-closed',
-    'fas fa-lightbulb'
+    'fas fa-couch',
+    'fas fa-bed',
+    'fas fa-table',
+    'fas fa-cabinet-filing',
+    
+    // Vidros e Janelas
+    'fas fa-window-maximize',
+    'fas fa-window-restore',
+    'fas fa-glass',
+    
+    // Outros Serviços
+    'fas fa-bug',
+    'fas fa-spider',
+    'fas fa-dumpster',
+    'fas fa-truck',
+    'fas fa-box',
+    'fas fa-cube',
+    'fas fa-cubes',
+    'fas fa-clipboard-check',
+    'fas fa-tasks',
+    'fas fa-check-circle',
+    'fas fa-star',
+    'fas fa-heart',
+    'fas fa-thumbs-up',
+    'fas fa-handshake',
+    'fas fa-user-cog',
+    'fas fa-user-tie',
+    'fas fa-headset',
+    'fas fa-phone-alt',
+    'fas fa-envelope',
+    'fas fa-calendar-alt',
+    'fas fa-clock',
+    'fas fa-stopwatch',
+    'fas fa-exclamation-triangle',
+    'fas fa-info-circle',
+    'fas fa-question-circle',
+    'fas fa-check-double',
+    'fas fa-certificate',
+    'fas fa-award',
+    'fas fa-medal',
+    'fas fa-trophy',
+    'fas fa-gem',
+    'fas fa-diamond'
 ];
 ob_start();
 ?>
@@ -185,6 +286,27 @@ ob_start();
                 </select>
                 <?php if (isset($errors['status'])): ?>
                     <p class="mt-1 text-sm text-red-600"><?= htmlspecialchars($errors['status']) ?></p>
+                <?php endif; ?>
+            </div>
+            
+            <!-- Tipo de Imóvel -->
+            <div>
+                <label for="tipo_imovel" class="block text-sm font-medium text-gray-700">
+                    Tipo de Imóvel <span class="text-red-500">*</span>
+                </label>
+                <select name="tipo_imovel" 
+                        id="tipo_imovel"
+                        class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm <?= isset($errors['tipo_imovel']) ? 'border-red-300' : '' ?>"
+                        required>
+                    <option value="AMBOS" <?= ($data['tipo_imovel'] ?? $categoria['tipo_imovel'] ?? 'AMBOS') === 'AMBOS' ? 'selected' : '' ?>>Ambos (Residencial e Comercial)</option>
+                    <option value="RESIDENCIAL" <?= ($data['tipo_imovel'] ?? $categoria['tipo_imovel'] ?? '') === 'RESIDENCIAL' ? 'selected' : '' ?>>Apenas Residencial</option>
+                    <option value="COMERCIAL" <?= ($data['tipo_imovel'] ?? $categoria['tipo_imovel'] ?? '') === 'COMERCIAL' ? 'selected' : '' ?>>Apenas Comercial</option>
+                </select>
+                <p class="mt-1 text-xs text-gray-500">
+                    Selecione para qual tipo de imóvel esta categoria se aplica
+                </p>
+                <?php if (isset($errors['tipo_imovel'])): ?>
+                    <p class="mt-1 text-sm text-red-600"><?= htmlspecialchars($errors['tipo_imovel']) ?></p>
                 <?php endif; ?>
             </div>
             

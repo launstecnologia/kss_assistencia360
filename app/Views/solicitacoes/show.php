@@ -803,17 +803,140 @@ function salvarStatus(event) {
 }
 
 function copiarInformacoes() {
-    const info = `SOLICITAÇÃO: <?= $solicitacao['numero_solicitacao'] ?? '#'.$solicitacao['id'] ?>
-STATUS: <?= $solicitacao['status_nome'] ?? '' ?>
-CATEGORIA: <?= $solicitacao['categoria_nome'] ?? '' ?>
-CLIENTE: <?= $solicitacao['locatario_nome'] ?? '' ?>
-TELEFONE: <?= $solicitacao['locatario_telefone'] ?? '' ?>
-ENDEREÇO: <?= $solicitacao['imovel_endereco'] ?? '' ?>, <?= $solicitacao['imovel_numero'] ?? '' ?>
-DESCRIÇÃO: <?= $solicitacao['descricao_problema'] ?? '' ?>
-DATA: <?= date('d/m/Y H:i', strtotime($solicitacao['created_at'])) ?>`.trim();
+    // Montar informações completas do locatário para enviar ao prestador
+    <?php
+    // Formatar data de criação
+    $dataCriacao = date('d/m/Y', strtotime($solicitacao['created_at']));
+    $horaCriacao = date('H:i', strtotime($solicitacao['created_at']));
+    $dataCriacaoFormatada = $dataCriacao . ' às ' . $horaCriacao;
+    
+    // Formatar endereço
+    $endereco = [];
+    if (!empty($solicitacao['imovel_endereco'])) {
+        $endereco[] = $solicitacao['imovel_endereco'];
+        if (!empty($solicitacao['imovel_numero'])) {
+            $endereco[] = $solicitacao['imovel_numero'];
+        }
+    }
+    $enderecoCompleto = implode(', ', $endereco);
+    
+    // Formatar localização (Bairro/Cidade/Estado)
+    $localizacao = [];
+    if (!empty($solicitacao['imovel_bairro'])) {
+        $localizacao[] = $solicitacao['imovel_bairro'];
+    }
+    if (!empty($solicitacao['imovel_cidade'])) {
+        $localizacao[] = $solicitacao['imovel_cidade'];
+        if (!empty($solicitacao['imovel_estado'])) {
+            $localizacao[] = $solicitacao['imovel_estado'];
+        }
+    }
+    $localizacaoCompleta = implode(' - ', $localizacao);
+    
+    // Buscar horários informados pelo locatário
+    $horariosLocatario = [];
+    if (!empty($solicitacao['horarios_indisponiveis'])) {
+        $horariosLocatario = !empty($solicitacao['datas_opcoes']) 
+            ? json_decode($solicitacao['datas_opcoes'], true) : [];
+    } else {
+        $horariosLocatario = !empty($solicitacao['horarios_opcoes']) 
+            ? json_decode($solicitacao['horarios_opcoes'], true) : [];
+    }
+    $horariosTexto = '';
+    if (!empty($horariosLocatario) && is_array($horariosLocatario)) {
+        $horariosTexto = implode("\n", array_filter($horariosLocatario));
+    }
+    ?>
+    const info = `═══════════════════════════════════════
+
+📋 INFORMAÇÕES DA SOLICITAÇÃO
+
+═══════════════════════════════════════
+
+
+
+🔢 Número da Solicitação: <?= $solicitacao['numero_solicitacao'] ?? 'KS'.$solicitacao['id'] ?>
+
+📊 Status: <?= $solicitacao['status_nome'] ?? 'Não informado' ?>
+
+📅 Data de Criação: <?= $dataCriacaoFormatada ?>
+
+
+
+═══════════════════════════════════════
+
+👤 DADOS DO LOCATÁRIO
+
+═══════════════════════════════════════
+
+
+
+Nome: <?= $solicitacao['locatario_nome'] ?? 'Não informado' ?>
+
+<?php if (!empty($solicitacao['locatario_cpf'])): ?>
+CPF: <?= $solicitacao['locatario_cpf'] ?>
+
+<?php endif; ?>
+<?php if (!empty($solicitacao['locatario_telefone'])): ?>
+Telefone: <?= $solicitacao['locatario_telefone'] ?>
+
+<?php endif; ?>
+Nº do Contrato: <?= !empty($solicitacao['numero_contrato']) ? $solicitacao['numero_contrato'] : '' ?>
+
+<?php if (!empty($solicitacao['imobiliaria_nome'])): ?>
+Imobiliária: <?= $solicitacao['imobiliaria_nome'] ?>
+
+<?php endif; ?>
+
+
+
+<?php if (!empty($horariosTexto)): ?>
+═══════════════════════════════════════
+
+📅 Data Informada pelo Locatário
+
+═══════════════════════════════════════
+<?= $horariosTexto ?>
+
+═══════════════════════════════════════
+
+<?php endif; ?>
+📍 ENDEREÇO DO IMÓVEL
+
+═══════════════════════════════════════
+
+
+
+<?php if (!empty($enderecoCompleto)): ?>
+Endereço: <?= $enderecoCompleto ?>
+
+<?php endif; ?>
+<?php if (!empty($localizacaoCompleta)): ?>
+Bairro/Cidade/Estado: <?= $localizacaoCompleta ?>
+
+<?php endif; ?>
+<?php if (!empty($solicitacao['imovel_cep'])): ?>
+CEP: <?= $solicitacao['imovel_cep'] ?>
+
+<?php endif; ?>
+
+
+
+═══════════════════════════════════════
+
+📝 DESCRIÇÃO DO PROBLEMA
+
+═══════════════════════════════════════
+
+
+
+<?= !empty($solicitacao['descricao_problema']) ? $solicitacao['descricao_problema'] : 'Nenhuma descrição fornecida.' ?>`.trim();
     
     navigator.clipboard.writeText(info).then(() => {
-        alert('Informações copiadas!');
+        alert('✅ Informações copiadas para a área de transferência!');
+    }).catch(err => {
+        console.error('Erro ao copiar:', err);
+        alert('Erro ao copiar informações. Por favor, tente novamente.');
     });
 }
 
@@ -822,6 +945,14 @@ document.getElementById('modalStatus')?.addEventListener('click', function(e) {
 });
 
 function confirmarHorario(solicitacaoId, horario) {
+    // ✅ Solicitar protocolo da seguradora antes de confirmar
+    const protocoloSeguradora = prompt('Para confirmar o horário, é necessário informar o protocolo da seguradora:\n\nDigite o protocolo:');
+    
+    if (!protocoloSeguradora || protocoloSeguradora.trim() === '') {
+        alert('O protocolo da seguradora é obrigatório para confirmar o horário.');
+        return;
+    }
+    
     if (!confirm('Confirmar este horário? O status será alterado para "Serviço Agendado".')) {
         return;
     }
@@ -829,7 +960,10 @@ function confirmarHorario(solicitacaoId, horario) {
     fetch(`<?= url('admin/solicitacoes/') ?>${solicitacaoId}/confirmar-horario`, {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ horario: horario })
+        body: JSON.stringify({ 
+            horario: horario,
+            protocolo_seguradora: protocoloSeguradora.trim()
+        })
     })
     .then(async response => {
         // ✅ Verificar se a resposta é JSON válido antes de parsear

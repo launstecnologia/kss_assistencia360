@@ -110,7 +110,29 @@ abstract class Controller
 
     protected function isAuthenticated(): bool
     {
-        return isset($_SESSION['user_id']);
+        // Verificar se há sessão ativa
+        if (isset($_SESSION['user_id'])) {
+            return true;
+        }
+        
+        // Verificar cookie de "lembrar de mim"
+        if (isset($_COOKIE['remember_token'])) {
+            $usuarioModel = new \App\Models\Usuario();
+            $user = $usuarioModel->findByRememberToken($_COOKIE['remember_token']);
+            
+            if ($user) {
+                // Restaurar sessão
+                $_SESSION['user_id'] = $user['id'];
+                $_SESSION['user'] = $user;
+                $_SESSION['user_level'] = $user['nivel_permissao'];
+                return true;
+            } else {
+                // Token inválido, remover cookie
+                setcookie('remember_token', '', time() - 3600, '/');
+            }
+        }
+        
+        return false;
     }
 
     protected function requireAuth(): void

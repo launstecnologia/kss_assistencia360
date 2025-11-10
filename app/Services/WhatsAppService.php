@@ -148,6 +148,9 @@ class WhatsAppService
             // Criar token se necessário (para mensagens de confirmação/sugestão de horário)
             $token = $this->createTokenIfNeeded($solicitacaoId, $messageType, $solicitacao, $extraData);
             
+            // Adicionar message_type aos extraData para uso em prepareVariables
+            $extraData['message_type'] = $messageType;
+            
             // Preparar variáveis (incluindo links com token)
             $variables = $this->prepareVariables($solicitacao, $extraData, $token);
             
@@ -314,7 +317,7 @@ class WhatsAppService
     private function createTokenIfNeeded(int $solicitacaoId, string $messageType, array $solicitacao, array $extraData): ?string
     {
         // Tipos de mensagem que precisam de token
-        $tokenTypes = ['Horário Confirmado', 'Horário Sugerido', 'Confirmação de Serviço'];
+        $tokenTypes = ['Horário Confirmado', 'Horário Sugerido', 'Confirmação de Serviço', 'lembrete_peca'];
         
         if (!in_array($messageType, $tokenTypes)) {
             return null;
@@ -345,6 +348,8 @@ class WhatsAppService
             $actionType = 'reschedule';
         } elseif ($messageType === 'Confirmação de Serviço') {
             $actionType = 'service_status';
+        } elseif ($messageType === 'lembrete_peca') {
+            $actionType = 'compra_peca';
         }
         
         // Criar token
@@ -419,6 +424,10 @@ class WhatsAppService
             'link_cancelamento_solicitacao' => $this->getCancelamentoSolicitacaoLink($baseUrl, $solicitacao),
             // Link de ações do serviço (pré-serviço)
             'link_acoes_servico' => $extraData['link_acoes_servico'] ?? '',
+            // Link de compra de peça (para lembrete_peca)
+            'link_compra_peca' => $token && ($extraData['message_type'] ?? '') === 'lembrete_peca' 
+                ? $this->cleanUrl($baseUrl . '/compra-peca?token=' . $token) 
+                : ($extraData['link_compra_peca'] ?? ''),
         ];
         
         // Mesclar com dados extras (sobrescreve se existir)

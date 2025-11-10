@@ -50,13 +50,15 @@ class CategoriasController extends Controller
             'icone' => $this->input('icone'),
             'cor' => $this->input('cor'),
             'status' => $this->input('status', 'ATIVA'),
-            'ordem' => $this->input('ordem', 0)
+            'ordem' => $this->input('ordem', 0),
+            'tipo_imovel' => $this->input('tipo_imovel', 'AMBOS')
         ];
 
         $errors = $this->validate([
             'nome' => 'required|min:3|max:100',
             'descricao' => 'max:500',
-            'status' => 'required|in:ATIVA,INATIVA'
+            'status' => 'required|in:ATIVA,INATIVA',
+            'tipo_imovel' => 'required|in:RESIDENCIAL,COMERCIAL,AMBOS'
         ], $data);
 
         if (!empty($errors)) {
@@ -121,13 +123,15 @@ class CategoriasController extends Controller
             'icone' => $this->input('icone'),
             'cor' => $this->input('cor'),
             'status' => $this->input('status'),
-            'ordem' => $this->input('ordem', 0)
+            'ordem' => $this->input('ordem', 0),
+            'tipo_imovel' => $this->input('tipo_imovel', 'AMBOS')
         ];
 
         $errors = $this->validate([
             'nome' => 'required|min:3|max:100',
             'descricao' => 'max:500',
-            'status' => 'required|in:ATIVA,INATIVA'
+            'status' => 'required|in:ATIVA,INATIVA',
+            'tipo_imovel' => 'required|in:RESIDENCIAL,COMERCIAL,AMBOS'
         ], $data);
 
         if (!empty($errors)) {
@@ -250,7 +254,7 @@ class CategoriasController extends Controller
             'categoria_id' => $categoriaId,
             'nome' => $this->input('nome'),
             'descricao' => $this->input('descricao'),
-            'tempo_estimado' => $this->input('tempo_estimado'),
+            'prazo_minimo' => $this->input('prazo_minimo', 1),
             'status' => $this->input('status', 'ATIVA'),
             'ordem' => $this->input('ordem', 0),
             'is_emergencial' => $this->input('is_emergencial', 0) ? 1 : 0
@@ -259,7 +263,7 @@ class CategoriasController extends Controller
         $errors = $this->validate([
             'nome' => 'required|min:3|max:100',
             'descricao' => 'max:500',
-            'tempo_estimado' => 'numeric|min:0',
+            'prazo_minimo' => 'required|numeric|min:0',
             'status' => 'required|in:ATIVA,INATIVA'
         ], $data);
 
@@ -311,7 +315,7 @@ class CategoriasController extends Controller
         $data = [
             'nome' => $this->input('nome'),
             'descricao' => $this->input('descricao'),
-            'tempo_estimado' => $this->input('tempo_estimado'),
+            'prazo_minimo' => $this->input('prazo_minimo', 1),
             'status' => $this->input('status'),
             'ordem' => $this->input('ordem', 0),
             'is_emergencial' => $this->input('is_emergencial', 0) ? 1 : 0
@@ -320,7 +324,7 @@ class CategoriasController extends Controller
         $errors = $this->validate([
             'nome' => 'required|min:3|max:100',
             'descricao' => 'max:500',
-            'tempo_estimado' => 'numeric|min:0',
+            'prazo_minimo' => 'required|numeric|min:0',
             'status' => 'required|in:ATIVA,INATIVA'
         ], $data);
 

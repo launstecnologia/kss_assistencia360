@@ -333,8 +333,108 @@ function updatePeriod(periodo) {
 // Funções do Offcanvas (removidas - usando versão atualizada abaixo)
 
 function copiarInformacoes() {
-    // TODO: Implementar função de copiar informações
-    alert('Funcionalidade de copiar informações será implementada');
+    if (!offcanvasSolicitacaoId) {
+        alert('Nenhuma solicitação selecionada');
+        return;
+    }
+    
+    // Buscar dados da solicitação atual do offcanvas
+    const solicitacao = window.solicitacaoAtual || null;
+    
+    if (!solicitacao) {
+        alert('Erro: Dados da solicitação não encontrados. Por favor, recarregue a página.');
+        return;
+    }
+    
+    // Formatar data de criação
+    const dataCriacao = formatarDataHora(solicitacao.created_at);
+    const dataCriacaoFormatada = dataCriacao.replace(' às ', ' às ');
+    
+    // Formatar endereço
+    let enderecoCompleto = '';
+    if (solicitacao.imovel_endereco) {
+        enderecoCompleto = solicitacao.imovel_endereco;
+        if (solicitacao.imovel_numero) {
+            enderecoCompleto += ', ' + solicitacao.imovel_numero;
+        }
+    }
+    
+    // Formatar localização (Bairro/Cidade/Estado)
+    const localizacao = [solicitacao.imovel_bairro, solicitacao.imovel_cidade, solicitacao.imovel_estado].filter(Boolean).join(' - ');
+    
+    // Buscar horários informados pelo locatário
+    let horariosLocatario = [];
+    if (solicitacao.horarios_indisponiveis) {
+        horariosLocatario = solicitacao.datas_opcoes ? JSON.parse(solicitacao.datas_opcoes) : [];
+    } else {
+        horariosLocatario = solicitacao.horarios_opcoes ? JSON.parse(solicitacao.horarios_opcoes) : [];
+    }
+    const horariosTexto = Array.isArray(horariosLocatario) ? horariosLocatario.filter(Boolean).join('\n') : '';
+    
+    // Montar informações completas do locatário para enviar ao prestador
+    let info = `═══════════════════════════════════════
+
+📋 INFORMAÇÕES DA SOLICITAÇÃO
+
+═══════════════════════════════════════
+
+
+
+🔢 Número da Solicitação: ${solicitacao.numero_solicitacao || 'KS' + solicitacao.id}
+
+📊 Status: ${solicitacao.status_nome || 'Não informado'}
+
+📅 Data de Criação: ${dataCriacaoFormatada}
+
+
+
+═══════════════════════════════════════
+
+👤 DADOS DO LOCATÁRIO
+
+═══════════════════════════════════════
+
+
+
+Nome: ${solicitacao.locatario_nome || 'Não informado'}
+
+${solicitacao.locatario_cpf ? `CPF: ${solicitacao.locatario_cpf}\n` : ''}${solicitacao.locatario_telefone ? `Telefone: ${solicitacao.locatario_telefone}\n` : ''}Nº do Contrato: ${solicitacao.numero_contrato || ''}
+
+${solicitacao.imobiliaria_nome ? `Imobiliária: ${solicitacao.imobiliaria_nome}\n` : ''}
+
+${horariosTexto ? `═══════════════════════════════════════
+
+📅 Data Informada pelo Locatário
+
+═══════════════════════════════════════
+${horariosTexto}
+
+═══════════════════════════════════════
+
+` : ''}📍 ENDEREÇO DO IMÓVEL
+
+═══════════════════════════════════════
+
+
+
+${enderecoCompleto ? `Endereço: ${enderecoCompleto}\n` : ''}${localizacao ? `Bairro/Cidade/Estado: ${localizacao}\n` : ''}${solicitacao.imovel_cep ? `CEP: ${solicitacao.imovel_cep}\n` : ''}
+
+═══════════════════════════════════════
+
+📝 DESCRIÇÃO DO PROBLEMA
+
+═══════════════════════════════════════
+
+
+
+${solicitacao.descricao_problema || 'Nenhuma descrição fornecida.'}`.trim();
+    
+    navigator.clipboard.writeText(info).then(() => {
+        alert('✅ Informações copiadas para a área de transferência!');
+    }).catch(err => {
+        console.error('Erro ao copiar:', err);
+        alert('Erro ao copiar informações. Por favor, tente novamente.');
+    });
 }
 
 function toggleCampoReembolso() {
@@ -446,6 +546,8 @@ function abrirDetalhes(solicitacaoId) {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
+                // Armazenar solicitação globalmente para uso em copiarInformacoes
+                window.solicitacaoAtual = data.solicitacao;
                 renderizarDetalhes(data.solicitacao);
                 // ✅ Monitorar mudanças após renderizar
                 setTimeout(() => {

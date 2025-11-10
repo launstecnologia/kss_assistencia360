@@ -1896,5 +1896,199 @@ class TokenController extends Controller
             $this->json(['success' => false, 'message' => 'Erro ao processar ação: ' . $e->getMessage()], 500);
         }
     }
+    
+    /**
+     * Exibe página para informar compra de peça e selecionar novos horários
+     * GET /compra-peca?token=xxx
+     */
+    public function compraPeca(): void
+    {
+        $token = $this->input('token');
+
+        if (!$token) {
+            $this->view('token.error', [
+                'title' => 'Token Inválido',
+                'message' => 'Token não fornecido. Por favor, use o link completo enviado no WhatsApp.',
+                'error_type' => 'missing_token'
+            ]);
+            return;
+        }
+
+        // Validar token (permitir tokens já usados, mas verificar se não expirou)
+        $tokenData = $this->tokenModel->validateToken($token);
+        
+        if (!$tokenData) {
+            // Tentar buscar token mesmo se já foi usado, mas verificar se não expirou
+            $sql = "
+                SELECT * FROM schedule_confirmation_tokens
+                WHERE token = ?
+                AND expires_at > NOW()
+            ";
+            $tokenData = \App\Core\Database::fetch($sql, [$token]);
+        }
+
+        if (!$tokenData) {
+            $this->view('token.error', [
+                'title' => 'Token Inválido ou Expirado',
+                'message' => 'Este link é inválido ou expirou. Por favor, entre em contato conosco.',
+                'error_type' => 'invalid_token'
+            ]);
+            return;
+        }
+
+        // Buscar dados da solicitação
+        $sql = "
+            SELECT s.*, 
+                   st.nome as status_nome,
+                   st.cor as status_cor,
+                   i.instancia as imobiliaria_instancia,
+                   c.nome as categoria_nome,
+                   sc.nome as subcategoria_nome
+            FROM solicitacoes s
+            LEFT JOIN status st ON s.status_id = st.id
+            LEFT JOIN imobiliarias i ON s.imobiliaria_id = i.id
+            LEFT JOIN categorias c ON s.categoria_id = c.id
+            LEFT JOIN subcategorias sc ON s.subcategoria_id = sc.id
+            WHERE s.id = ?
+        ";
+        $solicitacao = \App\Core\Database::fetch($sql, [$tokenData['solicitacao_id']]);
+
+        if (!$solicitacao) {
+            $this->view('token.error', [
+                'title' => 'Solicitação Não Encontrada',
+                'message' => 'A solicitação associada a este token não foi encontrada.',
+                'error_type' => 'solicitacao_not_found'
+            ]);
+            return;
+        }
+
+        // Se já foi processado (POST), processar compra de peça
+        if ($this->isPost()) {
+            $this->processarCompraPeca($token, $tokenData, $solicitacao);
+            return;
+        }
+
+        // Exibir formulário para selecionar novos horários
+        $this->view('token.compra-peca', [
+            'token' => $token,
+            'tokenData' => $tokenData,
+            'solicitacao' => $solicitacao,
+            'title' => 'Informar Compra de Peça e Selecionar Horários'
+        ]);
+    }
+
+    /**
+     * Processa compra de peça e seleção de novos horários
+     */
+    private function processarCompraPeca(string $token, array $tokenData, array $solicitacao): void
+    {
+        try {
+            // Obter dados do formulário
+            $dataAgendamento = $this->input('data_agendamento');
+            $horarioSelecionado = $this->input('horario_selecionado');
+            
+            if (empty($dataAgendamento) || empty($horarioSelecionado)) {
+                $this->view('token.compra-peca', [
+                    'token' => $token,
+                    'tokenData' => $tokenData,
+                    'solicitacao' => $solicitacao,
+                    'title' => 'Informar Compra de Peça e Selecionar Horários',
+                    'error' => 'Por favor, selecione uma data e um horário.'
+                ]);
+                return;
+            }
+
+            // Converter data para formato do banco (Y-m-d)
+            $dataFormatada = null;
+            if (preg_match('/^\d{2}\/\d{2}\/\d{4}$/', $dataAgendamento)) {
+                $dataFormatada = \DateTime::createFromFormat('d/m/Y', $dataAgendamento)->format('Y-m-d');
+            } elseif (preg_match('/^\d{4}-\d{2}-\d{2}$/', $dataAgendamento)) {
+                $dataFormatada = $dataAgendamento;
+            }
+
+            if (!$dataFormatada) {
+                $this->view('token.compra-peca', [
+                    'token' => $token,
+                    'tokenData' => $tokenData,
+                    'solicitacao' => $solicitacao,
+                    'title' => 'Informar Compra de Peça e Selecionar Horários',
+                    'error' => 'Data inválida. Por favor, selecione uma data válida.'
+                ]);
+                return;
+            }
+
+            // Marcar token como usado
+            $this->tokenModel->markAsUsed($token, 'compra_peca');
+
+            // Atualizar solicitação: marcar peça como comprada e definir novos horários
+            $updateData = [
+                'data_agendamento' => $dataFormatada,
+                'horario_agendamento' => $horarioSelecionado,
+                'data_limite_peca' => null,
+                'data_ultimo_lembrete' => null,
+                'lembretes_enviados' => 0
+            ];
+
+            // Remover condição "Comprar peças" se existir
+            $condicaoModel = new \App\Models\Condicao();
+            $condicaoComprarPecas = $condicaoModel->findByNome('Comprar peças');
+            if ($condicaoComprarPecas) {
+                $updateData['condicao_id'] = null;
+            }
+
+            // Atualizar status para "Buscando Prestador" ou "Nova Solicitação"
+            $statusModel = new \App\Models\Status();
+            $statusBuscando = $statusModel->findByNome('Buscando Prestador');
+            if (!$statusBuscando) {
+                $statusBuscando = $statusModel->findByNome('Nova Solicitação');
+            }
+            if ($statusBuscando) {
+                $updateData['status_id'] = $statusBuscando['id'];
+            }
+
+            // Adicionar observação sobre compra de peça
+            $observacoes = $solicitacao['observacoes'] ?? '';
+            $observacoes .= "\n\n✅ Locatário informou que comprou a peça em " . date('d/m/Y H:i') . " e selecionou novo horário: " . date('d/m/Y', strtotime($dataFormatada)) . " - " . $horarioSelecionado;
+            $updateData['observacoes'] = $observacoes;
+
+            // Atualizar solicitação
+            $this->solicitacaoModel->update($solicitacao['id'], $updateData);
+
+            // Adicionar ao histórico
+            $historico = "✅ Locatário informou que comprou a peça e selecionou novo horário: " . date('d/m/Y', strtotime($dataFormatada)) . " - " . $horarioSelecionado;
+            $sqlHistorico = "
+                INSERT INTO solicitacoes_historico (solicitacao_id, usuario_id, acao, descricao, created_at)
+                VALUES (?, NULL, 'compra_peca', ?, NOW())
+            ";
+            \App\Core\Database::query($sqlHistorico, [$solicitacao['id'], $historico]);
+
+            // Redirecionar para criar nova solicitação (ou dashboard do locatário)
+            $instancia = $solicitacao['imobiliaria_instancia'] ?? '';
+            $redirectUrl = url($instancia . '/nova-solicitacao?success=' . urlencode('Peça comprada informada com sucesso! Agora você pode criar uma nova solicitação.'));
+            
+            // Se não tiver instância, redirecionar para página de sucesso
+            if (empty($instancia)) {
+                $this->view('token.sucesso', [
+                    'title' => 'Compra de Peça Informada',
+                    'message' => 'Obrigado por informar que comprou a peça! Seus novos horários foram registrados e nossa equipe entrará em contato em breve.',
+                    'solicitacao' => $solicitacao,
+                    'action' => 'confirmacao'
+                ]);
+                return;
+            }
+
+            $this->redirect($redirectUrl);
+            
+        } catch (\Exception $e) {
+            error_log('Erro ao processar compra de peça: ' . $e->getMessage());
+            $this->view('token.compra-peca', [
+                'token' => $token,
+                'tokenData' => $tokenData,
+                'solicitacao' => $solicitacao,
+                'title' => 'Informar Compra de Peça e Selecionar Horários',
+                'error' => 'Erro ao processar. Por favor, tente novamente ou entre em contato conosco.'
+            ]);
+        }
+    }
 }
 

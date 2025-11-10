@@ -107,24 +107,24 @@ ob_start();
                 <?php endif; ?>
             </div>
             
-            <!-- Tempo Estimado -->
+            <!-- Prazo Mínimo -->
             <div>
-                <label for="tempo_estimado" class="block text-sm font-medium text-gray-700">
-                    Tempo Estimado (horas)
+                <label for="prazo_minimo" class="block text-sm font-medium text-gray-700">
+                    Prazo Mínimo (dias) <span class="text-red-500">*</span>
                 </label>
                 <input type="number" 
-                       name="tempo_estimado" 
-                       id="tempo_estimado" 
-                       value="<?= htmlspecialchars($data['tempo_estimado'] ?? '') ?>"
+                       name="prazo_minimo" 
+                       id="prazo_minimo" 
+                       value="<?= htmlspecialchars($data['prazo_minimo'] ?? '1') ?>"
                        min="0"
-                       step="0.5"
-                       class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm <?= isset($errors['tempo_estimado']) ? 'border-red-300' : '' ?>"
-                       placeholder="2.5">
+                       class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm <?= isset($errors['prazo_minimo']) ? 'border-red-300' : '' ?>"
+                       placeholder="1"
+                       required>
                 <p class="mt-1 text-xs text-gray-500">
-                    Tempo estimado para resolver esta subcategoria
+                    Dias mínimos a partir de hoje para poder agendar. Ex: 0 = hoje, 1 = amanhã, 2 = depois de amanhã. Sábados e domingos são automaticamente excluídos.
                 </p>
-                <?php if (isset($errors['tempo_estimado'])): ?>
-                    <p class="mt-1 text-sm text-red-600"><?= htmlspecialchars($errors['tempo_estimado']) ?></p>
+                <?php if (isset($errors['prazo_minimo'])): ?>
+                    <p class="mt-1 text-sm text-red-600"><?= htmlspecialchars($errors['prazo_minimo']) ?></p>
                 <?php endif; ?>
             </div>
             
@@ -212,12 +212,10 @@ ob_start();
                     <p id="preview-descricao" class="text-xs text-gray-500 mt-1">
                         <?= htmlspecialchars($data['descricao'] ?? 'Descrição da subcategoria') ?>
                     </p>
-                    <?php if ($data['tempo_estimado'] ?? ''): ?>
-                        <p id="preview-tempo" class="text-xs text-gray-500 mt-1">
-                            <i class="fas fa-clock mr-1"></i>
-                            Tempo estimado: <span id="preview-tempo-value"><?= htmlspecialchars($data['tempo_estimado'] ?? '') ?></span> horas
-                        </p>
-                    <?php endif; ?>
+                    <p id="preview-prazo" class="text-xs text-gray-500 mt-1">
+                        <i class="fas fa-calendar-day mr-1"></i>
+                        Prazo mínimo: <span id="preview-prazo-value"><?= htmlspecialchars($data['prazo_minimo'] ?? '1') ?></span> dia(s)
+                    </p>
                 </div>
             </div>
         </div>
@@ -248,18 +246,11 @@ document.getElementById('descricao').addEventListener('input', function() {
     document.getElementById('preview-descricao').textContent = this.value || 'Descrição da subcategoria';
 });
 
-document.getElementById('tempo_estimado').addEventListener('input', function() {
-    const tempo = this.value;
-    const previewTempo = document.getElementById('preview-tempo');
-    const previewTempoValue = document.getElementById('preview-tempo-value');
-    
-    if (tempo) {
-        previewTempoValue.textContent = tempo;
-        if (!previewTempo.style.display || previewTempo.style.display === 'none') {
-            previewTempo.style.display = 'block';
-        }
-    } else {
-        previewTempo.style.display = 'none';
+document.getElementById('prazo_minimo').addEventListener('input', function() {
+    const prazo = this.value;
+    const previewPrazoValue = document.getElementById('preview-prazo-value');
+    if (previewPrazoValue) {
+        previewPrazoValue.textContent = prazo || '1';
     }
 });
 

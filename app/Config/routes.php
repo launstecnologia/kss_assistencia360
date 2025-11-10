@@ -43,6 +43,8 @@ $router->get('/cancelar-solicitacao', 'TokenController@cancelarSolicitacao');
 $router->post('/cancelar-solicitacao', 'TokenController@cancelarSolicitacao');
 $router->get('/reagendamento-horario', 'TokenController@reagendamentoHorario');
 $router->post('/reagendamento-horario', 'TokenController@reagendamentoHorario');
+$router->get('/compra-peca', 'TokenController@compraPeca');
+$router->post('/compra-peca', 'TokenController@compraPeca');
 $router->get('/status-servico', 'TokenController@statusServico');
 $router->get('/acoes-servico', 'TokenController@acoesServico');
 $router->post('/acoes-servico', 'TokenController@processarAcaoServico');
@@ -53,6 +55,10 @@ $router->get('/operador', 'AuthController@showLogin'); // Operador também vai p
 $router->get('/login', 'AuthController@showLogin');
 $router->post('/login', 'AuthController@login');
 $router->get('/logout', 'AuthController@logout');
+$router->get('/forgot-password', 'AuthController@showForgotPassword');
+$router->post('/forgot-password', 'AuthController@sendPasswordReset');
+$router->get('/reset-password', 'AuthController@showResetPassword');
+$router->post('/reset-password', 'AuthController@resetPassword');
 $router->get('/pwa/solicitar', 'PwaController@solicitar', ['auth']);
 $router->post('/pwa/solicitar', 'PwaController@createSolicitacao', ['auth']);
 $router->get('/pwa/solicitacoes', 'PwaController@solicitacoes', ['auth']);
@@ -62,6 +68,7 @@ $router->get('/pwa/solicitacao/{id}', 'PwaController@showSolicitacao', ['auth'])
 $router->get('/admin/dashboard', 'DashboardController@index', ['auth']);
 $router->get('/admin/relatorios', 'RelatoriosController@index', ['auth']);
 $router->get('/admin/kanban', 'DashboardController@kanban', ['auth']);
+$router->get('/admin/kanban/novas-solicitacoes', 'DashboardController@novasSolicitacoes', ['auth']);
 $router->post('/admin/kanban/mover', 'DashboardController@moverCard', ['auth']);
 $router->post('/admin/kanban/atualizar-condicao', 'DashboardController@atualizarCondicao', ['auth']);
 $router->get('/admin/dashboard/solicitacoes-por-imobiliaria', 'DashboardController@solicitacoesPorImobiliaria', ['auth']);
@@ -118,6 +125,7 @@ $router->post('/admin/solicitacoes/enviar-notificacoes-pos-servico', 'Solicitaco
 // Rota pública para cron job (sem autenticação - configurar proteção no servidor)
 $router->get('/cron/notificacoes-pre-servico', 'SolicitacoesController@cronNotificacoesPreServico');
 $router->get('/cron/notificacoes-pos-servico', 'SolicitacoesController@cronNotificacoesPosServico');
+$router->get('/cron/lembretes-peca', 'SolicitacoesController@cronLembretesPeca');
 
 // Gerenciamento de Cron Jobs
 $router->get('/admin/cron-jobs', 'CronJobsController@index', ['auth', 'admin']);
@@ -169,6 +177,7 @@ $router->get('/admin/imobiliarias/create', 'ImobiliariasController@create', ['au
 $router->post('/admin/imobiliarias', 'ImobiliariasController@store', ['auth', 'admin']);
 $router->post('/admin/imobiliarias/buscar-cnpj', 'ImobiliariasController@buscarCnpj', ['auth', 'admin']);
 $router->get('/admin/imobiliarias/{id}', 'ImobiliariasController@show', ['auth', 'admin']);
+$router->get('/admin/imobiliarias/{id}/api', 'ImobiliariasController@api', ['auth', 'admin']);
 $router->get('/admin/imobiliarias/{id}/edit', 'ImobiliariasController@edit', ['auth', 'admin']);
 $router->post('/admin/imobiliarias/{id}', 'ImobiliariasController@update', ['auth', 'admin']);
 $router->post('/admin/imobiliarias/{id}/delete', 'ImobiliariasController@destroy', ['auth', 'admin']);
@@ -209,6 +218,7 @@ $router->get('/admin/status', 'StatusController@index', ['auth', 'admin']);
 $router->get('/admin/status/create', 'StatusController@create', ['auth', 'admin']);
 $router->post('/admin/status', 'StatusController@store', ['auth', 'admin']);
 $router->post('/admin/status/reordenar', 'StatusController@reordenar', ['auth', 'admin']); // ANTES das rotas com {id}
+$router->get('/admin/status/{id}/api', 'StatusController@api', ['auth', 'admin']);
 $router->get('/admin/status/{id}/edit', 'StatusController@edit', ['auth', 'admin']);
 $router->post('/admin/status/{id}', 'StatusController@update', ['auth', 'admin']);
 $router->post('/admin/status/{id}/delete', 'StatusController@delete', ['auth', 'admin']);
@@ -218,6 +228,7 @@ $router->get('/admin/condicoes', 'CondicoesController@index', ['auth', 'admin'])
 $router->get('/admin/condicoes/create', 'CondicoesController@create', ['auth', 'admin']);
 $router->post('/admin/condicoes', 'CondicoesController@store', ['auth', 'admin']);
 $router->post('/admin/condicoes/reordenar', 'CondicoesController@reordenar', ['auth', 'admin']); // ANTES das rotas com {id}
+$router->get('/admin/condicoes/{id}/api', 'CondicoesController@api', ['auth', 'admin']);
 $router->get('/admin/condicoes/{id}/edit', 'CondicoesController@edit', ['auth', 'admin']);
 $router->post('/admin/condicoes/{id}', 'CondicoesController@update', ['auth', 'admin']);
 $router->post('/admin/condicoes/{id}/delete', 'CondicoesController@delete', ['auth', 'admin']);
