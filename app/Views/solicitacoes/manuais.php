@@ -238,6 +238,10 @@ ob_start();
                                     <i class="fas fa-eye mr-1"></i> Ver
                                 </button>
                                 <?php if (!$solicitacao['migrada']): ?>
+                                    <a href="<?= url('admin/solicitacoes-manuais/' . $solicitacao['id'] . '/editar') ?>" 
+                                       class="text-yellow-600 hover:text-yellow-900 mr-3">
+                                        <i class="fas fa-edit mr-1"></i> Editar
+                                    </a>
                                     <button onclick="confirmarMigracao(<?= $solicitacao['id'] ?>)" 
                                             class="text-green-600 hover:text-green-900">
                                         <i class="fas fa-arrow-right mr-1"></i> Migrar

@@ -2934,6 +2934,207 @@ class SolicitacoesController extends Controller
     }
     
     /**
+     * Exibir formulário para editar solicitação manual (admin)
+     */
+    public function editarSolicitacaoManual(int $id): void
+    {
+        $this->requireAuth();
+        
+        $solicitacaoManualModel = new \App\Models\SolicitacaoManual();
+        $solicitacao = $solicitacaoManualModel->find($id);
+        
+        if (!$solicitacao) {
+            $this->redirect(url('admin/solicitacoes-manuais?error=' . urlencode('Solicitação não encontrada')));
+            return;
+        }
+        
+        // Verificar se já foi migrada
+        if (!empty($solicitacao['migrada_para_solicitacao_id'])) {
+            $this->redirect(url('admin/solicitacoes-manuais?error=' . urlencode('Não é possível editar uma solicitação que já foi migrada')));
+            return;
+        }
+        
+        // Buscar dados necessários para o formulário
+        $imobiliarias = $this->imobiliariaModel->getAll();
+        $categoriaModel = new \App\Models\Categoria();
+        $subcategoriaModel = new \App\Models\Subcategoria();
+        $categorias = $categoriaModel->getAtivas();
+        $subcategorias = $subcategoriaModel->getAtivas();
+        $statusList = $this->statusModel->getAll();
+        
+        // Organizar subcategorias por categoria
+        foreach ($categorias as $key => $categoria) {
+            $categorias[$key]['subcategorias'] = array_values(array_filter($subcategorias, function($sub) use ($categoria) {
+                return $sub['categoria_id'] == $categoria['id'];
+            }));
+        }
+        
+        // Decodificar JSONs
+        if (!empty($solicitacao['horarios_preferenciais'])) {
+            $solicitacao['horarios_preferenciais'] = is_string($solicitacao['horarios_preferenciais']) 
+                ? json_decode($solicitacao['horarios_preferenciais'], true) 
+                : $solicitacao['horarios_preferenciais'];
+        }
+        
+        if (!empty($solicitacao['fotos'])) {
+            $solicitacao['fotos'] = is_string($solicitacao['fotos']) 
+                ? json_decode($solicitacao['fotos'], true) 
+                : $solicitacao['fotos'];
+        }
+        
+        $this->view('solicitacoes.editar-manual', [
+            'solicitacao' => $solicitacao,
+            'imobiliarias' => $imobiliarias,
+            'categorias' => $categorias,
+            'subcategorias' => $subcategorias,
+            'statusList' => $statusList
+        ]);
+    }
+    
+    /**
+     * Processar atualização de solicitação manual (admin)
+     */
+    public function atualizarSolicitacaoManual(int $id): void
+    {
+        $this->requireAuth();
+        
+        $solicitacaoManualModel = new \App\Models\SolicitacaoManual();
+        $solicitacao = $solicitacaoManualModel->find($id);
+        
+        if (!$solicitacao) {
+            $this->redirect(url('admin/solicitacoes-manuais?error=' . urlencode('Solicitação não encontrada')));
+            return;
+        }
+        
+        // Verificar se já foi migrada
+        if (!empty($solicitacao['migrada_para_solicitacao_id'])) {
+            $this->redirect(url('admin/solicitacoes-manuais?error=' . urlencode('Não é possível editar uma solicitação que já foi migrada')));
+            return;
+        }
+        
+        try {
+            // Validar dados obrigatórios
+            $dados = [
+                'imobiliaria_id' => $this->input('imobiliaria_id'),
+                'nome_completo' => trim($this->input('nome_completo')),
+                'cpf' => preg_replace('/\D/', '', $this->input('cpf')),
+                'whatsapp' => trim($this->input('whatsapp')),
+                'tipo_imovel' => $this->input('tipo_imovel'),
+                'subtipo_imovel' => $this->input('subtipo_imovel'),
+                'cep' => preg_replace('/\D/', '', $this->input('cep')),
+                'endereco' => trim($this->input('endereco')),
+                'numero' => trim($this->input('numero')),
+                'complemento' => trim($this->input('complemento')),
+                'bairro' => trim($this->input('bairro')),
+                'cidade' => trim($this->input('cidade')),
+                'estado' => trim($this->input('estado')),
+                'categoria_id' => $this->input('categoria_id'),
+                'subcategoria_id' => $this->input('subcategoria_id'),
+                'descricao_problema' => trim($this->input('descricao_problema')),
+                'numero_contrato' => trim($this->input('numero_contrato')) ?: null,
+                'local_manutencao' => trim($this->input('local_manutencao')),
+                'status_id' => $this->input('status_id')
+            ];
+            
+            // Validar campos obrigatórios
+            $camposObrigatorios = [
+                'imobiliaria_id' => 'Imobiliária',
+                'nome_completo' => 'Nome completo',
+                'cpf' => 'CPF',
+                'whatsapp' => 'WhatsApp',
+                'tipo_imovel' => 'Tipo de imóvel',
+                'cep' => 'CEP',
+                'endereco' => 'Endereço',
+                'numero' => 'Número',
+                'bairro' => 'Bairro',
+                'cidade' => 'Cidade',
+                'estado' => 'Estado',
+                'categoria_id' => 'Categoria',
+                'subcategoria_id' => 'Subcategoria',
+                'descricao_problema' => 'Descrição do problema'
+            ];
+            
+            $erros = [];
+            foreach ($camposObrigatorios as $campo => $label) {
+                if (empty($dados[$campo])) {
+                    $erros[] = "O campo '{$label}' é obrigatório";
+                }
+            }
+            
+            if (!empty($erros)) {
+                $this->redirect(url('admin/solicitacoes-manuais/' . $id . '/editar?error=' . urlencode(implode('. ', $erros))));
+                return;
+            }
+            
+            // Validar CPF
+            if (!$solicitacaoManualModel->validarCPF($dados['cpf'])) {
+                $this->redirect(url('admin/solicitacoes-manuais/' . $id . '/editar?error=' . urlencode('CPF inválido')));
+                return;
+            }
+            
+            // Validar WhatsApp
+            $whatsappLimpo = preg_replace('/\D/', '', $dados['whatsapp']);
+            if (strlen($whatsappLimpo) < 10 || strlen($whatsappLimpo) > 11) {
+                $this->redirect(url('admin/solicitacoes-manuais/' . $id . '/editar?error=' . urlencode('WhatsApp inválido')));
+                return;
+            }
+            $dados['whatsapp'] = $whatsappLimpo;
+            
+            // Processar horários preferenciais
+            $horariosRaw = $this->input('horarios_opcoes');
+            if (!empty($horariosRaw)) {
+                $horarios = is_string($horariosRaw) ? json_decode($horariosRaw, true) : $horariosRaw;
+                $dados['horarios_preferenciais'] = $horarios;
+            } else {
+                $dados['horarios_preferenciais'] = [];
+            }
+            
+            // Processar upload de fotos
+            $fotosExistentesInput = $this->input('fotos_existentes');
+            $fotosExistentes = [];
+            if (!empty($fotosExistentesInput)) {
+                $fotosExistentes = is_string($fotosExistentesInput) 
+                    ? json_decode($fotosExistentesInput, true) 
+                    : $fotosExistentesInput;
+                if (!is_array($fotosExistentes)) {
+                    $fotosExistentes = [];
+                }
+            } else {
+                // Se não vier no input, manter as existentes
+                $fotosExistentes = !empty($solicitacao['fotos']) 
+                    ? (is_string($solicitacao['fotos']) ? json_decode($solicitacao['fotos'], true) : $solicitacao['fotos'])
+                    : [];
+            }
+            
+            // Adicionar novas fotos se houver upload
+            if (!empty($_FILES['fotos']['name'][0])) {
+                $fotosNovas = $this->processarUploadFotosManual();
+                $fotosExistentes = array_merge($fotosExistentes, $fotosNovas);
+            }
+            
+            $dados['fotos'] = $fotosExistentes;
+            
+            // Definir status padrão se não informado
+            if (empty($dados['status_id'])) {
+                $statusPadrao = $this->statusModel->findByNome('Nova Solicitação');
+                $dados['status_id'] = $statusPadrao['id'] ?? 1;
+            }
+            
+            // Atualizar solicitação manual
+            $atualizado = $solicitacaoManualModel->update($id, $dados);
+            
+            if ($atualizado) {
+                $this->redirect(url('admin/solicitacoes-manuais?success=' . urlencode('Solicitação manual atualizada com sucesso!')));
+            } else {
+                $this->redirect(url('admin/solicitacoes-manuais/' . $id . '/editar?error=' . urlencode('Erro ao atualizar solicitação manual. Tente novamente.')));
+            }
+        } catch (\Exception $e) {
+            error_log('Erro ao atualizar solicitação manual: ' . $e->getMessage());
+            $this->redirect(url('admin/solicitacoes-manuais/' . $id . '/editar?error=' . urlencode('Erro ao processar: ' . $e->getMessage())));
+        }
+    }
+    
+    /**
      * Ver detalhes de uma solicitação manual (JSON para modal)
      */
     public function verSolicitacaoManual(int $id): void

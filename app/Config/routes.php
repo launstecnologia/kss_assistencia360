@@ -257,6 +257,8 @@ $router->post('/admin/configuracoes/{id}/delete', 'ConfiguracoesController@destr
 $router->get('/admin/solicitacoes-manuais', 'SolicitacoesController@solicitacoesManuais', ['auth']);
 $router->get('/admin/solicitacoes-manuais/nova', 'SolicitacoesController@novaSolicitacaoManual', ['auth']);
 $router->post('/admin/solicitacoes-manuais/nova', 'SolicitacoesController@criarSolicitacaoManual', ['auth']);
+$router->get('/admin/solicitacoes-manuais/{id}/editar', 'SolicitacoesController@editarSolicitacaoManual', ['auth']);
+$router->post('/admin/solicitacoes-manuais/{id}/editar', 'SolicitacoesController@atualizarSolicitacaoManual', ['auth']);
 $router->get('/admin/solicitacoes-manuais/{id}', 'SolicitacoesController@verSolicitacaoManual', ['auth']);
 $router->post('/admin/solicitacoes-manuais/{id}/status', 'SolicitacoesController@atualizarStatusManual', ['auth']);
 $router->post('/admin/solicitacoes-manuais/{id}/migrar', 'SolicitacoesController@migrarParaSistema', ['auth']);
