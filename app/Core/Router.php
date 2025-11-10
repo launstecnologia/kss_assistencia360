@@ -57,18 +57,33 @@ class Router
         $method = $_SERVER['REQUEST_METHOD'];
         $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
         
+        $debugMode = defined('DEBUG') ? DEBUG : (bool)($_ENV['APP_DEBUG'] ?? true);
+        
+        if ($debugMode) {
+            error_log("Router Debug - Original path: $path");
+        }
+        
         // Remove a base path se existir (ex: /kss/confirmacao-horario -> /confirmacao-horario)
         $basePath = \App\Core\Url::path();
         
+        if ($debugMode) {
+            error_log("Router Debug - Base path: '$basePath'");
+        }
+        
+        // Só remover base path se ele realmente existir no path
         if ($basePath && $basePath !== '/' && $basePath !== '') {
-            // Remover base path do início do path
+            // Verificar se o path começa com o base path
             if (strpos($path, '/' . $basePath . '/') === 0) {
+                // Path: /kss/cron/lembretes-peca -> /cron/lembretes-peca
                 $path = substr($path, strlen('/' . $basePath));
             } elseif ($path === '/' . $basePath) {
+                // Path: /kss -> /
                 $path = '/';
-            } elseif (strpos($path, '/' . $basePath) === 0) {
+            } elseif (strpos($path, '/' . $basePath) === 0 && strlen($path) > strlen('/' . $basePath)) {
+                // Path: /kss/cron -> /cron (sem barra final)
                 $path = substr($path, strlen('/' . $basePath));
             }
+            // Se o path não começa com base path, não fazer nada (pode estar rodando sem base path)
         }
         
         // Garantir que o path começa com /
@@ -78,13 +93,33 @@ class Router
         
         $path = rtrim($path, '/') ?: '/';
 
-        $debugMode = defined('DEBUG') ? DEBUG : (bool)($_ENV['APP_DEBUG'] ?? true);
+        if ($debugMode) {
+            error_log("Router Debug - Processed path: '$path', Method: $method");
+            error_log("Router Debug - Total routes: " . count($this->routes));
+        }
 
-        foreach ($this->routes as $route) {
-            if ($route['method'] === $method && $this->matchPath($route['path'], $path)) {
+        foreach ($this->routes as $index => $route) {
+            // Log todas as rotas cron para debug
+            if ($debugMode && strpos($route['path'], 'cron') !== false) {
+                error_log("Router Debug - Route #$index: {$route['method']} {$route['path']}");
+            }
+            
+            // Verificar se o método corresponde
+            if ($route['method'] !== $method) {
+                continue;
+            }
+            
+            // Verificar match do path
+            $matched = $this->matchPath($route['path'], $path);
+            
+            if ($debugMode && strpos($route['path'], 'cron') !== false) {
+                error_log("Router Debug - Match result for {$route['path']}: " . ($matched ? 'TRUE' : 'FALSE'));
+            }
+            
+            if ($matched) {
                 // Debug - remover em produção
                 if ($debugMode) {
-                    error_log("Router Debug - Route matched: {$route['method']} {$route['path']}");
+                    error_log("Router Debug - Route matched: {$route['method']} {$route['path']} (index: $index)");
                 }
                 
                 // Executar middlewares
@@ -104,6 +139,10 @@ class Router
         }
 
         // Rota não encontrada
+        if ($debugMode) {
+            error_log("Router Debug - No route matched for: $method $path");
+        }
+        
         http_response_code(404);
         View::render('errors.404');
     }

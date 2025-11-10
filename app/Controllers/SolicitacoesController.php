@@ -1016,7 +1016,31 @@ class SolicitacoesController extends Controller
      */
     public function cronLembretesPeca(): void
     {
-        $this->processarLembretesPeca();
+        // Limpar buffers
+        while (ob_get_level() > 0) {
+            ob_end_clean();
+        }
+        
+        // Log para debug
+        error_log("CRON Lembretes Peça: Método chamado - " . date('Y-m-d H:i:s'));
+        
+        try {
+            $this->processarLembretesPeca();
+        } catch (\Exception $e) {
+            error_log("CRON Lembretes Peça: Erro - " . $e->getMessage());
+            $this->json([
+                'success' => false,
+                'error' => 'Erro ao processar lembretes: ' . $e->getMessage(),
+                'timestamp' => date('Y-m-d H:i:s')
+            ], 500);
+        } catch (\Throwable $e) {
+            error_log("CRON Lembretes Peça: Erro fatal - " . $e->getMessage());
+            $this->json([
+                'success' => false,
+                'error' => 'Erro fatal ao processar lembretes: ' . $e->getMessage(),
+                'timestamp' => date('Y-m-d H:i:s')
+            ], 500);
+        }
     }
 
     /**
