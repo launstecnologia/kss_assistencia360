@@ -282,6 +282,8 @@ class LocatarioController extends Controller
         // Buscar categorias e subcategorias
         $categoriaModel = new \App\Models\Categoria();
         $subcategoriaModel = new \App\Models\Subcategoria();
+        
+        // Na etapa 1, mostrar todas as categorias (ainda não há seleção de finalidade)
         $categorias = $categoriaModel->getAtivas();
         $subcategorias = $subcategoriaModel->getAtivas();
         
@@ -336,7 +338,22 @@ class LocatarioController extends Controller
                 // Buscar categorias e subcategorias
                 $categoriaModel = new \App\Models\Categoria();
                 $subcategoriaModel = new \App\Models\Subcategoria();
-                $categorias = $categoriaModel->getAtivas();
+                
+                // Filtrar categorias baseado na finalidade da locação selecionada
+                $finalidadeLocacao = $novaSolicitacao['finalidade_locacao'] ?? 'RESIDENCIAL';
+                
+                // Buscar categorias que correspondem ao tipo de imóvel selecionado
+                // Se for RESIDENCIAL, mostrar categorias com tipo_imovel = 'RESIDENCIAL' ou 'AMBOS'
+                // Se for COMERCIAL, mostrar categorias com tipo_imovel = 'COMERCIAL' ou 'AMBOS'
+                if ($finalidadeLocacao === 'RESIDENCIAL') {
+                    $categorias = $categoriaModel->getByTipoImovel('RESIDENCIAL');
+                } elseif ($finalidadeLocacao === 'COMERCIAL') {
+                    $categorias = $categoriaModel->getByTipoImovel('COMERCIAL');
+                } else {
+                    // Fallback: mostrar todas se não houver seleção
+                    $categorias = $categoriaModel->getAtivas();
+                }
+                
                 $subcategorias = $subcategoriaModel->getAtivas();
                 
                 // Organizar subcategorias por categoria
@@ -348,6 +365,7 @@ class LocatarioController extends Controller
                 
                 $data['categorias'] = $categorias;
                 $data['subcategorias'] = $subcategorias;
+                $data['finalidade_locacao'] = $finalidadeLocacao; // Passar para a view
                 break;
             case 3:
                 // Fotos já estão em $novaSolicitacao
@@ -387,10 +405,23 @@ class LocatarioController extends Controller
                 
                 file_put_contents('C:\xampp\htdocs\debug_kss.log', date('H:i:s') . " - Valores: endereco=$enderecoSelecionado, finalidade=$finalidadeLocacao, tipo=$tipoImovel\n", FILE_APPEND);
                 
-                // Usar isset() e !== null ao invés de empty() porque "0" é um valor válido!
-                if ($enderecoSelecionado === null || $finalidadeLocacao === null || $tipoImovel === null) {
+                // Validar campos obrigatórios
+                if ($enderecoSelecionado === null || $finalidadeLocacao === null) {
                     $instancia = $this->getInstanciaFromUrl();
-                    file_put_contents('C:\xampp\htdocs\debug_kss.log', date('H:i:s') . " - ERRO: Campos faltando! Redirecionando...\n", FILE_APPEND);
+                    file_put_contents('C:\xampp\htdocs\debug_kss.log', date('H:i:s') . " - ERRO: Campos obrigatórios faltando! Redirecionando...\n", FILE_APPEND);
+                    $this->redirect(url($instancia . '/nova-solicitacao?error=campos_obrigatorios'));
+                    return;
+                }
+                
+                // Se for COMERCIAL, definir tipo_imovel como COMERCIAL se não foi enviado
+                if ($finalidadeLocacao === 'COMERCIAL' && ($tipoImovel === null || $tipoImovel === '')) {
+                    $tipoImovel = 'COMERCIAL';
+                }
+                
+                // Se for RESIDENCIAL, tipo_imovel é obrigatório (CASA ou APARTAMENTO)
+                if ($finalidadeLocacao === 'RESIDENCIAL' && ($tipoImovel === null || $tipoImovel === '')) {
+                    $instancia = $this->getInstanciaFromUrl();
+                    file_put_contents('C:\xampp\htdocs\debug_kss.log', date('H:i:s') . " - ERRO: Tipo de imóvel obrigatório para Residencial! Redirecionando...\n", FILE_APPEND);
                     $this->redirect(url($instancia . '/nova-solicitacao?error=campos_obrigatorios'));
                     return;
                 }
@@ -440,8 +471,30 @@ class LocatarioController extends Controller
                 $_SESSION['nova_solicitacao']['is_fora_horario'] = $isForaHorario;
                 
                 if ($isEmergencial) {
-                    // Emergencial: não precisa de horários
-                    $_SESSION['nova_solicitacao']['horarios_preferenciais'] = [];
+                    // Emergencial: verificar tipo de atendimento escolhido
+                    $tipoAtendimentoEmergencial = $this->input('tipo_atendimento_emergencial', '120_minutos');
+                    $_SESSION['nova_solicitacao']['tipo_atendimento_emergencial'] = $tipoAtendimentoEmergencial;
+                    
+                    if ($tipoAtendimentoEmergencial === '120_minutos') {
+                        // Atendimento em 120 minutos: não precisa de horários
+                        $_SESSION['nova_solicitacao']['horarios_preferenciais'] = [];
+                    } else if ($tipoAtendimentoEmergencial === 'agendar') {
+                        // Agendar: receber horários enviados pelo JavaScript
+                        $horariosRaw = $this->input('horarios_opcoes');
+                        $horarios = [];
+                        
+                        if (!empty($horariosRaw)) {
+                            // Se for string JSON, decodificar
+                            $horarios = is_string($horariosRaw) ? json_decode($horariosRaw, true) : $horariosRaw;
+                        }
+                        
+                        // Log para debug
+                        file_put_contents('C:\xampp\htdocs\debug_kss.log', date('H:i:s') . " - Horários emergenciais recebidos: " . print_r($horariosRaw, true) . "\n", FILE_APPEND);
+                        file_put_contents('C:\xampp\htdocs\debug_kss.log', date('H:i:s') . " - Horários emergenciais processados: " . print_r($horarios, true) . "\n", FILE_APPEND);
+                        
+                        // Salvar horários formatados na sessão
+                        $_SESSION['nova_solicitacao']['horarios_preferenciais'] = $horarios;
+                    }
                 } else {
                     // Normal: receber horários enviados pelo JavaScript
                     $horariosRaw = $this->input('horarios_opcoes');
@@ -1135,7 +1188,25 @@ class LocatarioController extends Controller
             // Buscar categorias e subcategorias
             $categoriaModel = new \App\Models\Categoria();
             $subcategoriaModel = new \App\Models\Subcategoria();
-            $categorias = $categoriaModel->getAtivas();
+            
+            // Filtrar categorias baseado na finalidade da locação selecionada (se estiver na etapa 2 ou superior)
+            $dados = $_SESSION['solicitacao_manual'] ?? [];
+            $tipoImovel = $dados['tipo_imovel'] ?? 'RESIDENCIAL';
+            
+            // Se estiver na etapa 2 ou superior, filtrar categorias
+            if ($etapa >= 2 && !empty($tipoImovel)) {
+                if ($tipoImovel === 'RESIDENCIAL') {
+                    $categorias = $categoriaModel->getByTipoImovel('RESIDENCIAL');
+                } elseif ($tipoImovel === 'COMERCIAL') {
+                    $categorias = $categoriaModel->getByTipoImovel('COMERCIAL');
+                } else {
+                    $categorias = $categoriaModel->getAtivas();
+                }
+            } else {
+                // Na etapa 1, mostrar todas
+                $categorias = $categoriaModel->getAtivas();
+            }
+            
             $subcategorias = $subcategoriaModel->getAtivas();
             
             // Organizar subcategorias por categoria
@@ -1151,7 +1222,7 @@ class LocatarioController extends Controller
                 'categorias' => $categorias,
                 'subcategorias' => $subcategorias,
                 'etapa' => $etapa,
-                'dados' => $_SESSION['solicitacao_manual'] ?? []
+                'dados' => $dados
             ]);
             return;
         }

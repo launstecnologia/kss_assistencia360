@@ -271,12 +271,24 @@ $steps = [
     
     <?php elseif ($etapaAtual == 2): ?>
         <!-- ETAPA 2: SERVIÇO -->
+        <?php
+        $finalidadeLocacao = $finalidade_locacao ?? $_SESSION['nova_solicitacao']['finalidade_locacao'] ?? 'RESIDENCIAL';
+        $finalidadeTexto = $finalidadeLocacao === 'RESIDENCIAL' ? 'Residencial' : 'Comercial';
+        ?>
         <div class="px-6 py-4 border-b border-gray-200">
             <h2 class="text-lg font-medium text-gray-900">
                 <i class="fas fa-cog mr-2"></i>
                 Qual tipo de serviço você precisa?
             </h2>
-            <p class="text-sm text-gray-500 mt-1">Selecione a categoria do serviço desejado</p>
+            <p class="text-sm text-gray-500 mt-1">
+                Selecione a categoria do serviço desejado
+                <?php if (!empty($finalidadeLocacao)): ?>
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 ml-2">
+                        <i class="fas fa-<?= $finalidadeLocacao === 'RESIDENCIAL' ? 'home' : 'building' ?> mr-1"></i>
+                        <?= $finalidadeTexto ?>
+                    </span>
+                <?php endif; ?>
+            </p>
         </div>
         
         <div class="p-6">
@@ -285,7 +297,14 @@ $steps = [
                 
                 <!-- Categoria do Serviço -->
                 <div>
-                    <h3 class="text-sm font-medium text-gray-700 mb-3">Categoria do Serviço</h3>
+                    <h3 class="text-sm font-medium text-gray-700 mb-3">
+                        Categoria do Serviço
+                        <?php if (!empty($finalidadeLocacao)): ?>
+                            <span class="text-xs text-gray-500 font-normal">
+                                (Mostrando categorias para <?= strtolower($finalidadeTexto) ?>)
+                            </span>
+                        <?php endif; ?>
+                    </h3>
                     <div class="space-y-3">
                         <?php if (!empty($categorias)): ?>
                             <?php foreach ($categorias as $categoria): ?>
@@ -315,12 +334,20 @@ $steps = [
                                                             <label class="relative block cursor-pointer">
                                                                 <input type="radio" name="subcategoria_id" value="<?= $subcategoria['id'] ?>" 
                                                                        class="sr-only subcategoria-radio">
-                                                                <div class="border border-gray-200 rounded-lg p-3 hover:border-blue-300 transition-colors subcategoria-card">
+                                                                <div class="border border-gray-200 rounded-lg p-3 hover:border-blue-300 transition-colors subcategoria-card <?= (!empty($subcategoria['is_emergencial']) && ($subcategoria['is_emergencial'] == 1 || $subcategoria['is_emergencial'] === true)) ? 'border-red-300 bg-red-50' : '' ?>">
                                                                     <div class="flex items-start justify-between">
                                                                         <div class="flex-1">
-                                                                            <h5 class="text-sm font-medium text-gray-900 mb-1">
-                                                                                <?= htmlspecialchars($subcategoria['nome']) ?>
-                                                                            </h5>
+                                                                            <div class="flex items-center gap-2 mb-1">
+                                                                                <h5 class="text-sm font-medium text-gray-900">
+                                                                                    <?= htmlspecialchars($subcategoria['nome']) ?>
+                                                                                </h5>
+                                                                                <?php if (!empty($subcategoria['is_emergencial']) && ($subcategoria['is_emergencial'] == 1 || $subcategoria['is_emergencial'] === true)): ?>
+                                                                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 border border-red-200">
+                                                                                        <i class="fas fa-exclamation-triangle mr-1"></i>
+                                                                                        Emergencial
+                                                                                    </span>
+                                                                                <?php endif; ?>
+                                                                            </div>
                                                                             <?php if (!empty($subcategoria['descricao'])): ?>
                                                                                 <p class="text-xs text-gray-600">
                                                                                     <?= htmlspecialchars($subcategoria['descricao']) ?>
@@ -448,6 +475,12 @@ $steps = [
         $subcategoria = $subcategoriaModel->find($subcategoriaId);
         $isEmergencial = !empty($subcategoria['is_emergencial']);
         
+        // Calcular data mínima para agendamento baseado no prazo_minimo
+        $dataMinimaAgendamento = null;
+        if (!$isEmergencial && $subcategoriaId) {
+            $dataMinimaAgendamento = $subcategoriaModel->calcularDataLimiteAgendamento($subcategoriaId);
+        }
+        
         // Verificar se está fora do horário comercial usando configurações
         $configuracaoModel = new \App\Models\Configuracao();
         $isForaHorario = $configuracaoModel->isForaHorarioComercial();
@@ -516,17 +549,146 @@ $steps = [
                 <input type="hidden" name="is_emergencial" value="<?= $isEmergencial ? '1' : '0' ?>">
                 
                 <?php if ($isEmergencial): ?>
-                    <!-- Emergencial: Não mostrar opções de horário -->
-                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                        <div class="text-sm text-blue-800">
-                            <p class="font-medium mb-2">Sua solicitação será processada imediatamente</p>
-                            <p class="mb-2">Por ser uma emergência, não é necessário selecionar horário. O atendimento será agendado automaticamente e você receberá retorno em até 120 minutos.</p>
-                            <?php if ($isForaHorario && $telefoneEmergencia): ?>
-                                <p class="mt-3 font-medium">
+                    <!-- Emergencial: Duas opções -->
+                    <div class="space-y-4">
+                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                            <div class="text-sm text-blue-800">
+                                <p class="font-medium mb-2">Escolha como deseja prosseguir:</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Opção 1: Atendimento em 120 minutos -->
+                        <label class="relative block cursor-pointer">
+                            <input type="radio" name="tipo_atendimento_emergencial" value="120_minutos" checked 
+                                   class="sr-only tipo-atendimento-radio" id="opcao_120_minutos">
+                            <div class="border-2 border-green-500 rounded-lg p-4 bg-green-50 hover:bg-green-100 transition-colors tipo-atendimento-card">
+                                <div class="flex items-start">
+                                    <div class="flex-shrink-0 mt-1">
+                                        <div class="w-5 h-5 border-2 border-green-600 rounded-full bg-green-600 flex items-center justify-center tipo-atendimento-check">
+                                            <i class="fas fa-check text-white text-xs"></i>
+                                        </div>
+                                    </div>
+                                    <div class="ml-3 flex-1">
+                                        <h4 class="text-sm font-semibold text-gray-900 mb-1">
+                                            <i class="fas fa-bolt text-yellow-500 mr-2"></i>
+                                            Solicitar Atendimento em 120 minutos
+                                        </h4>
+                                        <p class="text-xs text-gray-600">
+                                            Sua solicitação será processada imediatamente. O atendimento será agendado automaticamente e você receberá retorno em até 120 minutos.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </label>
+                        
+                        <!-- Opção 2: Agendar -->
+                        <label class="relative block cursor-pointer">
+                            <input type="radio" name="tipo_atendimento_emergencial" value="agendar" 
+                                   class="sr-only tipo-atendimento-radio" id="opcao_agendar">
+                            <div class="border-2 border-gray-200 rounded-lg p-4 bg-white hover:border-blue-300 hover:bg-blue-50 transition-colors tipo-atendimento-card">
+                                <div class="flex items-start">
+                                    <div class="flex-shrink-0 mt-1">
+                                        <div class="w-5 h-5 border-2 border-gray-300 rounded-full tipo-atendimento-check"></div>
+                                    </div>
+                                    <div class="ml-3 flex-1">
+                                        <h4 class="text-sm font-semibold text-gray-900 mb-1">
+                                            <i class="fas fa-calendar-alt text-blue-500 mr-2"></i>
+                                            Agendar
+                                        </h4>
+                                        <p class="text-xs text-gray-600">
+                                            Se preferir, você pode agendar um horário específico para o atendimento.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </label>
+                        
+                        <?php if ($isForaHorario && $telefoneEmergencia): ?>
+                            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                                <p class="text-sm text-yellow-800">
                                     <i class="fas fa-phone mr-2"></i>
-                                    Fora do horário comercial: Ligue para <strong><?= htmlspecialchars($telefoneEmergencia['numero']) ?></strong>
+                                    <strong>Fora do horário comercial:</strong> Ligue para <strong><?= htmlspecialchars($telefoneEmergencia['numero']) ?></strong>
                                 </p>
-                            <?php endif; ?>
+                            </div>
+                        <?php endif; ?>
+                        
+                        <!-- Seção de Agendamento (oculta por padrão, aparece quando selecionar "Agendar") -->
+                        <div id="secao-agendamento-emergencial" class="hidden space-y-4 pt-4 border-t border-gray-200">
+                            <!-- Instruções -->
+                            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                                <div class="text-sm text-blue-800">
+                                    <p class="font-medium mb-2">Selecione até 3 datas e horários preferenciais</p>
+                                    <p class="mb-2">Após sua escolha, o prestador verificará a disponibilidade. Caso algum dos horários não esteja livre, poderão ser sugeridas novas opções.</p>
+                                    <p>Você receberá uma notificação confirmando a data e o horário final definidos (via WhatsApp e aplicativo).</p>
+                                </div>
+                            </div>
+                            
+                            <!-- Seleção de Data -->
+                            <div>
+                                <label for="data_selecionada_emergencial" class="block text-sm font-medium text-gray-700 mb-3">
+                                    Selecione uma Data
+                                </label>
+                                <div class="relative cursor-pointer">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <i class="fas fa-calendar-alt text-gray-400"></i>
+                                    </div>
+                                    <input type="date" id="data_selecionada_emergencial" name="data_selecionada" 
+                                           class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 text-sm text-gray-700 cursor-pointer transition-colors"
+                                           placeholder="Selecione uma data"
+                                           min="<?= date('Y-m-d', strtotime('+1 day')) ?>"
+                                           max="<?= date('Y-m-d', strtotime('+30 days')) ?>">
+                                </div>
+                                <div class="mt-2 flex items-center text-xs text-gray-500">
+                                    <i class="fas fa-info-circle mr-1.5"></i>
+                                    <span>Atendimentos disponíveis apenas em dias úteis (segunda a sexta-feira)</span>
+                                </div>
+                            </div>
+                            
+                            <!-- Seleção de Horário -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-3">
+                                    Selecione um Horário
+                                </label>
+                                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                    <label class="relative">
+                                        <input type="radio" name="horario_selecionado_emergencial" value="08:00-11:00" class="sr-only horario-radio-emergencial">
+                                        <div class="border-2 border-gray-200 rounded-lg p-3 text-center cursor-pointer hover:border-green-300 transition-colors horario-card-emergencial">
+                                            <div class="text-sm font-medium text-gray-900">08h00 às 11h00</div>
+                                        </div>
+                                    </label>
+                                    
+                                    <label class="relative">
+                                        <input type="radio" name="horario_selecionado_emergencial" value="11:00-14:00" class="sr-only horario-radio-emergencial">
+                                        <div class="border-2 border-gray-200 rounded-lg p-3 text-center cursor-pointer hover:border-green-300 transition-colors horario-card-emergencial">
+                                            <div class="text-sm font-medium text-gray-900">11h00 às 14h00</div>
+                                        </div>
+                                    </label>
+                                    
+                                    <label class="relative">
+                                        <input type="radio" name="horario_selecionado_emergencial" value="14:00-17:00" class="sr-only horario-radio-emergencial">
+                                        <div class="border-2 border-gray-200 rounded-lg p-3 text-center cursor-pointer hover:border-green-300 transition-colors horario-card-emergencial">
+                                            <div class="text-sm font-medium text-gray-900">14h00 às 17h00</div>
+                                        </div>
+                                    </label>
+                                    
+                                    <label class="relative">
+                                        <input type="radio" name="horario_selecionado_emergencial" value="17:00-20:00" class="sr-only horario-radio-emergencial">
+                                        <div class="border-2 border-gray-200 rounded-lg p-3 text-center cursor-pointer hover:border-green-300 transition-colors horario-card-emergencial">
+                                            <div class="text-sm font-medium text-gray-900">17h00 às 20h00</div>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <!-- Horários Selecionados -->
+                            <div id="horarios-selecionados-emergencial" class="hidden">
+                                <h4 class="text-sm font-medium text-gray-700 mb-3">
+                                    Horários Selecionados (<span id="contador-horarios-emergencial">0</span>/3)
+                                </h4>
+                                <div id="lista-horarios-emergencial" class="space-y-2">
+                                    <!-- Horários serão inseridos aqui via JavaScript -->
+                                </div>
+                            </div>
                         </div>
                     </div>
                 <?php else: ?>
@@ -552,12 +714,26 @@ $steps = [
                             <input type="date" id="data_selecionada" name="data_selecionada" 
                                    class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 text-sm text-gray-700 cursor-pointer transition-colors"
                                    placeholder="Selecione uma data"
-                                   min="<?= date('Y-m-d', strtotime('+1 day')) ?>"
-                                   max="<?= date('Y-m-d', strtotime('+30 days')) ?>">
+                                   min="<?= $dataMinimaAgendamento ? $dataMinimaAgendamento->format('Y-m-d') : date('Y-m-d', strtotime('+1 day')) ?>"
+                                   max="<?= date('Y-m-d', strtotime('+30 days')) ?>"
+                                   data-min-date="<?= $dataMinimaAgendamento ? $dataMinimaAgendamento->format('Y-m-d') : '' ?>">
                         </div>
                         <div class="mt-2 flex items-center text-xs text-gray-500">
                             <i class="fas fa-info-circle mr-1.5"></i>
-                            <span>Atendimentos disponíveis apenas em dias úteis (segunda a sexta-feira)</span>
+                            <span>
+                                Atendimentos disponíveis apenas em dias úteis (segunda a sexta-feira)
+                                <?php if ($dataMinimaAgendamento && !$isEmergencial): ?>
+                                    <?php
+                                    $prazoMinimo = $subcategoria['prazo_minimo'] ?? 1;
+                                    $dataMinimaFormatada = $dataMinimaAgendamento->format('d/m/Y');
+                                    ?>
+                                    <br>
+                                    <strong>Data mínima para agendamento: <?= $dataMinimaFormatada ?></strong>
+                                    <?php if ($prazoMinimo > 0): ?>
+                                        (prazo mínimo de <?= $prazoMinimo ?> dia<?= $prazoMinimo > 1 ? 's' : '' ?>)
+                                    <?php endif; ?>
+                                <?php endif; ?>
+                            </span>
                         </div>
                     </div>
                     
@@ -919,17 +1095,31 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
         
-        // Validação: bloquear seleção de fins de semana
+        // Validação: bloquear seleção de fins de semana e verificar data mínima
         dataInput.addEventListener('change', function() {
             if (!this.value) return;
             
             const dataSelecionada = new Date(this.value + 'T12:00:00');
             const diaDaSemana = dataSelecionada.getDay(); // 0 = Domingo, 6 = Sábado
             
+            // Verificar se é fim de semana
             if (diaDaSemana === 0 || diaDaSemana === 6) {
                 const nomeDia = diaDaSemana === 0 ? 'domingo' : 'sábado';
                 alert('⚠️ Atendimentos não são realizados aos fins de semana.\n\nA data selecionada é um ' + nomeDia + '.\nPor favor, selecione um dia útil (segunda a sexta-feira).');
                 this.value = '';
+                return;
+            }
+            
+            // Verificar se a data está antes da data mínima permitida
+            const dataMinima = this.getAttribute('data-min-date');
+            if (dataMinima) {
+                const dataMinimaObj = new Date(dataMinima + 'T12:00:00');
+                if (dataSelecionada < dataMinimaObj) {
+                    const dataMinimaFormatada = new Date(dataMinima).toLocaleDateString('pt-BR');
+                    alert('⚠️ Data não disponível para agendamento.\n\nA data selecionada é anterior à data mínima permitida (' + dataMinimaFormatada + ').\nPor favor, selecione uma data válida.');
+                    this.value = '';
+                    return;
+                }
             }
         });
     }
@@ -1163,13 +1353,310 @@ document.addEventListener('DOMContentLoaded', function() {
         previewPhotos(input);
     };
     
-    // Sistema de agendamento
+    // Sistema de agendamento para emergencial
+    const tipoAtendimentoRadios = document.querySelectorAll('.tipo-atendimento-radio');
+    const secaoAgendamentoEmergencial = document.getElementById('secao-agendamento-emergencial');
+    const btnContinuar = document.getElementById('btn-continuar');
+    
+    // Função para atualizar visual e exibição baseado no tipo selecionado
+    function atualizarTipoAtendimento(tipoSelecionado) {
+        console.log('🔄 Atualizando tipo de atendimento para:', tipoSelecionado);
+        const radio = document.querySelector(`.tipo-atendimento-radio[value="${tipoSelecionado}"]`);
+        if (!radio) {
+            console.error('❌ Radio não encontrado para:', tipoSelecionado);
+            return;
+        }
+        
+        // Garantir que o radio está marcado
+        radio.checked = true;
+        
+        const card = radio.closest('label')?.querySelector('.tipo-atendimento-card');
+        const check = card ? card.querySelector('.tipo-atendimento-check') : null;
+        
+        console.log('📦 Card encontrado:', card ? 'Sim' : 'Não');
+        console.log('✅ Check encontrado:', check ? 'Sim' : 'Não');
+        
+        // Atualizar visual de todos os cards (limpar seleção anterior)
+        document.querySelectorAll('.tipo-atendimento-card').forEach(c => {
+            c.classList.remove('border-green-500', 'bg-green-50', 'border-blue-500', 'bg-blue-50');
+            c.classList.add('border-gray-200', 'bg-white');
+            const chk = c.querySelector('.tipo-atendimento-check');
+            if (chk) {
+                chk.classList.remove('bg-green-600', 'border-green-600', 'bg-blue-500', 'border-blue-500', 'flex', 'items-center', 'justify-center');
+                chk.classList.add('border-gray-300', 'rounded-full');
+                chk.innerHTML = '';
+                chk.style.backgroundColor = '';
+                chk.style.display = 'block';
+            }
+        });
+        
+        // Atualizar card selecionado
+        if (tipoSelecionado === '120_minutos') {
+            if (card) {
+                card.classList.remove('border-gray-200', 'bg-white');
+                card.classList.add('border-green-500', 'bg-green-50');
+                console.log('✅ Card 120 minutos atualizado');
+            }
+            if (check) {
+                check.classList.remove('border-gray-300');
+                check.classList.add('bg-green-600', 'border-green-600', 'flex', 'items-center', 'justify-center', 'rounded-full');
+                check.innerHTML = '<i class="fas fa-check text-white text-xs"></i>';
+                check.style.display = 'flex';
+                console.log('✅ Check 120 minutos atualizado');
+            }
+            // Ocultar seção de agendamento
+            if (secaoAgendamentoEmergencial) {
+                secaoAgendamentoEmergencial.classList.add('hidden');
+                secaoAgendamentoEmergencial.style.display = 'none';
+            }
+            // Habilitar botão continuar
+            if (btnContinuar) {
+                btnContinuar.disabled = false;
+                btnContinuar.classList.remove('bg-gray-400', 'cursor-not-allowed');
+                btnContinuar.classList.add('bg-green-600', 'hover:bg-green-700');
+            }
+        } else if (tipoSelecionado === 'agendar') {
+            if (card) {
+                card.classList.remove('border-gray-200', 'bg-white');
+                card.classList.add('border-blue-500', 'bg-blue-50');
+                console.log('✅ Card Agendar atualizado');
+            }
+            if (check) {
+                check.classList.remove('border-gray-300');
+                check.classList.add('bg-blue-500', 'border-blue-500', 'flex', 'items-center', 'justify-center', 'rounded-full');
+                check.innerHTML = '<i class="fas fa-check text-white text-xs"></i>';
+                check.style.display = 'flex';
+                console.log('✅ Check Agendar atualizado');
+            }
+            // Mostrar seção de agendamento
+            if (secaoAgendamentoEmergencial) {
+                secaoAgendamentoEmergencial.classList.remove('hidden');
+                secaoAgendamentoEmergencial.style.display = 'block';
+                console.log('✅ Seção de agendamento emergencial exibida');
+            } else {
+                console.error('❌ Seção de agendamento emergencial não encontrada!');
+                const secao = document.getElementById('secao-agendamento-emergencial');
+                if (secao) {
+                    secao.classList.remove('hidden');
+                    secao.style.display = 'block';
+                }
+            }
+            // Desabilitar botão continuar até selecionar horários
+            if (btnContinuar) {
+                btnContinuar.disabled = true;
+                btnContinuar.classList.add('bg-gray-400', 'cursor-not-allowed');
+                btnContinuar.classList.remove('bg-green-600', 'hover:bg-green-700');
+            }
+        }
+    }
+    
+    // Controlar exibição do calendário quando selecionar tipo de atendimento
+    if (tipoAtendimentoRadios.length > 0) {
+        tipoAtendimentoRadios.forEach(radio => {
+            radio.addEventListener('change', function() {
+                atualizarTipoAtendimento(this.value);
+            });
+        });
+        
+        // Adicionar evento de clique nos labels e cards
+        document.querySelectorAll('label').forEach(label => {
+            if (label.querySelector('.tipo-atendimento-card')) {
+                label.addEventListener('click', function(e) {
+                    const radio = this.querySelector('.tipo-atendimento-radio');
+                    if (radio) {
+                        console.log('🖱️ Label clicado, selecionando:', radio.value);
+                        // Forçar seleção do radio
+                        radio.checked = true;
+                        // Atualizar visual imediatamente
+                        atualizarTipoAtendimento(radio.value);
+                        // Disparar evento change
+                        radio.dispatchEvent(new Event('change', { bubbles: true }));
+                    }
+                });
+            }
+        });
+        
+        // Adicionar evento diretamente nos cards também (para garantir que funcione)
+        document.querySelectorAll('.tipo-atendimento-card').forEach(card => {
+            card.style.cursor = 'pointer';
+            card.addEventListener('click', function(e) {
+                const label = this.closest('label');
+                if (!label) return;
+                
+                const radio = label.querySelector('.tipo-atendimento-radio');
+                if (radio) {
+                    console.log('🖱️ Card clicado, selecionando:', radio.value);
+                    // Forçar seleção do radio
+                    radio.checked = true;
+                    // Atualizar visual imediatamente
+                    atualizarTipoAtendimento(radio.value);
+                    // Disparar evento change
+                    radio.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+            });
+        });
+        
+        // Verificar se a seção de agendamento existe
+        console.log('🔍 Verificando seção de agendamento emergencial:', secaoAgendamentoEmergencial);
+        if (secaoAgendamentoEmergencial) {
+            console.log('✅ Seção encontrada no DOM');
+        } else {
+            console.error('❌ Seção de agendamento emergencial NÃO encontrada no DOM!');
+        }
+        
+        // Inicializar estado inicial - garantir que a seção esteja oculta se "120 minutos" estiver selecionado
+        const radio120Minutos = document.getElementById('opcao_120_minutos');
+        const radioAgendar = document.getElementById('opcao_agendar');
+        
+        if (radio120Minutos && radio120Minutos.checked) {
+            // Se "120 minutos" está selecionado, ocultar seção de agendamento
+            if (secaoAgendamentoEmergencial) {
+                secaoAgendamentoEmergencial.classList.add('hidden');
+                secaoAgendamentoEmergencial.style.display = 'none';
+            }
+            atualizarTipoAtendimento('120_minutos');
+        } else if (radioAgendar && radioAgendar.checked) {
+            // Se "Agendar" está selecionado, mostrar seção de agendamento
+            if (secaoAgendamentoEmergencial) {
+                secaoAgendamentoEmergencial.classList.remove('hidden');
+                secaoAgendamentoEmergencial.style.display = 'block';
+            }
+            atualizarTipoAtendimento('agendar');
+        } else {
+            // Por padrão, se nenhum estiver selecionado, ocultar
+            if (secaoAgendamentoEmergencial) {
+                secaoAgendamentoEmergencial.classList.add('hidden');
+                secaoAgendamentoEmergencial.style.display = 'none';
+            }
+        }
+    } else {
+        console.warn('⚠️ Nenhum radio de tipo de atendimento encontrado');
+    }
+    
+    // Sistema de agendamento para emergencial (quando selecionar "Agendar")
+    const horarioRadiosEmergencial = document.querySelectorAll('.horario-radio-emergencial');
+    const horarioCardsEmergencial = document.querySelectorAll('.horario-card-emergencial');
+    const horariosSelecionadosEmergencial = document.getElementById('horarios-selecionados-emergencial');
+    const listaHorariosEmergencial = document.getElementById('lista-horarios-emergencial');
+    const contadorHorariosEmergencial = document.getElementById('contador-horarios-emergencial');
+    
+    let horariosEscolhidosEmergencial = [];
+    
+    horarioRadiosEmergencial.forEach(radio => {
+        radio.addEventListener('change', function() {
+            const data = document.getElementById('data_selecionada_emergencial')?.value;
+            const horario = this.value;
+            
+            if (data && horario) {
+                const horarioCompleto = `${formatarData(data)} - ${horario}`;
+                
+                if (!horariosEscolhidosEmergencial.includes(horarioCompleto) && horariosEscolhidosEmergencial.length < 3) {
+                    horariosEscolhidosEmergencial.push(horarioCompleto);
+                    atualizarListaHorariosEmergencial();
+                }
+            }
+        });
+    });
+    
+    // Click no card de horário emergencial também seleciona o radio
+    horarioCardsEmergencial.forEach(card => {
+        card.addEventListener('click', function() {
+            const label = this.closest('label');
+            const radio = label ? label.querySelector('.horario-radio-emergencial') : null;
+            if (radio) {
+                radio.checked = true;
+                radio.dispatchEvent(new Event('change'));
+            }
+        });
+    });
+    
+    // Atualizar lista quando data mudar
+    const dataInputEmergencial = document.getElementById('data_selecionada_emergencial');
+    if (dataInputEmergencial) {
+        dataInputEmergencial.addEventListener('change', function() {
+            if (!this.value) return;
+            
+            const dataSelecionada = new Date(this.value + 'T12:00:00');
+            const diaDaSemana = dataSelecionada.getDay(); // 0 = Domingo, 6 = Sábado
+            
+            // Verificar se é fim de semana
+            if (diaDaSemana === 0 || diaDaSemana === 6) {
+                const nomeDia = diaDaSemana === 0 ? 'domingo' : 'sábado';
+                alert('⚠️ Atendimentos não são realizados aos fins de semana.\n\nA data selecionada é um ' + nomeDia + '.\nPor favor, selecione um dia útil (segunda a sexta-feira).');
+                this.value = '';
+                return;
+            }
+            
+            // Limpar horários selecionados quando mudar a data
+            horariosEscolhidosEmergencial = [];
+            atualizarListaHorariosEmergencial();
+            
+            // Desmarcar todos os horários
+            horarioRadiosEmergencial.forEach(radio => {
+                radio.checked = false;
+            });
+        });
+    }
+    
+    function atualizarListaHorariosEmergencial() {
+        if (horariosEscolhidosEmergencial.length > 0) {
+            if (horariosSelecionadosEmergencial) {
+                horariosSelecionadosEmergencial.classList.remove('hidden');
+            }
+            if (contadorHorariosEmergencial) {
+                contadorHorariosEmergencial.textContent = horariosEscolhidosEmergencial.length;
+            }
+            
+            if (listaHorariosEmergencial) {
+                listaHorariosEmergencial.innerHTML = '';
+                horariosEscolhidosEmergencial.forEach((horario, index) => {
+                    const div = document.createElement('div');
+                    div.className = 'flex items-center justify-between bg-green-50 border border-green-200 rounded-lg p-3';
+                    div.innerHTML = `
+                        <div class="flex items-center">
+                            <i class="fas fa-clock text-green-600 mr-2"></i>
+                            <span class="text-sm text-green-800">${horario}</span>
+                        </div>
+                        <button type="button" onclick="removerHorarioEmergencial(${index})" 
+                                class="text-red-500 hover:text-red-700">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    `;
+                    listaHorariosEmergencial.appendChild(div);
+                });
+            }
+            
+            // Habilitar botão continuar se tiver pelo menos 1 horário
+            if (btnContinuar && horariosEscolhidosEmergencial.length > 0) {
+                btnContinuar.disabled = false;
+                btnContinuar.classList.remove('bg-gray-400', 'cursor-not-allowed');
+                btnContinuar.classList.add('bg-green-600', 'hover:bg-green-700');
+            }
+        } else {
+            if (horariosSelecionadosEmergencial) {
+                horariosSelecionadosEmergencial.classList.add('hidden');
+            }
+            // Só desabilitar se estiver na opção "Agendar"
+            const opcaoAgendar = document.getElementById('opcao_agendar');
+            if (btnContinuar && opcaoAgendar && opcaoAgendar.checked) {
+                btnContinuar.disabled = true;
+                btnContinuar.classList.add('bg-gray-400', 'cursor-not-allowed');
+                btnContinuar.classList.remove('bg-green-600', 'hover:bg-green-700');
+            }
+        }
+    }
+    
+    window.removerHorarioEmergencial = function(index) {
+        horariosEscolhidosEmergencial.splice(index, 1);
+        atualizarListaHorariosEmergencial();
+    };
+    
+    // Sistema de agendamento (normal - não emergencial)
     const horarioRadios = document.querySelectorAll('.horario-radio');
     const horarioCards = document.querySelectorAll('.horario-card');
     const horariosSelecionados = document.getElementById('horarios-selecionados');
     const listaHorarios = document.getElementById('lista-horarios');
     const contadorHorarios = document.getElementById('contador-horarios');
-    const btnContinuar = document.getElementById('btn-continuar');
     
     let horariosEscolhidos = [];
     
@@ -1253,20 +1740,53 @@ document.addEventListener('DOMContentLoaded', function() {
     const form = document.querySelector('form');
     if (form) {
         form.addEventListener('submit', function(e) {
-            // Converter: "29/10/2025 - 08:00-11:00" → "2025-10-29 08:00:00"
-            const horariosFormatados = horariosEscolhidos.map(horario => {
-                const [dataStr, faixaHorario] = horario.split(' - ');
-                const [dia, mes, ano] = dataStr.split('/');
-                const horarioInicial = faixaHorario.split('-')[0];
-                return `${ano}-${mes}-${dia} ${horarioInicial}:00`;
-            });
+            // Verificar se é emergencial e qual opção foi selecionada
+            const tipoAtendimento = document.querySelector('.tipo-atendimento-radio:checked')?.value;
             
-            // Enviar como JSON
-            const inputHorarios = document.createElement('input');
-            inputHorarios.type = 'hidden';
-            inputHorarios.name = 'horarios_opcoes';
-            inputHorarios.value = JSON.stringify(horariosFormatados);
-            form.appendChild(inputHorarios);
+            if (tipoAtendimento === '120_minutos') {
+                // Enviar campo indicando atendimento em 120 minutos
+                const inputTipo = document.createElement('input');
+                inputTipo.type = 'hidden';
+                inputTipo.name = 'tipo_atendimento_emergencial';
+                inputTipo.value = '120_minutos';
+                form.appendChild(inputTipo);
+            } else if (tipoAtendimento === 'agendar') {
+                // Converter horários emergenciais: "29/10/2025 - 08:00-11:00" → "2025-10-29 08:00:00"
+                const horariosFormatados = horariosEscolhidosEmergencial.map(horario => {
+                    const [dataStr, faixaHorario] = horario.split(' - ');
+                    const [dia, mes, ano] = dataStr.split('/');
+                    const horarioInicial = faixaHorario.split('-')[0];
+                    return `${ano}-${mes}-${dia} ${horarioInicial}:00`;
+                });
+                
+                // Enviar como JSON
+                const inputHorarios = document.createElement('input');
+                inputHorarios.type = 'hidden';
+                inputHorarios.name = 'horarios_opcoes';
+                inputHorarios.value = JSON.stringify(horariosFormatados);
+                form.appendChild(inputHorarios);
+                
+                const inputTipo = document.createElement('input');
+                inputTipo.type = 'hidden';
+                inputTipo.name = 'tipo_atendimento_emergencial';
+                inputTipo.value = 'agendar';
+                form.appendChild(inputTipo);
+            } else {
+                // Normal (não emergencial): Converter: "29/10/2025 - 08:00-11:00" → "2025-10-29 08:00:00"
+                const horariosFormatados = horariosEscolhidos.map(horario => {
+                    const [dataStr, faixaHorario] = horario.split(' - ');
+                    const [dia, mes, ano] = dataStr.split('/');
+                    const horarioInicial = faixaHorario.split('-')[0];
+                    return `${ano}-${mes}-${dia} ${horarioInicial}:00`;
+                });
+                
+                // Enviar como JSON
+                const inputHorarios = document.createElement('input');
+                inputHorarios.type = 'hidden';
+                inputHorarios.name = 'horarios_opcoes';
+                inputHorarios.value = JSON.stringify(horariosFormatados);
+                form.appendChild(inputHorarios);
+            }
         });
     }
     
@@ -1275,22 +1795,44 @@ document.addEventListener('DOMContentLoaded', function() {
     const tipoImovelContainer = document.getElementById('tipo_imovel_container');
     
     if (finalidadeSelect && tipoImovelContainer) {
+        // Criar campo hidden para tipo_imovel quando for Comercial
+        let hiddenTipoImovel = document.getElementById('hidden_tipo_imovel');
+        if (!hiddenTipoImovel) {
+            hiddenTipoImovel = document.createElement('input');
+            hiddenTipoImovel.type = 'hidden';
+            hiddenTipoImovel.name = 'tipo_imovel';
+            hiddenTipoImovel.id = 'hidden_tipo_imovel';
+            tipoImovelContainer.parentNode.insertBefore(hiddenTipoImovel, tipoImovelContainer);
+        }
+        
         function toggleTipoImovel() {
             if (finalidadeSelect.value === 'COMERCIAL') {
                 tipoImovelContainer.style.display = 'none';
-                // Limpar seleção dos radio buttons
+                // Limpar seleção dos radio buttons e desabilitar para não enviar
                 const radioButtons = tipoImovelContainer.querySelectorAll('input[type="radio"]');
                 radioButtons.forEach(radio => {
                     radio.checked = false;
                     radio.removeAttribute('required');
+                    radio.disabled = true; // Desabilitar para não enviar
                 });
+                // Definir valor padrão para Comercial no campo hidden
+                hiddenTipoImovel.value = 'COMERCIAL';
+                hiddenTipoImovel.disabled = false; // Garantir que está habilitado
             } else {
                 tipoImovelContainer.style.display = 'block';
+                // Habilitar radio buttons novamente
+                const radioButtons = tipoImovelContainer.querySelectorAll('input[type="radio"]');
+                radioButtons.forEach(radio => {
+                    radio.disabled = false;
+                });
                 // Restaurar seleção padrão (Casa)
                 const radioCasa = tipoImovelContainer.querySelector('input[value="CASA"]');
                 if (radioCasa) {
                     radioCasa.checked = true;
                 }
+                // Desabilitar o campo hidden para não enviar (os radio buttons vão enviar o valor)
+                hiddenTipoImovel.disabled = true;
+                hiddenTipoImovel.value = '';
             }
         }
         
@@ -1299,6 +1841,16 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Executar quando mudar a seleção
         finalidadeSelect.addEventListener('change', toggleTipoImovel);
+        
+        // Garantir que quando os radio buttons mudarem, o hidden seja limpo
+        const radioButtons = tipoImovelContainer.querySelectorAll('input[type="radio"]');
+        radioButtons.forEach(radio => {
+            radio.addEventListener('change', function() {
+                if (finalidadeSelect.value === 'RESIDENCIAL') {
+                    hiddenTipoImovel.value = '';
+                }
+            });
+        });
     }
 });
 </script>

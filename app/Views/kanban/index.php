@@ -147,14 +147,29 @@ ob_start();
                         </div>
                     </div>
                     
-                    <!-- Prioridade -->
-                    <?php if (isset($solicitacao['prioridade']) && $solicitacao['prioridade'] !== 'NORMAL'): ?>
+                    <!-- Prioridade / Emergencial -->
+                    <?php 
+                    $isEmergencial = !empty($solicitacao['subcategoria_is_emergencial']) || !empty($solicitacao['is_emergencial']);
+                    $mostrarPrioridade = false;
+                    $textoPrioridade = '';
+                    $corPrioridade = '';
+                    
+                    if ($isEmergencial) {
+                        $mostrarPrioridade = true;
+                        $textoPrioridade = 'Emergencial';
+                        $corPrioridade = 'bg-red-100 text-red-800';
+                    } elseif (isset($solicitacao['prioridade']) && $solicitacao['prioridade'] !== 'NORMAL') {
+                        $mostrarPrioridade = true;
+                        $textoPrioridade = $solicitacao['prioridade'];
+                        $corPrioridade = $solicitacao['prioridade'] === 'ALTA' ? 'bg-red-100 text-red-800' : 
+                                        ($solicitacao['prioridade'] === 'MEDIA' ? 'bg-yellow-100 text-yellow-800' : 'bg-blue-100 text-blue-800');
+                    }
+                    ?>
+                    <?php if ($mostrarPrioridade): ?>
                     <div class="mt-3">
-                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium 
-                            <?= $solicitacao['prioridade'] === 'ALTA' ? 'bg-red-100 text-red-800' : 
-                                ($solicitacao['prioridade'] === 'MEDIA' ? 'bg-yellow-100 text-yellow-800' : 'bg-blue-100 text-blue-800') ?>">
-                            <i class="fas fa-exclamation-circle mr-1"></i>
-                            <?= htmlspecialchars($solicitacao['prioridade']) ?>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium <?= $corPrioridade ?>">
+                            <i class="fas fa-<?= $isEmergencial ? 'exclamation-triangle' : 'exclamation-circle' ?> mr-1"></i>
+                            <?= htmlspecialchars($textoPrioridade) ?>
                         </span>
                     </div>
                     <?php endif; ?>
@@ -686,9 +701,31 @@ function renderizarDetalhes(solicitacao) {
                         ` : ''}
                         <div>
                             <p class="text-gray-500 mb-1">Prioridade:</p>
-                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                ${solicitacao.prioridade || 'NORMAL'}
-                            </span>
+                            ${(() => {
+                                const isEmergencial = solicitacao.subcategoria_is_emergencial || solicitacao.is_emergencial || false;
+                                const prioridade = solicitacao.prioridade || 'NORMAL';
+                                let texto = '';
+                                let cor = '';
+                                
+                                if (isEmergencial) {
+                                    texto = 'Emergencial';
+                                    cor = 'bg-red-100 text-red-800';
+                                } else if (prioridade === 'ALTA') {
+                                    texto = 'ALTA';
+                                    cor = 'bg-red-100 text-red-800';
+                                } else if (prioridade === 'MEDIA') {
+                                    texto = 'MEDIA';
+                                    cor = 'bg-yellow-100 text-yellow-800';
+                                } else {
+                                    texto = 'NORMAL';
+                                    cor = 'bg-green-100 text-green-800';
+                                }
+                                
+                                return `<span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${cor}">
+                                    <i class="fas fa-${isEmergencial ? 'exclamation-triangle' : 'exclamation-circle'} mr-1"></i>
+                                    ${texto}
+                                </span>`;
+                            })()}
                         </div>
                     </div>
                 </div>
@@ -1969,6 +2006,292 @@ document.addEventListener('change', function(e) {
         }
     }
 });
+
+// ============================================
+// ATUALIZAÇÃO AUTOMÁTICA DE NOVAS SOLICITAÇÕES
+// ============================================
+(function() {
+    'use strict';
+    
+    // Encontrar a coluna "Nova Solicitação"
+    let colunaNovaSolicitacao = null;
+    let statusNovaSolicitacaoId = null;
+    let solicitacoesExistentes = new Set();
+    let intervaloAtualizacao = null;
+    
+    // Função para encontrar a coluna "Nova Solicitação"
+    function encontrarColunaNovaSolicitacao() {
+        const colunas = document.querySelectorAll('.kanban-column');
+        for (let coluna of colunas) {
+            const titulo = coluna.querySelector('h3');
+            if (titulo && titulo.textContent.trim() === 'Nova Solicitação') {
+                colunaNovaSolicitacao = coluna;
+                const cardsContainer = coluna.querySelector('.kanban-cards');
+                if (cardsContainer) {
+                    statusNovaSolicitacaoId = cardsContainer.getAttribute('data-status-id');
+                }
+                break;
+            }
+        }
+    }
+    
+    // Função para coletar IDs das solicitações existentes
+    function coletarIdsExistentes() {
+        solicitacoesExistentes.clear();
+        if (colunaNovaSolicitacao) {
+            const cards = colunaNovaSolicitacao.querySelectorAll('[data-solicitacao-id]');
+            cards.forEach(card => {
+                const id = card.getAttribute('data-solicitacao-id');
+                if (id) {
+                    solicitacoesExistentes.add(parseInt(id));
+                }
+            });
+        }
+    }
+    
+    // Função para criar HTML do card
+    function criarCardHTML(solicitacao, statusCor) {
+        const numeroSolicitacao = solicitacao.numero_solicitacao || ('KSI' + solicitacao.id);
+        const categoriaNome = solicitacao.categoria_nome || 'Sem categoria';
+        const subcategoriaNome = solicitacao.subcategoria_nome || '';
+        const locatarioNome = solicitacao.locatario_nome || 'Não informado';
+        const endereco = solicitacao.imovel_endereco ? 
+            (solicitacao.imovel_endereco + (solicitacao.imovel_numero ? ', ' + solicitacao.imovel_numero : '')) : 
+            'Endereço não informado';
+        const dataCriacao = new Date(solicitacao.created_at).toLocaleDateString('pt-BR');
+        const logoUrl = solicitacao.imobiliaria_logo ? 
+            `<?= url('Public/uploads/logos/') ?>${solicitacao.imobiliaria_logo}` : '';
+        const imobiliariaNome = solicitacao.imobiliaria_nome || '';
+        const condicaoNome = solicitacao.condicao_nome || '';
+        const condicaoCor = solicitacao.condicao_cor || '#6B7280';
+        const numeroContrato = solicitacao.numero_contrato || '';
+        const protocoloSeguradora = solicitacao.protocolo_seguradora || '';
+        const isEmergencial = solicitacao.is_emergencial_fora_horario || false;
+        const isEmergencialSubcategoria = solicitacao.subcategoria_is_emergencial || false;
+        const prioridade = solicitacao.prioridade || '';
+        
+        // Determinar se deve mostrar "Emergencial" ou prioridade
+        let mostrarPrioridade = false;
+        let textoPrioridade = '';
+        let corPrioridade = '';
+        
+        if (isEmergencialSubcategoria || isEmergencial) {
+            mostrarPrioridade = true;
+            textoPrioridade = 'Emergencial';
+            corPrioridade = 'bg-red-100 text-red-800';
+        } else if (prioridade && prioridade !== 'NORMAL') {
+            mostrarPrioridade = true;
+            textoPrioridade = prioridade;
+            corPrioridade = prioridade === 'ALTA' ? 'bg-red-100 text-red-800' : 
+                           (prioridade === 'MEDIA' ? 'bg-yellow-100 text-yellow-800' : 'bg-blue-100 text-blue-800');
+        }
+        
+        return `
+            <div class="kanban-card bg-white rounded-lg shadow-sm p-4 cursor-pointer hover:shadow-md transition-shadow border-l-4" 
+                 style="border-color: ${statusCor}"
+                 data-solicitacao-id="${solicitacao.id}"
+                 data-status-id="${solicitacao.status_id}"
+                 onclick="abrirDetalhes(${solicitacao.id})">
+                
+                <!-- Header do Card -->
+                <div class="flex items-start justify-between mb-3">
+                    <div class="flex-1">
+                        <div class="flex items-center gap-2 mb-1">
+                            <h4 class="font-semibold text-gray-900 text-sm">${numeroSolicitacao}</h4>
+                            ${isEmergencial ? `
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800" title="Emergencial fora do horário comercial">
+                                    <i class="fas fa-exclamation-triangle mr-1"></i>
+                                    Fora do Horário
+                                </span>
+                            ` : ''}
+                            ${numeroContrato ? `
+                                <span class="text-xs text-gray-500">Contrato: ${numeroContrato}</span>
+                            ` : ''}
+                        </div>
+                        <div class="flex items-center text-xs text-gray-600 mt-1">
+                            <i class="fas fa-wrench w-3 mr-1 text-gray-400"></i>
+                            <span class="truncate">${categoriaNome}</span>
+                        </div>
+                    </div>
+                    <div class="flex flex-col items-end gap-1">
+                        ${logoUrl ? `
+                            <img src="${logoUrl}" 
+                                 alt="${imobiliariaNome}" 
+                                 class="h-7 w-auto"
+                                 onerror="this.style.display='none';">
+                        ` : ''}
+                        ${condicaoNome ? `
+                            <span class="inline-block px-2 py-0.5 rounded-md text-xs font-medium" 
+                                  style="background-color: ${condicaoCor}20; color: ${condicaoCor}">
+                                ${condicaoNome}
+                            </span>
+                        ` : ''}
+                    </div>
+                </div>
+                
+                <!-- Informações do Card -->
+                <div class="space-y-1 text-xs text-gray-600">
+                    ${subcategoriaNome ? `
+                        <div class="flex items-center">
+                            <i class="fas fa-list w-4 mr-1 text-gray-400"></i>
+                            <span class="truncate">${subcategoriaNome}</span>
+                        </div>
+                    ` : ''}
+                    ${protocoloSeguradora ? `
+                        <div class="flex items-center">
+                            <i class="fas fa-hashtag w-4 mr-1 text-gray-400"></i>
+                            <span class="truncate text-xs text-gray-500">Protocolo: ${protocoloSeguradora}</span>
+                        </div>
+                    ` : ''}
+                    <div class="flex items-center">
+                        <i class="fas fa-user w-4 mr-1 text-gray-400"></i>
+                        <span class="truncate">${locatarioNome}</span>
+                    </div>
+                    <div class="flex items-center">
+                        <i class="fas fa-map-marker-alt w-4 mr-1 text-gray-400"></i>
+                        <span class="truncate">${endereco}</span>
+                    </div>
+                    <div class="flex items-center">
+                        <i class="fas fa-calendar w-4 mr-1 text-gray-400"></i>
+                        <span>${dataCriacao}</span>
+                    </div>
+                </div>
+                
+                ${mostrarPrioridade ? `
+                    <div class="mt-3">
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${corPrioridade}">
+                            <i class="fas fa-${(isEmergencialSubcategoria || isEmergencial) ? 'exclamation-triangle' : 'exclamation-circle'} mr-1"></i>
+                            ${textoPrioridade}
+                        </span>
+                    </div>
+                ` : ''}
+            </div>
+        `;
+    }
+    
+    // Função para atualizar a coluna com novas solicitações
+    function atualizarColunaNovaSolicitacao(solicitacoes) {
+        if (!colunaNovaSolicitacao || !solicitacoes || solicitacoes.length === 0) {
+            return;
+        }
+        
+        const cardsContainer = colunaNovaSolicitacao.querySelector('.kanban-cards');
+        if (!cardsContainer) {
+            return;
+        }
+        
+        // Coletar IDs existentes antes de adicionar novas
+        coletarIdsExistentes();
+        
+        // Encontrar status cor
+        const statusCor = colunaNovaSolicitacao.querySelector('.w-3.h-3')?.style.backgroundColor || '#3B82F6';
+        
+        // Filtrar apenas novas solicitações (que não existem ainda)
+        const novasSolicitacoes = solicitacoes.filter(s => !solicitacoesExistentes.has(parseInt(s.id)));
+        
+        if (novasSolicitacoes.length === 0) {
+            return; // Nenhuma nova solicitação
+        }
+        
+        // Remover mensagem "Nenhuma solicitação" se existir
+        const mensagemVazia = cardsContainer.querySelector('.text-center.py-8');
+        if (mensagemVazia) {
+            mensagemVazia.remove();
+        }
+        
+        // Adicionar novas solicitações no topo (mais recentes primeiro)
+        novasSolicitacoes.reverse().forEach(solicitacao => {
+            const cardHTML = criarCardHTML(solicitacao, statusCor);
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = cardHTML.trim();
+            const novoCard = tempDiv.firstElementChild;
+            
+            // Adicionar no início do container
+            if (cardsContainer.firstChild) {
+                cardsContainer.insertBefore(novoCard, cardsContainer.firstChild);
+            } else {
+                cardsContainer.appendChild(novoCard);
+            }
+            
+            // Adicionar ao Set de existentes
+            solicitacoesExistentes.add(parseInt(solicitacao.id));
+            
+            // Adicionar animação de entrada
+            novoCard.style.opacity = '0';
+            novoCard.style.transform = 'translateY(-10px)';
+            setTimeout(() => {
+                novoCard.style.transition = 'all 0.3s ease-in-out';
+                novoCard.style.opacity = '1';
+                novoCard.style.transform = 'translateY(0)';
+            }, 10);
+        });
+        
+        // Atualizar contador
+        const contador = colunaNovaSolicitacao.querySelector('.bg-gray-200');
+        if (contador) {
+            const totalCards = cardsContainer.querySelectorAll('.kanban-card').length;
+            contador.textContent = totalCards;
+        }
+        
+        // Mostrar notificação discreta
+        if (novasSolicitacoes.length > 0) {
+            console.log(`✅ ${novasSolicitacoes.length} nova(s) solicitação(ões) adicionada(s)`);
+        }
+    }
+    
+    // Função para buscar novas solicitações via AJAX
+    function buscarNovasSolicitacoes() {
+        const imobiliariaId = new URLSearchParams(window.location.search).get('imobiliaria_id') || '';
+        const url = `<?= url('admin/kanban/novas-solicitacoes') ?>${imobiliariaId ? '?imobiliaria_id=' + imobiliariaId : ''}`;
+        
+        fetch(url, {
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.solicitacoes) {
+                atualizarColunaNovaSolicitacao(data.solicitacoes);
+            }
+        })
+        .catch(error => {
+            console.error('Erro ao buscar novas solicitações:', error);
+        });
+    }
+    
+    // Inicializar quando a página carregar
+    document.addEventListener('DOMContentLoaded', function() {
+        encontrarColunaNovaSolicitacao();
+        
+        if (colunaNovaSolicitacao) {
+            // Coletar IDs iniciais
+            coletarIdsExistentes();
+            
+            // Iniciar polling a cada 3 segundos
+            intervaloAtualizacao = setInterval(buscarNovasSolicitacoes, 3000);
+            
+            console.log('✅ Atualização automática de novas solicitações ativada (a cada 3 segundos)');
+        } else {
+            console.warn('⚠️ Coluna "Nova Solicitação" não encontrada');
+        }
+    });
+    
+    // Parar polling quando a página for escondida (otimização)
+    document.addEventListener('visibilitychange', function() {
+        if (document.hidden) {
+            if (intervaloAtualizacao) {
+                clearInterval(intervaloAtualizacao);
+                intervaloAtualizacao = null;
+            }
+        } else {
+            if (!intervaloAtualizacao && colunaNovaSolicitacao) {
+                intervaloAtualizacao = setInterval(buscarNovasSolicitacoes, 3000);
+            }
+        }
+    });
+})();
 </script>
 
 

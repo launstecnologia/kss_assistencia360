@@ -180,6 +180,7 @@ class DashboardController extends Controller
                     s.*,
                     c.nome as categoria_nome,
                     sc.nome as subcategoria_nome,
+                    sc.is_emergencial as subcategoria_is_emergencial,
                     i.nome as imobiliaria_nome,
                     i.logo as imobiliaria_logo,
                     st.nome as status_nome,
@@ -224,6 +225,65 @@ class DashboardController extends Controller
             'user' => $user,
             'todosStatus' => $todosStatus,
             'todasCondicoes' => $todasCondicoes
+        ]);
+    }
+
+    /**
+     * Endpoint AJAX para buscar novas solicitações
+     * Retorna apenas solicitações com status "Nova Solicitação"
+     */
+    public function novasSolicitacoes(): void
+    {
+        $this->requireAuth();
+        
+        $imobiliariaId = $this->input('imobiliaria_id');
+        
+        // Buscar ID do status "Nova Solicitação"
+        $statusNova = $this->statusModel->findByNome('Nova Solicitação');
+        
+        if (!$statusNova) {
+            $this->json(['success' => true, 'solicitacoes' => []]);
+            return;
+        }
+        
+        // Buscar novas solicitações
+        $sql = "
+            SELECT 
+                s.*,
+                c.nome as categoria_nome,
+                sc.nome as subcategoria_nome,
+                sc.is_emergencial as subcategoria_is_emergencial,
+                i.nome as imobiliaria_nome,
+                i.logo as imobiliaria_logo,
+                st.nome as status_nome,
+                st.cor as status_cor,
+                cond.nome as condicao_nome,
+                cond.cor as condicao_cor
+            FROM solicitacoes s
+            LEFT JOIN categorias c ON s.categoria_id = c.id
+            LEFT JOIN subcategorias sc ON s.subcategoria_id = sc.id
+            LEFT JOIN imobiliarias i ON s.imobiliaria_id = i.id
+            LEFT JOIN status st ON s.status_id = st.id
+            LEFT JOIN condicoes cond ON s.condicao_id = cond.id
+            WHERE s.status_id = ?
+        ";
+        
+        $params = [$statusNova['id']];
+        
+        if ($imobiliariaId) {
+            $sql .= " AND s.imobiliaria_id = ?";
+            $params[] = $imobiliariaId;
+        }
+        
+        $sql .= " ORDER BY s.created_at DESC LIMIT 50";
+        
+        $solicitacoes = \App\Core\Database::fetchAll($sql, $params);
+        
+        $this->json([
+            'success' => true,
+            'solicitacoes' => $solicitacoes,
+            'status_id' => $statusNova['id'],
+            'count' => count($solicitacoes)
         ]);
     }
 

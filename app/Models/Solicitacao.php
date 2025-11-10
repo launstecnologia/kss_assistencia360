@@ -155,6 +155,7 @@ class Solicitacao extends Model
                 c.nome as categoria_nome,
                 sc.nome as subcategoria_nome,
                 sc.prazo_minimo,
+                sc.is_emergencial as subcategoria_is_emergencial,
                 i.nome as imobiliaria_nome,
                 i.url_base as imobiliaria_url,
                 i.telefone as imobiliaria_telefone,
