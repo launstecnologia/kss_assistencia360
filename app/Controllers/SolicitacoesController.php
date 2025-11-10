@@ -2805,7 +2805,7 @@ class SolicitacoesController extends Controller
                 'categoria_id' => $this->input('categoria_id'),
                 'subcategoria_id' => $this->input('subcategoria_id'),
                 'descricao_problema' => trim($this->input('descricao_problema')),
-                'numero_contrato' => trim($this->input('numero_contrato')),
+                'numero_contrato' => trim($this->input('numero_contrato')) ?: null,
                 'local_manutencao' => trim($this->input('local_manutencao')),
                 'status_id' => $this->input('status_id'),
                 'termos_aceitos' => true // Admin sempre aceita

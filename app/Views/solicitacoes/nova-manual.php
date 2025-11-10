@@ -61,7 +61,7 @@ ob_start();
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Imobiliária *</label>
                 <select name="imobiliaria_id" required
-                        class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500">
+                        class="block w-full px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all">
                     <option value="">Selecione...</option>
                     <?php foreach ($imobiliarias as $imob): ?>
                         <option value="<?= $imob['id'] ?>"><?= htmlspecialchars($imob['nome']) ?></option>
@@ -71,29 +71,29 @@ ob_start();
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Nome Completo *</label>
                 <input type="text" name="nome_completo" required
-                       class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500">
+                       class="block w-full px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all">
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">CPF *</label>
-                <input type="text" name="cpf" required maxlength="14"
-                       class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
+                <input type="text" name="cpf" id="cpf" required maxlength="14"
+                       class="block w-full px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all"
                        placeholder="000.000.000-00">
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">WhatsApp *</label>
-                <input type="text" name="whatsapp" required
-                       class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
+                <input type="text" name="whatsapp" id="whatsapp" required
+                       class="block w-full px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all"
                        placeholder="(00) 00000-0000">
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Nº do Contrato</label>
                 <input type="text" name="numero_contrato"
-                       class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500">
+                       class="block w-full px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all">
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
                 <select name="status_id"
-                        class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500">
+                        class="block w-full px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all">
                     <option value="">Status Padrão (Nova Solicitação)</option>
                     <?php foreach ($statusList as $status): ?>
                         <option value="<?= $status['id'] ?>"><?= htmlspecialchars($status['nome']) ?></option>
@@ -113,7 +113,7 @@ ob_start();
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Tipo de Imóvel *</label>
                 <select name="tipo_imovel" required
-                        class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500">
+                        class="block w-full px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all">
                     <option value="">Selecione...</option>
                     <option value="Residencial">Residencial</option>
                     <option value="Comercial">Comercial</option>
@@ -122,44 +122,51 @@ ob_start();
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Subtipo</label>
                 <input type="text" name="subtipo_imovel"
-                       class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
+                       class="block w-full px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all"
                        placeholder="Ex: Apartamento, Casa, Loja...">
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">CEP *</label>
-                <input type="text" name="cep" required maxlength="9"
-                       class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
-                       placeholder="00000-000">
+                <div class="flex gap-2">
+                    <input type="text" name="cep" id="cep" required maxlength="9"
+                           class="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all"
+                           placeholder="00000-000">
+                    <button type="button" id="btn-buscar-cep"
+                            class="px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
+                        <i class="fas fa-search mr-2"></i>Buscar
+                    </button>
+                </div>
+                <p class="text-xs text-gray-500 mt-1">Digite o CEP e clique em buscar para preencher automaticamente</p>
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Endereço *</label>
-                <input type="text" name="endereco" required
-                       class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500">
+                <input type="text" name="endereco" id="endereco" required
+                       class="block w-full px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all">
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Número *</label>
-                <input type="text" name="numero" required
-                       class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500">
+                <input type="text" name="numero" id="numero" required
+                       class="block w-full px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all">
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Complemento</label>
-                <input type="text" name="complemento"
-                       class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500">
+                <input type="text" name="complemento" id="complemento"
+                       class="block w-full px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all">
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Bairro *</label>
-                <input type="text" name="bairro" required
-                       class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500">
+                <input type="text" name="bairro" id="bairro" required
+                       class="block w-full px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all">
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Cidade *</label>
-                <input type="text" name="cidade" required
-                       class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500">
+                <input type="text" name="cidade" id="cidade" required
+                       class="block w-full px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all">
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Estado *</label>
-                <select name="estado" required
-                        class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500">
+                <select name="estado" id="estado" required
+                        class="block w-full px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all">
                     <option value="">Selecione...</option>
                     <option value="AC">Acre</option>
                     <option value="AL">Alagoas</option>
@@ -203,7 +210,7 @@ ob_start();
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Categoria *</label>
                 <select name="categoria_id" id="categoria_id" required
-                        class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500">
+                        class="block w-full px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all">
                     <option value="">Selecione...</option>
                     <?php foreach ($categorias as $categoria): ?>
                         <option value="<?= $categoria['id'] ?>"><?= htmlspecialchars($categoria['nome']) ?></option>
@@ -213,20 +220,20 @@ ob_start();
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Subcategoria *</label>
                 <select name="subcategoria_id" id="subcategoria_id" required
-                        class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500">
+                        class="block w-full px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all">
                     <option value="">Selecione primeiro a categoria</option>
                 </select>
             </div>
             <div class="md:col-span-2">
                 <label class="block text-sm font-medium text-gray-700 mb-2">Local da Manutenção</label>
                 <input type="text" name="local_manutencao"
-                       class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
+                       class="block w-full px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all"
                        placeholder="Ex: Sala, Cozinha, Quarto...">
             </div>
             <div class="md:col-span-2">
                 <label class="block text-sm font-medium text-gray-700 mb-2">Descrição do Problema *</label>
                 <textarea name="descricao_problema" required rows="4"
-                          class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
+                          class="block w-full px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all"
                           placeholder="Descreva detalhadamente o problema..."></textarea>
             </div>
         </div>
@@ -244,7 +251,7 @@ ob_start();
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Data</label>
                 <input type="date" id="data_selecionada" 
-                       class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
+                       class="block w-full px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all"
                        min="<?= date('Y-m-d', strtotime('+1 day')) ?>"
                        max="<?= date('Y-m-d', strtotime('+30 days')) ?>">
             </div>
@@ -297,12 +304,12 @@ ob_start();
             <i class="fas fa-images mr-2 text-green-600"></i>
             Fotos (Opcional)
         </h2>
-        <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Anexar Fotos</label>
-            <input type="file" name="fotos[]" multiple accept="image/*"
-                   class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100">
-            <p class="text-xs text-gray-500 mt-2">Você pode selecionar múltiplas fotos (JPG, PNG, GIF, WEBP)</p>
-        </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Anexar Fotos</label>
+                <input type="file" name="fotos[]" multiple accept="image/*"
+                       class="block w-full text-sm text-gray-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100 transition-all">
+                <p class="text-xs text-gray-500 mt-2">Você pode selecionar múltiplas fotos (JPG, PNG, GIF, WEBP)</p>
+            </div>
     </div>
     
     <!-- Botões -->
@@ -341,7 +348,7 @@ document.getElementById('categoria_id').addEventListener('change', function() {
 });
 
 // Máscaras de input
-document.querySelector('input[name="cpf"]').addEventListener('input', function(e) {
+document.getElementById('cpf')?.addEventListener('input', function(e) {
     let value = e.target.value.replace(/\D/g, '');
     if (value.length <= 11) {
         value = value.replace(/(\d{3})(\d)/, '$1.$2');
@@ -351,7 +358,7 @@ document.querySelector('input[name="cpf"]').addEventListener('input', function(e
     }
 });
 
-document.querySelector('input[name="whatsapp"]').addEventListener('input', function(e) {
+document.getElementById('whatsapp')?.addEventListener('input', function(e) {
     let value = e.target.value.replace(/\D/g, '');
     if (value.length <= 11) {
         if (value.length <= 10) {
@@ -365,11 +372,64 @@ document.querySelector('input[name="whatsapp"]').addEventListener('input', funct
     }
 });
 
-document.querySelector('input[name="cep"]').addEventListener('input', function(e) {
+document.getElementById('cep')?.addEventListener('input', function(e) {
     let value = e.target.value.replace(/\D/g, '');
     if (value.length <= 8) {
         value = value.replace(/(\d{5})(\d)/, '$1-$2');
         e.target.value = value;
+    }
+});
+
+// Buscar CEP via API
+document.getElementById('btn-buscar-cep')?.addEventListener('click', async function() {
+    const cepInput = document.getElementById('cep');
+    const cep = cepInput.value.replace(/\D/g, '');
+    
+    if (cep.length !== 8) {
+        alert('CEP inválido. Digite um CEP com 8 dígitos.');
+        cepInput.focus();
+        return;
+    }
+    
+    const btn = this;
+    const originalHtml = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Buscando...';
+    btn.disabled = true;
+    
+    try {
+        const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+        const data = await response.json();
+        
+        if (data.erro) {
+            alert('CEP não encontrado. Verifique o CEP digitado.');
+            cepInput.focus();
+        } else {
+            // Preencher campos automaticamente
+            document.getElementById('endereco').value = data.logradouro || '';
+            document.getElementById('bairro').value = data.bairro || '';
+            document.getElementById('cidade').value = data.localidade || '';
+            document.getElementById('estado').value = data.uf || '';
+            
+            // Focar no campo número após preencher
+            document.getElementById('numero').focus();
+        }
+    } catch (error) {
+        console.error('Erro ao buscar CEP:', error);
+        alert('Erro ao buscar CEP. Tente novamente.');
+    } finally {
+        btn.innerHTML = originalHtml;
+        btn.disabled = false;
+    }
+});
+
+// Buscar CEP automaticamente ao sair do campo (se tiver 8 dígitos)
+document.getElementById('cep')?.addEventListener('blur', async function() {
+    const cep = this.value.replace(/\D/g, '');
+    if (cep.length === 8) {
+        const btn = document.getElementById('btn-buscar-cep');
+        if (btn) {
+            btn.click();
+        }
     }
 });
 
