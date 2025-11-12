@@ -254,15 +254,11 @@ class WhatsappInstancesController extends Controller
             // Criar instância na Evolution API PRIMEIRO
             $evolutionService = new EvolutionApiService($apiUrl, $apiKey, $token);
             
-            // Construir URL do webhook automaticamente
-            $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http';
-            $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
-            $basePath = trim($config['app']['base_path'] ?? '', '/');
-            $webhookUrl = $protocol . '://' . $host;
-            if (!empty($basePath) && $basePath !== '/') {
-                $webhookUrl .= '/' . trim($basePath, '/');
-            }
-            $webhookUrl .= '/webhook/whatsapp';
+            // URL do webhook fixa
+            $webhookUrl = 'https://kss.launs.com.br/webhook/whatsapp';
+            
+            // Log para debug
+            error_log("🔗 Webhook URL: $webhookUrl");
             
             // Log da configuração do webhook
             $this->writeInstanceLog([

@@ -218,29 +218,47 @@ class ChatController extends Controller
      */
     public function webhook(): void
     {
+        // Ler o body completo antes de qualquer processamento
+        $rawBody = file_get_contents('php://input');
+        
         // Log do webhook recebido
         $logData = [
             'timestamp' => date('Y-m-d H:i:s'),
-            'method' => $_SERVER['REQUEST_METHOD'],
-            'headers' => getallheaders(),
-            'body' => file_get_contents('php://input')
+            'method' => $_SERVER['REQUEST_METHOD'] ?? 'UNKNOWN',
+            'uri' => $_SERVER['REQUEST_URI'] ?? 'UNKNOWN',
+            'headers' => getallheaders() ?? [],
+            'body_raw' => $rawBody,
+            'body_length' => strlen($rawBody)
         ];
-        error_log('WEBHOOK RECEBIDO: ' . json_encode($logData, JSON_PRETTY_PRINT));
+        error_log('🔔 WEBHOOK RECEBIDO: ' . json_encode($logData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
 
-        $payload = json_decode(file_get_contents('php://input'), true);
+        $payload = json_decode($rawBody, true);
 
         if (!$payload) {
+            $jsonError = json_last_error_msg();
+            error_log("❌ Erro ao decodificar JSON: $jsonError | Body: " . substr($rawBody, 0, 500));
             http_response_code(400);
-            echo json_encode(['error' => 'Invalid payload']);
+            echo json_encode(['error' => 'Invalid payload', 'json_error' => $jsonError]);
             return;
         }
 
-        // Evolution API envia eventos diferentes
-        // Verificar se é evento de mensagem recebida
-        if (isset($payload['event']) && $payload['event'] === 'messages.upsert') {
+        // Log do payload decodificado
+        error_log('📦 PAYLOAD DECODIFICADO: ' . json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+
+        // Evolution API pode enviar eventos de diferentes formas
+        // Verificar diferentes estruturas possíveis
+        $event = $payload['event'] ?? $payload['type'] ?? null;
+        error_log("🔍 Evento detectado: " . ($event ?? 'NENHUM'));
+
+        // Processar diferentes tipos de eventos
+        if ($event === 'messages.upsert' || isset($payload['data']['messages'])) {
+            error_log("✅ Processando mensagem recebida (messages.upsert)");
             $this->processarMensagemRecebida($payload);
-        } elseif (isset($payload['event']) && $payload['event'] === 'messages.update') {
+        } elseif ($event === 'messages.update' || isset($payload['data']['key'])) {
+            error_log("✅ Processando atualização de mensagem (messages.update)");
             $this->processarAtualizacaoMensagem($payload);
+        } else {
+            error_log("⚠️ Evento não reconhecido ou sem processamento necessário. Payload: " . json_encode($payload, JSON_UNESCAPED_UNICODE));
         }
 
         // Sempre retornar 200 para Evolution API
@@ -254,39 +272,114 @@ class ChatController extends Controller
     private function processarMensagemRecebida(array $payload): void
     {
         try {
-            $messages = $payload['data']['messages'] ?? [];
+            // Tentar diferentes estruturas de payload
+            $messages = $payload['data']['messages'] ?? $payload['messages'] ?? [];
+            
+            if (empty($messages)) {
+                error_log("⚠️ Nenhuma mensagem encontrada no payload");
+                return;
+            }
+
+            error_log("📨 Processando " . count($messages) . " mensagem(ns)");
             
             foreach ($messages as $message) {
                 // Ignorar mensagens enviadas por nós
-                if (isset($message['key']['fromMe']) && $message['key']['fromMe'] === true) {
+                $fromMe = $message['key']['fromMe'] ?? $message['fromMe'] ?? false;
+                if ($fromMe === true) {
+                    error_log("⏭️ Ignorando mensagem enviada por nós");
                     continue;
                 }
 
-                $numeroRemetente = $message['key']['remoteJid'] ?? '';
+                // Extrair número do remetente de diferentes formatos
+                $numeroRemetente = $message['key']['remoteJid'] ?? 
+                                 $message['remoteJid'] ?? 
+                                 $message['from'] ?? 
+                                 $message['key']['participant'] ?? '';
+                
+                // Extrair texto da mensagem de diferentes formatos
                 $mensagemTexto = $message['message']['conversation'] ?? 
-                                $message['message']['extendedTextMessage']['text'] ?? '';
+                                $message['message']['extendedTextMessage']['text'] ??
+                                $message['message']['text'] ??
+                                $message['body'] ??
+                                '';
 
-                if (empty($mensagemTexto) || empty($numeroRemetente)) {
+                error_log("📝 Mensagem: $mensagemTexto | De: $numeroRemetente");
+
+                if (empty($mensagemTexto) && empty($message['message']['imageMessage']) && empty($message['message']['videoMessage'])) {
+                    error_log("⚠️ Mensagem vazia ou sem texto (pode ser mídia)");
+                    // Continuar mesmo assim para processar mídias se necessário
+                }
+
+                if (empty($numeroRemetente)) {
+                    error_log("❌ Número do remetente vazio");
                     continue;
                 }
 
-                // Remover @c.us do número
-                $numeroLimpo = str_replace('@c.us', '', $numeroRemetente);
+                // Remover @c.us, @s.whatsapp.net, etc do número
+                $numeroLimpo = preg_replace('/@[^.]+\.whatsapp\.net$/', '', $numeroRemetente);
+                $numeroLimpo = str_replace('@c.us', '', $numeroLimpo);
+                $numeroLimpo = str_replace('@s.whatsapp.net', '', $numeroLimpo);
+                
+                // Formatar número brasileiro
                 $numeroFormatado = $this->formatarNumeroBrasil($numeroLimpo);
+                error_log("📞 Número formatado: $numeroFormatado (original: $numeroRemetente)");
 
-                // Buscar solicitação pelo número do cliente
-                $solicitacao = $this->solicitacaoModel->findByWhatsApp($numeroFormatado);
+                // IMPORTANTE: Verificar se a mensagem é do número fixo 16997360690
+                // Se for, buscar a solicitação que tem atendimento ativo com essa instância
+                $numeroFixo = '16997360690';
+                $numeroFixoFormatado = $this->formatarNumeroBrasil($numeroFixo);
+                
+                if ($numeroFormatado === $numeroFixoFormatado || $numeroLimpo === $numeroFixo) {
+                    error_log("✅ Mensagem recebida do número fixo: $numeroFixo");
+                    
+                    // Buscar instância pelo instance_name do webhook
+                    $instanceName = $payload['instance'] ?? $payload['instanceName'] ?? $payload['data']['instance'] ?? null;
+                    error_log("🔍 Instance name do payload: " . ($instanceName ?? 'NÃO ENCONTRADO'));
+                    
+                    if ($instanceName) {
+                        $whatsappInstance = $this->whatsappInstanceModel->findByInstanceName($instanceName);
+                        
+                        if ($whatsappInstance) {
+                            // Buscar solicitação com atendimento ativo para esta instância
+                            $sql = "
+                                SELECT id 
+                                FROM solicitacoes 
+                                WHERE chat_whatsapp_instance_id = ? 
+                                AND chat_atendimento_ativo = 1 
+                                ORDER BY chat_atendimento_iniciado_em DESC 
+                                LIMIT 1
+                            ";
+                            $solicitacao = \App\Core\Database::fetch($sql, [$whatsappInstance['id']]);
+                            
+                            if (!$solicitacao) {
+                                error_log("⚠️ Nenhuma solicitação com atendimento ativo encontrada para instância: {$whatsappInstance['instance_name']}");
+                                continue;
+                            }
+                            
+                            error_log("✅ Solicitação encontrada: {$solicitacao['id']}");
+                        } else {
+                            error_log("❌ Instância não encontrada: $instanceName");
+                            continue;
+                        }
+                    } else {
+                        error_log("❌ Instance name não encontrado no payload");
+                        continue;
+                    }
+                } else {
+                    // Buscar solicitação pelo número do cliente (comportamento original)
+                    $solicitacao = $this->solicitacaoModel->findByWhatsApp($numeroFormatado);
 
-                if (!$solicitacao) {
-                    error_log("Solicitação não encontrada para número: $numeroFormatado");
-                    continue;
-                }
-
-                // Buscar instância pelo instance_name do webhook
-                $instanceName = $payload['instance'] ?? null;
-                $whatsappInstance = null;
-                if ($instanceName) {
-                    $whatsappInstance = $this->whatsappInstanceModel->findByInstanceName($instanceName);
+                    if (!$solicitacao) {
+                        error_log("⚠️ Solicitação não encontrada para número: $numeroFormatado");
+                        continue;
+                    }
+                    
+                    // Buscar instância pelo instance_name do webhook
+                    $instanceName = $payload['instance'] ?? $payload['instanceName'] ?? $payload['data']['instance'] ?? null;
+                    $whatsappInstance = null;
+                    if ($instanceName) {
+                        $whatsappInstance = $this->whatsappInstanceModel->findByInstanceName($instanceName);
+                    }
                 }
 
                 // Criar registro de mensagem recebida
@@ -296,18 +389,20 @@ class ChatController extends Controller
                     'instance_name' => $instanceName,
                     'numero_remetente' => $numeroFormatado,
                     'numero_destinatario' => $whatsappInstance['numero_whatsapp'] ?? 'ADMIN',
-                    'mensagem' => $mensagemTexto,
+                    'mensagem' => $mensagemTexto ?: '[Mídia ou mensagem sem texto]',
                     'tipo' => 'RECEBIDA',
                     'status' => 'ENTREGUE',
-                    'message_id' => $message['key']['id'] ?? null,
-                    'metadata' => json_encode($message),
+                    'message_id' => $message['key']['id'] ?? $message['id'] ?? null,
+                    'metadata' => json_encode($message, JSON_UNESCAPED_UNICODE),
                     'created_at' => date('Y-m-d H:i:s')
                 ];
 
-                $this->mensagemModel->create($mensagemData);
+                $mensagemId = $this->mensagemModel->create($mensagemData);
+                error_log("✅ Mensagem salva com ID: $mensagemId");
             }
         } catch (\Exception $e) {
-            error_log("Erro ao processar mensagem recebida: " . $e->getMessage());
+            error_log("❌ Erro ao processar mensagem recebida: " . $e->getMessage());
+            error_log("Stack trace: " . $e->getTraceAsString());
         }
     }
 
