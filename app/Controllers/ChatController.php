@@ -693,5 +693,62 @@ class ChatController extends Controller
             'message' => 'Atendimento encerrado com sucesso. A instância foi liberada.'
         ]);
     }
+    
+    /**
+     * Retorna contagem de mensagens não lidas para múltiplas solicitações
+     * GET /admin/chat/mensagens-nao-lidas?solicitacao_ids=1,2,3
+     */
+    public function getMensagensNaoLidas(): void
+    {
+        $this->requireAdmin();
+        
+        $solicitacaoIds = $this->input('solicitacao_ids', '');
+        
+        if (empty($solicitacaoIds)) {
+            $this->json([
+                'success' => true,
+                'contagens' => []
+            ]);
+            return;
+        }
+        
+        // Converter string de IDs separados por vírgula em array
+        $ids = array_map('intval', explode(',', $solicitacaoIds));
+        $ids = array_filter($ids, fn($id) => $id > 0);
+        
+        if (empty($ids)) {
+            $this->json([
+                'success' => true,
+                'contagens' => []
+            ]);
+            return;
+        }
+        
+        // Buscar contagens de mensagens não lidas
+        $placeholders = implode(',', array_fill(0, count($ids), '?'));
+        $sql = "
+            SELECT 
+                solicitacao_id,
+                COUNT(*) as nao_lidas
+            FROM solicitacao_mensagens
+            WHERE solicitacao_id IN ($placeholders)
+              AND tipo = 'RECEBIDA'
+              AND status != 'LIDA'
+            GROUP BY solicitacao_id
+        ";
+        
+        $resultados = \App\Core\Database::fetchAll($sql, $ids);
+        
+        // Converter para formato chave-valor
+        $contagens = [];
+        foreach ($resultados as $resultado) {
+            $contagens[$resultado['solicitacao_id']] = (int)$resultado['nao_lidas'];
+        }
+        
+        $this->json([
+            'success' => true,
+            'contagens' => $contagens
+        ]);
+    }
 }
 

@@ -67,6 +67,7 @@ ob_start();
                                 <h4 class="font-semibold text-gray-900 text-sm">
                                     <?= htmlspecialchars($solicitacao['numero_solicitacao'] ?? 'KSI' . $solicitacao['id']) ?>
                                 </h4>
+                                <span class="chat-badge-<?= $solicitacao['id'] ?> hidden ml-1 px-1.5 py-0.5 text-xs font-bold text-white bg-red-500 rounded-full" title="Mensagens não lidas"></span>
                                 <?php if (!empty($solicitacao['is_emergencial_fora_horario'])): ?>
                                     <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800" title="Emergencial fora do horário comercial">
                                         <i class="fas fa-exclamation-triangle mr-1"></i>
@@ -143,7 +144,7 @@ ob_start();
                         
                         <div class="flex items-center">
                             <i class="fas fa-calendar w-4 mr-1 text-gray-400"></i>
-                            <span><?= date('d/m/Y', strtotime($solicitacao['created_at'])) ?></span>
+                            <span title="Data de Registro"><?= date('d/m/Y', strtotime($solicitacao['created_at'])) ?></span>
                         </div>
                     </div>
                     
@@ -247,9 +248,9 @@ ob_start();
             </div>
             <div id="detalhesContent" class="hidden"></div>
             <!-- Conteúdo do Chat -->
-            <div id="chatContent" class="hidden flex flex-col h-[calc(100vh-200px)]">
+            <div id="chatContent" class="hidden flex flex-col" style="height: calc(100vh - 250px); max-height: calc(100vh - 250px);">
                 <!-- Seleção de Instância WhatsApp -->
-                <div id="chatInstanceSelector" class="mb-4 p-4 bg-gray-50 rounded-lg">
+                <div id="chatInstanceSelector" class="flex-shrink-0 mb-4 p-4 bg-gray-50 rounded-lg">
                     <div class="flex items-center justify-between mb-2">
                         <label class="block text-sm font-medium text-gray-700">
                             <i class="fab fa-whatsapp mr-2 text-green-500"></i>
@@ -269,23 +270,26 @@ ob_start();
                     </select>
                     <p id="chatInstanceInfo" class="text-xs text-gray-500 mt-2">Instância selecionada no modal de seleção</p>
                 </div>
-                <!-- Área de Mensagens -->
-                <div id="chatMessages" class="flex-1 overflow-y-auto mb-4 p-4 bg-white rounded-lg border border-gray-200 space-y-3 hidden">
-                    <div class="text-center text-gray-500 py-8">
-                        <i class="fab fa-whatsapp text-4xl mb-2 text-gray-300"></i>
-                        <p>Carregando mensagens...</p>
+                <!-- Container para mensagens e empty state -->
+                <div class="flex-1 flex flex-col min-h-0 overflow-hidden">
+                    <!-- Área de Mensagens -->
+                    <div id="chatMessages" class="flex-1 overflow-y-auto mb-4 p-4 bg-white rounded-lg border border-gray-200 space-y-3 hidden" style="min-height: 0;">
+                        <div class="text-center text-gray-500 py-8">
+                            <i class="fab fa-whatsapp text-4xl mb-2 text-gray-300"></i>
+                            <p>Carregando mensagens...</p>
+                        </div>
                     </div>
-                </div>
-                <!-- Mensagem quando não há conversa -->
-                <div id="chatEmptyState" class="flex-1 flex items-center justify-center mb-4 p-8 bg-white rounded-lg border border-gray-200">
-                    <div class="text-center">
-                        <i class="fab fa-whatsapp text-6xl mb-4 text-gray-300"></i>
-                        <p class="text-gray-600 mb-2">Nenhuma conversa iniciada</p>
-                        <p class="text-sm text-gray-500">Selecione uma instância WhatsApp acima para começar a conversar</p>
+                    <!-- Mensagem quando não há conversa -->
+                    <div id="chatEmptyState" class="flex-1 flex items-center justify-center mb-4 p-8 bg-white rounded-lg border border-gray-200 overflow-y-auto" style="min-height: 0;">
+                        <div class="text-center">
+                            <i class="fab fa-whatsapp text-6xl mb-4 text-gray-300"></i>
+                            <p class="text-gray-600 mb-2">Nenhuma conversa iniciada</p>
+                            <p class="text-sm text-gray-500">Selecione uma instância WhatsApp acima para começar a conversar</p>
+                        </div>
                     </div>
                 </div>
                 <!-- Input de Mensagem -->
-                <div id="chatInputContainer" class="flex gap-2 mt-4 hidden">
+                <div id="chatInputContainer" class="flex-shrink-0 flex gap-2 mt-4 hidden">
                     <input type="text" id="chatMessageInput" placeholder="Digite sua mensagem..." 
                            class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                            onkeypress="if(event.key === 'Enter') enviarMensagemChat()">
@@ -1669,63 +1673,46 @@ function enviarInformacoesNoChat() {
     }
     const horariosTexto = Array.isArray(horariosLocatario) ? horariosLocatario.filter(Boolean).join('\n') : '';
     
-    // Montar informações formatadas (mesmo formato de copiarInformacoes)
+    // Montar informações formatadas com quebras de linha preservadas
     let mensagem = `═══════════════════════════════════════
 
-📋 INFORMAÇÕES DA SOLICITAÇÃO
+📋 *INFORMAÇÕES DA SOLICITAÇÃO*
 
 ═══════════════════════════════════════
 
-
-
-🔢 Número da Solicitação: ${solicitacao.numero_solicitacao || 'KS' + solicitacao.id}
-
-📊 Status: ${solicitacao.status_nome || 'Não informado'}
-
-📅 Data de Criação: ${dataCriacaoFormatada}
-
-
+🔢 *Número da Solicitação:* ${solicitacao.numero_solicitacao || 'KS' + solicitacao.id}
+📊 *Status:* ${solicitacao.status_nome || 'Não informado'}
+📅 *Data de Criação:* ${dataCriacaoFormatada}
 
 ═══════════════════════════════════════
 
-👤 DADOS DO LOCATÁRIO
+👤 *DADOS DO LOCATÁRIO*
 
 ═══════════════════════════════════════
 
+*Nome:* ${solicitacao.locatario_nome || 'Não informado'}
+${solicitacao.locatario_cpf ? `*CPF:* ${solicitacao.locatario_cpf}\n` : ''}${solicitacao.locatario_telefone ? `*Telefone:* ${solicitacao.locatario_telefone}\n` : ''}*Nº do Contrato:* ${solicitacao.numero_contrato || 'Não informado'}
+${solicitacao.imobiliaria_nome ? `*Imobiliária:* ${solicitacao.imobiliaria_nome}\n` : ''}${horariosTexto ? `\n═══════════════════════════════════════
 
-
-Nome: ${solicitacao.locatario_nome || 'Não informado'}
-
-${solicitacao.locatario_cpf ? `CPF: ${solicitacao.locatario_cpf}\n` : ''}${solicitacao.locatario_telefone ? `Telefone: ${solicitacao.locatario_telefone}\n` : ''}Nº do Contrato: ${solicitacao.numero_contrato || ''}
-
-${solicitacao.imobiliaria_nome ? `Imobiliária: ${solicitacao.imobiliaria_nome}\n` : ''}
-
-${horariosTexto ? `═══════════════════════════════════════
-
-📅 Data Informada pelo Locatário
+📅 *Data Informada pelo Locatário*
 
 ═══════════════════════════════════════
+
 ${horariosTexto}
 
-═══════════════════════════════════════
-
-` : ''}📍 ENDEREÇO DO IMÓVEL
+═══════════════════════════════════════\n` : ''}📍 *ENDEREÇO DO IMÓVEL*
 
 ═══════════════════════════════════════
 
+${enderecoCompleto ? `*Endereço:* ${enderecoCompleto}\n` : ''}${localizacao ? `*Bairro/Cidade/Estado:* ${localizacao}\n` : ''}${solicitacao.imovel_cep ? `*CEP:* ${solicitacao.imovel_cep}\n` : ''}═══════════════════════════════════════
 
-
-${enderecoCompleto ? `Endereço: ${enderecoCompleto}\n` : ''}${localizacao ? `Bairro/Cidade/Estado: ${localizacao}\n` : ''}${solicitacao.imovel_cep ? `CEP: ${solicitacao.imovel_cep}\n` : ''}
-
-═══════════════════════════════════════
-
-📝 DESCRIÇÃO DO PROBLEMA
+📝 *DESCRIÇÃO DO PROBLEMA*
 
 ═══════════════════════════════════════
 
+${solicitacao.descricao_problema || 'Nenhuma descrição fornecida.'}
 
-
-${solicitacao.descricao_problema || 'Nenhuma descrição fornecida.'}`.trim();
+═══════════════════════════════════════`.trim();
     
     // Preencher o campo de mensagem e enviar
     // Abrir aba de chat se não estiver aberta
@@ -2738,6 +2725,7 @@ document.addEventListener('change', function(e) {
                     <div class="flex-1">
                         <div class="flex items-center gap-2 mb-1">
                             <h4 class="font-semibold text-gray-900 text-sm">${numeroSolicitacao}</h4>
+                            <span class="chat-badge-${solicitacao.id} hidden ml-1 px-1.5 py-0.5 text-xs font-bold text-white bg-red-500 rounded-full" title="Mensagens não lidas"></span>
                             ${isEmergencial ? `
                                 <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800" title="Emergencial fora do horário comercial">
                                     <i class="fas fa-exclamation-triangle mr-1"></i>
@@ -2793,7 +2781,7 @@ document.addEventListener('change', function(e) {
                     </div>
                     <div class="flex items-center">
                         <i class="fas fa-calendar w-4 mr-1 text-gray-400"></i>
-                        <span>${dataCriacao}</span>
+                        <span title="Data de Registro">${dataCriacao}</span>
                     </div>
                 </div>
                 
@@ -3312,6 +3300,8 @@ document.addEventListener('change', function(e) {
                 if (data.success) {
                     renderizarMensagens(data.mensagens);
                     atualizarBadgeChat(data.mensagens);
+                    // Atualizar badge no card do kanban também
+                    atualizarBadgesMensagensNaoLidas();
                     
                     const select = document.getElementById('chatWhatsappInstance');
                     const btnEncerrar = document.getElementById('btnEncerrarAtendimento');
@@ -3608,6 +3598,60 @@ document.addEventListener('change', function(e) {
             abrirDetalhesOriginal(solicitacaoId);
         }
     };
+    
+    // Função para atualizar badges de mensagens não lidas nos cards do kanban
+    function atualizarBadgesMensagensNaoLidas() {
+        // Coletar todos os IDs de solicitações visíveis no kanban
+        const cards = document.querySelectorAll('.kanban-card[data-solicitacao-id]');
+        const solicitacaoIds = Array.from(cards).map(card => card.getAttribute('data-solicitacao-id')).filter(Boolean);
+        
+        if (solicitacaoIds.length === 0) {
+            return;
+        }
+        
+        // Buscar contagens de mensagens não lidas
+        fetch(`<?= url('admin/chat/mensagens-nao-lidas') ?>?solicitacao_ids=${solicitacaoIds.join(',')}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.contagens) {
+                    // Atualizar badges em cada card
+                    solicitacaoIds.forEach(solicitacaoId => {
+                        const count = data.contagens[solicitacaoId] || 0;
+                        const badge = document.querySelector(`.chat-badge-${solicitacaoId}`);
+                        
+                        if (badge) {
+                            if (count > 0) {
+                                badge.textContent = count > 99 ? '99+' : count;
+                                badge.classList.remove('hidden');
+                            } else {
+                                badge.classList.add('hidden');
+                            }
+                        }
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Erro ao buscar mensagens não lidas:', error);
+            });
+    }
+    
+    // Atualizar badges periodicamente (a cada 10 segundos)
+    setInterval(() => {
+        atualizarBadgesMensagensNaoLidas();
+    }, 10000);
+    
+    // Atualizar badges quando a página carregar
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                atualizarBadgesMensagensNaoLidas();
+            }, 2000);
+        });
+    } else {
+        setTimeout(() => {
+            atualizarBadgesMensagensNaoLidas();
+        }, 2000);
+    }
 </script>
 
 
