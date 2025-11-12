@@ -329,6 +329,26 @@ ob_start();
                     <p class="mt-1 text-sm text-red-600"><?= htmlspecialchars($errors['ordem']) ?></p>
                 <?php endif; ?>
             </div>
+            
+            <!-- Limite de Solicitações (12 meses) -->
+            <div>
+                <label for="limite_solicitacoes_12_meses" class="block text-sm font-medium text-gray-700">
+                    Limite de Solicitações (12 meses)
+                </label>
+                <input type="number" 
+                       name="limite_solicitacoes_12_meses" 
+                       id="limite_solicitacoes_12_meses" 
+                       value="<?= htmlspecialchars((string)($data['limite_solicitacoes_12_meses'] ?? $categoria['limite_solicitacoes_12_meses'] ?? '')) ?>"
+                       min="0"
+                       class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm <?= isset($errors['limite_solicitacoes_12_meses']) ? 'border-red-300' : '' ?>"
+                       placeholder="Ex: 5 (deixe vazio para ilimitado)">
+                <p class="mt-1 text-xs text-gray-500">
+                    Número máximo de solicitações permitidas por contrato nesta categoria em um período de 12 meses. Deixe vazio para permitir solicitações ilimitadas.
+                </p>
+                <?php if (isset($errors['limite_solicitacoes_12_meses'])): ?>
+                    <p class="mt-1 text-sm text-red-600"><?= htmlspecialchars($errors['limite_solicitacoes_12_meses']) ?></p>
+                <?php endif; ?>
+            </div>
         </div>
         
         <!-- Preview -->

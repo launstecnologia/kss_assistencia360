@@ -668,6 +668,18 @@ class LocatarioController extends Controller
         // Se for emergencial, definir prioridade como ALTA
         $prioridade = $isEmergencial ? 'ALTA' : 'NORMAL';
         
+        // Verificar limite de solicitações da categoria (se houver número de contrato)
+        if (!empty($numeroContrato)) {
+            $categoriaModel = new \App\Models\Categoria();
+            $verificacaoLimite = $categoriaModel->verificarLimiteSolicitacoes($dados['categoria_id'], $numeroContrato);
+            
+            if (!$verificacaoLimite['permitido']) {
+                $instancia = $locatario['instancia'];
+                $this->redirect(url($instancia . '/nova-solicitacao?error=' . urlencode($verificacaoLimite['mensagem'])));
+                return;
+            }
+        }
+        
         $data = [
             // IDs e relacionamentos
             'locatario_id' => $locatario['codigo_locatario'] ?? $locatario['id'],
@@ -1471,6 +1483,289 @@ class LocatarioController extends Controller
             'telefoneEmergencia' => $telefoneEmergencia,
             'instancia' => $instancia
         ]);
+    }
+    
+    /**
+     * Executar ação na solicitação (concluir, cancelar, etc)
+     * POST /{instancia}/solicitacoes/{id}/acao
+     */
+    public function executarAcao(string $instancia, int $id): void
+    {
+        $this->requireLocatarioAuth();
+        
+        if (!$this->isPost()) {
+            $this->json(['success' => false, 'message' => 'Método não permitido'], 405);
+            return;
+        }
+        
+        $acao = $this->input('acao');
+        $solicitacao = $this->solicitacaoModel->find($id);
+        
+        if (!$solicitacao) {
+            $this->json(['success' => false, 'message' => 'Solicitação não encontrada'], 404);
+            return;
+        }
+        
+        // Verificar se a solicitação pertence ao locatário logado
+        $locatario = $_SESSION['locatario'];
+        if ($solicitacao['locatario_id'] != $locatario['id']) {
+            $this->json(['success' => false, 'message' => 'Você não tem permissão para executar esta ação'], 403);
+            return;
+        }
+        
+        try {
+            $statusModel = new \App\Models\Status();
+            $observacaoInput = $this->input('observacao', '');
+            $valorReembolso = $this->input('valor_reembolso');
+            
+            // Processar upload de anexos
+            $anexosSalvos = [];
+            if (isset($_FILES['anexos']) && !empty($_FILES['anexos']['name'][0])) {
+                $anexosSalvos = $this->processarUploadAnexos($id, $_FILES['anexos']);
+            }
+            
+            $observacaoBase = $solicitacao['observacoes'] ?? '';
+            $timestamp = date('d/m/Y H:i:s');
+            
+            switch ($acao) {
+                case 'concluido':
+                    $statusConcluido = $statusModel->findByNome('Concluído');
+                    if (!$statusConcluido) {
+                        $statusConcluido = $statusModel->findByNome('Concluido');
+                    }
+                    if ($statusConcluido) {
+                        $observacaoFinal = $observacaoBase;
+                        if (!empty($observacaoInput)) {
+                            $observacaoFinal .= "\n\n[Concluído em {$timestamp}] Observação do locatário: {$observacaoInput}";
+                        } else {
+                            $observacaoFinal .= "\n\n[Concluído em {$timestamp}] Serviço concluído - confirmado pelo locatário";
+                        }
+                        if (!empty($anexosSalvos)) {
+                            $observacaoFinal .= "\nAnexos: " . implode(', ', $anexosSalvos);
+                        }
+                        
+                        $this->solicitacaoModel->update($id, [
+                            'status_id' => $statusConcluido['id'],
+                            'observacoes' => $observacaoFinal
+                        ]);
+                        $this->json(['success' => true, 'message' => 'Solicitação marcada como concluída com sucesso!']);
+                    } else {
+                        $this->json(['success' => false, 'message' => 'Status "Concluído" não encontrado no sistema']);
+                    }
+                    break;
+                    
+                case 'cancelado':
+                    if (empty($observacaoInput)) {
+                        $this->json(['success' => false, 'message' => 'Observação é obrigatória para cancelamento'], 400);
+                        return;
+                    }
+                    
+                    $statusCancelado = $statusModel->findByNome('Cancelado');
+                    if (!$statusCancelado) {
+                        $statusCancelado = $statusModel->findByNome('Cancelada');
+                    }
+                    if ($statusCancelado) {
+                        $observacaoFinal = $observacaoBase . "\n\n[Cancelado em {$timestamp}] Motivo: {$observacaoInput}";
+                        if (!empty($anexosSalvos)) {
+                            $observacaoFinal .= "\nAnexos: " . implode(', ', $anexosSalvos);
+                        }
+                        
+                        $this->solicitacaoModel->update($id, [
+                            'status_id' => $statusCancelado['id'],
+                            'observacoes' => $observacaoFinal
+                        ]);
+                        $this->json(['success' => true, 'message' => 'Solicitação cancelada com sucesso!']);
+                    } else {
+                        $this->json(['success' => false, 'message' => 'Status "Cancelado" não encontrado no sistema']);
+                    }
+                    break;
+                    
+                case 'servico_nao_realizado':
+                    $observacaoFinal = $observacaoBase . "\n\n[Serviço não realizado em {$timestamp}]";
+                    if (!empty($observacaoInput)) {
+                        $observacaoFinal .= " Observação: {$observacaoInput}";
+                    }
+                    if (!empty($anexosSalvos)) {
+                        $observacaoFinal .= "\nAnexos: " . implode(', ', $anexosSalvos);
+                    }
+                    
+                    $this->solicitacaoModel->update($id, [
+                        'observacoes' => $observacaoFinal
+                    ]);
+                    $this->json(['success' => true, 'message' => 'Informação registrada: serviço não realizado']);
+                    break;
+                    
+                case 'comprar_pecas':
+                    $observacaoFinal = $observacaoBase . "\n\n[Comprar peças em {$timestamp}]";
+                    if (!empty($observacaoInput)) {
+                        $observacaoFinal .= " Observação: {$observacaoInput}";
+                    }
+                    if (!empty($anexosSalvos)) {
+                        $observacaoFinal .= "\nAnexos: " . implode(', ', $anexosSalvos);
+                    }
+                    
+                    $this->solicitacaoModel->update($id, [
+                        'observacoes' => $observacaoFinal
+                    ]);
+                    $this->json(['success' => true, 'message' => 'Informação registrada: necessário comprar peças']);
+                    break;
+                    
+                case 'reembolso':
+                    if (empty($observacaoInput)) {
+                        $this->json(['success' => false, 'message' => 'Justificativa é obrigatória para reembolso'], 400);
+                        return;
+                    }
+                    if (empty($valorReembolso) || $valorReembolso <= 0) {
+                        $this->json(['success' => false, 'message' => 'Valor do reembolso é obrigatório'], 400);
+                        return;
+                    }
+                    
+                    $observacaoFinal = $observacaoBase . "\n\n[Reembolso solicitado em {$timestamp}]";
+                    $observacaoFinal .= "\nJustificativa: {$observacaoInput}";
+                    $observacaoFinal .= "\nValor solicitado: R$ " . number_format($valorReembolso, 2, ',', '.');
+                    if (!empty($anexosSalvos)) {
+                        $observacaoFinal .= "\nAnexos: " . implode(', ', $anexosSalvos);
+                    }
+                    
+                    $this->solicitacaoModel->update($id, [
+                        'observacoes' => $observacaoFinal,
+                        'precisa_reembolso' => 1,
+                        'valor_reembolso' => floatval($valorReembolso)
+                    ]);
+                    $this->json(['success' => true, 'message' => 'Solicitação de reembolso registrada com sucesso!']);
+                    break;
+                    
+                default:
+                    $this->json(['success' => false, 'message' => 'Ação não reconhecida'], 400);
+                    return;
+            }
+            
+        } catch (\Exception $e) {
+            error_log('Erro ao executar ação [LocatarioController]: ' . $e->getMessage());
+            $this->json(['success' => false, 'message' => 'Erro ao executar ação: ' . $e->getMessage()], 500);
+        }
+    }
+    
+    /**
+     * Processar upload de anexos
+     */
+    private function processarUploadAnexos(int $solicitacaoId, array $files): array
+    {
+        $anexosSalvos = [];
+        $uploadDir = __DIR__ . '/../../Public/uploads/solicitacoes/' . $solicitacaoId . '/anexos/';
+        
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0755, true);
+        }
+        
+        $allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+        $maxSize = 10 * 1024 * 1024; // 10MB
+        
+        $fileCount = count($files['name']);
+        for ($i = 0; $i < $fileCount; $i++) {
+            if ($files['error'][$i] !== UPLOAD_ERR_OK) {
+                continue;
+            }
+            
+            if ($files['size'][$i] > $maxSize) {
+                continue;
+            }
+            
+            $fileType = $files['type'][$i];
+            if (!in_array($fileType, $allowedTypes)) {
+                continue;
+            }
+            
+            $extension = pathinfo($files['name'][$i], PATHINFO_EXTENSION);
+            $fileName = uniqid('anexo_') . '_' . time() . '.' . $extension;
+            $filePath = $uploadDir . $fileName;
+            
+            if (move_uploaded_file($files['tmp_name'][$i], $filePath)) {
+                $anexosSalvos[] = 'uploads/solicitacoes/' . $solicitacaoId . '/anexos/' . $fileName;
+            }
+        }
+        
+        return $anexosSalvos;
+    }
+    
+    /**
+     * Página de avaliação NPS
+     * GET /{instancia}/solicitacoes/{id}/avaliacao
+     */
+    public function avaliacao(string $instancia, int $id): void
+    {
+        $this->requireLocatarioAuth();
+        
+        if ($this->isPost()) {
+            $this->salvarAvaliacao($instancia, $id);
+            return;
+        }
+        
+        $solicitacao = $this->solicitacaoModel->find($id);
+        if (!$solicitacao) {
+            $this->redirect($instancia . '/solicitacoes');
+            return;
+        }
+        
+        $locatario = $_SESSION['locatario'];
+        if ($solicitacao['locatario_id'] != $locatario['id']) {
+            $this->redirect($instancia . '/solicitacoes');
+            return;
+        }
+        
+        $this->view('locatario.avaliacao', [
+            'locatario' => $locatario,
+            'solicitacao' => $solicitacao,
+            'instancia' => $instancia
+        ]);
+    }
+    
+    /**
+     * Salvar avaliação NPS
+     */
+    private function salvarAvaliacao(string $instancia, int $id): void
+    {
+        $npsScore = $this->input('nps_score');
+        $comentario = $this->input('comentario', '');
+        
+        if (empty($npsScore) || !is_numeric($npsScore)) {
+            $this->json(['success' => false, 'message' => 'Score NPS é obrigatório'], 400);
+            return;
+        }
+        
+        $solicitacao = $this->solicitacaoModel->find($id);
+        if (!$solicitacao) {
+            $this->json(['success' => false, 'message' => 'Solicitação não encontrada'], 404);
+            return;
+        }
+        
+        $locatario = $_SESSION['locatario'];
+        if ($solicitacao['locatario_id'] != $locatario['id']) {
+            $this->json(['success' => false, 'message' => 'Sem permissão'], 403);
+            return;
+        }
+        
+        try {
+            // Salvar avaliação (pode criar uma tabela de avaliações ou salvar nas observações)
+            $observacao = ($solicitacao['observacoes'] ?? '') . "\n\n[AVALIAÇÃO NPS - " . date('d/m/Y H:i:s') . "]";
+            $observacao .= "\nScore: {$npsScore}/10";
+            if (!empty($comentario)) {
+                $observacao .= "\nComentário: {$comentario}";
+            }
+            
+            $this->solicitacaoModel->update($id, [
+                'observacoes' => $observacao
+            ]);
+            
+            // TODO: Criar tabela de avaliações se necessário
+            // Por enquanto, salvar nas observações
+            
+            $this->json(['success' => true, 'message' => 'Avaliação registrada com sucesso!']);
+            
+        } catch (\Exception $e) {
+            error_log('Erro ao salvar avaliação [LocatarioController]: ' . $e->getMessage());
+            $this->json(['success' => false, 'message' => 'Erro ao salvar avaliação'], 500);
+        }
     }
     
     /**

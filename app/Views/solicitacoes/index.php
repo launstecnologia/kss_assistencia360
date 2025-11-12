@@ -98,7 +98,7 @@ ob_start();
             <!-- ID e Status -->
             <div class="flex items-center gap-3">
                 <h3 class="text-lg font-bold text-gray-900">
-                    <?= htmlspecialchars($sol['numero_solicitacao'] ?? 'KSI'.$sol['id']) ?>
+                    <?= htmlspecialchars($sol['numero_solicitacao'] ?? 'KSS'.$sol['id']) ?>
                 </h3>
                 <span class="px-3 py-1 rounded-full text-sm font-medium" 
                       style="background-color: <?= $sol['status_cor'] ?? '#3B82F6' ?>20; color: <?= $sol['status_cor'] ?? '#3B82F6' ?>">

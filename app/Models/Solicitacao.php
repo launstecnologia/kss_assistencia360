@@ -487,9 +487,9 @@ class Solicitacao extends Model
         $ano = date('Y');
         $mes = date('m');
         
-        // Buscar último número do mês
+        // Buscar último número do mês (buscar tanto KSI quanto KSS para compatibilidade)
         $sql = "SELECT numero_solicitacao FROM solicitacoes 
-                WHERE numero_solicitacao LIKE 'KSI{$ano}{$mes}%' 
+                WHERE (numero_solicitacao LIKE 'KSI{$ano}{$mes}%' OR numero_solicitacao LIKE 'KSS{$ano}{$mes}%')
                 ORDER BY numero_solicitacao DESC LIMIT 1";
         $ultimo = Database::fetch($sql);
         
@@ -499,7 +499,7 @@ class Solicitacao extends Model
             $numero = 1;
         }
         
-        return 'KSI' . $ano . $mes . str_pad($numero, 4, '0', STR_PAD_LEFT);
+        return 'KSS' . $ano . $mes . str_pad($numero, 4, '0', STR_PAD_LEFT);
     }
 
     public function validarDatasOpcoes(array $datas): array

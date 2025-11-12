@@ -185,6 +185,68 @@ class SolicitacoesController extends Controller
         ]);
     }
 
+    /**
+     * Retorna contagem de solicitações do mesmo contrato e categoria nos últimos 12 meses
+     * GET /admin/solicitacoes/historico-utilizacao?numero_contrato=XXX&categoria_id=YYY
+     */
+    public function historicoUtilizacao(): void
+    {
+        $this->requireAuth();
+        
+        $numeroContrato = $this->input('numero_contrato', '');
+        $categoriaId = $this->input('categoria_id');
+        
+        if (empty($numeroContrato)) {
+            $this->json([
+                'success' => false,
+                'message' => 'Número do contrato é obrigatório'
+            ], 400);
+            return;
+        }
+        
+        try {
+            // Calcular data de 12 meses atrás
+            $dataInicio = date('Y-m-d', strtotime('-12 months'));
+            $dataFim = date('Y-m-d');
+            
+            // Buscar contagem de solicitações do mesmo contrato e categoria nos últimos 12 meses
+            $sql = "
+                SELECT COUNT(*) as total
+                FROM solicitacoes
+                WHERE numero_contrato = ?
+                AND DATE(created_at) >= ?
+                AND DATE(created_at) <= ?
+            ";
+            
+            $params = [$numeroContrato, $dataInicio, $dataFim];
+            
+            // Adicionar filtro por categoria se fornecido
+            if (!empty($categoriaId)) {
+                $sql .= " AND categoria_id = ?";
+                $params[] = $categoriaId;
+            }
+            
+            $resultado = \App\Core\Database::fetch($sql, $params);
+            
+            $total = (int) ($resultado['total'] ?? 0);
+            
+            $this->json([
+                'success' => true,
+                'total' => $total,
+                'periodo' => '12 meses',
+                'data_inicio' => $dataInicio,
+                'data_fim' => $dataFim
+            ]);
+            
+        } catch (\Exception $e) {
+            error_log('Erro ao buscar histórico de utilização: ' . $e->getMessage());
+            $this->json([
+                'success' => false,
+                'message' => 'Erro ao buscar histórico de utilização'
+            ], 500);
+        }
+    }
+
     public function edit(int $id): void
     {
         $solicitacao = $this->solicitacaoModel->getDetalhes($id);
@@ -403,6 +465,17 @@ class SolicitacoesController extends Controller
         if (!empty($datasErrors)) {
             $this->json(['error' => 'Datas inválidas', 'details' => $datasErrors], 400);
             return;
+        }
+
+        // Verificar limite de solicitações da categoria (se houver número de contrato)
+        if (!empty($data['numero_contrato'])) {
+            $categoriaModel = new \App\Models\Categoria();
+            $verificacaoLimite = $categoriaModel->verificarLimiteSolicitacoes($data['categoria_id'], $data['numero_contrato']);
+            
+            if (!$verificacaoLimite['permitido']) {
+                $this->json(['error' => $verificacaoLimite['mensagem']], 400);
+                return;
+            }
         }
 
         try {
@@ -2870,6 +2943,21 @@ class SolicitacoesController extends Controller
                 return;
             }
             $dados['whatsapp'] = $whatsappLimpo;
+            
+            // Verificar limite de solicitações da categoria (se houver número de contrato)
+            if (!empty($dados['numero_contrato']) && !empty($dados['categoria_id'])) {
+                $categoriaModel = new \App\Models\Categoria();
+                $verificacaoLimite = $categoriaModel->verificarLimiteSolicitacoes($dados['categoria_id'], $dados['numero_contrato']);
+                
+                if (!$verificacaoLimite['permitido']) {
+                    if ($isAjax) {
+                        $this->json(['success' => false, 'error' => $verificacaoLimite['mensagem']], 400);
+                    } else {
+                        $this->redirect(url('admin/solicitacoes-manuais/nova?error=' . urlencode($verificacaoLimite['mensagem'])));
+                    }
+                    return;
+                }
+            }
             
             // Processar horários preferenciais
             $horariosRaw = $this->input('horarios_opcoes');

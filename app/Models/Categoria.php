@@ -8,7 +8,7 @@ class Categoria extends Model
 {
     protected string $table = 'categorias';
     protected array $fillable = [
-        'nome', 'descricao', 'icone', 'cor', 'status', 'ordem', 'tipo_imovel', 'tipo_assistencia', 'prazo_minimo', 'created_at', 'updated_at'
+        'nome', 'descricao', 'icone', 'cor', 'status', 'ordem', 'tipo_imovel', 'tipo_assistencia', 'prazo_minimo', 'limite_solicitacoes_12_meses', 'created_at', 'updated_at'
     ];
     protected array $casts = [
         'prazo_minimo' => 'int',
@@ -88,5 +88,63 @@ class Categoria extends Model
         ";
         
         return Database::fetch($sql, [$categoriaId, $periodo]) ?: [];
+    }
+
+    /**
+     * Verifica se o contrato ultrapassou o limite de solicitações da categoria nos últimos 12 meses
+     * @param int $categoriaId ID da categoria
+     * @param string $numeroContrato Número do contrato
+     * @return array ['permitido' => bool, 'limite' => int|null, 'total_atual' => int, 'mensagem' => string]
+     */
+    public function verificarLimiteSolicitacoes(int $categoriaId, string $numeroContrato): array
+    {
+        // Buscar categoria e seu limite
+        $categoria = $this->find($categoriaId);
+        if (!$categoria) {
+            return [
+                'permitido' => true,
+                'limite' => null,
+                'total_atual' => 0,
+                'mensagem' => 'Categoria não encontrada'
+            ];
+        }
+
+        $limite = $categoria['limite_solicitacoes_12_meses'] ?? null;
+        
+        // Se não houver limite definido, permitir
+        if ($limite === null || $limite <= 0) {
+            return [
+                'permitido' => true,
+                'limite' => null,
+                'total_atual' => 0,
+                'mensagem' => 'Sem limite definido'
+            ];
+        }
+
+        // Calcular data de 12 meses atrás
+        $dataInicio = date('Y-m-d', strtotime('-12 months'));
+        
+        // Contar solicitações do mesmo contrato e categoria nos últimos 12 meses
+        $sql = "
+            SELECT COUNT(*) as total
+            FROM solicitacoes
+            WHERE categoria_id = ?
+            AND numero_contrato = ?
+            AND DATE(created_at) >= ?
+        ";
+        
+        $resultado = Database::fetch($sql, [$categoriaId, $numeroContrato, $dataInicio]);
+        $totalAtual = (int) ($resultado['total'] ?? 0);
+        
+        $permitido = $totalAtual < $limite;
+        
+        return [
+            'permitido' => $permitido,
+            'limite' => $limite,
+            'total_atual' => $totalAtual,
+            'mensagem' => $permitido 
+                ? "Limite disponível: {$totalAtual}/{$limite} solicitações"
+                : "Limite atingido! Você já possui {$totalAtual} solicitação" . ($totalAtual > 1 ? 'ões' : '') . " desta categoria nos últimos 12 meses. O limite permitido é de {$limite} solicitação" . ($limite > 1 ? 'ões' : '') . "."
+        ];
     }
 }

@@ -51,7 +51,8 @@ class CategoriasController extends Controller
             'cor' => $this->input('cor'),
             'status' => $this->input('status', 'ATIVA'),
             'ordem' => $this->input('ordem', 0),
-            'tipo_imovel' => $this->input('tipo_imovel', 'AMBOS')
+            'tipo_imovel' => $this->input('tipo_imovel', 'AMBOS'),
+            'limite_solicitacoes_12_meses' => $this->input('limite_solicitacoes_12_meses') ? (int)$this->input('limite_solicitacoes_12_meses') : null
         ];
 
         $errors = $this->validate([
@@ -124,7 +125,8 @@ class CategoriasController extends Controller
             'cor' => $this->input('cor'),
             'status' => $this->input('status'),
             'ordem' => $this->input('ordem', 0),
-            'tipo_imovel' => $this->input('tipo_imovel', 'AMBOS')
+            'tipo_imovel' => $this->input('tipo_imovel', 'AMBOS'),
+            'limite_solicitacoes_12_meses' => $this->input('limite_solicitacoes_12_meses') ? (int)$this->input('limite_solicitacoes_12_meses') : null
         ];
 
         $errors = $this->validate([

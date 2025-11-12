@@ -95,6 +95,7 @@ $router->post('/admin/whatsapp-instances/{id}/desconectar', 'WhatsappInstancesCo
 $router->post('/admin/whatsapp-instances/{id}/delete', 'WhatsappInstancesController@destroy', ['auth']);
 $router->get('/admin/solicitacoes', 'SolicitacoesController@index', ['auth']);
 $router->get('/admin/solicitacoes/{id}/api', 'SolicitacoesController@api', ['auth']);
+$router->get('/admin/solicitacoes/historico-utilizacao', 'SolicitacoesController@historicoUtilizacao', ['auth']);
 $router->get('/admin/solicitacoes/{id}', 'SolicitacoesController@show', ['auth']);
 // Rotas do chat
 $router->get('/admin/chat/{solicitacao_id}/mensagens', 'ChatController@getMensagens', ['auth']);
@@ -161,6 +162,9 @@ $router->post('/{instancia}', 'LocatarioController@login');
 $router->get('/{instancia}/dashboard', 'LocatarioController@dashboard');
 $router->get('/{instancia}/solicitacoes', 'LocatarioController@solicitacoes');
 $router->get('/{instancia}/solicitacoes/{id}', 'LocatarioController@showSolicitacao');
+$router->get('/{instancia}/solicitacoes/{id}/avaliacao', 'LocatarioController@avaliacao');
+$router->post('/{instancia}/solicitacoes/{id}/avaliacao', 'LocatarioController@avaliacao');
+$router->post('/{instancia}/solicitacoes/{id}/acao', 'LocatarioController@executarAcao');
 $router->get('/{instancia}/solicitacao-emergencial/{solicitacaoId}', 'LocatarioController@solicitacaoEmergencial');
 $router->get('/{instancia}/perfil', 'LocatarioController@perfil');
 $router->post('/{instancia}/atualizar-perfil', 'LocatarioController@atualizarPerfil');

@@ -65,7 +65,7 @@ ob_start();
                         <div class="flex-1">
                             <div class="flex items-center gap-2 mb-1">
                                 <h4 class="font-semibold text-gray-900 text-sm">
-                                    <?= htmlspecialchars($solicitacao['numero_solicitacao'] ?? 'KSI' . $solicitacao['id']) ?>
+                                    <?= htmlspecialchars($solicitacao['numero_solicitacao'] ?? 'KSS' . $solicitacao['id']) ?>
                                 </h4>
                                 <span class="chat-badge-<?= $solicitacao['id'] ?> hidden ml-1 px-1.5 py-0.5 text-xs font-bold text-white bg-red-500 rounded-full" title="Mensagens não lidas"></span>
                                 <?php if (!empty($solicitacao['is_emergencial_fora_horario'])): ?>
@@ -290,11 +290,14 @@ ob_start();
                 </div>
                 <!-- Input de Mensagem -->
                 <div id="chatInputContainer" class="flex-shrink-0 flex gap-2 mt-4 hidden">
-                    <input type="text" id="chatMessageInput" placeholder="Digite sua mensagem..." 
-                           class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                           onkeypress="if(event.key === 'Enter') enviarMensagemChat()">
+                    <textarea id="chatMessageInput" placeholder="Digite sua mensagem... (Enter para enviar, Shift+Enter para nova linha)" 
+                           class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 resize-none"
+                           rows="1"
+                           style="min-height: 42px; max-height: 120px;"
+                           onkeydown="handleChatInputKeydown(event)"
+                           oninput="this.style.height = 'auto'; this.style.height = Math.min(this.scrollHeight, 120) + 'px';"></textarea>
                     <button onclick="enviarMensagemChat()" 
-                            class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                            class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors self-end">
                         <i class="fab fa-whatsapp mr-2"></i>
                         Enviar
                     </button>
@@ -609,6 +612,11 @@ function abrirDetalhes(solicitacaoId) {
                 // Armazenar solicitação globalmente para uso em copiarInformacoes
                 window.solicitacaoAtual = data.solicitacao;
                 renderizarDetalhes(data.solicitacao);
+                
+                // Carregar contagem de histórico se tiver contrato
+                if (data.solicitacao.numero_contrato) {
+                    carregarContagemHistorico(data.solicitacao.id, data.solicitacao.numero_contrato, data.solicitacao.categoria_id);
+                }
             } else {
                 detalhesContent.innerHTML = `
                     <div class="text-center py-12">
@@ -824,7 +832,18 @@ function renderizarDetalhes(solicitacao) {
                     ${solicitacao.subcategoria_nome ? `<div class="text-sm text-gray-600 mt-1">${solicitacao.subcategoria_nome}</div>` : ''}
                 </div>
                 <div class="text-right text-sm text-gray-500">
-                    ${formatarData(solicitacao.created_at)}
+                    <div>${formatarData(solicitacao.created_at)}</div>
+                    ${solicitacao.numero_contrato ? `
+                        <button onclick="abrirHistoricoUtilizacao(${solicitacao.id}, '${solicitacao.numero_contrato}', ${solicitacao.categoria_id || 'null'})" 
+                                class="mt-2 px-3 py-1.5 bg-gray-600 text-white text-xs font-medium rounded-lg hover:bg-gray-700 transition-colors flex items-center gap-2"
+                                id="btnHistorico-${solicitacao.id}">
+                            <i class="fas fa-history"></i>
+                            Histórico de Utilização
+                            <span id="badgeHistorico-${solicitacao.id}" class="bg-white text-gray-600 px-1.5 py-0.5 rounded-full text-xs font-bold" title="Carregando...">
+                                ...
+                            </span>
+                        </button>
+                    ` : ''}
                 </div>
             </div>
         </div>
@@ -1675,43 +1694,29 @@ function enviarInformacoesNoChat() {
     
     // Montar informações formatadas com quebras de linha preservadas
     let mensagem = `═══════════════════════════════════════
-
 📋 *INFORMAÇÕES DA SOLICITAÇÃO*
-
 ═══════════════════════════════════════
-
 🔢 *Número da Solicitação:* ${solicitacao.numero_solicitacao || 'KS' + solicitacao.id}
 📊 *Status:* ${solicitacao.status_nome || 'Não informado'}
 📅 *Data de Criação:* ${dataCriacaoFormatada}
 
 ═══════════════════════════════════════
-
 👤 *DADOS DO LOCATÁRIO*
-
 ═══════════════════════════════════════
-
 *Nome:* ${solicitacao.locatario_nome || 'Não informado'}
 ${solicitacao.locatario_cpf ? `*CPF:* ${solicitacao.locatario_cpf}\n` : ''}${solicitacao.locatario_telefone ? `*Telefone:* ${solicitacao.locatario_telefone}\n` : ''}*Nº do Contrato:* ${solicitacao.numero_contrato || 'Não informado'}
-${solicitacao.imobiliaria_nome ? `*Imobiliária:* ${solicitacao.imobiliaria_nome}\n` : ''}${horariosTexto ? `\n═══════════════════════════════════════
-
+${solicitacao.imobiliaria_nome ? `*Imobiliária:* ${solicitacao.imobiliaria_nome}\n` : ''}${horariosTexto ? `
+═══════════════════════════════════════
 📅 *Data Informada pelo Locatário*
-
 ═══════════════════════════════════════
-
 ${horariosTexto}
-
-═══════════════════════════════════════\n` : ''}📍 *ENDEREÇO DO IMÓVEL*
-
 ═══════════════════════════════════════
-
+` : ''}📍 *ENDEREÇO DO IMÓVEL*
+═══════════════════════════════════════
 ${enderecoCompleto ? `*Endereço:* ${enderecoCompleto}\n` : ''}${localizacao ? `*Bairro/Cidade/Estado:* ${localizacao}\n` : ''}${solicitacao.imovel_cep ? `*CEP:* ${solicitacao.imovel_cep}\n` : ''}═══════════════════════════════════════
-
 📝 *DESCRIÇÃO DO PROBLEMA*
-
 ═══════════════════════════════════════
-
 ${solicitacao.descricao_problema || 'Nenhuma descrição fornecida.'}
-
 ═══════════════════════════════════════`.trim();
     
     // Preencher o campo de mensagem e enviar
@@ -2678,7 +2683,7 @@ document.addEventListener('change', function(e) {
     
     // Função para criar HTML do card
     function criarCardHTML(solicitacao, statusCor) {
-        const numeroSolicitacao = solicitacao.numero_solicitacao || ('KSI' + solicitacao.id);
+        const numeroSolicitacao = solicitacao.numero_solicitacao || ('KSS' + solicitacao.id);
         const categoriaNome = solicitacao.categoria_nome || 'Sem categoria';
         const subcategoriaNome = solicitacao.subcategoria_nome || '';
         const locatarioNome = solicitacao.locatario_nome || 'Não informado';
@@ -3528,6 +3533,16 @@ document.addEventListener('change', function(e) {
         }
     }
 
+    function handleChatInputKeydown(event) {
+        // Se for Enter sem Shift, envia a mensagem
+        if (event.key === 'Enter' && !event.shiftKey) {
+            event.preventDefault();
+            enviarMensagemChat();
+        }
+        // Se for Shift+Enter, permite o comportamento padrão (quebra de linha)
+        // Não fazemos nada, deixando o navegador processar normalmente
+    }
+
     function enviarMensagemChat() {
         if (!chatSolicitacaoId) return;
 
@@ -3560,6 +3575,8 @@ document.addEventListener('change', function(e) {
         .then(data => {
             if (data.success) {
                 input.value = '';
+                input.style.height = 'auto';
+                input.style.height = '42px';
                 carregarMensagensChat();
             } else {
                 alert('Erro ao enviar mensagem: ' + data.message);
@@ -3594,10 +3611,38 @@ document.addEventListener('change', function(e) {
     const abrirDetalhesOriginal = window.abrirDetalhes;
     window.abrirDetalhes = function(solicitacaoId) {
         chatSolicitacaoId = solicitacaoId;
+        // Atualizar badge do card específico quando clicado
+        atualizarBadgeCardEspecifico(solicitacaoId);
         if (abrirDetalhesOriginal) {
             abrirDetalhesOriginal(solicitacaoId);
         }
     };
+    
+    // Função para atualizar badge de um card específico
+    function atualizarBadgeCardEspecifico(solicitacaoId) {
+        if (!solicitacaoId) return;
+        
+        fetch(`<?= url('admin/chat/mensagens-nao-lidas') ?>?solicitacao_ids=${solicitacaoId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.contagens) {
+                    const count = data.contagens[solicitacaoId] || 0;
+                    const badge = document.querySelector(`.chat-badge-${solicitacaoId}`);
+                    
+                    if (badge) {
+                        if (count > 0) {
+                            badge.textContent = count > 99 ? '99+' : count;
+                            badge.classList.remove('hidden');
+                        } else {
+                            badge.classList.add('hidden');
+                        }
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Erro ao atualizar badge do card:', error);
+            });
+    }
     
     // Função para atualizar badges de mensagens não lidas nos cards do kanban
     function atualizarBadgesMensagensNaoLidas() {
@@ -3635,10 +3680,10 @@ document.addEventListener('change', function(e) {
             });
     }
     
-    // Atualizar badges periodicamente (a cada 10 segundos)
+    // Atualizar badges periodicamente (a cada 5 segundos para ser mais responsivo)
     setInterval(() => {
         atualizarBadgesMensagensNaoLidas();
-    }, 10000);
+    }, 5000);
     
     // Atualizar badges quando a página carregar
     if (document.readyState === 'loading') {
@@ -3651,6 +3696,63 @@ document.addEventListener('change', function(e) {
         setTimeout(() => {
             atualizarBadgesMensagensNaoLidas();
         }, 2000);
+    }
+    
+    // Função para carregar contagem de histórico de utilização
+    function carregarContagemHistorico(solicitacaoId, numeroContrato, categoriaId) {
+        let url = `<?= url('admin/solicitacoes/historico-utilizacao') ?>?numero_contrato=${encodeURIComponent(numeroContrato)}`;
+        if (categoriaId) {
+            url += `&categoria_id=${categoriaId}`;
+        }
+        
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const badge = document.getElementById(`badgeHistorico-${solicitacaoId}`);
+                    const button = document.getElementById(`btnHistorico-${solicitacaoId}`);
+                    if (badge) {
+                        const total = data.total || 0;
+                        badge.textContent = total;
+                        badge.title = `${total} solicitação${total !== 1 ? 'ões' : ''} no período de 12 meses`;
+                        if (button) {
+                            button.title = `Ver histórico: ${total} solicitação${total !== 1 ? 'ões' : ''} no período de 12 meses`;
+                        }
+                    }
+                } else {
+                    const badge = document.getElementById(`badgeHistorico-${solicitacaoId}`);
+                    if (badge) {
+                        badge.textContent = '?';
+                        badge.title = 'Erro ao carregar';
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Erro ao carregar contagem de histórico:', error);
+                const badge = document.getElementById(`badgeHistorico-${solicitacaoId}`);
+                if (badge) {
+                    badge.textContent = '?';
+                    badge.title = 'Erro ao carregar';
+                }
+            });
+    }
+    
+    // Função para abrir relatório com filtro de contrato e categoria
+    function abrirHistoricoUtilizacao(solicitacaoId, numeroContrato, categoriaId) {
+        // Calcular data de 12 meses atrás
+        const dataFim = new Date();
+        const dataInicio = new Date();
+        dataInicio.setMonth(dataInicio.getMonth() - 12);
+        
+        const dataInicioStr = dataInicio.toISOString().split('T')[0];
+        const dataFimStr = dataFim.toISOString().split('T')[0];
+        
+        // Abrir relatório em nova aba com filtros
+        let url = `<?= url('admin/relatorios') ?>?numero_contrato=${encodeURIComponent(numeroContrato)}&data_inicio=${dataInicioStr}&data_fim=${dataFimStr}`;
+        if (categoriaId) {
+            url += `&categoria_id=${categoriaId}`;
+        }
+        window.open(url, '_blank');
     }
 </script>
 

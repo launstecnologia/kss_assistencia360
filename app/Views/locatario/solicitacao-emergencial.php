@@ -30,7 +30,7 @@ ob_start();
             <i class="fas fa-exclamation-triangle text-2xl mr-3"></i>
             <div>
                 <h2 class="text-xl font-bold">Solicitação Emergencial Criada</h2>
-                <p class="text-red-100 text-sm mt-1">Nº Solicitação: <?= htmlspecialchars($solicitacao['numero_solicitacao'] ?? 'KSI' . $solicitacao['id']) ?></p>
+                <p class="text-red-100 text-sm mt-1">Nº Solicitação: <?= htmlspecialchars($solicitacao['numero_solicitacao'] ?? 'KSS' . $solicitacao['id']) ?></p>
             </div>
         </div>
     </div>
@@ -86,7 +86,7 @@ ob_start();
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                     <p class="text-sm text-gray-500">Número da Solicitação</p>
-                    <p class="text-sm font-medium text-gray-900"><?= htmlspecialchars($solicitacao['numero_solicitacao'] ?? 'KSI' . $solicitacao['id']) ?></p>
+                    <p class="text-sm font-medium text-gray-900"><?= htmlspecialchars($solicitacao['numero_solicitacao'] ?? 'KSS' . $solicitacao['id']) ?></p>
                 </div>
                 <div>
                     <p class="text-sm text-gray-500">Categoria</p>
@@ -111,7 +111,7 @@ ob_start();
             </h4>
             <ul class="text-sm text-blue-800 space-y-2 list-disc list-inside">
                 <li>Ligue para o telefone de emergência acima</li>
-                <li>Informe o número da sua solicitação: <strong><?= htmlspecialchars($solicitacao['numero_solicitacao'] ?? 'KSI' . $solicitacao['id']) ?></strong></li>
+                <li>Informe o número da sua solicitação: <strong><?= htmlspecialchars($solicitacao['numero_solicitacao'] ?? 'KSS' . $solicitacao['id']) ?></strong></li>
                 <li>Nossa equipe entrará em contato em até 120 minutos</li>
                 <li>Você receberá atualizações via WhatsApp</li>
             </ul>

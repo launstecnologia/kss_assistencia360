@@ -105,9 +105,25 @@ ob_start();
         <?php else: ?>
             <div class="space-y-3">
                 <?php foreach (array_slice($solicitacoes, 0, 5) as $solicitacao): 
-                    $numeroSolicitacao = $solicitacao['numero_solicitacao'] ?? ('KSI' . $solicitacao['id']);
-                    $protocolo = $solicitacao['numero_solicitacao'] ?? ('#' . $solicitacao['id']);
-                    $dataAgendada = !empty($solicitacao['data_agendamento']) ? date('d/m/Y', strtotime($solicitacao['data_agendamento'])) : '-';
+                    $numeroSolicitacao = $solicitacao['numero_solicitacao'] ?? ('KSS' . $solicitacao['id']);
+                    $protocolo = $solicitacao['protocolo_seguradora'] ?? '-';
+                    
+                    // Formatar data criada com horário em português
+                    $dataCriada = date('d/m/Y \à\s H:i', strtotime($solicitacao['created_at']));
+                    
+                    // Formatar data agendada
+                    if (!empty($solicitacao['data_agendamento'])) {
+                        $dataAgendamento = $solicitacao['data_agendamento'];
+                        $timestamp = strtotime($dataAgendamento);
+                        if ($timestamp !== false) {
+                            // Sempre mostrar data e horário quando tiver agendamento
+                            $dataAgendada = date('d/m/Y \à\s H:i', $timestamp);
+                        } else {
+                            $dataAgendada = 'Data inválida';
+                        }
+                    } else {
+                        $dataAgendada = 'Aguardando confirmação do prestador';
+                    }
                 ?>
                     <a href="<?= url($locatario['instancia'] . '/solicitacoes/' . $solicitacao['id']) ?>" 
                        class="block border border-gray-200 rounded-lg p-3 hover:bg-gray-50 hover:border-green-300 transition-all cursor-pointer">
@@ -141,13 +157,13 @@ ob_start();
                             <!-- Data Criada -->
                             <div>
                                 <span class="text-gray-500">Data Criada:</span>
-                                <span class="font-medium text-gray-900 ml-1"><?= date('d/m/Y', strtotime($solicitacao['created_at'])) ?></span>
+                                <span class="font-medium text-gray-900 ml-1"><?= $dataCriada ?></span>
                             </div>
                             
                             <!-- Data Agendada -->
                             <div>
                                 <span class="text-gray-500">Data Agendada:</span>
-                                <span class="font-medium text-gray-900 ml-1"><?= $dataAgendada ?></span>
+                                <span class="font-medium ml-1 <?= $dataAgendada === 'Aguardando confirmação do prestador' ? 'text-red-600' : 'text-gray-900' ?>"><?= $dataAgendada ?></span>
                             </div>
                         </div>
                     </a>

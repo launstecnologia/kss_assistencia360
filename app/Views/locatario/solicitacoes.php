@@ -133,7 +133,7 @@ ob_start();
                             <!-- Protocol and Description -->
                             <div class="mb-3">
                                 <p class="text-sm text-gray-500 mb-1">
-                                    <strong>Protocolo:</strong> <?= htmlspecialchars($solicitacao['numero_solicitacao'] ?? '#' . $solicitacao['id']) ?>
+                                    <strong>Protocolo:</strong> <?= htmlspecialchars($solicitacao['protocolo_seguradora'] ?? '-') ?>
                                 </p>
                                 <?php if (!empty($solicitacao['subcategoria_nome'])): ?>
                                     <p class="text-sm text-gray-600 mb-1">
