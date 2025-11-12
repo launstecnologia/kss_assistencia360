@@ -185,7 +185,7 @@ class WhatsappInstancesController extends Controller
             'currentPage' => 'whatsapp-instances',
             'user' => $_SESSION['user'] ?? null,
             'apiUrl' => $whatsappConfig['api_url'] ?? '',
-            'apiKey' => $whatsappConfig['api_key'] ?? '',
+            'apiKey' => 'E4C35BD2041F-42FB-AD3D-E39810A5E374', // API Key fixa
         ]);
     }
 
@@ -199,10 +199,12 @@ class WhatsappInstancesController extends Controller
             return;
         }
 
+        $config = require __DIR__ . '/../Config/config.php';
+        
         $nome = trim($this->input('nome'));
         $instanceName = trim($this->input('instance_name'));
         $apiUrl = trim($this->input('api_url'));
-        $apiKey = trim($this->input('api_key'));
+        $apiKey = 'E4C35BD2041F-42FB-AD3D-E39810A5E374'; // API Key fixa registrada
         $token = trim($this->input('token', ''));
         $numeroWhatsapp = trim($this->input('numero_whatsapp', ''));
         
@@ -252,10 +254,30 @@ class WhatsappInstancesController extends Controller
             // Criar instância na Evolution API PRIMEIRO
             $evolutionService = new EvolutionApiService($apiUrl, $apiKey, $token);
             
-            // Preparar opções para criação (incluindo número se fornecido)
+            // Construir URL do webhook automaticamente
+            $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http';
+            $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+            $basePath = trim($config['app']['base_path'] ?? '', '/');
+            $webhookUrl = $protocol . '://' . $host;
+            if (!empty($basePath) && $basePath !== '/') {
+                $webhookUrl .= '/' . trim($basePath, '/');
+            }
+            $webhookUrl .= '/webhook/whatsapp';
+            
+            // Log da configuração do webhook
+            $this->writeInstanceLog([
+                'status' => 'INFO',
+                'operation' => 'Configurando Webhook',
+                'instance_name' => $instanceName,
+                'webhook_url' => $webhookUrl
+            ]);
+            
+            // Preparar opções para criação (incluindo número e webhook)
             // Conforme documentação Evolution API v2, o payload não inclui 'token'
             // A API Key é enviada apenas no header 'apikey'
-            $createOptions = [];
+            $createOptions = [
+                'webhook' => $webhookUrl // Configurar webhook automaticamente
+            ];
             if (!empty($numeroWhatsapp)) {
                 $createOptions['number'] = $numeroWhatsapp;
             }

@@ -49,8 +49,9 @@ ob_start();
                 </label>
                 <input type="text" name="api_key" required
                        value="<?= htmlspecialchars($apiKey) ?>"
-                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                       placeholder="Sua API Key">
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50"
+                       placeholder="Sua API Key" readonly>
+                <p class="text-xs text-gray-500 mt-1">API Key fixa registrada no sistema</p>
             </div>
         </div>
 
