@@ -509,6 +509,59 @@ class EvolutionApiService
     }
 
     /**
+     * Envia mensagem de texto via Evolution API
+     * 
+     * @param string $instanceName Nome da instância
+     * @param string $number Número do destinatário (formato: 5511999998888@c.us)
+     * @param string $message Texto da mensagem
+     * @return array Resposta da API
+     */
+    public function sendMessage(string $instanceName, string $number, string $message): array
+    {
+        $url = "{$this->apiUrl}/message/sendText/{$instanceName}";
+        
+        $payload = [
+            'number' => $number,
+            'text' => $message
+        ];
+
+        $this->writeLog([
+            'timestamp' => date('Y-m-d H:i:s'),
+            'status' => 'INICIADO',
+            'operation' => 'Enviar Mensagem',
+            'instance_name' => $instanceName,
+            'number' => $number,
+            'message_length' => strlen($message)
+        ]);
+
+        try {
+            $response = $this->fazerRequisicao('POST', $url, $payload);
+            
+            $this->writeLog([
+                'timestamp' => date('Y-m-d H:i:s'),
+                'status' => 'SUCESSO',
+                'operation' => 'Enviar Mensagem',
+                'instance_name' => $instanceName,
+                'number' => $number,
+                'api_response' => $response
+            ]);
+
+            return $response;
+        } catch (\Exception $e) {
+            $this->writeLog([
+                'timestamp' => date('Y-m-d H:i:s'),
+                'status' => 'ERRO',
+                'operation' => 'Enviar Mensagem',
+                'instance_name' => $instanceName,
+                'number' => $number,
+                'erro' => $e->getMessage()
+            ]);
+
+            throw $e;
+        }
+    }
+
+    /**
      * Faz uma requisição HTTP para a Evolution API
      */
     private function fazerRequisicao(string $method, string $url, array $payload = []): array

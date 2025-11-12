@@ -34,6 +34,9 @@ $router->get('/api/estados', 'PwaController@getEstados');
 $router->get('/api/cidades', 'PwaController@getCidades');
 $router->get('/api/imobiliarias', 'PwaController@getImobiliarias');
 
+// Webhook para receber mensagens da Evolution API (sem autenticação)
+$router->post('/webhook/whatsapp', 'ChatController@webhook');
+
 // Rotas públicas para tokens de confirmação/cancelamento (sem autenticação)
 $router->get('/confirmacao-horario', 'TokenController@confirmacaoHorario');
 $router->post('/confirmacao-horario', 'TokenController@confirmacaoHorario');
@@ -93,6 +96,10 @@ $router->post('/admin/whatsapp-instances/{id}/delete', 'WhatsappInstancesControl
 $router->get('/admin/solicitacoes', 'SolicitacoesController@index', ['auth']);
 $router->get('/admin/solicitacoes/{id}/api', 'SolicitacoesController@api', ['auth']);
 $router->get('/admin/solicitacoes/{id}', 'SolicitacoesController@show', ['auth']);
+// Rotas do chat
+$router->get('/admin/chat/{solicitacao_id}/mensagens', 'ChatController@getMensagens', ['auth']);
+$router->post('/admin/chat/{solicitacao_id}/enviar', 'ChatController@enviarMensagem', ['auth']);
+$router->get('/admin/chat/instancias', 'ChatController@getInstancias', ['auth']);
 $router->post('/admin/solicitacoes/{id}/status', 'SolicitacoesController@updateStatus', ['auth']);
 $router->post('/admin/solicitacoes/{id}/confirmar-horario', 'SolicitacoesController@confirmarHorario', ['auth']);
 $router->post('/admin/solicitacoes/{id}/desconfirmar-horario', 'SolicitacoesController@desconfirmarHorario', ['auth']);

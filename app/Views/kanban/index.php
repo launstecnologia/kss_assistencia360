@@ -185,23 +185,42 @@ ob_start();
 <div id="detalhesOffcanvas" class="fixed inset-0 z-50 hidden">
     <div class="fixed inset-0 bg-gray-600 bg-opacity-50 transition-opacity" onclick="fecharDetalhes()"></div>
     <div id="offcanvasPanel" class="fixed right-0 top-0 h-full w-full md:w-[90%] lg:w-[900px] bg-gray-50 shadow-xl transform translate-x-full transition-transform duration-300 ease-in-out overflow-y-auto">
-        <div class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 z-10">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                    <i class="fas fa-file-alt text-gray-600"></i>
-                    <h2 class="text-xl font-bold text-gray-900">Detalhes da Solicitação</h2>
+        <div class="sticky top-0 bg-white border-b border-gray-200 z-10">
+            <div class="px-6 py-4">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center gap-3">
+                        <i class="fas fa-file-alt text-gray-600"></i>
+                        <h2 class="text-xl font-bold text-gray-900">Detalhes da Solicitação</h2>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <button onclick="copiarInformacoes()" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium rounded-lg transition-colors">
+                            <i class="fas fa-copy mr-2"></i>
+                            Copiar Informações
+                        </button>
+                        <button onclick="abrirLinksAcoes()" class="px-4 py-2 bg-blue-100 hover:bg-blue-200 text-blue-700 text-sm font-medium rounded-lg transition-colors">
+                            <i class="fas fa-link mr-2"></i>
+                            Links de Ações
+                        </button>
+                        <button onclick="abrirChatDireto()" class="px-4 py-2 bg-green-100 hover:bg-green-200 text-green-700 text-sm font-medium rounded-lg transition-colors relative">
+                            <i class="fab fa-whatsapp mr-2"></i>
+                            Chat WhatsApp
+                            <span id="chatBadgeHeader" class="hidden ml-2 px-2 py-0.5 text-xs font-bold text-white bg-red-500 rounded-full">0</span>
+                        </button>
+                        <button onclick="fecharDetalhes()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                            <i class="fas fa-times text-xl"></i>
+                        </button>
+                    </div>
                 </div>
-                <div class="flex items-center gap-3">
-                    <button onclick="copiarInformacoes()" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium rounded-lg transition-colors">
-                        <i class="fas fa-copy mr-2"></i>
-                        Copiar Informações
+                <!-- Abas: Detalhes e Chat -->
+                <div class="flex border-b border-gray-200">
+                    <button id="tabDetalhes" onclick="mostrarAba('detalhes')" class="px-4 py-2 font-medium text-sm border-b-2 border-blue-600 text-blue-600">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        Detalhes
                     </button>
-                    <button onclick="abrirLinksAcoes()" class="px-4 py-2 bg-blue-100 hover:bg-blue-200 text-blue-700 text-sm font-medium rounded-lg transition-colors">
-                        <i class="fas fa-link mr-2"></i>
-                        Links de Ações
-                    </button>
-                    <button onclick="fecharDetalhes()" class="text-gray-400 hover:text-gray-600 transition-colors">
-                        <i class="fas fa-times text-xl"></i>
+                    <button id="tabChat" onclick="mostrarAba('chat')" class="px-4 py-2 font-medium text-sm border-b-2 border-transparent text-gray-600 hover:text-gray-900 relative">
+                        <i class="fab fa-whatsapp mr-2"></i>
+                        Chat WhatsApp
+                        <span id="chatBadge" class="hidden ml-2 px-2 py-0.5 text-xs font-bold text-white bg-red-500 rounded-full">0</span>
                     </button>
                 </div>
             </div>
@@ -214,6 +233,46 @@ ob_start();
                 </div>
             </div>
             <div id="detalhesContent" class="hidden"></div>
+            <!-- Conteúdo do Chat -->
+            <div id="chatContent" class="hidden flex flex-col h-[calc(100vh-200px)]">
+                <!-- Seleção de Instância WhatsApp -->
+                <div id="chatInstanceSelector" class="mb-4 p-4 bg-gray-50 rounded-lg">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fab fa-whatsapp mr-2 text-green-500"></i>
+                        Instância WhatsApp <span class="text-red-500">*</span>
+                    </label>
+                    <select id="chatWhatsappInstance" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
+                        <option value="">Selecione uma instância...</option>
+                    </select>
+                    <p class="text-xs text-gray-500 mt-2">Selecione a instância WhatsApp para iniciar a conversa</p>
+                </div>
+                <!-- Área de Mensagens -->
+                <div id="chatMessages" class="flex-1 overflow-y-auto mb-4 p-4 bg-white rounded-lg border border-gray-200 space-y-3 hidden">
+                    <div class="text-center text-gray-500 py-8">
+                        <i class="fab fa-whatsapp text-4xl mb-2 text-gray-300"></i>
+                        <p>Carregando mensagens...</p>
+                    </div>
+                </div>
+                <!-- Mensagem quando não há conversa -->
+                <div id="chatEmptyState" class="flex-1 flex items-center justify-center mb-4 p-8 bg-white rounded-lg border border-gray-200">
+                    <div class="text-center">
+                        <i class="fab fa-whatsapp text-6xl mb-4 text-gray-300"></i>
+                        <p class="text-gray-600 mb-2">Nenhuma conversa iniciada</p>
+                        <p class="text-sm text-gray-500">Selecione uma instância WhatsApp acima para começar a conversar</p>
+                    </div>
+                </div>
+                <!-- Input de Mensagem -->
+                <div id="chatInputContainer" class="flex gap-2 hidden">
+                    <input type="text" id="chatMessageInput" placeholder="Digite sua mensagem..." 
+                           class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                           onkeypress="if(event.key === 'Enter') enviarMensagemChat()">
+                    <button onclick="enviarMensagemChat()" 
+                            class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                        <i class="fab fa-whatsapp mr-2"></i>
+                        Enviar
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -2633,6 +2692,330 @@ document.addEventListener('change', function(e) {
         }
     });
 })();
+
+    // ==================== FUNÇÕES DO CHAT ====================
+    let chatSolicitacaoId = null;
+    let chatPollingInterval = null;
+
+    function mostrarAba(aba) {
+        const detalhesContent = document.getElementById('detalhesContent');
+        const chatContent = document.getElementById('chatContent');
+        const tabDetalhes = document.getElementById('tabDetalhes');
+        const tabChat = document.getElementById('tabChat');
+
+        if (aba === 'detalhes') {
+            detalhesContent.classList.remove('hidden');
+            chatContent.classList.add('hidden');
+            tabDetalhes.classList.add('border-blue-600', 'text-blue-600');
+            tabDetalhes.classList.remove('border-transparent', 'text-gray-600');
+            tabChat.classList.remove('border-blue-600', 'text-blue-600');
+            tabChat.classList.add('border-transparent', 'text-gray-600');
+            if (chatPollingInterval) {
+                clearInterval(chatPollingInterval);
+                chatPollingInterval = null;
+            }
+        } else if (aba === 'chat') {
+            detalhesContent.classList.add('hidden');
+            chatContent.classList.remove('hidden');
+            tabChat.classList.add('border-blue-600', 'text-blue-600');
+            tabChat.classList.remove('border-transparent', 'text-gray-600');
+            tabDetalhes.classList.remove('border-blue-600', 'text-blue-600');
+            tabDetalhes.classList.add('border-transparent', 'text-gray-600');
+            
+            // Carregar chat quando abrir a aba
+            if (chatSolicitacaoId) {
+                carregarInstanciasWhatsApp();
+                carregarMensagensChat();
+                
+                // Se não houver mensagens, mostrar seletor de instância
+                setTimeout(() => {
+                    const select = document.getElementById('chatWhatsappInstance');
+                    if (select && select.value === '') {
+                        document.getElementById('chatMessages').classList.add('hidden');
+                        document.getElementById('chatEmptyState').classList.remove('hidden');
+                        document.getElementById('chatInputContainer').classList.add('hidden');
+                    } else {
+                        iniciarPollingMensagens();
+                    }
+                }, 500);
+            }
+        }
+    }
+
+    function carregarInstanciasWhatsApp() {
+        fetch('<?= url('admin/chat/instancias') ?>')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Erro ao carregar instâncias: ' + response.status);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Instâncias recebidas:', data);
+                if (data.success) {
+                    const select = document.getElementById('chatWhatsappInstance');
+                    if (!select) {
+                        console.error('Select chatWhatsappInstance não encontrado');
+                        return;
+                    }
+                    select.innerHTML = '<option value="">Selecione uma instância...</option>';
+                    
+                    if (data.instancias && data.instancias.length > 0) {
+                        data.instancias.forEach(instancia => {
+                            const option = document.createElement('option');
+                            option.value = instancia.id;
+                            option.textContent = `${instancia.nome} (${instancia.status})`;
+                            if (instancia.is_padrao) {
+                                option.selected = true;
+                            }
+                            select.appendChild(option);
+                        });
+                    } else {
+                        console.warn('Nenhuma instância encontrada');
+                        const option = document.createElement('option');
+                        option.value = '';
+                        option.textContent = 'Nenhuma instância disponível';
+                        option.disabled = true;
+                        select.appendChild(option);
+                    }
+                    
+                    // Quando selecionar instância, carregar mensagens e mostrar input
+                    select.addEventListener('change', function() {
+                        if (this.value) {
+                            carregarMensagensChat();
+                            document.getElementById('chatInputContainer').classList.remove('hidden');
+                            
+                            // Se não houver mensagens, mostrar estado vazio mas com input disponível
+                            setTimeout(() => {
+                                const messagesDiv = document.getElementById('chatMessages');
+                                const emptyState = document.getElementById('chatEmptyState');
+                                const hasMessages = messagesDiv && !messagesDiv.classList.contains('hidden') && messagesDiv.innerHTML.trim() !== '';
+                                
+                                if (!hasMessages) {
+                                    emptyState.classList.remove('hidden');
+                                    emptyState.innerHTML = `
+                                        <div class="text-center">
+                                            <i class="fab fa-whatsapp text-6xl mb-4 text-gray-300"></i>
+                                            <p class="text-gray-600 mb-2">Nenhuma mensagem ainda</p>
+                                            <p class="text-sm text-gray-500">Digite uma mensagem abaixo para iniciar a conversa</p>
+                                        </div>
+                                    `;
+                                } else {
+                                    emptyState.classList.add('hidden');
+                                }
+                            }, 300);
+                            
+                            iniciarPollingMensagens();
+                        } else {
+                            document.getElementById('chatInputContainer').classList.add('hidden');
+                            document.getElementById('chatEmptyState').classList.remove('hidden');
+                            document.getElementById('chatEmptyState').innerHTML = `
+                                <div class="text-center">
+                                    <i class="fab fa-whatsapp text-6xl mb-4 text-gray-300"></i>
+                                    <p class="text-gray-600 mb-2">Nenhuma conversa iniciada</p>
+                                    <p class="text-sm text-gray-500">Selecione uma instância WhatsApp acima para começar a conversar</p>
+                                </div>
+                            `;
+                        }
+                    });
+                } else {
+                    console.error('Resposta não foi bem-sucedida:', data);
+                }
+            })
+            .catch(error => {
+                console.error('Erro ao carregar instâncias:', error);
+                const select = document.getElementById('chatWhatsappInstance');
+                if (select) {
+                    select.innerHTML = '<option value="">Erro ao carregar instâncias</option>';
+                }
+            });
+    }
+    
+    function abrirChatDireto() {
+        // Abrir aba de chat
+        mostrarAba('chat');
+        
+        // Se não houver mensagens, focar na seleção de instância
+        setTimeout(() => {
+            const select = document.getElementById('chatWhatsappInstance');
+            if (select && select.value === '') {
+                select.focus();
+            }
+        }, 100);
+    }
+
+    function carregarMensagensChat() {
+        if (!chatSolicitacaoId) return;
+
+        fetch(`<?= url('admin/chat/') ?>${chatSolicitacaoId}/mensagens`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    renderizarMensagens(data.mensagens);
+                    atualizarBadgeChat(data.mensagens);
+                    
+                    const select = document.getElementById('chatWhatsappInstance');
+                    const hasInstance = select && select.value !== '';
+                    
+                    // Se não houver mensagens
+                    if (data.mensagens.length === 0) {
+                        document.getElementById('chatMessages').classList.add('hidden');
+                        
+                        // Se tiver instância selecionada, mostrar estado vazio mas com input
+                        if (hasInstance) {
+                            document.getElementById('chatEmptyState').classList.remove('hidden');
+                            document.getElementById('chatEmptyState').innerHTML = `
+                                <div class="text-center">
+                                    <i class="fab fa-whatsapp text-6xl mb-4 text-gray-300"></i>
+                                    <p class="text-gray-600 mb-2">Nenhuma mensagem ainda</p>
+                                    <p class="text-sm text-gray-500">Digite uma mensagem abaixo para iniciar a conversa</p>
+                                </div>
+                            `;
+                            document.getElementById('chatInputContainer').classList.remove('hidden');
+                        } else {
+                            // Se não tiver instância, mostrar mensagem para selecionar
+                            document.getElementById('chatEmptyState').classList.remove('hidden');
+                            document.getElementById('chatEmptyState').innerHTML = `
+                                <div class="text-center">
+                                    <i class="fab fa-whatsapp text-6xl mb-4 text-gray-300"></i>
+                                    <p class="text-gray-600 mb-2">Nenhuma conversa iniciada</p>
+                                    <p class="text-sm text-gray-500">Selecione uma instância WhatsApp acima para começar a conversar</p>
+                                </div>
+                            `;
+                            document.getElementById('chatInputContainer').classList.add('hidden');
+                        }
+                    } else {
+                        // Se houver mensagens, mostrar normalmente
+                        document.getElementById('chatMessages').classList.remove('hidden');
+                        document.getElementById('chatEmptyState').classList.add('hidden');
+                        document.getElementById('chatInputContainer').classList.remove('hidden');
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Erro ao carregar mensagens:', error);
+            });
+    }
+
+    function renderizarMensagens(mensagens) {
+        const container = document.getElementById('chatMessages');
+        
+        if (mensagens.length === 0) {
+            return;
+        }
+
+        container.innerHTML = mensagens.map(msg => {
+            const isEnviada = msg.tipo === 'ENVIADA';
+            const dataHora = new Date(msg.created_at).toLocaleString('pt-BR');
+            const statusIcon = msg.status === 'LIDA' ? '✓✓' : msg.status === 'ENTREGUE' ? '✓' : '';
+            
+            return `
+                <div class="flex ${isEnviada ? 'justify-end' : 'justify-start'}">
+                    <div class="max-w-[70%] ${isEnviada ? 'bg-green-100' : 'bg-gray-100'} rounded-lg p-3">
+                        <p class="text-sm text-gray-800 whitespace-pre-wrap">${escapeHtml(msg.mensagem)}</p>
+                        <div class="flex items-center justify-end mt-1 text-xs text-gray-500">
+                            <span>${dataHora}</span>
+                            ${isEnviada ? `<span class="ml-2">${statusIcon}</span>` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        // Scroll para o final
+        container.scrollTop = container.scrollHeight;
+    }
+
+    function atualizarBadgeChat(mensagens) {
+        const naoLidas = mensagens.filter(m => m.tipo === 'RECEBIDA' && m.status !== 'LIDA').length;
+        const badge = document.getElementById('chatBadge');
+        const badgeHeader = document.getElementById('chatBadgeHeader');
+        
+        if (naoLidas > 0) {
+            if (badge) {
+                badge.textContent = naoLidas;
+                badge.classList.remove('hidden');
+            }
+            if (badgeHeader) {
+                badgeHeader.textContent = naoLidas;
+                badgeHeader.classList.remove('hidden');
+            }
+        } else {
+            if (badge) badge.classList.add('hidden');
+            if (badgeHeader) badgeHeader.classList.add('hidden');
+        }
+    }
+
+    function enviarMensagemChat() {
+        if (!chatSolicitacaoId) return;
+
+        const input = document.getElementById('chatMessageInput');
+        const mensagem = input.value.trim();
+        const instanceId = document.getElementById('chatWhatsappInstance').value;
+
+        if (!mensagem) {
+            alert('Digite uma mensagem');
+            return;
+        }
+
+        if (!instanceId) {
+            alert('Selecione uma instância WhatsApp');
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('mensagem', mensagem);
+        formData.append('whatsapp_instance_id', instanceId);
+
+        fetch(`<?= url('admin/chat/') ?>${chatSolicitacaoId}/enviar`, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                input.value = '';
+                carregarMensagensChat();
+            } else {
+                alert('Erro ao enviar mensagem: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Erro:', error);
+            alert('Erro ao enviar mensagem');
+        });
+    }
+
+    function iniciarPollingMensagens() {
+        if (chatPollingInterval) {
+            clearInterval(chatPollingInterval);
+        }
+        
+        // Atualizar mensagens a cada 5 segundos
+        chatPollingInterval = setInterval(() => {
+            if (chatSolicitacaoId && !document.getElementById('chatContent').classList.contains('hidden')) {
+                carregarMensagensChat();
+            }
+        }, 5000);
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    // Atualizar chatSolicitacaoId quando abrir detalhes
+    const abrirDetalhesOriginal = window.abrirDetalhes;
+    window.abrirDetalhes = function(solicitacaoId) {
+        chatSolicitacaoId = solicitacaoId;
+        if (abrirDetalhesOriginal) {
+            abrirDetalhesOriginal(solicitacaoId);
+        }
+    };
 </script>
 
 

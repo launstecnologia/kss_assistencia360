@@ -769,4 +769,34 @@ class Solicitacao extends Model
         $status = Database::fetch($sql, [$statusNome]);
         return $status['id'] ?? 1;
     }
+
+    /**
+     * Busca solicitação pelo número de WhatsApp
+     * Compara com cliente_whatsapp, cliente_telefone, locatario_telefone
+     */
+    public function findByWhatsApp(string $numero): ?array
+    {
+        // Limpar número (remover caracteres não numéricos)
+        $numeroLimpo = preg_replace('/[^0-9]/', '', $numero);
+        
+        // Remover DDI 55 se presente
+        if (substr($numeroLimpo, 0, 2) === '55') {
+            $numeroLimpo = substr($numeroLimpo, 2);
+        }
+
+        $sql = "
+            SELECT * FROM {$this->table}
+            WHERE 
+                REPLACE(REPLACE(REPLACE(REPLACE(COALESCE(locatario_telefone, ''), '(', ''), ')', ''), '-', ''), ' ', '') LIKE ?
+                OR REPLACE(REPLACE(REPLACE(REPLACE(COALESCE(cliente_telefone, ''), '(', ''), ')', ''), '-', ''), ' ', '') LIKE ?
+                OR REPLACE(REPLACE(REPLACE(REPLACE(COALESCE(cliente_whatsapp, ''), '(', ''), ')', ''), '-', ''), ' ', '') LIKE ?
+            ORDER BY created_at DESC
+            LIMIT 1
+        ";
+        
+        $numeroBusca = '%' . $numeroLimpo . '%';
+        $result = Database::fetch($sql, [$numeroBusca, $numeroBusca, $numeroBusca]);
+        
+        return $result ?: null;
+    }
 }
