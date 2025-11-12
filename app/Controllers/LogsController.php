@@ -203,6 +203,7 @@ class LogsController extends Controller
                 ? 'C:/xampp/php/logs/php_error_log' 
                 : (ini_get('error_log') ?: '/var/log/php_errors.log'),
             'whatsapp_evolution_api.log' => __DIR__ . '/../../storage/logs/whatsapp_evolution_api.log',
+            'webhook_whatsapp.log' => __DIR__ . '/../../storage/logs/webhook_whatsapp.log',
             'error.log' => __DIR__ . '/../../storage/logs/error.log',
             'app.log' => __DIR__ . '/../../storage/logs/app.log'
         ];
@@ -315,6 +316,18 @@ class LogsController extends Controller
                 'path' => $appLogPath,
                 'size' => filesize($appLogPath),
                 'modified' => filemtime($appLogPath)
+            ];
+        }
+
+        // Webhook WhatsApp Log
+        $webhookLogPath = __DIR__ . '/../../storage/logs/webhook_whatsapp.log';
+        if (file_exists($webhookLogPath)) {
+            $logs[] = [
+                'name' => 'webhook_whatsapp.log',
+                'label' => 'Webhook WhatsApp',
+                'path' => $webhookLogPath,
+                'size' => filesize($webhookLogPath),
+                'modified' => filemtime($webhookLogPath)
             ];
         }
 

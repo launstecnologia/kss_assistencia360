@@ -106,8 +106,12 @@ class ChatController extends Controller
         // Se já existe instância definida e atendimento ativo, usar essa instância
         if ($instanciaJaDefinida && $atendimentoAtivo) {
             $instanceId = $solicitacao['chat_whatsapp_instance_id'];
-        } elseif ($instanciaJaDefinida && !$atendimentoAtivo) {
-            // Se a instância está definida mas o atendimento foi encerrado, não permitir enviar
+        } elseif ($instanciaJaDefinida && !$atendimentoAtivo && $instanceId) {
+            // Se a instância está definida mas o atendimento foi encerrado E uma nova instância foi fornecida
+            // Reiniciar atendimento com a nova instância (ou mesma se for a mesma)
+            $this->iniciarAtendimento($solicitacaoId, $instanceId);
+        } elseif ($instanciaJaDefinida && !$atendimentoAtivo && !$instanceId) {
+            // Se a instância está definida mas o atendimento foi encerrado E nenhuma instância foi fornecida
             $this->json([
                 'success' => false,
                 'message' => 'O atendimento foi encerrado. Selecione uma instância para iniciar um novo atendimento.'
@@ -230,12 +234,22 @@ class ChatController extends Controller
             'body_raw' => $rawBody,
             'body_length' => strlen($rawBody)
         ];
+        
+        // Salvar em log exclusivo de webhook
+        $this->writeWebhookLog('WEBHOOK RECEBIDO', $logData);
+        
+        // Também logar no error_log padrão
         error_log('🔔 WEBHOOK RECEBIDO: ' . json_encode($logData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
 
         $payload = json_decode($rawBody, true);
 
         if (!$payload) {
             $jsonError = json_last_error_msg();
+            $this->writeWebhookLog('ERRO JSON', [
+                'error' => $jsonError,
+                'body_preview' => substr($rawBody, 0, 500),
+                'body_length' => strlen($rawBody)
+            ]);
             error_log("❌ Erro ao decodificar JSON: $jsonError | Body: " . substr($rawBody, 0, 500));
             http_response_code(400);
             echo json_encode(['error' => 'Invalid payload', 'json_error' => $jsonError]);
@@ -243,27 +257,62 @@ class ChatController extends Controller
         }
 
         // Log do payload decodificado
+        $this->writeWebhookLog('PAYLOAD DECODIFICADO', ['payload' => $payload]);
         error_log('📦 PAYLOAD DECODIFICADO: ' . json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
 
         // Evolution API pode enviar eventos de diferentes formas
         // Verificar diferentes estruturas possíveis
         $event = $payload['event'] ?? $payload['type'] ?? null;
+        $this->writeWebhookLog('EVENTO DETECTADO', ['event' => $event ?? 'NENHUM']);
         error_log("🔍 Evento detectado: " . ($event ?? 'NENHUM'));
 
         // Processar diferentes tipos de eventos
         if ($event === 'messages.upsert' || isset($payload['data']['messages'])) {
+            $this->writeWebhookLog('PROCESSANDO MENSAGEM', ['event' => 'messages.upsert', 'payload' => $payload]);
             error_log("✅ Processando mensagem recebida (messages.upsert)");
             $this->processarMensagemRecebida($payload);
         } elseif ($event === 'messages.update' || isset($payload['data']['key'])) {
+            $this->writeWebhookLog('PROCESSANDO ATUALIZAÇÃO', ['event' => 'messages.update', 'payload' => $payload]);
             error_log("✅ Processando atualização de mensagem (messages.update)");
             $this->processarAtualizacaoMensagem($payload);
         } else {
+            $this->writeWebhookLog('EVENTO NÃO RECONHECIDO', ['event' => $event, 'payload' => $payload]);
             error_log("⚠️ Evento não reconhecido ou sem processamento necessário. Payload: " . json_encode($payload, JSON_UNESCAPED_UNICODE));
         }
 
         // Sempre retornar 200 para Evolution API
+        $this->writeWebhookLog('RESPOSTA ENVIADA', ['status' => 200, 'response' => ['success' => true]]);
         http_response_code(200);
         echo json_encode(['success' => true]);
+    }
+    
+    /**
+     * Escreve log exclusivo para webhook
+     */
+    private function writeWebhookLog(string $tipo, array $data): void
+    {
+        $logDir = __DIR__ . '/../../storage/logs';
+        
+        // Criar diretório se não existir
+        if (!is_dir($logDir)) {
+            mkdir($logDir, 0755, true);
+        }
+        
+        $logFile = $logDir . '/webhook_whatsapp.log';
+        
+        // Formatar linha de log
+        $timestamp = date('Y-m-d H:i:s');
+        $logLine = sprintf(
+            "[%s] [%s] %s\n",
+            $timestamp,
+            strtoupper($tipo),
+            json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
+        );
+        
+        $logLine .= str_repeat('-', 100) . "\n";
+        
+        // Escrever no arquivo
+        file_put_contents($logFile, $logLine, FILE_APPEND | LOCK_EX);
     }
 
     /**
