@@ -267,7 +267,9 @@ $router->get('/admin/solicitacoes-manuais/{id}', 'SolicitacoesController@verSoli
 $router->post('/admin/solicitacoes-manuais/{id}/status', 'SolicitacoesController@atualizarStatusManual', ['auth']);
 $router->post('/admin/solicitacoes-manuais/{id}/migrar', 'SolicitacoesController@migrarParaSistema', ['auth']);
 
-// Rotas de Instância (para acesso direto por imobiliária)
+// Rotas de Instância (para acesso direto por imobiliária) - DEPOIS das rotas do LocatarioController
+$router->get('/{instancia}/login', 'InstanciaController@login');
+$router->post('/{instancia}/login', 'InstanciaController@authenticate');
 $router->get('/{instancia}', 'InstanciaController@index');
 
 $router->get('/{instancia}/dashboard', 'InstanciaController@dashboard', ['auth']);

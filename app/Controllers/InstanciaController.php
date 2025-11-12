@@ -139,6 +139,19 @@ class InstanciaController extends Controller
                 $_SESSION['imobiliaria_id'] = $this->imobiliaria['id'];
                 $_SESSION['user_level'] = 'LOCATARIO';
                 $_SESSION['cliente_data'] = $clienteData;
+                
+                // Salvar dados completos do locatário na sessão
+                $_SESSION['locatario'] = [
+                    'id' => $locatario['id'],
+                    'nome' => $clienteData['nome'],
+                    'cpf' => $cpf,
+                    'email' => $clienteData['email'] ?? null,
+                    'telefone' => $clienteData['telefone'] ?? null,
+                    'whatsapp' => $locatario['whatsapp'] ?? null,
+                    'imobiliaria_id' => $this->imobiliaria['id'],
+                    'ksi_cliente_id' => $clienteData['id_cliente'],
+                    'ultima_sincronizacao' => date('Y-m-d H:i:s')
+                ];
 
                 $this->redirect('/' . $this->imobiliaria['instancia'] . '/dashboard');
             } else {
@@ -169,16 +182,47 @@ class InstanciaController extends Controller
         }
         
         // Buscar WhatsApp do banco se estiver vazio
-        if (empty($locatario['whatsapp'])) {
+        $whatsappInicial = $locatario['whatsapp'] ?? 'NÃO DEFINIDO';
+        error_log('InstanciaController::dashboard - WhatsApp inicial: ' . var_export($whatsappInicial, true));
+        
+        $whatsappVazio = empty($locatario['whatsapp']) || trim($locatario['whatsapp']) === '' || $locatario['whatsapp'] === null;
+        error_log('InstanciaController::dashboard - WhatsApp vazio (antes buscar banco): ' . ($whatsappVazio ? 'SIM' : 'NÃO'));
+        
+        if ($whatsappVazio) {
             $cpfLimpo = str_replace(['.', '-'], '', $locatario['cpf']);
             $locatarioBanco = $this->locatarioModel->findByCpfAndImobiliaria($cpfLimpo, $this->imobiliaria['id']);
             
             if ($locatarioBanco) {
-                $locatario['whatsapp'] = $locatarioBanco['whatsapp'] ?? '';
-                $locatario['telefone'] = $locatarioBanco['telefone'] ?? '';
-                $locatario['email'] = $locatarioBanco['email'] ?? '';
+                $whatsappBanco = trim($locatarioBanco['whatsapp'] ?? '');
+                error_log('InstanciaController::dashboard - WhatsApp do banco: ' . var_export($whatsappBanco, true));
+                if (!empty($whatsappBanco)) {
+                    $locatario['whatsapp'] = $whatsappBanco;
+                    $locatario['telefone'] = $locatarioBanco['telefone'] ?? '';
+                    $locatario['email'] = $locatarioBanco['email'] ?? '';
+                    
+                    // Atualizar sessão
+                    $_SESSION['locatario']['whatsapp'] = $locatario['whatsapp'];
+                    $_SESSION['locatario']['telefone'] = $locatario['telefone'];
+                    $_SESSION['locatario']['email'] = $locatario['email'];
+                    error_log('InstanciaController::dashboard - WhatsApp atualizado da sessão/banco: ' . $locatario['whatsapp']);
+                } else {
+                    // Garantir que está vazio
+                    $locatario['whatsapp'] = '';
+                    error_log('InstanciaController::dashboard - WhatsApp do banco está vazio, definindo como string vazia');
+                }
+            } else {
+                // Garantir que está vazio
+                $locatario['whatsapp'] = '';
+                error_log('InstanciaController::dashboard - Locatário não encontrado no banco, definindo WhatsApp como string vazia');
             }
         }
+        
+        // Verificação final
+        $whatsappFinal = $locatario['whatsapp'] ?? 'NÃO DEFINIDO';
+        $whatsappVazioFinal = empty($locatario['whatsapp']) || trim($locatario['whatsapp']) === '' || $locatario['whatsapp'] === null;
+        error_log('InstanciaController::dashboard - WhatsApp final: ' . var_export($whatsappFinal, true));
+        error_log('InstanciaController::dashboard - WhatsApp vazio (final): ' . ($whatsappVazioFinal ? 'SIM' : 'NÃO'));
+        error_log('InstanciaController::dashboard - Deve mostrar modal: ' . ($whatsappVazioFinal ? 'SIM' : 'NÃO'));
 
         $this->view('instancia.dashboard', [
             'imobiliaria' => $this->imobiliaria,
@@ -261,8 +305,86 @@ class InstanciaController extends Controller
 
         $this->checkAuth();
 
-        // Implementar atualização de perfil
-        $this->json(['success' => true, 'message' => 'Perfil atualizado com sucesso']);
+        try {
+            if (!$this->isPost()) {
+                $this->json(['success' => false, 'message' => 'Método não permitido']);
+                return;
+            }
+
+            $locatarioId = $_SESSION['locatario_id'] ?? null;
+            if (!$locatarioId) {
+                $this->json(['success' => false, 'message' => 'Locatário não encontrado']);
+                return;
+            }
+
+            // Receber dados do formulário
+            $nome = trim($this->input('nome', ''));
+            $email = trim($this->input('email', ''));
+            $whatsapp = trim($this->input('whatsapp', ''));
+
+            // Validar dados
+            if (empty($nome)) {
+                $this->json(['success' => false, 'message' => 'O nome é obrigatório']);
+                return;
+            }
+
+            // Validar email se fornecido
+            if (!empty($email) && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                $this->json(['success' => false, 'message' => 'E-mail inválido']);
+                return;
+            }
+
+            // Validar WhatsApp se fornecido
+            if (!empty($whatsapp)) {
+                $whatsappLimpo = preg_replace('/\D/', '', $whatsapp);
+                if (strlen($whatsappLimpo) < 10 || strlen($whatsappLimpo) > 11) {
+                    $this->json(['success' => false, 'message' => 'WhatsApp inválido. Use o formato (XX) XXXXX-XXXX']);
+                    return;
+                }
+            }
+
+            // Preparar dados para atualização
+            $dados = [
+                'nome' => $nome,
+                'whatsapp' => $whatsapp,
+                'telefone' => $whatsapp // Usar whatsapp como telefone também
+            ];
+
+            if (!empty($email)) {
+                $dados['email'] = $email;
+            }
+
+            // Atualizar no banco
+            $sucesso = $this->locatarioModel->updateDadosPessoais($locatarioId, $dados);
+
+            if ($sucesso) {
+                // Atualizar dados na sessão
+                if (isset($_SESSION['locatario'])) {
+                    $_SESSION['locatario']['nome'] = $nome;
+                    $_SESSION['locatario']['whatsapp'] = $whatsapp;
+                    $_SESSION['locatario']['telefone'] = $whatsapp;
+                    if (!empty($email)) {
+                        $_SESSION['locatario']['email'] = $email;
+                    }
+                }
+
+                $this->json([
+                    'success' => true,
+                    'message' => 'Perfil atualizado com sucesso!'
+                ]);
+            } else {
+                $this->json([
+                    'success' => false,
+                    'message' => 'Erro ao atualizar perfil. Tente novamente.'
+                ]);
+            }
+        } catch (\Exception $e) {
+            error_log('Erro ao atualizar perfil: ' . $e->getMessage());
+            $this->json([
+                'success' => false,
+                'message' => 'Erro ao processar requisição: ' . $e->getMessage()
+            ]);
+        }
     }
 
     public function novaSolicitacao(string $instancia = null): void
@@ -326,6 +448,13 @@ class InstanciaController extends Controller
         $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
         $segments = explode('/', trim($path, '/'));
         
+        // Remover o base path se existir
+        $basePath = trim(defined('FOLDER') ? FOLDER : '', '/');
+        if (!empty($basePath) && !empty($segments) && $segments[0] === $basePath) {
+            array_shift($segments);
+        }
+        
+        // O primeiro segmento restante é a instância
         return $segments[0] ?? null;
     }
 

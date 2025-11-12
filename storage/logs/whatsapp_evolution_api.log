@@ -463,3 +463,6 @@
 [2025-11-10 11:53:10] [INFO] Operação:Informações da instância obtidas | Instância:notification
   DETALHES: {"status":"INFO","operation":"Informações da instância obtidas","instance_name":"notification","has_instance_data":false}
 ----------------------------------------------------------------------------------------------------
+[2025-11-12 07:49:06] [INFO] Operação:Informações da instância obtidas | Instância:notification
+  DETALHES: {"status":"INFO","operation":"Informações da instância obtidas","instance_name":"notification","has_instance_data":false}
+----------------------------------------------------------------------------------------------------

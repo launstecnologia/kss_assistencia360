@@ -1,18 +1,680 @@
-[10-Nov-2025 15:02:44 America/Sao_Paulo] Router Debug - Original path: /
-[10-Nov-2025 15:02:44 America/Sao_Paulo] Router Debug - Base path: 'kss'
-[10-Nov-2025 15:02:44 America/Sao_Paulo] Router Debug - Processed path: '/', Method: GET
-[10-Nov-2025 15:02:44 America/Sao_Paulo] Router Debug - Total routes: 202
-[10-Nov-2025 15:02:44 America/Sao_Paulo] matchPath: '/' vs '/'
-[10-Nov-2025 15:02:44 America/Sao_Paulo] Router Debug - Route matched: GET /
-[10-Nov-2025 15:02:44 America/Sao_Paulo] Router Debug - Original path: /api/estados
-[10-Nov-2025 15:02:44 America/Sao_Paulo] Router Debug - Base path: 'kss'
-[10-Nov-2025 15:02:44 America/Sao_Paulo] Router Debug - Processed path: '/api/estados', Method: GET
-[10-Nov-2025 15:02:44 America/Sao_Paulo] Router Debug - Total routes: 202
-[10-Nov-2025 15:02:44 America/Sao_Paulo] matchPath: '/' vs '/api/estados'
-[10-Nov-2025 15:02:44 America/Sao_Paulo] matchPath result: false
-[10-Nov-2025 15:02:44 America/Sao_Paulo] matchPath: '/pwa' vs '/api/estados'
-[10-Nov-2025 15:02:44 America/Sao_Paulo] matchPath result: false
-[10-Nov-2025 15:02:44 America/Sao_Paulo] matchPath: '/pwa/login' vs '/api/estados'
-[10-Nov-2025 15:02:44 America/Sao_Paulo] matchPath result: false
-[10-Nov-2025 15:02:44 America/Sao_Paulo] matchPath: '/api/estados' vs '/api/estados'
-[10-Nov-2025 15:02:44 America/Sao_Paulo] Router Debug - Route matched: GET /api/estados
+[12-Nov-2025 10:13:52 America/Sao_Paulo] index.php - Starting dispatch for: /lago/dashboard
+[12-Nov-2025 10:13:52 America/Sao_Paulo] index.php - Routes loaded, total: 212
+[12-Nov-2025 10:13:52 America/Sao_Paulo] Router Debug - Original path: /lago/dashboard
+[12-Nov-2025 10:13:52 America/Sao_Paulo] Router Debug - Base path: 'kss'
+[12-Nov-2025 10:13:52 America/Sao_Paulo] Router Debug - Processed path: '/lago/dashboard', Method: GET
+[12-Nov-2025 10:13:52 America/Sao_Paulo] Router Debug - Total routes: 212
+[12-Nov-2025 10:13:52 America/Sao_Paulo] matchPath: '/' vs '/lago/dashboard'
+[12-Nov-2025 10:13:52 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:13:52 America/Sao_Paulo] matchPath: '/pwa' vs '/lago/dashboard'
+[12-Nov-2025 10:13:52 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:13:52 America/Sao_Paulo] matchPath: '/pwa/login' vs '/lago/dashboard'
+[12-Nov-2025 10:13:52 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:13:52 America/Sao_Paulo] matchPath: '/api/estados' vs '/lago/dashboard'
+[12-Nov-2025 10:13:52 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:13:52 America/Sao_Paulo] matchPath: '/api/cidades' vs '/lago/dashboard'
+[12-Nov-2025 10:13:52 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:13:52 America/Sao_Paulo] matchPath: '/api/imobiliarias' vs '/lago/dashboard'
+[12-Nov-2025 10:13:52 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:13:52 America/Sao_Paulo] matchPath: '/confirmacao-horario' vs '/lago/dashboard'
+[12-Nov-2025 10:13:52 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:13:52 America/Sao_Paulo] matchPath: '/cancelamento-horario' vs '/lago/dashboard'
+[12-Nov-2025 10:13:52 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:13:52 America/Sao_Paulo] matchPath: '/cancelar-solicitacao' vs '/lago/dashboard'
+[12-Nov-2025 10:13:52 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:13:52 America/Sao_Paulo] matchPath: '/reagendamento-horario' vs '/lago/dashboard'
+[12-Nov-2025 10:13:52 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:13:52 America/Sao_Paulo] matchPath: '/compra-peca' vs '/lago/dashboard'
+[12-Nov-2025 10:13:52 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:13:52 America/Sao_Paulo] matchPath: '/status-servico' vs '/lago/dashboard'
+[12-Nov-2025 10:13:52 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:13:52 America/Sao_Paulo] matchPath: '/acoes-servico' vs '/lago/dashboard'
+[12-Nov-2025 10:13:52 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:13:52 America/Sao_Paulo] matchPath: '/admin' vs '/lago/dashboard'
+[12-Nov-2025 10:13:52 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:13:52 America/Sao_Paulo] matchPath: '/operador' vs '/lago/dashboard'
+[12-Nov-2025 10:13:52 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:13:52 America/Sao_Paulo] matchPath: '/login' vs '/lago/dashboard'
+[12-Nov-2025 10:13:52 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:13:52 America/Sao_Paulo] matchPath: '/logout' vs '/lago/dashboard'
+[12-Nov-2025 10:13:52 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:13:52 America/Sao_Paulo] matchPath: '/forgot-password' vs '/lago/dashboard'
+[12-Nov-2025 10:13:52 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:13:52 America/Sao_Paulo] matchPath: '/reset-password' vs '/lago/dashboard'
+[12-Nov-2025 10:13:52 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:13:52 America/Sao_Paulo] matchPath: '/pwa/solicitar' vs '/lago/dashboard'
+[12-Nov-2025 10:13:52 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:13:52 America/Sao_Paulo] matchPath: '/pwa/solicitacoes' vs '/lago/dashboard'
+[12-Nov-2025 10:13:52 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:13:52 America/Sao_Paulo] matchPath: '/pwa/solicitacao/{id}' vs '/lago/dashboard'
+[12-Nov-2025 10:13:52 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:13:52 America/Sao_Paulo] matchPath: '/admin/dashboard' vs '/lago/dashboard'
+[12-Nov-2025 10:13:52 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:13:52 America/Sao_Paulo] matchPath: '/admin/relatorios' vs '/lago/dashboard'
+[12-Nov-2025 10:13:52 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:13:52 America/Sao_Paulo] matchPath: '/admin/kanban' vs '/lago/dashboard'
+[12-Nov-2025 10:13:52 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:13:52 America/Sao_Paulo] matchPath: '/admin/kanban/novas-solicitacoes' vs '/lago/dashboard'
+[12-Nov-2025 10:13:52 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:13:52 America/Sao_Paulo] matchPath: '/admin/dashboard/solicitacoes-por-imobiliaria' vs '/lago/dashboard'
+[12-Nov-2025 10:13:52 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:13:52 America/Sao_Paulo] matchPath: '/admin/dashboard/solicitacoes-por-status' vs '/lago/dashboard'
+[12-Nov-2025 10:13:52 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:13:52 America/Sao_Paulo] matchPath: '/admin/templates-whatsapp' vs '/lago/dashboard'
+[12-Nov-2025 10:13:52 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:13:52 America/Sao_Paulo] matchPath: '/admin/templates-whatsapp/{id}/edit' vs '/lago/dashboard'
+[12-Nov-2025 10:13:52 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:13:52 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances' vs '/lago/dashboard'
+[12-Nov-2025 10:13:52 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:13:52 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/create' vs '/lago/dashboard'
+[12-Nov-2025 10:13:52 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:13:52 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/qrcode' vs '/lago/dashboard'
+[12-Nov-2025 10:13:52 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:13:52 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/verificar-status' vs '/lago/dashboard'
+[12-Nov-2025 10:13:52 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:13:52 America/Sao_Paulo] matchPath: '/admin/solicitacoes' vs '/lago/dashboard'
+[12-Nov-2025 10:13:52 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:13:52 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/api' vs '/lago/dashboard'
+[12-Nov-2025 10:13:52 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:13:52 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}' vs '/lago/dashboard'
+[12-Nov-2025 10:13:52 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:13:52 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/edit' vs '/lago/dashboard'
+[12-Nov-2025 10:13:52 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:13:52 America/Sao_Paulo] Router Debug - Route #85: GET /cron/notificacoes-pre-servico
+[12-Nov-2025 10:13:52 America/Sao_Paulo] matchPath: '/cron/notificacoes-pre-servico' vs '/lago/dashboard'
+[12-Nov-2025 10:13:52 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:13:52 America/Sao_Paulo] Router Debug - Match result for /cron/notificacoes-pre-servico: FALSE
+[12-Nov-2025 10:13:52 America/Sao_Paulo] Router Debug - Route #86: GET /cron/notificacoes-pos-servico
+[12-Nov-2025 10:13:52 America/Sao_Paulo] matchPath: '/cron/notificacoes-pos-servico' vs '/lago/dashboard'
+[12-Nov-2025 10:13:52 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:13:52 America/Sao_Paulo] Router Debug - Match result for /cron/notificacoes-pos-servico: FALSE
+[12-Nov-2025 10:13:52 America/Sao_Paulo] Router Debug - Route #87: GET /cron/lembretes-peca
+[12-Nov-2025 10:13:52 America/Sao_Paulo] matchPath: '/cron/lembretes-peca' vs '/lago/dashboard'
+[12-Nov-2025 10:13:52 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:13:52 America/Sao_Paulo] Router Debug - Match result for /cron/lembretes-peca: FALSE
+[12-Nov-2025 10:13:52 America/Sao_Paulo] Router Debug - Route #88: GET /admin/cron-jobs
+[12-Nov-2025 10:13:52 America/Sao_Paulo] matchPath: '/admin/cron-jobs' vs '/lago/dashboard'
+[12-Nov-2025 10:13:52 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:13:52 America/Sao_Paulo] Router Debug - Match result for /admin/cron-jobs: FALSE
+[12-Nov-2025 10:13:52 America/Sao_Paulo] Router Debug - Route #89: POST /admin/cron-jobs/{id}/executar
+[12-Nov-2025 10:13:52 America/Sao_Paulo] Router Debug - Route #90: POST /admin/cron-jobs/{id}/toggle-ativo
+[12-Nov-2025 10:13:52 America/Sao_Paulo] Router Debug - Route #91: POST /admin/cron-jobs/{id}/atualizar-frequencia
+[12-Nov-2025 10:13:52 America/Sao_Paulo] Router Debug - Route #92: GET /admin/cron-jobs/{id}/historico
+[12-Nov-2025 10:13:52 America/Sao_Paulo] matchPath: '/admin/cron-jobs/{id}/historico' vs '/lago/dashboard'
+[12-Nov-2025 10:13:52 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:13:52 America/Sao_Paulo] Router Debug - Match result for /admin/cron-jobs/{id}/historico: FALSE
+[12-Nov-2025 10:13:52 America/Sao_Paulo] Router Debug - Route #93: POST /admin/cron-jobs/executar-pendentes
+[12-Nov-2025 10:13:52 America/Sao_Paulo] matchPath: '/admin/logs' vs '/lago/dashboard'
+[12-Nov-2025 10:13:52 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:13:52 America/Sao_Paulo] matchPath: '/admin/logs/download' vs '/lago/dashboard'
+[12-Nov-2025 10:13:52 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:13:52 America/Sao_Paulo] matchPath: '/admin/migracoes' vs '/lago/dashboard'
+[12-Nov-2025 10:13:52 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:13:52 America/Sao_Paulo] matchPath: '/{instancia}' vs '/lago/dashboard'
+[12-Nov-2025 10:13:52 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:13:52 America/Sao_Paulo] matchPath: '/{instancia}/dashboard' vs '/lago/dashboard'
+[12-Nov-2025 10:13:52 America/Sao_Paulo] matchPath result: true
+[12-Nov-2025 10:13:52 America/Sao_Paulo] Router Debug - Route matched: GET /{instancia}/dashboard (index: 103)
+[12-Nov-2025 10:15:30 America/Sao_Paulo] index.php - Starting dispatch for: /lago/dashboard
+[12-Nov-2025 10:15:30 America/Sao_Paulo] index.php - Routes loaded, total: 212
+[12-Nov-2025 10:15:30 America/Sao_Paulo] Router Debug - Original path: /lago/dashboard
+[12-Nov-2025 10:15:30 America/Sao_Paulo] Router Debug - Base path: 'kss'
+[12-Nov-2025 10:15:30 America/Sao_Paulo] Router Debug - Processed path: '/lago/dashboard', Method: GET
+[12-Nov-2025 10:15:30 America/Sao_Paulo] Router Debug - Total routes: 212
+[12-Nov-2025 10:15:30 America/Sao_Paulo] matchPath: '/' vs '/lago/dashboard'
+[12-Nov-2025 10:15:30 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:15:30 America/Sao_Paulo] matchPath: '/pwa' vs '/lago/dashboard'
+[12-Nov-2025 10:15:30 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:15:30 America/Sao_Paulo] matchPath: '/pwa/login' vs '/lago/dashboard'
+[12-Nov-2025 10:15:30 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:15:30 America/Sao_Paulo] matchPath: '/api/estados' vs '/lago/dashboard'
+[12-Nov-2025 10:15:30 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:15:30 America/Sao_Paulo] matchPath: '/api/cidades' vs '/lago/dashboard'
+[12-Nov-2025 10:15:30 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:15:30 America/Sao_Paulo] matchPath: '/api/imobiliarias' vs '/lago/dashboard'
+[12-Nov-2025 10:15:30 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:15:30 America/Sao_Paulo] matchPath: '/confirmacao-horario' vs '/lago/dashboard'
+[12-Nov-2025 10:15:30 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:15:30 America/Sao_Paulo] matchPath: '/cancelamento-horario' vs '/lago/dashboard'
+[12-Nov-2025 10:15:30 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:15:30 America/Sao_Paulo] matchPath: '/cancelar-solicitacao' vs '/lago/dashboard'
+[12-Nov-2025 10:15:30 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:15:30 America/Sao_Paulo] matchPath: '/reagendamento-horario' vs '/lago/dashboard'
+[12-Nov-2025 10:15:30 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:15:30 America/Sao_Paulo] matchPath: '/compra-peca' vs '/lago/dashboard'
+[12-Nov-2025 10:15:30 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:15:30 America/Sao_Paulo] matchPath: '/status-servico' vs '/lago/dashboard'
+[12-Nov-2025 10:15:30 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:15:30 America/Sao_Paulo] matchPath: '/acoes-servico' vs '/lago/dashboard'
+[12-Nov-2025 10:15:30 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:15:30 America/Sao_Paulo] matchPath: '/admin' vs '/lago/dashboard'
+[12-Nov-2025 10:15:30 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:15:30 America/Sao_Paulo] matchPath: '/operador' vs '/lago/dashboard'
+[12-Nov-2025 10:15:30 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:15:30 America/Sao_Paulo] matchPath: '/login' vs '/lago/dashboard'
+[12-Nov-2025 10:15:30 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:15:30 America/Sao_Paulo] matchPath: '/logout' vs '/lago/dashboard'
+[12-Nov-2025 10:15:30 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:15:30 America/Sao_Paulo] matchPath: '/forgot-password' vs '/lago/dashboard'
+[12-Nov-2025 10:15:30 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:15:30 America/Sao_Paulo] matchPath: '/reset-password' vs '/lago/dashboard'
+[12-Nov-2025 10:15:30 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:15:30 America/Sao_Paulo] matchPath: '/pwa/solicitar' vs '/lago/dashboard'
+[12-Nov-2025 10:15:30 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:15:30 America/Sao_Paulo] matchPath: '/pwa/solicitacoes' vs '/lago/dashboard'
+[12-Nov-2025 10:15:30 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:15:30 America/Sao_Paulo] matchPath: '/pwa/solicitacao/{id}' vs '/lago/dashboard'
+[12-Nov-2025 10:15:30 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:15:30 America/Sao_Paulo] matchPath: '/admin/dashboard' vs '/lago/dashboard'
+[12-Nov-2025 10:15:30 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:15:30 America/Sao_Paulo] matchPath: '/admin/relatorios' vs '/lago/dashboard'
+[12-Nov-2025 10:15:30 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:15:30 America/Sao_Paulo] matchPath: '/admin/kanban' vs '/lago/dashboard'
+[12-Nov-2025 10:15:30 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:15:30 America/Sao_Paulo] matchPath: '/admin/kanban/novas-solicitacoes' vs '/lago/dashboard'
+[12-Nov-2025 10:15:30 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:15:30 America/Sao_Paulo] matchPath: '/admin/dashboard/solicitacoes-por-imobiliaria' vs '/lago/dashboard'
+[12-Nov-2025 10:15:30 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:15:30 America/Sao_Paulo] matchPath: '/admin/dashboard/solicitacoes-por-status' vs '/lago/dashboard'
+[12-Nov-2025 10:15:30 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:15:30 America/Sao_Paulo] matchPath: '/admin/templates-whatsapp' vs '/lago/dashboard'
+[12-Nov-2025 10:15:30 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:15:30 America/Sao_Paulo] matchPath: '/admin/templates-whatsapp/{id}/edit' vs '/lago/dashboard'
+[12-Nov-2025 10:15:30 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:15:30 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances' vs '/lago/dashboard'
+[12-Nov-2025 10:15:30 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:15:30 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/create' vs '/lago/dashboard'
+[12-Nov-2025 10:15:30 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:15:30 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/qrcode' vs '/lago/dashboard'
+[12-Nov-2025 10:15:30 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:15:30 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/verificar-status' vs '/lago/dashboard'
+[12-Nov-2025 10:15:30 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:15:30 America/Sao_Paulo] matchPath: '/admin/solicitacoes' vs '/lago/dashboard'
+[12-Nov-2025 10:15:30 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:15:30 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/api' vs '/lago/dashboard'
+[12-Nov-2025 10:15:30 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:15:30 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}' vs '/lago/dashboard'
+[12-Nov-2025 10:15:30 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:15:30 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/edit' vs '/lago/dashboard'
+[12-Nov-2025 10:15:30 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:15:30 America/Sao_Paulo] Router Debug - Route #85: GET /cron/notificacoes-pre-servico
+[12-Nov-2025 10:15:30 America/Sao_Paulo] matchPath: '/cron/notificacoes-pre-servico' vs '/lago/dashboard'
+[12-Nov-2025 10:15:30 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:15:30 America/Sao_Paulo] Router Debug - Match result for /cron/notificacoes-pre-servico: FALSE
+[12-Nov-2025 10:15:30 America/Sao_Paulo] Router Debug - Route #86: GET /cron/notificacoes-pos-servico
+[12-Nov-2025 10:15:30 America/Sao_Paulo] matchPath: '/cron/notificacoes-pos-servico' vs '/lago/dashboard'
+[12-Nov-2025 10:15:30 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:15:30 America/Sao_Paulo] Router Debug - Match result for /cron/notificacoes-pos-servico: FALSE
+[12-Nov-2025 10:15:30 America/Sao_Paulo] Router Debug - Route #87: GET /cron/lembretes-peca
+[12-Nov-2025 10:15:30 America/Sao_Paulo] matchPath: '/cron/lembretes-peca' vs '/lago/dashboard'
+[12-Nov-2025 10:15:30 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:15:30 America/Sao_Paulo] Router Debug - Match result for /cron/lembretes-peca: FALSE
+[12-Nov-2025 10:15:30 America/Sao_Paulo] Router Debug - Route #88: GET /admin/cron-jobs
+[12-Nov-2025 10:15:30 America/Sao_Paulo] matchPath: '/admin/cron-jobs' vs '/lago/dashboard'
+[12-Nov-2025 10:15:30 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:15:30 America/Sao_Paulo] Router Debug - Match result for /admin/cron-jobs: FALSE
+[12-Nov-2025 10:15:30 America/Sao_Paulo] Router Debug - Route #89: POST /admin/cron-jobs/{id}/executar
+[12-Nov-2025 10:15:30 America/Sao_Paulo] Router Debug - Route #90: POST /admin/cron-jobs/{id}/toggle-ativo
+[12-Nov-2025 10:15:30 America/Sao_Paulo] Router Debug - Route #91: POST /admin/cron-jobs/{id}/atualizar-frequencia
+[12-Nov-2025 10:15:30 America/Sao_Paulo] Router Debug - Route #92: GET /admin/cron-jobs/{id}/historico
+[12-Nov-2025 10:15:30 America/Sao_Paulo] matchPath: '/admin/cron-jobs/{id}/historico' vs '/lago/dashboard'
+[12-Nov-2025 10:15:30 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:15:30 America/Sao_Paulo] Router Debug - Match result for /admin/cron-jobs/{id}/historico: FALSE
+[12-Nov-2025 10:15:30 America/Sao_Paulo] Router Debug - Route #93: POST /admin/cron-jobs/executar-pendentes
+[12-Nov-2025 10:15:30 America/Sao_Paulo] matchPath: '/admin/logs' vs '/lago/dashboard'
+[12-Nov-2025 10:15:30 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:15:30 America/Sao_Paulo] matchPath: '/admin/logs/download' vs '/lago/dashboard'
+[12-Nov-2025 10:15:30 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:15:30 America/Sao_Paulo] matchPath: '/admin/migracoes' vs '/lago/dashboard'
+[12-Nov-2025 10:15:30 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:15:30 America/Sao_Paulo] matchPath: '/{instancia}' vs '/lago/dashboard'
+[12-Nov-2025 10:15:30 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:15:30 America/Sao_Paulo] matchPath: '/{instancia}/dashboard' vs '/lago/dashboard'
+[12-Nov-2025 10:15:30 America/Sao_Paulo] matchPath result: true
+[12-Nov-2025 10:15:30 America/Sao_Paulo] Router Debug - Route matched: GET /{instancia}/dashboard (index: 103)
+[12-Nov-2025 10:16:13 America/Sao_Paulo] index.php - Starting dispatch for: /
+[12-Nov-2025 10:16:13 America/Sao_Paulo] index.php - Routes loaded, total: 212
+[12-Nov-2025 10:16:13 America/Sao_Paulo] Router Debug - Original path: /
+[12-Nov-2025 10:16:13 America/Sao_Paulo] Router Debug - Base path: 'kss'
+[12-Nov-2025 10:16:13 America/Sao_Paulo] Router Debug - Processed path: '/', Method: GET
+[12-Nov-2025 10:16:13 America/Sao_Paulo] Router Debug - Total routes: 212
+[12-Nov-2025 10:16:13 America/Sao_Paulo] matchPath: '/' vs '/'
+[12-Nov-2025 10:16:13 America/Sao_Paulo] Router Debug - Route matched: GET / (index: 0)
+[12-Nov-2025 10:16:14 America/Sao_Paulo] index.php - Starting dispatch for: /api/estados
+[12-Nov-2025 10:16:14 America/Sao_Paulo] index.php - Routes loaded, total: 212
+[12-Nov-2025 10:16:14 America/Sao_Paulo] Router Debug - Original path: /api/estados
+[12-Nov-2025 10:16:14 America/Sao_Paulo] Router Debug - Base path: 'kss'
+[12-Nov-2025 10:16:14 America/Sao_Paulo] Router Debug - Processed path: '/api/estados', Method: GET
+[12-Nov-2025 10:16:14 America/Sao_Paulo] Router Debug - Total routes: 212
+[12-Nov-2025 10:16:14 America/Sao_Paulo] matchPath: '/' vs '/api/estados'
+[12-Nov-2025 10:16:14 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:14 America/Sao_Paulo] matchPath: '/pwa' vs '/api/estados'
+[12-Nov-2025 10:16:14 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:14 America/Sao_Paulo] matchPath: '/pwa/login' vs '/api/estados'
+[12-Nov-2025 10:16:14 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:14 America/Sao_Paulo] matchPath: '/api/estados' vs '/api/estados'
+[12-Nov-2025 10:16:14 America/Sao_Paulo] Router Debug - Route matched: GET /api/estados (index: 4)
+[12-Nov-2025 10:16:20 America/Sao_Paulo] index.php - Starting dispatch for: /admin
+[12-Nov-2025 10:16:20 America/Sao_Paulo] index.php - Routes loaded, total: 212
+[12-Nov-2025 10:16:20 America/Sao_Paulo] Router Debug - Original path: /admin
+[12-Nov-2025 10:16:20 America/Sao_Paulo] Router Debug - Base path: 'kss'
+[12-Nov-2025 10:16:20 America/Sao_Paulo] Router Debug - Processed path: '/admin', Method: GET
+[12-Nov-2025 10:16:20 America/Sao_Paulo] Router Debug - Total routes: 212
+[12-Nov-2025 10:16:20 America/Sao_Paulo] matchPath: '/' vs '/admin'
+[12-Nov-2025 10:16:20 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:20 America/Sao_Paulo] matchPath: '/pwa' vs '/admin'
+[12-Nov-2025 10:16:20 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:20 America/Sao_Paulo] matchPath: '/pwa/login' vs '/admin'
+[12-Nov-2025 10:16:20 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:20 America/Sao_Paulo] matchPath: '/api/estados' vs '/admin'
+[12-Nov-2025 10:16:20 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:20 America/Sao_Paulo] matchPath: '/api/cidades' vs '/admin'
+[12-Nov-2025 10:16:20 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:20 America/Sao_Paulo] matchPath: '/api/imobiliarias' vs '/admin'
+[12-Nov-2025 10:16:20 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:20 America/Sao_Paulo] matchPath: '/confirmacao-horario' vs '/admin'
+[12-Nov-2025 10:16:20 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:20 America/Sao_Paulo] matchPath: '/cancelamento-horario' vs '/admin'
+[12-Nov-2025 10:16:20 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:20 America/Sao_Paulo] matchPath: '/cancelar-solicitacao' vs '/admin'
+[12-Nov-2025 10:16:20 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:20 America/Sao_Paulo] matchPath: '/reagendamento-horario' vs '/admin'
+[12-Nov-2025 10:16:20 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:20 America/Sao_Paulo] matchPath: '/compra-peca' vs '/admin'
+[12-Nov-2025 10:16:20 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:20 America/Sao_Paulo] matchPath: '/status-servico' vs '/admin'
+[12-Nov-2025 10:16:20 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:20 America/Sao_Paulo] matchPath: '/acoes-servico' vs '/admin'
+[12-Nov-2025 10:16:20 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:20 America/Sao_Paulo] matchPath: '/admin' vs '/admin'
+[12-Nov-2025 10:16:20 America/Sao_Paulo] Router Debug - Route matched: GET /admin (index: 20)
+[12-Nov-2025 10:16:25 America/Sao_Paulo] index.php - Starting dispatch for: /lago
+[12-Nov-2025 10:16:25 America/Sao_Paulo] index.php - Routes loaded, total: 212
+[12-Nov-2025 10:16:25 America/Sao_Paulo] Router Debug - Original path: /lago
+[12-Nov-2025 10:16:25 America/Sao_Paulo] Router Debug - Base path: 'kss'
+[12-Nov-2025 10:16:25 America/Sao_Paulo] Router Debug - Processed path: '/lago', Method: GET
+[12-Nov-2025 10:16:25 America/Sao_Paulo] Router Debug - Total routes: 212
+[12-Nov-2025 10:16:25 America/Sao_Paulo] matchPath: '/' vs '/lago'
+[12-Nov-2025 10:16:25 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:25 America/Sao_Paulo] matchPath: '/pwa' vs '/lago'
+[12-Nov-2025 10:16:25 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:25 America/Sao_Paulo] matchPath: '/pwa/login' vs '/lago'
+[12-Nov-2025 10:16:25 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:25 America/Sao_Paulo] matchPath: '/api/estados' vs '/lago'
+[12-Nov-2025 10:16:25 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:25 America/Sao_Paulo] matchPath: '/api/cidades' vs '/lago'
+[12-Nov-2025 10:16:25 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:25 America/Sao_Paulo] matchPath: '/api/imobiliarias' vs '/lago'
+[12-Nov-2025 10:16:25 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:25 America/Sao_Paulo] matchPath: '/confirmacao-horario' vs '/lago'
+[12-Nov-2025 10:16:25 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:25 America/Sao_Paulo] matchPath: '/cancelamento-horario' vs '/lago'
+[12-Nov-2025 10:16:25 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:25 America/Sao_Paulo] matchPath: '/cancelar-solicitacao' vs '/lago'
+[12-Nov-2025 10:16:25 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:25 America/Sao_Paulo] matchPath: '/reagendamento-horario' vs '/lago'
+[12-Nov-2025 10:16:25 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:25 America/Sao_Paulo] matchPath: '/compra-peca' vs '/lago'
+[12-Nov-2025 10:16:25 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:25 America/Sao_Paulo] matchPath: '/status-servico' vs '/lago'
+[12-Nov-2025 10:16:25 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:25 America/Sao_Paulo] matchPath: '/acoes-servico' vs '/lago'
+[12-Nov-2025 10:16:25 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:25 America/Sao_Paulo] matchPath: '/admin' vs '/lago'
+[12-Nov-2025 10:16:25 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:25 America/Sao_Paulo] matchPath: '/operador' vs '/lago'
+[12-Nov-2025 10:16:25 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:25 America/Sao_Paulo] matchPath: '/login' vs '/lago'
+[12-Nov-2025 10:16:25 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:25 America/Sao_Paulo] matchPath: '/logout' vs '/lago'
+[12-Nov-2025 10:16:25 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:25 America/Sao_Paulo] matchPath: '/forgot-password' vs '/lago'
+[12-Nov-2025 10:16:25 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:25 America/Sao_Paulo] matchPath: '/reset-password' vs '/lago'
+[12-Nov-2025 10:16:25 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:25 America/Sao_Paulo] matchPath: '/pwa/solicitar' vs '/lago'
+[12-Nov-2025 10:16:25 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:25 America/Sao_Paulo] matchPath: '/pwa/solicitacoes' vs '/lago'
+[12-Nov-2025 10:16:25 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:25 America/Sao_Paulo] matchPath: '/pwa/solicitacao/{id}' vs '/lago'
+[12-Nov-2025 10:16:25 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:25 America/Sao_Paulo] matchPath: '/admin/dashboard' vs '/lago'
+[12-Nov-2025 10:16:25 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:25 America/Sao_Paulo] matchPath: '/admin/relatorios' vs '/lago'
+[12-Nov-2025 10:16:25 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:25 America/Sao_Paulo] matchPath: '/admin/kanban' vs '/lago'
+[12-Nov-2025 10:16:25 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:25 America/Sao_Paulo] matchPath: '/admin/kanban/novas-solicitacoes' vs '/lago'
+[12-Nov-2025 10:16:25 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:25 America/Sao_Paulo] matchPath: '/admin/dashboard/solicitacoes-por-imobiliaria' vs '/lago'
+[12-Nov-2025 10:16:25 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:25 America/Sao_Paulo] matchPath: '/admin/dashboard/solicitacoes-por-status' vs '/lago'
+[12-Nov-2025 10:16:25 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:25 America/Sao_Paulo] matchPath: '/admin/templates-whatsapp' vs '/lago'
+[12-Nov-2025 10:16:25 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:25 America/Sao_Paulo] matchPath: '/admin/templates-whatsapp/{id}/edit' vs '/lago'
+[12-Nov-2025 10:16:25 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:25 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances' vs '/lago'
+[12-Nov-2025 10:16:25 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:25 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/create' vs '/lago'
+[12-Nov-2025 10:16:25 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:25 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/qrcode' vs '/lago'
+[12-Nov-2025 10:16:25 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:25 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/verificar-status' vs '/lago'
+[12-Nov-2025 10:16:25 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:25 America/Sao_Paulo] matchPath: '/admin/solicitacoes' vs '/lago'
+[12-Nov-2025 10:16:25 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:25 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/api' vs '/lago'
+[12-Nov-2025 10:16:25 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:25 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}' vs '/lago'
+[12-Nov-2025 10:16:25 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:25 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/edit' vs '/lago'
+[12-Nov-2025 10:16:25 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:25 America/Sao_Paulo] Router Debug - Route #85: GET /cron/notificacoes-pre-servico
+[12-Nov-2025 10:16:25 America/Sao_Paulo] matchPath: '/cron/notificacoes-pre-servico' vs '/lago'
+[12-Nov-2025 10:16:25 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:25 America/Sao_Paulo] Router Debug - Match result for /cron/notificacoes-pre-servico: FALSE
+[12-Nov-2025 10:16:25 America/Sao_Paulo] Router Debug - Route #86: GET /cron/notificacoes-pos-servico
+[12-Nov-2025 10:16:25 America/Sao_Paulo] matchPath: '/cron/notificacoes-pos-servico' vs '/lago'
+[12-Nov-2025 10:16:25 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:25 America/Sao_Paulo] Router Debug - Match result for /cron/notificacoes-pos-servico: FALSE
+[12-Nov-2025 10:16:25 America/Sao_Paulo] Router Debug - Route #87: GET /cron/lembretes-peca
+[12-Nov-2025 10:16:25 America/Sao_Paulo] matchPath: '/cron/lembretes-peca' vs '/lago'
+[12-Nov-2025 10:16:25 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:25 America/Sao_Paulo] Router Debug - Match result for /cron/lembretes-peca: FALSE
+[12-Nov-2025 10:16:25 America/Sao_Paulo] Router Debug - Route #88: GET /admin/cron-jobs
+[12-Nov-2025 10:16:25 America/Sao_Paulo] matchPath: '/admin/cron-jobs' vs '/lago'
+[12-Nov-2025 10:16:25 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:25 America/Sao_Paulo] Router Debug - Match result for /admin/cron-jobs: FALSE
+[12-Nov-2025 10:16:25 America/Sao_Paulo] Router Debug - Route #89: POST /admin/cron-jobs/{id}/executar
+[12-Nov-2025 10:16:25 America/Sao_Paulo] Router Debug - Route #90: POST /admin/cron-jobs/{id}/toggle-ativo
+[12-Nov-2025 10:16:25 America/Sao_Paulo] Router Debug - Route #91: POST /admin/cron-jobs/{id}/atualizar-frequencia
+[12-Nov-2025 10:16:25 America/Sao_Paulo] Router Debug - Route #92: GET /admin/cron-jobs/{id}/historico
+[12-Nov-2025 10:16:25 America/Sao_Paulo] matchPath: '/admin/cron-jobs/{id}/historico' vs '/lago'
+[12-Nov-2025 10:16:25 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:25 America/Sao_Paulo] Router Debug - Match result for /admin/cron-jobs/{id}/historico: FALSE
+[12-Nov-2025 10:16:25 America/Sao_Paulo] Router Debug - Route #93: POST /admin/cron-jobs/executar-pendentes
+[12-Nov-2025 10:16:25 America/Sao_Paulo] matchPath: '/admin/logs' vs '/lago'
+[12-Nov-2025 10:16:25 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:25 America/Sao_Paulo] matchPath: '/admin/logs/download' vs '/lago'
+[12-Nov-2025 10:16:25 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:25 America/Sao_Paulo] matchPath: '/admin/migracoes' vs '/lago'
+[12-Nov-2025 10:16:25 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:25 America/Sao_Paulo] matchPath: '/{instancia}' vs '/lago'
+[12-Nov-2025 10:16:25 America/Sao_Paulo] matchPath result: true
+[12-Nov-2025 10:16:25 America/Sao_Paulo] Router Debug - Route matched: GET /{instancia} (index: 101)
+[12-Nov-2025 10:16:51 America/Sao_Paulo] index.php - Starting dispatch for: /lago
+[12-Nov-2025 10:16:51 America/Sao_Paulo] index.php - Routes loaded, total: 212
+[12-Nov-2025 10:16:51 America/Sao_Paulo] Router Debug - Original path: /lago
+[12-Nov-2025 10:16:51 America/Sao_Paulo] Router Debug - Base path: 'kss'
+[12-Nov-2025 10:16:51 America/Sao_Paulo] Router Debug - Processed path: '/lago', Method: POST
+[12-Nov-2025 10:16:51 America/Sao_Paulo] Router Debug - Total routes: 212
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath: '/pwa/login' vs '/lago'
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath: '/confirmacao-horario' vs '/lago'
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath: '/cancelamento-horario' vs '/lago'
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath: '/cancelar-solicitacao' vs '/lago'
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath: '/reagendamento-horario' vs '/lago'
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath: '/compra-peca' vs '/lago'
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath: '/acoes-servico' vs '/lago'
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath: '/login' vs '/lago'
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath: '/forgot-password' vs '/lago'
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath: '/reset-password' vs '/lago'
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath: '/pwa/solicitar' vs '/lago'
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath: '/admin/kanban/mover' vs '/lago'
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath: '/admin/kanban/atualizar-condicao' vs '/lago'
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath: '/admin/templates-whatsapp' vs '/lago'
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath: '/admin/templates-whatsapp/{id}' vs '/lago'
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath: '/admin/templates-whatsapp/{id}/delete' vs '/lago'
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances' vs '/lago'
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/atualizar-qrcode' vs '/lago'
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/set-padrao' vs '/lago'
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/reiniciar' vs '/lago'
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/logout' vs '/lago'
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/desconectar' vs '/lago'
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/delete' vs '/lago'
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/status' vs '/lago'
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/confirmar-horario' vs '/lago'
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/desconfirmar-horario' vs '/lago'
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/horarios/bulk' vs '/lago'
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/confirmar-servico' vs '/lago'
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/solicitar-novos-horarios' vs '/lago'
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/adicionar-horario-seguradora' vs '/lago'
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/remover-horario-seguradora' vs '/lago'
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/atualizar' vs '/lago'
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/edit' vs '/lago'
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath: '/admin/solicitacoes/criar' vs '/lago'
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath: '/admin/solicitacoes/confirmar-datas' vs '/lago'
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath: '/admin/solicitacoes/cancelar' vs '/lago'
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/aceitar-data-prestador' vs '/lago'
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/recusar-propor-datas' vs '/lago'
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/aceitar-data-locatario' vs '/lago'
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/recusar-datas-locatario' vs '/lago'
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/confirmar-agendamento-final' vs '/lago'
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath: '/admin/solicitacoes/confirmar-atendimento' vs '/lago'
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath: '/admin/solicitacoes/informar-compra-peca' vs '/lago'
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath: '/admin/solicitacoes/enviar-lembretes' vs '/lago'
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath: '/admin/solicitacoes/expirar' vs '/lago'
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath: '/admin/solicitacoes/enviar-notificacoes-pre-servico' vs '/lago'
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath: '/admin/solicitacoes/enviar-notificacoes-pos-servico' vs '/lago'
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:51 America/Sao_Paulo] Router Debug - Route #85: GET /cron/notificacoes-pre-servico
+[12-Nov-2025 10:16:51 America/Sao_Paulo] Router Debug - Route #86: GET /cron/notificacoes-pos-servico
+[12-Nov-2025 10:16:51 America/Sao_Paulo] Router Debug - Route #87: GET /cron/lembretes-peca
+[12-Nov-2025 10:16:51 America/Sao_Paulo] Router Debug - Route #88: GET /admin/cron-jobs
+[12-Nov-2025 10:16:51 America/Sao_Paulo] Router Debug - Route #89: POST /admin/cron-jobs/{id}/executar
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath: '/admin/cron-jobs/{id}/executar' vs '/lago'
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:51 America/Sao_Paulo] Router Debug - Match result for /admin/cron-jobs/{id}/executar: FALSE
+[12-Nov-2025 10:16:51 America/Sao_Paulo] Router Debug - Route #90: POST /admin/cron-jobs/{id}/toggle-ativo
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath: '/admin/cron-jobs/{id}/toggle-ativo' vs '/lago'
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:51 America/Sao_Paulo] Router Debug - Match result for /admin/cron-jobs/{id}/toggle-ativo: FALSE
+[12-Nov-2025 10:16:51 America/Sao_Paulo] Router Debug - Route #91: POST /admin/cron-jobs/{id}/atualizar-frequencia
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath: '/admin/cron-jobs/{id}/atualizar-frequencia' vs '/lago'
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:51 America/Sao_Paulo] Router Debug - Match result for /admin/cron-jobs/{id}/atualizar-frequencia: FALSE
+[12-Nov-2025 10:16:51 America/Sao_Paulo] Router Debug - Route #92: GET /admin/cron-jobs/{id}/historico
+[12-Nov-2025 10:16:51 America/Sao_Paulo] Router Debug - Route #93: POST /admin/cron-jobs/executar-pendentes
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath: '/admin/cron-jobs/executar-pendentes' vs '/lago'
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:51 America/Sao_Paulo] Router Debug - Match result for /admin/cron-jobs/executar-pendentes: FALSE
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath: '/admin/logs/limpar' vs '/lago'
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath: '/admin/migracoes/run' vs '/lago'
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath: '/admin/migracoes/purge' vs '/lago'
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath: '/admin/migracoes/limpar-disponibilidade' vs '/lago'
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath: '/{instancia}' vs '/lago'
+[12-Nov-2025 10:16:51 America/Sao_Paulo] matchPath result: true
+[12-Nov-2025 10:16:51 America/Sao_Paulo] Router Debug - Route matched: POST /{instancia} (index: 102)
+[12-Nov-2025 10:16:51 America/Sao_Paulo] === KSI API REQUEST DEBUG ===
+[12-Nov-2025 10:16:51 America/Sao_Paulo] Method: POST
+[12-Nov-2025 10:16:51 America/Sao_Paulo] URL: https://www.lagoimobiliaria.com.br/kurole_include/api/webservice/escopos/
+[12-Nov-2025 10:16:51 America/Sao_Paulo] URL Params: {"ws_destino":"CLIENTES_AUTENTICACOES","id":"42","token":"bccbe9c743bd0e8edc809012f5a8da9a"}
+[12-Nov-2025 10:16:51 America/Sao_Paulo] Body Params: {"ksi_cli_usuario":"310.160.248-35","ksi_cli_senha":"Mat09074170#"}
+[12-Nov-2025 10:16:51 America/Sao_Paulo] Token: bccbe9c743bd0e8edc809012f5a8da9a
+[12-Nov-2025 10:16:51 America/Sao_Paulo] API ID: 42
+[12-Nov-2025 10:16:51 America/Sao_Paulo] Full URL: https://www.lagoimobiliaria.com.br/kurole_include/api/webservice/escopos/?ws_destino=CLIENTES_AUTENTICACOES&id=42&token=bccbe9c743bd0e8edc809012f5a8da9a
+[12-Nov-2025 10:16:51 America/Sao_Paulo] Headers: ["Authorization: Bearer bccbe9c743bd0e8edc809012f5a8da9a","Content-Type: application\/x-www-form-urlencoded","Accept: application\/json"]
+[12-Nov-2025 10:16:52 America/Sao_Paulo] HTTP Code: 200
+[12-Nov-2025 10:16:52 America/Sao_Paulo] Response: [{"sucesso":"1","msg":"","dados":[{"id_cliente":"572735","nome":"Matheus Gouv\u00eaa Tozzo","cliente_autenticado":"1","flag_senha_provisoria":"","url_definir_senha":"https:\/\/www.lagoimobiliaria.com.br\/salv\/clientes\/acesso\/login\/","servicos":{"flag_locador":"1","flag_locatario":"0","flag_fiador":"0"}}]}]
+[12-Nov-2025 10:16:52 America/Sao_Paulo] CURL Error: 
+[12-Nov-2025 10:16:52 America/Sao_Paulo] KSI API Response: [{"sucesso":"1","msg":"","dados":[{"id_cliente":"572735","nome":"Matheus Gouv\u00eaa Tozzo","cliente_autenticado":"1","flag_senha_provisoria":"","url_definir_senha":"https:\/\/www.lagoimobiliaria.com.br\/salv\/clientes\/acesso\/login\/","servicos":{"flag_locador":"1","flag_locatario":"0","flag_fiador":"0"}}]}]
+[12-Nov-2025 10:16:52 America/Sao_Paulo] === KSI API REQUEST DEBUG ===
+[12-Nov-2025 10:16:52 America/Sao_Paulo] Method: GET
+[12-Nov-2025 10:16:52 America/Sao_Paulo] URL: https://www.lagoimobiliaria.com.br/kurole_include/api/webservice/escopos/
+[12-Nov-2025 10:16:52 America/Sao_Paulo] URL Params: {"ws_destino":"IMO_CTR_LOCATARIOS","id":"42","token":"bccbe9c743bd0e8edc809012f5a8da9a","id_cliente":"572735"}
+[12-Nov-2025 10:16:52 America/Sao_Paulo] Body Params: []
+[12-Nov-2025 10:16:52 America/Sao_Paulo] Token: bccbe9c743bd0e8edc809012f5a8da9a
+[12-Nov-2025 10:16:52 America/Sao_Paulo] API ID: 42
+[12-Nov-2025 10:16:52 America/Sao_Paulo] Full URL: https://www.lagoimobiliaria.com.br/kurole_include/api/webservice/escopos/?ws_destino=IMO_CTR_LOCATARIOS&id=42&token=bccbe9c743bd0e8edc809012f5a8da9a&id_cliente=572735
+[12-Nov-2025 10:16:52 America/Sao_Paulo] Headers: ["Authorization: Bearer bccbe9c743bd0e8edc809012f5a8da9a","Content-Type: application\/x-www-form-urlencoded","Accept: application\/json"]
+[12-Nov-2025 10:16:52 America/Sao_Paulo] HTTP Code: 200
+[12-Nov-2025 10:16:52 America/Sao_Paulo] Response: [{"sucesso":0,"msg":"Este cliente n\u00e3o possui contrato de loca\u00e7\u00e3o.","dados":[]}]
+[12-Nov-2025 10:16:52 America/Sao_Paulo] CURL Error: 
+[12-Nov-2025 10:16:52 America/Sao_Paulo] KSI API Imóveis Response: [{"sucesso":0,"msg":"Este cliente n\u00e3o possui contrato de loca\u00e7\u00e3o.","dados":[]}]
+[12-Nov-2025 10:16:52 America/Sao_Paulo] index.php - Starting dispatch for: /lago/dashboard
+[12-Nov-2025 10:16:52 America/Sao_Paulo] index.php - Routes loaded, total: 212
+[12-Nov-2025 10:16:52 America/Sao_Paulo] Router Debug - Original path: /lago/dashboard
+[12-Nov-2025 10:16:52 America/Sao_Paulo] Router Debug - Base path: 'kss'
+[12-Nov-2025 10:16:52 America/Sao_Paulo] Router Debug - Processed path: '/lago/dashboard', Method: GET
+[12-Nov-2025 10:16:52 America/Sao_Paulo] Router Debug - Total routes: 212
+[12-Nov-2025 10:16:52 America/Sao_Paulo] matchPath: '/' vs '/lago/dashboard'
+[12-Nov-2025 10:16:52 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:52 America/Sao_Paulo] matchPath: '/pwa' vs '/lago/dashboard'
+[12-Nov-2025 10:16:52 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:52 America/Sao_Paulo] matchPath: '/pwa/login' vs '/lago/dashboard'
+[12-Nov-2025 10:16:52 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:52 America/Sao_Paulo] matchPath: '/api/estados' vs '/lago/dashboard'
+[12-Nov-2025 10:16:52 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:52 America/Sao_Paulo] matchPath: '/api/cidades' vs '/lago/dashboard'
+[12-Nov-2025 10:16:52 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:52 America/Sao_Paulo] matchPath: '/api/imobiliarias' vs '/lago/dashboard'
+[12-Nov-2025 10:16:52 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:52 America/Sao_Paulo] matchPath: '/confirmacao-horario' vs '/lago/dashboard'
+[12-Nov-2025 10:16:52 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:52 America/Sao_Paulo] matchPath: '/cancelamento-horario' vs '/lago/dashboard'
+[12-Nov-2025 10:16:52 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:52 America/Sao_Paulo] matchPath: '/cancelar-solicitacao' vs '/lago/dashboard'
+[12-Nov-2025 10:16:52 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:52 America/Sao_Paulo] matchPath: '/reagendamento-horario' vs '/lago/dashboard'
+[12-Nov-2025 10:16:52 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:52 America/Sao_Paulo] matchPath: '/compra-peca' vs '/lago/dashboard'
+[12-Nov-2025 10:16:52 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:52 America/Sao_Paulo] matchPath: '/status-servico' vs '/lago/dashboard'
+[12-Nov-2025 10:16:52 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:52 America/Sao_Paulo] matchPath: '/acoes-servico' vs '/lago/dashboard'
+[12-Nov-2025 10:16:52 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:52 America/Sao_Paulo] matchPath: '/admin' vs '/lago/dashboard'
+[12-Nov-2025 10:16:52 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:52 America/Sao_Paulo] matchPath: '/operador' vs '/lago/dashboard'
+[12-Nov-2025 10:16:52 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:52 America/Sao_Paulo] matchPath: '/login' vs '/lago/dashboard'
+[12-Nov-2025 10:16:52 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:52 America/Sao_Paulo] matchPath: '/logout' vs '/lago/dashboard'
+[12-Nov-2025 10:16:52 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:52 America/Sao_Paulo] matchPath: '/forgot-password' vs '/lago/dashboard'
+[12-Nov-2025 10:16:52 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:52 America/Sao_Paulo] matchPath: '/reset-password' vs '/lago/dashboard'
+[12-Nov-2025 10:16:52 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:52 America/Sao_Paulo] matchPath: '/pwa/solicitar' vs '/lago/dashboard'
+[12-Nov-2025 10:16:52 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:52 America/Sao_Paulo] matchPath: '/pwa/solicitacoes' vs '/lago/dashboard'
+[12-Nov-2025 10:16:52 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:52 America/Sao_Paulo] matchPath: '/pwa/solicitacao/{id}' vs '/lago/dashboard'
+[12-Nov-2025 10:16:52 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:52 America/Sao_Paulo] matchPath: '/admin/dashboard' vs '/lago/dashboard'
+[12-Nov-2025 10:16:53 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:53 America/Sao_Paulo] matchPath: '/admin/relatorios' vs '/lago/dashboard'
+[12-Nov-2025 10:16:53 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:53 America/Sao_Paulo] matchPath: '/admin/kanban' vs '/lago/dashboard'
+[12-Nov-2025 10:16:53 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:53 America/Sao_Paulo] matchPath: '/admin/kanban/novas-solicitacoes' vs '/lago/dashboard'
+[12-Nov-2025 10:16:53 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:53 America/Sao_Paulo] matchPath: '/admin/dashboard/solicitacoes-por-imobiliaria' vs '/lago/dashboard'
+[12-Nov-2025 10:16:53 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:53 America/Sao_Paulo] matchPath: '/admin/dashboard/solicitacoes-por-status' vs '/lago/dashboard'
+[12-Nov-2025 10:16:53 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:53 America/Sao_Paulo] matchPath: '/admin/templates-whatsapp' vs '/lago/dashboard'
+[12-Nov-2025 10:16:53 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:53 America/Sao_Paulo] matchPath: '/admin/templates-whatsapp/{id}/edit' vs '/lago/dashboard'
+[12-Nov-2025 10:16:53 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:53 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances' vs '/lago/dashboard'
+[12-Nov-2025 10:16:53 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:53 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/create' vs '/lago/dashboard'
+[12-Nov-2025 10:16:53 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:53 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/qrcode' vs '/lago/dashboard'
+[12-Nov-2025 10:16:53 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:53 America/Sao_Paulo] matchPath: '/admin/whatsapp-instances/{id}/verificar-status' vs '/lago/dashboard'
+[12-Nov-2025 10:16:53 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:53 America/Sao_Paulo] matchPath: '/admin/solicitacoes' vs '/lago/dashboard'
+[12-Nov-2025 10:16:53 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:53 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/api' vs '/lago/dashboard'
+[12-Nov-2025 10:16:53 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:53 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}' vs '/lago/dashboard'
+[12-Nov-2025 10:16:53 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:53 America/Sao_Paulo] matchPath: '/admin/solicitacoes/{id}/edit' vs '/lago/dashboard'
+[12-Nov-2025 10:16:53 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:53 America/Sao_Paulo] Router Debug - Route #85: GET /cron/notificacoes-pre-servico
+[12-Nov-2025 10:16:53 America/Sao_Paulo] matchPath: '/cron/notificacoes-pre-servico' vs '/lago/dashboard'
+[12-Nov-2025 10:16:53 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:53 America/Sao_Paulo] Router Debug - Match result for /cron/notificacoes-pre-servico: FALSE
+[12-Nov-2025 10:16:53 America/Sao_Paulo] Router Debug - Route #86: GET /cron/notificacoes-pos-servico
+[12-Nov-2025 10:16:53 America/Sao_Paulo] matchPath: '/cron/notificacoes-pos-servico' vs '/lago/dashboard'
+[12-Nov-2025 10:16:53 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:53 America/Sao_Paulo] Router Debug - Match result for /cron/notificacoes-pos-servico: FALSE
+[12-Nov-2025 10:16:53 America/Sao_Paulo] Router Debug - Route #87: GET /cron/lembretes-peca
+[12-Nov-2025 10:16:53 America/Sao_Paulo] matchPath: '/cron/lembretes-peca' vs '/lago/dashboard'
+[12-Nov-2025 10:16:53 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:53 America/Sao_Paulo] Router Debug - Match result for /cron/lembretes-peca: FALSE
+[12-Nov-2025 10:16:53 America/Sao_Paulo] Router Debug - Route #88: GET /admin/cron-jobs
+[12-Nov-2025 10:16:53 America/Sao_Paulo] matchPath: '/admin/cron-jobs' vs '/lago/dashboard'
+[12-Nov-2025 10:16:53 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:53 America/Sao_Paulo] Router Debug - Match result for /admin/cron-jobs: FALSE
+[12-Nov-2025 10:16:53 America/Sao_Paulo] Router Debug - Route #89: POST /admin/cron-jobs/{id}/executar
+[12-Nov-2025 10:16:53 America/Sao_Paulo] Router Debug - Route #90: POST /admin/cron-jobs/{id}/toggle-ativo
+[12-Nov-2025 10:16:53 America/Sao_Paulo] Router Debug - Route #91: POST /admin/cron-jobs/{id}/atualizar-frequencia
+[12-Nov-2025 10:16:53 America/Sao_Paulo] Router Debug - Route #92: GET /admin/cron-jobs/{id}/historico
+[12-Nov-2025 10:16:53 America/Sao_Paulo] matchPath: '/admin/cron-jobs/{id}/historico' vs '/lago/dashboard'
+[12-Nov-2025 10:16:53 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:53 America/Sao_Paulo] Router Debug - Match result for /admin/cron-jobs/{id}/historico: FALSE
+[12-Nov-2025 10:16:53 America/Sao_Paulo] Router Debug - Route #93: POST /admin/cron-jobs/executar-pendentes
+[12-Nov-2025 10:16:53 America/Sao_Paulo] matchPath: '/admin/logs' vs '/lago/dashboard'
+[12-Nov-2025 10:16:53 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:53 America/Sao_Paulo] matchPath: '/admin/logs/download' vs '/lago/dashboard'
+[12-Nov-2025 10:16:53 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:53 America/Sao_Paulo] matchPath: '/admin/migracoes' vs '/lago/dashboard'
+[12-Nov-2025 10:16:53 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:53 America/Sao_Paulo] matchPath: '/{instancia}' vs '/lago/dashboard'
+[12-Nov-2025 10:16:53 America/Sao_Paulo] matchPath result: false
+[12-Nov-2025 10:16:53 America/Sao_Paulo] matchPath: '/{instancia}/dashboard' vs '/lago/dashboard'
+[12-Nov-2025 10:16:53 America/Sao_Paulo] matchPath result: true
+[12-Nov-2025 10:16:53 America/Sao_Paulo] Router Debug - Route matched: GET /{instancia}/dashboard (index: 103)

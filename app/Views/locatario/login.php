@@ -89,9 +89,21 @@ ob_start();
 
                 <div class="flex items-center justify-between">
                     <div class="text-sm">
-                        <a href="#" class="font-medium text-blue-600 hover:text-blue-500">
-                            Esqueci a Senha
-                        </a>
+                        <?php if (!empty($imobiliaria['url_base'])): ?>
+                            <?php 
+                            $urlBase = rtrim($imobiliaria['url_base'], '/');
+                            $urlEsqueciSenha = $urlBase . '/kurole_include/ksi/clientes/acesso/login/#abrirEsqueciSenha';
+                            ?>
+                            <a href="<?= htmlspecialchars($urlEsqueciSenha) ?>" 
+                               target="_blank"
+                               class="font-medium text-blue-600 hover:text-blue-500">
+                                Esqueci a Senha
+                            </a>
+                        <?php else: ?>
+                            <a href="#" class="font-medium text-blue-600 hover:text-blue-500">
+                                Esqueci a Senha
+                            </a>
+                        <?php endif; ?>
                     </div>
                 </div>
 
