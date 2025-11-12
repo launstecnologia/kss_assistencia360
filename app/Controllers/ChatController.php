@@ -240,6 +240,12 @@ class ChatController extends Controller
         
         // Também logar no error_log padrão
         error_log('🔔 WEBHOOK RECEBIDO: ' . json_encode($logData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+        
+        // Log importante: verificar se o método é POST
+        if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
+            $this->writeWebhookLog('AVISO: MÉTODO NÃO É POST', ['method' => $_SERVER['REQUEST_METHOD'] ?? 'UNKNOWN']);
+            error_log("⚠️ AVISO: Webhook recebido com método diferente de POST: " . ($_SERVER['REQUEST_METHOD'] ?? 'UNKNOWN'));
+        }
 
         $payload = json_decode($rawBody, true);
 
@@ -267,17 +273,42 @@ class ChatController extends Controller
         error_log("🔍 Evento detectado: " . ($event ?? 'NENHUM'));
 
         // Processar diferentes tipos de eventos
-        if ($event === 'messages.upsert' || isset($payload['data']['messages'])) {
-            $this->writeWebhookLog('PROCESSANDO MENSAGEM', ['event' => 'messages.upsert', 'payload' => $payload]);
-            error_log("✅ Processando mensagem recebida (messages.upsert)");
-            $this->processarMensagemRecebida($payload);
-        } elseif ($event === 'messages.update' || isset($payload['data']['key'])) {
-            $this->writeWebhookLog('PROCESSANDO ATUALIZAÇÃO', ['event' => 'messages.update', 'payload' => $payload]);
-            error_log("✅ Processando atualização de mensagem (messages.update)");
-            $this->processarAtualizacaoMensagem($payload);
+        // Verificar se é evento de mensagem (pode vir como messages.upsert, MESSAGES_UPSERT, ou com data.messages)
+        $isMessageEvent = false;
+        $messageEventType = null;
+        
+        if ($event === 'messages.upsert' || $event === 'MESSAGES_UPSERT' || isset($payload['data']['messages'])) {
+            $isMessageEvent = true;
+            $messageEventType = 'messages.upsert';
+        } elseif ($event === 'messages.update' || $event === 'MESSAGES_UPDATE' || isset($payload['data']['key'])) {
+            $isMessageEvent = true;
+            $messageEventType = 'messages.update';
+        }
+        
+        if ($isMessageEvent) {
+            $this->writeWebhookLog('PROCESSANDO MENSAGEM', [
+                'event' => $messageEventType, 
+                'event_original' => $event,
+                'has_data_messages' => isset($payload['data']['messages']),
+                'has_data_key' => isset($payload['data']['key']),
+                'payload_keys' => array_keys($payload)
+            ]);
+            error_log("✅ Processando mensagem recebida - Evento: $messageEventType (original: $event)");
+            
+            if ($messageEventType === 'messages.upsert') {
+                $this->processarMensagemRecebida($payload);
+            } else {
+                $this->processarAtualizacaoMensagem($payload);
+            }
         } else {
-            $this->writeWebhookLog('EVENTO NÃO RECONHECIDO', ['event' => $event, 'payload' => $payload]);
-            error_log("⚠️ Evento não reconhecido ou sem processamento necessário. Payload: " . json_encode($payload, JSON_UNESCAPED_UNICODE));
+            // Eventos que não são mensagens (contacts.update, connection.update, etc) são ignorados intencionalmente
+            $this->writeWebhookLog('EVENTO IGNORADO (NÃO É MENSAGEM)', [
+                'event' => $event, 
+                'tipo' => 'Evento de sistema (contato, conexão, etc) - não requer processamento',
+                'payload_keys' => array_keys($payload),
+                'payload' => $payload
+            ]);
+            error_log("ℹ️ Evento ignorado (não é mensagem): $event - Este tipo de evento não requer processamento");
         }
 
         // Sempre retornar 200 para Evolution API
@@ -321,11 +352,31 @@ class ChatController extends Controller
     private function processarMensagemRecebida(array $payload): void
     {
         try {
+            $this->writeWebhookLog('INICIANDO PROCESSAMENTO MENSAGEM', [
+                'payload_structure' => [
+                    'has_data' => isset($payload['data']),
+                    'has_data_messages' => isset($payload['data']['messages']),
+                    'has_messages' => isset($payload['messages']),
+                    'data_keys' => isset($payload['data']) ? array_keys($payload['data']) : [],
+                    'payload_keys' => array_keys($payload)
+                ]
+            ]);
+            
             // Tentar diferentes estruturas de payload
-            $messages = $payload['data']['messages'] ?? $payload['messages'] ?? [];
+            $messages = $payload['data']['messages'] ?? $payload['messages'] ?? $payload['data'] ?? [];
+            
+            // Se data é um array direto, pode ser que as mensagens estejam em data
+            if (isset($payload['data']) && is_array($payload['data']) && !isset($payload['data']['messages'])) {
+                // Verificar se data é uma mensagem única
+                if (isset($payload['data']['key']) || isset($payload['data']['message'])) {
+                    $messages = [$payload['data']];
+                }
+            }
             
             if (empty($messages)) {
+                $this->writeWebhookLog('ERRO: NENHUMA MENSAGEM ENCONTRADA', ['payload' => $payload]);
                 error_log("⚠️ Nenhuma mensagem encontrada no payload");
+                error_log("📋 Estrutura do payload: " . json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
                 return;
             }
 
