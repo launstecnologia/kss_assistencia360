@@ -42,14 +42,14 @@ ob_start();
 </div>
 
 <!-- Modal Novo Template -->
-<div id="modal-template" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
-    <div class="absolute inset-0 flex items-start justify-center pt-10">
-        <div class="bg-white w-full max-w-3xl rounded-lg shadow-lg">
-            <div class="flex items-center justify-between px-6 py-4 border-b">
+<div id="modal-template" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 overflow-y-auto">
+    <div class="absolute inset-0 flex items-start justify-center py-10 px-4">
+        <div class="bg-white w-full max-w-3xl rounded-lg shadow-lg max-h-[90vh] flex flex-col">
+            <div class="flex items-center justify-between px-6 py-4 border-b flex-shrink-0">
                 <h4 class="text-lg font-semibold">Novo Template</h4>
                 <button id="btn-close-modal" class="text-gray-500 hover:text-gray-700"><i class="fas fa-times"></i></button>
             </div>
-            <form method="post" action="<?= isset($editTemplate) ? url('admin/templates-whatsapp/' . $editTemplate['id']) : url('admin/templates-whatsapp') ?>" class="px-6 py-4">
+            <form method="post" action="<?= isset($editTemplate) ? url('admin/templates-whatsapp/' . $editTemplate['id']) : url('admin/templates-whatsapp') ?>" class="px-6 py-4 overflow-y-auto flex-1">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label class="text-sm text-gray-600">Nome do Template</label>
@@ -64,6 +64,8 @@ ob_start();
                             <option <?= $tipoSel==='Solicitar Novos Horários'?'selected':'' ?>>Solicitar Novos Horários</option>
                             <option <?= $tipoSel==='Atualização de Status'?'selected':'' ?>>Atualização de Status</option>
                             <option <?= $tipoSel==='Cancelamento'?'selected':'' ?>>Cancelamento</option>
+                            <option <?= $tipoSel==='Confirmação de Serviço'?'selected':'' ?>>Confirmação de Serviço</option>
+                            <option <?= $tipoSel==='Lembrete Pré-Serviço'?'selected':'' ?>>Lembrete Pré-Serviço</option>
                         </select>
                     </div>
                 </div>

@@ -16,6 +16,11 @@ ob_start();
             <i class="fas fa-exclamation-triangle mr-2"></i>
             Config. Emergência
         </a>
+        <a href="<?= url('admin/configuracoes/whatsapp') ?>" 
+           class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+            <i class="fab fa-whatsapp mr-2"></i>
+            Config. WhatsApp
+        </a>
         <a href="<?= url('admin/configuracoes/create') ?>" 
            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
             <i class="fas fa-plus mr-2"></i>

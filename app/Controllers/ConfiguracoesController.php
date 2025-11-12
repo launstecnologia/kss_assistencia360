@@ -263,5 +263,70 @@ class ConfiguracoesController extends Controller
             $this->redirect(url('admin/configuracoes/emergencia'));
         }
     }
+
+    /**
+     * Página de configurações do WhatsApp
+     */
+    public function whatsapp(): void
+    {
+        // Buscar configuração da URL base
+        $urlBase = $this->configuracaoModel->findByChave('whatsapp_links_base_url');
+
+        $this->view('configuracoes.whatsapp', [
+            'pageTitle' => 'Configurações WhatsApp',
+            'currentPage' => 'configuracoes',
+            'user' => $_SESSION['user'] ?? null,
+            'urlBase' => $urlBase
+        ]);
+    }
+
+    /**
+     * Salvar configurações do WhatsApp
+     */
+    public function salvarWhatsapp(): void
+    {
+        if (!$this->isPost()) {
+            $this->redirect(url('admin/configuracoes/whatsapp'));
+        }
+
+        try {
+            // Validar URL
+            $urlBase = trim($this->input('whatsapp_links_base_url', ''));
+            
+            if (empty($urlBase)) {
+                $_SESSION['flash_message'] = 'A URL base é obrigatória';
+                $_SESSION['flash_type'] = 'error';
+                $this->redirect(url('admin/configuracoes/whatsapp'));
+                return;
+            }
+
+            // Validar formato da URL
+            if (!preg_match('/^https?:\/\//', $urlBase)) {
+                $_SESSION['flash_message'] = 'A URL deve começar com http:// ou https://';
+                $_SESSION['flash_type'] = 'error';
+                $this->redirect(url('admin/configuracoes/whatsapp'));
+                return;
+            }
+
+            // Remover barra final se houver
+            $urlBase = rtrim($urlBase, '/');
+
+            // Salvar configuração
+            $this->configuracaoModel->setValor(
+                'whatsapp_links_base_url',
+                $urlBase,
+                'string',
+                'URL base para links enviados nas mensagens WhatsApp (links de token, confirmação, cancelamento, etc.). Exemplo: https://seu-dominio.com.br'
+            );
+
+            $_SESSION['flash_message'] = 'Configurações do WhatsApp salvas com sucesso';
+            $_SESSION['flash_type'] = 'success';
+            $this->redirect(url('admin/configuracoes/whatsapp'));
+        } catch (\Exception $e) {
+            $_SESSION['flash_message'] = 'Erro ao salvar configurações: ' . $e->getMessage();
+            $_SESSION['flash_type'] = 'error';
+            $this->redirect(url('admin/configuracoes/whatsapp'));
+        }
+    }
 }
 

@@ -675,25 +675,46 @@ class WhatsAppService
     
     /**
      * Obtém a URL base para links enviados nas mensagens WhatsApp
+     * Prioridade: Banco de dados > config.php > app.url > APP_URL > localhost
      * 
      * @return string URL base (sem barra final)
      */
     private function getLinksBaseUrl(): string
     {
-        $configFile = __DIR__ . '/../Config/config.php';
-        $config = file_exists($configFile) ? require $configFile : [];
+        // Prioridade 1: Buscar do banco de dados (configurações)
+        try {
+            $configuracaoModel = new \App\Models\Configuracao();
+            $urlBase = $configuracaoModel->getValor('whatsapp_links_base_url');
+            
+            if (!empty($urlBase)) {
+                $linksBaseUrl = $urlBase;
+            } else {
+                $linksBaseUrl = null;
+            }
+        } catch (\Exception $e) {
+            // Se houver erro ao buscar do banco, continuar com fallbacks
+            error_log('WhatsApp: Erro ao buscar URL base do banco: ' . $e->getMessage());
+            $linksBaseUrl = null;
+        }
         
-        // Prioridade: WHATSAPP_LINKS_BASE_URL > app.url > APP_URL > localhost
-        $whatsappConfig = $config['whatsapp'] ?? [];
-        $linksBaseUrl = $whatsappConfig['links_base_url'] ?? null;
-        
+        // Prioridade 2: Configuração do arquivo config.php
         if (!$linksBaseUrl) {
-            // Fallback para app.url
+            $configFile = __DIR__ . '/../Config/config.php';
+            $config = file_exists($configFile) ? require $configFile : [];
+            
+            $whatsappConfig = $config['whatsapp'] ?? [];
+            $linksBaseUrl = $whatsappConfig['links_base_url'] ?? null;
+        }
+        
+        // Prioridade 3: app.url do config.php
+        if (!$linksBaseUrl) {
+            $configFile = __DIR__ . '/../Config/config.php';
+            $config = file_exists($configFile) ? require $configFile : [];
             $linksBaseUrl = $config['app']['url'] ?? null;
         }
         
+        // Prioridade 4: Variável de ambiente
         if (!$linksBaseUrl) {
-            // Fallback para variável de ambiente
             $linksBaseUrl = (function_exists('env') ? env('APP_URL', 'http://localhost') : (getenv('APP_URL') ?: 'http://localhost'));
         }
         

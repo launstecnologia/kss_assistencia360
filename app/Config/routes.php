@@ -248,6 +248,8 @@ $router->post('/admin/configuracoes', 'ConfiguracoesController@store', ['auth', 
 // Rotas específicas PRIMEIRO (antes das rotas com {id})
 $router->get('/admin/configuracoes/emergencia', 'ConfiguracoesController@emergencia', ['auth', 'admin']);
 $router->post('/admin/configuracoes/emergencia', 'ConfiguracoesController@salvarEmergencia', ['auth', 'admin']);
+$router->get('/admin/configuracoes/whatsapp', 'ConfiguracoesController@whatsapp', ['auth', 'admin']);
+$router->post('/admin/configuracoes/whatsapp', 'ConfiguracoesController@salvarWhatsapp', ['auth', 'admin']);
 // Rotas genéricas DEPOIS
 $router->get('/admin/configuracoes/{id}/edit', 'ConfiguracoesController@edit', ['auth', 'admin']);
 $router->post('/admin/configuracoes/{id}', 'ConfiguracoesController@update', ['auth', 'admin']);
