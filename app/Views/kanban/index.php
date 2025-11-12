@@ -255,14 +255,19 @@ ob_start();
                             <i class="fab fa-whatsapp mr-2 text-green-500"></i>
                             Instância WhatsApp <span class="text-red-500">*</span>
                         </label>
-                        <button id="btnEncerrarAtendimento" class="hidden text-xs px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition-colors">
-                            <i class="fas fa-times-circle mr-1"></i>Encerrar Atendimento
-                        </button>
+                        <div class="flex items-center gap-2">
+                            <button onclick="abrirModalHistorico()" class="text-xs px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors">
+                                <i class="fas fa-history mr-1"></i>Histórico
+                            </button>
+                            <button id="btnEncerrarAtendimento" class="hidden text-xs px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition-colors">
+                                <i class="fas fa-times-circle mr-1"></i>Encerrar Atendimento
+                            </button>
+                        </div>
                     </div>
-                    <select id="chatWhatsappInstance" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
-                        <option value="">Selecione uma instância...</option>
+                    <select id="chatWhatsappInstance" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 bg-gray-100" disabled>
+                        <option value="">Instância selecionada no modal</option>
                     </select>
-                    <p id="chatInstanceInfo" class="text-xs text-gray-500 mt-2">Selecione a instância WhatsApp para iniciar a conversa</p>
+                    <p id="chatInstanceInfo" class="text-xs text-gray-500 mt-2">Instância selecionada no modal de seleção</p>
                 </div>
                 <!-- Área de Mensagens -->
                 <div id="chatMessages" class="flex-1 overflow-y-auto mb-4 p-4 bg-white rounded-lg border border-gray-200 space-y-3 hidden">
@@ -280,7 +285,7 @@ ob_start();
                     </div>
                 </div>
                 <!-- Input de Mensagem -->
-                <div id="chatInputContainer" class="flex gap-2 hidden">
+                <div id="chatInputContainer" class="flex gap-2 mt-4 hidden">
                     <input type="text" id="chatMessageInput" placeholder="Digite sua mensagem..." 
                            class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                            onkeypress="if(event.key === 'Enter') enviarMensagemChat()">
@@ -289,6 +294,72 @@ ob_start();
                         <i class="fab fa-whatsapp mr-2"></i>
                         Enviar
                     </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Seleção de Instância WhatsApp -->
+<div id="modalSelecionarInstancia" class="fixed inset-0 z-50 hidden">
+    <div class="fixed inset-0 bg-gray-600 bg-opacity-50 transition-opacity" onclick="fecharModalInstancia()"></div>
+    <div class="fixed inset-0 flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
+            <!-- Header do Modal -->
+            <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <i class="fab fa-whatsapp text-green-500 text-xl"></i>
+                    <h3 class="text-lg font-semibold text-gray-900">Selecionar Instância WhatsApp</h3>
+                </div>
+                <button onclick="fecharModalInstancia()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <!-- Conteúdo do Modal -->
+            <div class="px-6 py-4">
+                <p class="text-sm text-gray-600 mb-4">Selecione uma instância WhatsApp disponível para iniciar o atendimento:</p>
+                <div id="instanciasDisponiveisList" class="space-y-2 max-h-96 overflow-y-auto">
+                    <div class="text-center py-8">
+                        <i class="fas fa-spinner fa-spin text-3xl text-gray-400 mb-3"></i>
+                        <p class="text-gray-600">Carregando instâncias...</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Footer do Modal -->
+            <div class="px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
+                <button onclick="fecharModalInstancia()" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors">
+                    Cancelar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Histórico de Atendimentos -->
+<div id="modalHistoricoAtendimentos" class="fixed inset-0 z-50 hidden">
+    <div class="fixed inset-0 bg-gray-600 bg-opacity-50 transition-opacity" onclick="fecharModalHistorico()"></div>
+    <div class="fixed inset-0 flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+            <!-- Header do Modal -->
+            <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <i class="fas fa-history text-blue-600 text-xl"></i>
+                    <h3 class="text-lg font-semibold text-gray-900">Histórico de Atendimentos</h3>
+                </div>
+                <button onclick="fecharModalHistorico()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <!-- Conteúdo do Modal -->
+            <div class="flex-1 overflow-y-auto px-6 py-4">
+                <div id="historicoAtendimentosContent" class="space-y-3">
+                    <div class="text-center py-8">
+                        <i class="fas fa-spinner fa-spin text-3xl text-gray-400 mb-3"></i>
+                        <p class="text-gray-600">Carregando histórico...</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -513,6 +584,8 @@ function abrirDetalhes(solicitacaoId) {
     // Resetar flag de mudanças não salvas
     hasUnsavedChanges = false;
     offcanvasSolicitacaoId = solicitacaoId;
+    // Definir chatSolicitacaoId para uso no chat
+    chatSolicitacaoId = solicitacaoId;
     
     offcanvas.classList.remove('hidden');
     setTimeout(() => panel.classList.remove('translate-x-full'), 10);
@@ -2894,17 +2967,9 @@ document.addEventListener('change', function(e) {
                 carregarInstanciasWhatsApp();
                 carregarMensagensChat();
                 
-                // Se não houver mensagens, mostrar seletor de instância
-                setTimeout(() => {
-                    const select = document.getElementById('chatWhatsappInstance');
-                    if (select && select.value === '') {
-                        document.getElementById('chatMessages').classList.add('hidden');
-                        document.getElementById('chatEmptyState').classList.remove('hidden');
-                        document.getElementById('chatInputContainer').classList.add('hidden');
-                    } else {
-                        iniciarPollingMensagens();
-                    }
-                }, 500);
+                // Não esconder o campo de input aqui - deixar a lógica de carregarMensagensChat decidir
+                // O carregarMensagensChat já vai verificar o estado do atendimento e mostrar/esconder corretamente
+                iniciarPollingMensagens();
             }
         }
     }
@@ -2928,6 +2993,8 @@ document.addEventListener('change', function(e) {
                         console.error('Select chatWhatsappInstance não encontrado');
                         return;
                     }
+                    // Preservar valor atual antes de limpar
+                    const instanceIdAtual = select.value;
                     select.innerHTML = '<option value="">Selecione uma instância...</option>';
                     
                     if (data.instancias && data.instancias.length > 0) {
@@ -2935,13 +3002,16 @@ document.addEventListener('change', function(e) {
                             const option = document.createElement('option');
                             option.value = instancia.id;
                             let texto = `${instancia.nome} (${instancia.status})`;
-                            if (!instancia.disponivel) {
+                            if (!instancia.disponivel && instancia.id != instanceIdAtual) {
                                 texto += ' - EM USO';
                                 option.disabled = true;
                                 option.classList.add('text-red-500');
                             }
                             option.textContent = texto;
-                            if (instancia.is_padrao && instancia.disponivel) {
+                            // Selecionar a instância atual se existir
+                            if (instanceIdAtual && instancia.id == instanceIdAtual) {
+                                option.selected = true;
+                            } else if (!instanceIdAtual && instancia.is_padrao && instancia.disponivel) {
                                 option.selected = true;
                             }
                             select.appendChild(option);
@@ -2971,16 +3041,266 @@ document.addEventListener('change', function(e) {
     }
     
     function abrirChatDireto() {
-        // Abrir aba de chat
-        mostrarAba('chat');
+        if (!chatSolicitacaoId) {
+            alert('Nenhuma solicitação selecionada');
+            return;
+        }
         
-        // Se não houver mensagens, focar na seleção de instância
-        setTimeout(() => {
-            const select = document.getElementById('chatWhatsappInstance');
-            if (select && select.value === '') {
-                select.focus();
+        // Verificar se já existe atendimento ativo
+        fetch(`<?= url('admin/chat/') ?>${chatSolicitacaoId}/mensagens`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const atendimentoAtivo = data.solicitacao.chat_atendimento_ativo;
+                    const instanceId = data.solicitacao.chat_whatsapp_instance_id;
+                    
+                    if (atendimentoAtivo && instanceId) {
+                        // Já existe atendimento ativo, abrir chat diretamente
+                        mostrarAba('chat');
+                        carregarInstanciasWhatsApp();
+                        carregarMensagensChat();
+                    } else {
+                        // Não há atendimento ativo, abrir modal para selecionar instância
+                        abrirModalSelecionarInstancia();
+                    }
+                } else {
+                    // Se houver erro, abrir modal mesmo assim
+                    abrirModalSelecionarInstancia();
+                }
+            })
+            .catch(error => {
+                console.error('Erro ao verificar atendimento:', error);
+                abrirModalSelecionarInstancia();
+            });
+    }
+    
+    function abrirModalSelecionarInstancia() {
+        const modal = document.getElementById('modalSelecionarInstancia');
+        const content = document.getElementById('instanciasDisponiveisList');
+        
+        modal.classList.remove('hidden');
+        
+        // Carregar instâncias disponíveis
+        const url = `<?= url('admin/chat/instancias') ?>?solicitacao_id=${chatSolicitacaoId}`;
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.instancias) {
+                    // Separar instâncias disponíveis e indisponíveis
+                    const instanciasDisponiveis = data.instancias.filter(i => i.disponivel);
+                    const instanciasIndisponiveis = data.instancias.filter(i => !i.disponivel);
+                    
+                    if (instanciasDisponiveis.length === 0 && instanciasIndisponiveis.length === 0) {
+                        content.innerHTML = `
+                            <div class="text-center py-8">
+                                <i class="fas fa-exclamation-triangle text-4xl text-yellow-500 mb-3"></i>
+                                <p class="text-gray-700 font-medium mb-2">Nenhuma instância encontrada</p>
+                            </div>
+                        `;
+                    } else {
+                        let html = '';
+                        
+                        // Mostrar instâncias disponíveis primeiro
+                        if (instanciasDisponiveis.length > 0) {
+                            html += instanciasDisponiveis.map(instancia => `
+                                <button onclick="selecionarInstanciaNoModal(${instancia.id})" 
+                                        class="w-full text-left p-4 border-2 border-green-200 rounded-lg hover:border-green-500 hover:bg-green-50 transition-colors mb-2">
+                                    <div class="flex items-center justify-between">
+                                        <div>
+                                            <p class="font-medium text-gray-900">${instancia.nome}</p>
+                                            <p class="text-sm text-gray-500 mt-1">${instancia.instance_name}</p>
+                                        </div>
+                                        <div class="flex items-center gap-2">
+                                            <span class="px-2 py-1 text-xs font-medium rounded bg-green-100 text-green-800">
+                                                ${instancia.status}
+                                            </span>
+                                            <i class="fas fa-chevron-right text-green-500"></i>
+                                        </div>
+                                    </div>
+                                </button>
+                            `).join('');
+                        }
+                        
+                        // Mostrar instâncias indisponíveis (desabilitadas)
+                        if (instanciasIndisponiveis.length > 0) {
+                            html += instanciasIndisponiveis.map(instancia => `
+                                <div class="w-full text-left p-4 border-2 border-gray-200 rounded-lg bg-gray-50 opacity-60 cursor-not-allowed mb-2">
+                                    <div class="flex items-center justify-between">
+                                        <div>
+                                            <p class="font-medium text-gray-500">${instancia.nome}</p>
+                                            <p class="text-sm text-gray-400 mt-1">${instancia.instance_name}</p>
+                                            <p class="text-xs text-red-600 mt-1 font-medium">⚠️ Em uso em outro atendimento</p>
+                                        </div>
+                                        <div class="flex items-center gap-2">
+                                            <span class="px-2 py-1 text-xs font-medium rounded bg-red-100 text-red-800">
+                                                ${instancia.status} - EM USO
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            `).join('');
+                        }
+                        
+                        content.innerHTML = html;
+                    }
+                } else {
+                    content.innerHTML = `
+                        <div class="text-center py-8">
+                            <i class="fas fa-exclamation-circle text-4xl text-red-500 mb-3"></i>
+                            <p class="text-gray-700">Erro ao carregar instâncias</p>
+                        </div>
+                    `;
+                }
+            })
+            .catch(error => {
+                console.error('Erro ao carregar instâncias:', error);
+                content.innerHTML = `
+                    <div class="text-center py-8">
+                        <i class="fas fa-exclamation-circle text-4xl text-red-500 mb-3"></i>
+                        <p class="text-gray-700">Erro ao carregar instâncias</p>
+                    </div>
+                `;
+            });
+    }
+    
+    function fecharModalInstancia() {
+        const modal = document.getElementById('modalSelecionarInstancia');
+        modal.classList.add('hidden');
+    }
+    
+    function selecionarInstanciaNoModal(instanceId) {
+        if (!chatSolicitacaoId) {
+            alert('Nenhuma solicitação selecionada');
+            return;
+        }
+        
+        // Iniciar atendimento enviando uma mensagem inicial
+        // O backend vai iniciar o atendimento automaticamente quando receber a primeira mensagem
+        const formData = new FormData();
+        formData.append('mensagem', '👋 Atendimento iniciado');
+        formData.append('whatsapp_instance_id', instanceId);
+        
+        fetch(`<?= url('admin/chat/') ?>${chatSolicitacaoId}/enviar`, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
             }
-        }, 100);
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                fecharModalInstancia();
+                mostrarAba('chat');
+                // Aguardar um pouco para garantir que o atendimento foi iniciado
+                setTimeout(() => {
+                    carregarInstanciasWhatsApp();
+                    // Aguardar mais um pouco para garantir que as instâncias foram carregadas
+                    setTimeout(() => {
+                        carregarMensagensChat();
+                        mostrarNotificacao('Atendimento iniciado com sucesso', 'success');
+                    }, 300);
+                }, 500);
+            } else {
+                alert('Erro ao iniciar atendimento: ' + (data.message || 'Erro desconhecido'));
+            }
+        })
+        .catch(error => {
+            console.error('Erro:', error);
+            alert('Erro ao iniciar atendimento');
+        });
+    }
+    
+    function abrirModalHistorico() {
+        if (!chatSolicitacaoId) {
+            alert('Nenhuma solicitação selecionada');
+            return;
+        }
+        
+        const modal = document.getElementById('modalHistoricoAtendimentos');
+        const content = document.getElementById('historicoAtendimentosContent');
+        
+        modal.classList.remove('hidden');
+        
+        // Buscar histórico de atendimentos desta solicitação
+        fetch(`<?= url('admin/solicitacoes/') ?>${chatSolicitacaoId}/api`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.solicitacao) {
+                    const solicitacao = data.solicitacao;
+                    
+                    // Buscar todas as mensagens para montar histórico
+                    fetch(`<?= url('admin/chat/') ?>${chatSolicitacaoId}/mensagens`)
+                        .then(response => response.json())
+                        .then(chatData => {
+                            if (chatData.success) {
+                                const mensagens = chatData.mensagens;
+                                
+                                if (mensagens.length === 0) {
+                                    content.innerHTML = `
+                                        <div class="text-center py-8">
+                                            <i class="fas fa-inbox text-4xl text-gray-300 mb-3"></i>
+                                            <p class="text-gray-600">Nenhuma mensagem no histórico</p>
+                                        </div>
+                                    `;
+                                } else {
+                                    // Agrupar mensagens por data
+                                    const mensagensPorData = {};
+                                    mensagens.forEach(msg => {
+                                        const data = new Date(msg.created_at).toLocaleDateString('pt-BR');
+                                        if (!mensagensPorData[data]) {
+                                            mensagensPorData[data] = [];
+                                        }
+                                        mensagensPorData[data].push(msg);
+                                    });
+                                    
+                                    content.innerHTML = Object.keys(mensagensPorData).map(data => `
+                                        <div class="mb-6">
+                                            <h4 class="text-sm font-semibold text-gray-700 mb-3">${data}</h4>
+                                            <div class="space-y-2">
+                                                ${mensagensPorData[data].map(msg => {
+                                                    const isEnviada = msg.tipo === 'ENVIADA';
+                                                    const hora = new Date(msg.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                                                    return `
+                                                        <div class="flex ${isEnviada ? 'justify-end' : 'justify-start'}">
+                                                            <div class="max-w-[80%] ${isEnviada ? 'bg-green-100' : 'bg-gray-100'} rounded-lg p-3">
+                                                                <p class="text-sm text-gray-800 whitespace-pre-wrap">${escapeHtml(msg.mensagem)}</p>
+                                                                <p class="text-xs text-gray-500 mt-1">${hora}</p>
+                                                            </div>
+                                                        </div>
+                                                    `;
+                                                }).join('')}
+                                            </div>
+                                        </div>
+                                    `).join('');
+                                }
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Erro ao carregar mensagens:', error);
+                            content.innerHTML = `
+                                <div class="text-center py-8">
+                                    <i class="fas fa-exclamation-circle text-4xl text-red-500 mb-3"></i>
+                                    <p class="text-gray-700">Erro ao carregar histórico</p>
+                                </div>
+                            `;
+                        });
+                }
+            })
+            .catch(error => {
+                console.error('Erro ao carregar histórico:', error);
+                content.innerHTML = `
+                    <div class="text-center py-8">
+                        <i class="fas fa-exclamation-circle text-4xl text-red-500 mb-3"></i>
+                        <p class="text-gray-700">Erro ao carregar histórico</p>
+                    </div>
+                `;
+            });
+    }
+    
+    function fecharModalHistorico() {
+        const modal = document.getElementById('modalHistoricoAtendimentos');
+        modal.classList.add('hidden');
     }
 
     function carregarMensagensChat() {
@@ -3001,39 +3321,100 @@ document.addEventListener('change', function(e) {
                     const instanceId = data.solicitacao.chat_whatsapp_instance_id;
                     const atendimentoAtivo = data.solicitacao.chat_atendimento_ativo;
                     
-                    if (instanceId && atendimentoAtivo) {
+                    const chatInputContainer = document.getElementById('chatInputContainer');
+                    
+                    console.log('🔍 carregarMensagensChat - Debug:', {
+                        instanceId: instanceId,
+                        atendimentoAtivo: atendimentoAtivo,
+                        instanceIdType: typeof instanceId,
+                        atendimentoAtivoType: typeof atendimentoAtivo,
+                        instanceIdValue: instanceId,
+                        atendimentoAtivoValue: atendimentoAtivo,
+                        hasInstanceId: !!instanceId,
+                        hasAtendimentoAtivo: atendimentoAtivo === true || atendimentoAtivo === 1 || atendimentoAtivo === '1'
+                    });
+                    
+                    // Verificar se atendimento está ativo (pode vir como boolean, int ou string)
+                    const isAtendimentoAtivo = atendimentoAtivo === true || atendimentoAtivo === 1 || atendimentoAtivo === '1' || atendimentoAtivo === 'true';
+                    
+                    if (instanceId && isAtendimentoAtivo) {
                         // Instância já definida e atendimento ativo - bloquear mudança
+                        console.log('✅ Atendimento ATIVO - Mostrando campo e botão encerrar');
                         select.value = instanceId;
                         select.disabled = true;
                         select.classList.add('bg-gray-100', 'cursor-not-allowed');
-                        btnEncerrar.classList.remove('hidden');
+                        
+                        // Mostrar botão encerrar
+                        if (btnEncerrar) {
+                            btnEncerrar.classList.remove('hidden');
+                            console.log('✅ Botão encerrar REMOVIDO hidden');
+                        } else {
+                            console.error('❌ btnEncerrar não encontrado!');
+                        }
+                        
                         infoText.textContent = 'Instância bloqueada para este atendimento. Encerre o atendimento para usar outra instância.';
                         infoText.classList.add('text-yellow-600');
-                        document.getElementById('chatInputContainer').classList.remove('hidden');
-                    } else if (instanceId && !atendimentoAtivo) {
+                        infoText.classList.remove('text-orange-600');
+                        
+                        // Mostrar campo de input e botão enviar
+                        if (chatInputContainer) {
+                            chatInputContainer.classList.remove('hidden');
+                            console.log('✅ Campo de input REMOVIDO hidden');
+                        } else {
+                            console.error('❌ chatInputContainer não encontrado!');
+                        }
+                        
+                        // Buscar nome da instância para exibir
+                        carregarInstanciasWhatsApp();
+                    } else if (instanceId && !isAtendimentoAtivo) {
                         // Instância definida mas atendimento encerrado
+                        console.log('⚠️ Atendimento ENCERRADO');
                         select.value = instanceId;
-                        select.disabled = false;
-                        select.classList.remove('bg-gray-100', 'cursor-not-allowed');
-                        btnEncerrar.classList.add('hidden');
-                        infoText.textContent = 'Atendimento encerrado. Selecione uma instância para iniciar um novo atendimento.';
+                        select.disabled = true;
+                        select.classList.add('bg-gray-100', 'cursor-not-allowed');
+                        
+                        // Esconder botão encerrar
+                        if (btnEncerrar) {
+                            btnEncerrar.classList.add('hidden');
+                        }
+                        
+                        infoText.textContent = 'Atendimento encerrado. Clique no botão WhatsApp para iniciar um novo atendimento.';
                         infoText.classList.remove('text-yellow-600');
                         infoText.classList.add('text-orange-600');
+                        
+                        // Esconder campo de input
+                        if (chatInputContainer) {
+                            chatInputContainer.classList.add('hidden');
+                        }
                     } else {
                         // Nenhuma instância definida
-                        select.disabled = false;
-                        select.classList.remove('bg-gray-100', 'cursor-not-allowed');
-                        btnEncerrar.classList.add('hidden');
-                        infoText.textContent = 'Selecione a instância WhatsApp para iniciar a conversa';
+                        console.log('❌ Nenhuma instância definida');
+                        select.disabled = true;
+                        select.classList.add('bg-gray-100', 'cursor-not-allowed');
+                        
+                        // Esconder botão encerrar
+                        if (btnEncerrar) {
+                            btnEncerrar.classList.add('hidden');
+                        }
+                        
+                        infoText.textContent = 'Clique no botão WhatsApp para selecionar uma instância e iniciar o atendimento.';
                         infoText.classList.remove('text-yellow-600', 'text-orange-600');
+                        
+                        // Esconder campo de input
+                        if (chatInputContainer) {
+                            chatInputContainer.classList.add('hidden');
+                        }
                     }
+                    
+                    // Verificar novamente se atendimento está ativo (pode vir como boolean, int ou string)
+                    const isAtendimentoAtivoFinal = atendimentoAtivo === true || atendimentoAtivo === 1 || atendimentoAtivo === '1' || atendimentoAtivo === 'true';
                     
                     // Se não houver mensagens
                     if (data.mensagens.length === 0) {
                         document.getElementById('chatMessages').classList.add('hidden');
                         
                         // Se tiver instância selecionada e atendimento ativo, mostrar estado vazio mas com input
-                        if (instanceId && atendimentoAtivo) {
+                        if (instanceId && isAtendimentoAtivoFinal) {
                             document.getElementById('chatEmptyState').classList.remove('hidden');
                             document.getElementById('chatEmptyState').innerHTML = `
                                 <div class="text-center">
@@ -3042,7 +3423,7 @@ document.addEventListener('change', function(e) {
                                     <p class="text-sm text-gray-500">Digite uma mensagem abaixo para iniciar a conversa</p>
                                 </div>
                             `;
-                            document.getElementById('chatInputContainer').classList.remove('hidden');
+                            // Campo de input já está visível pela lógica acima
                         } else {
                             // Se não tiver instância ou atendimento encerrado, mostrar mensagem para selecionar
                             document.getElementById('chatEmptyState').classList.remove('hidden');
@@ -3053,17 +3434,12 @@ document.addEventListener('change', function(e) {
                                     <p class="text-sm text-gray-500">Selecione uma instância WhatsApp acima para começar a conversar</p>
                                 </div>
                             `;
-                            if (!atendimentoAtivo) {
-                                document.getElementById('chatInputContainer').classList.add('hidden');
-                            }
                         }
                     } else {
                         // Se houver mensagens, mostrar normalmente
                         document.getElementById('chatMessages').classList.remove('hidden');
                         document.getElementById('chatEmptyState').classList.add('hidden');
-                        if (atendimentoAtivo) {
-                            document.getElementById('chatInputContainer').classList.remove('hidden');
-                        }
+                        // Campo de input já está visível pela lógica acima se atendimento ativo
                     }
                 }
             })
@@ -3092,10 +3468,15 @@ document.addEventListener('change', function(e) {
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        mostrarNotificacao('Atendimento encerrado com sucesso', 'success');
-                        // Recarregar instâncias e mensagens
-                        carregarInstanciasWhatsApp();
+                        mostrarNotificacao('Atendimento encerrado com sucesso. A instância foi liberada.', 'success');
+                        // Recarregar mensagens para atualizar o estado
                         carregarMensagensChat();
+                        // O select já estará desabilitado, mas vamos garantir que está correto
+                        const select = document.getElementById('chatWhatsappInstance');
+                        if (select) {
+                            select.disabled = true;
+                            select.classList.add('bg-gray-100', 'cursor-not-allowed');
+                        }
                     } else {
                         mostrarNotificacao(data.message || 'Erro ao encerrar atendimento', 'error');
                     }

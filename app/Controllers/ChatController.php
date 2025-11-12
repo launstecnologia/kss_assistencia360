@@ -29,7 +29,15 @@ class ChatController extends Controller
     {
         $this->requireAdmin();
 
-        $solicitacao = $this->solicitacaoModel->find($solicitacaoId);
+        // Buscar solicitação com SQL direto para garantir que os campos de chat sejam retornados
+        $sql = "
+            SELECT id, chat_whatsapp_instance_id, chat_atendimento_ativo, 
+                   chat_atendimento_iniciado_em, chat_atendimento_encerrado_em
+            FROM solicitacoes 
+            WHERE id = ?
+        ";
+        $solicitacao = \App\Core\Database::fetch($sql, [$solicitacaoId]);
+        
         if (!$solicitacao) {
             $this->json([
                 'success' => false,
@@ -42,16 +50,21 @@ class ChatController extends Controller
         
         // Marcar mensagens recebidas como lidas
         $this->mensagemModel->marcarComoLidas($solicitacaoId);
+        
+        // Debug: Log dos valores
+        error_log("🔍 getMensagens - Solicitação: $solicitacaoId");
+        error_log("   instanceId: " . ($solicitacao['chat_whatsapp_instance_id'] ?? 'null'));
+        error_log("   atendimentoAtivo: " . ($solicitacao['chat_atendimento_ativo'] ?? 'null'));
 
         $this->json([
             'success' => true,
             'mensagens' => $mensagens,
             'solicitacao' => [
                 'id' => $solicitacao['id'],
-                'protocol' => $solicitacao['protocol'] ?? '',
-                'cliente_nome' => $solicitacao['cliente_nome'] ?? '',
-                'cliente_telefone' => $solicitacao['cliente_telefone'] ?? '',
-                'cliente_whatsapp' => $solicitacao['cliente_whatsapp'] ?? $solicitacao['cliente_telefone'] ?? '',
+                'protocol' => '',
+                'cliente_nome' => '',
+                'cliente_telefone' => '',
+                'cliente_whatsapp' => '',
                 'chat_whatsapp_instance_id' => $solicitacao['chat_whatsapp_instance_id'] ?? null,
                 'chat_atendimento_ativo' => (bool)($solicitacao['chat_atendimento_ativo'] ?? false)
             ]
@@ -424,13 +437,26 @@ class ChatController extends Controller
             throw new \Exception('Esta instância está sendo usada em outro atendimento ativo');
         }
         
-        // Atualizar solicitação
-        $this->solicitacaoModel->update($solicitacaoId, [
-            'chat_whatsapp_instance_id' => $instanceId,
-            'chat_atendimento_ativo' => 1,
-            'chat_atendimento_iniciado_em' => date('Y-m-d H:i:s'),
-            'updated_at' => date('Y-m-d H:i:s')
-        ]);
+        // Atualizar solicitação usando SQL direto para garantir que os campos sejam salvos
+        $sql = "
+            UPDATE solicitacoes 
+            SET chat_whatsapp_instance_id = ?,
+                chat_atendimento_ativo = 1,
+                chat_atendimento_iniciado_em = ?,
+                updated_at = ?
+            WHERE id = ?
+        ";
+        
+        $params = [
+            $instanceId,
+            date('Y-m-d H:i:s'),
+            date('Y-m-d H:i:s'),
+            $solicitacaoId
+        ];
+        
+        \App\Core\Database::query($sql, $params);
+        
+        error_log("✅ Atendimento iniciado - Solicitação: $solicitacaoId, Instância: $instanceId");
     }
     
     /**
@@ -450,12 +476,22 @@ class ChatController extends Controller
             return;
         }
 
-        // Encerrar atendimento
-        $this->solicitacaoModel->update($solicitacaoId, [
-            'chat_atendimento_ativo' => 0,
-            'chat_atendimento_encerrado_em' => date('Y-m-d H:i:s'),
-            'updated_at' => date('Y-m-d H:i:s')
+        // Encerrar atendimento usando SQL direto
+        $sql = "
+            UPDATE solicitacoes 
+            SET chat_atendimento_ativo = 0,
+                chat_atendimento_encerrado_em = ?,
+                updated_at = ?
+            WHERE id = ?
+        ";
+        
+        \App\Core\Database::query($sql, [
+            date('Y-m-d H:i:s'),
+            date('Y-m-d H:i:s'),
+            $solicitacaoId
         ]);
+        
+        error_log("✅ Atendimento encerrado - Solicitação: $solicitacaoId");
 
         $this->json([
             'success' => true,

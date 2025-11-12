@@ -28,6 +28,8 @@ class Solicitacao extends Model
         'horarios_indisponiveis',
         // Campo de emergência fora do horário comercial
         'is_emergencial_fora_horario',
+        // Campos de chat WhatsApp
+        'chat_whatsapp_instance_id', 'chat_atendimento_ativo', 'chat_atendimento_iniciado_em', 'chat_atendimento_encerrado_em',
         'created_at', 'updated_at'
     ];
     protected array $casts = [
