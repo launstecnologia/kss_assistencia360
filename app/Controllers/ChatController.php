@@ -51,7 +51,9 @@ class ChatController extends Controller
                 'protocol' => $solicitacao['protocol'] ?? '',
                 'cliente_nome' => $solicitacao['cliente_nome'] ?? '',
                 'cliente_telefone' => $solicitacao['cliente_telefone'] ?? '',
-                'cliente_whatsapp' => $solicitacao['cliente_whatsapp'] ?? $solicitacao['cliente_telefone'] ?? ''
+                'cliente_whatsapp' => $solicitacao['cliente_whatsapp'] ?? $solicitacao['cliente_telefone'] ?? '',
+                'chat_whatsapp_instance_id' => $solicitacao['chat_whatsapp_instance_id'] ?? null,
+                'chat_atendimento_ativo' => (bool)($solicitacao['chat_atendimento_ativo'] ?? false)
             ]
         ]);
     }
@@ -84,15 +86,34 @@ class ChatController extends Controller
             return;
         }
 
-        // Buscar instância WhatsApp
-        $whatsappInstance = null;
-        if ($instanceId) {
-            $whatsappInstance = $this->whatsappInstanceModel->find($instanceId);
-        } else {
-            // Usar instância padrão
-            $whatsappInstance = $this->whatsappInstanceModel->getPadrao();
+        // Verificar se já existe uma instância definida para esta solicitação
+        $instanciaJaDefinida = !empty($solicitacao['chat_whatsapp_instance_id']);
+        $atendimentoAtivo = (bool)($solicitacao['chat_atendimento_ativo'] ?? false);
+        
+        // Se já existe instância definida e atendimento ativo, usar essa instância
+        if ($instanciaJaDefinida && $atendimentoAtivo) {
+            $instanceId = $solicitacao['chat_whatsapp_instance_id'];
+        } elseif ($instanciaJaDefinida && !$atendimentoAtivo) {
+            // Se a instância está definida mas o atendimento foi encerrado, não permitir enviar
+            $this->json([
+                'success' => false,
+                'message' => 'O atendimento foi encerrado. Selecione uma instância para iniciar um novo atendimento.'
+            ], 400);
+            return;
+        } elseif (!$instanciaJaDefinida && $instanceId) {
+            // Primeira vez selecionando instância - iniciar atendimento
+            $this->iniciarAtendimento($solicitacaoId, $instanceId);
+        } elseif (!$instanciaJaDefinida && !$instanceId) {
+            $this->json([
+                'success' => false,
+                'message' => 'Selecione uma instância WhatsApp para iniciar o atendimento'
+            ], 400);
+            return;
         }
 
+        // Buscar instância WhatsApp
+        $whatsappInstance = $this->whatsappInstanceModel->find($instanceId);
+        
         if (!$whatsappInstance || $whatsappInstance['status'] !== 'CONECTADO') {
             $this->json([
                 'success' => false,
@@ -100,18 +121,18 @@ class ChatController extends Controller
             ], 400);
             return;
         }
-
-        // Obter número do destinatário (locatário)
-        // Número padrão para testes: 16997360690
-        $numeroDestinatario = $solicitacao['locatario_telefone'] ?? 
-                             $solicitacao['cliente_telefone'] ?? 
-                             $solicitacao['cliente_whatsapp'] ?? 
-                             '16997360690'; // Número padrão registrado
         
-        // Se ainda estiver vazio, usar o número padrão
-        if (empty($numeroDestinatario)) {
-            $numeroDestinatario = '16997360690';
+        // Verificar se a instância está sendo usada em outra solicitação ativa
+        if ($this->instanciaEmUso($instanceId, $solicitacaoId)) {
+            $this->json([
+                'success' => false,
+                'message' => 'Esta instância está sendo usada em outro atendimento ativo'
+            ], 400);
+            return;
         }
+
+        // Número fixo para envio de mensagens: 16997360690
+        $numeroDestinatario = '16997360690';
 
         // Formatar número para Evolution API
         $numeroFormatado = $this->formatWhatsAppNumber($numeroDestinatario);
@@ -350,18 +371,95 @@ class ChatController extends Controller
     public function getInstancias(): void
     {
         $this->requireAdmin();
+        
+        $solicitacaoId = $_GET['solicitacao_id'] ?? null;
 
         $instancias = $this->whatsappInstanceModel->getAtivas();
         
-        // Debug: log para verificar se está retornando instâncias
-        error_log('ChatController::getInstancias - Total de instâncias encontradas: ' . count($instancias));
-        if (!empty($instancias)) {
-            error_log('ChatController::getInstancias - Primeira instância: ' . json_encode($instancias[0]));
+        // Filtrar instâncias que estão em uso em outras solicitações ativas
+        $instanciasDisponiveis = [];
+        foreach ($instancias as $instancia) {
+            $emUso = $this->instanciaEmUso($instancia['id'], $solicitacaoId);
+            $instancia['disponivel'] = !$emUso;
+            $instancia['em_uso_em_outro_atendimento'] = $emUso;
+            $instanciasDisponiveis[] = $instancia;
         }
 
         $this->json([
             'success' => true,
-            'instancias' => $instancias
+            'instancias' => $instanciasDisponiveis
+        ]);
+    }
+    
+    /**
+     * Verifica se uma instância está em uso em outra solicitação ativa
+     */
+    private function instanciaEmUso(int $instanceId, ?int $excluirSolicitacaoId = null): bool
+    {
+        $sql = "
+            SELECT COUNT(*) as total
+            FROM solicitacoes
+            WHERE chat_whatsapp_instance_id = ?
+              AND chat_atendimento_ativo = 1
+        ";
+        
+        $params = [$instanceId];
+        
+        if ($excluirSolicitacaoId) {
+            $sql .= " AND id != ?";
+            $params[] = $excluirSolicitacaoId;
+        }
+        
+        $result = \App\Core\Database::fetch($sql, $params);
+        return ($result['total'] ?? 0) > 0;
+    }
+    
+    /**
+     * Inicia atendimento vinculando instância à solicitação
+     */
+    private function iniciarAtendimento(int $solicitacaoId, int $instanceId): void
+    {
+        // Verificar se a instância está disponível
+        if ($this->instanciaEmUso($instanceId, $solicitacaoId)) {
+            throw new \Exception('Esta instância está sendo usada em outro atendimento ativo');
+        }
+        
+        // Atualizar solicitação
+        $this->solicitacaoModel->update($solicitacaoId, [
+            'chat_whatsapp_instance_id' => $instanceId,
+            'chat_atendimento_ativo' => 1,
+            'chat_atendimento_iniciado_em' => date('Y-m-d H:i:s'),
+            'updated_at' => date('Y-m-d H:i:s')
+        ]);
+    }
+    
+    /**
+     * Encerra atendimento e libera instância
+     * POST /admin/chat/{solicitacao_id}/encerrar
+     */
+    public function encerrarAtendimento(int $solicitacaoId): void
+    {
+        $this->requireAdmin();
+
+        $solicitacao = $this->solicitacaoModel->find($solicitacaoId);
+        if (!$solicitacao) {
+            $this->json([
+                'success' => false,
+                'message' => 'Solicitação não encontrada'
+            ], 404);
+            return;
+        }
+
+        // Encerrar atendimento
+        $this->solicitacaoModel->update($solicitacaoId, [
+            'chat_atendimento_ativo' => 0,
+            'chat_atendimento_encerrado_em' => date('Y-m-d H:i:s'),
+            'updated_at' => date('Y-m-d H:i:s')
+        ]);
+
+        $this->json([
+            'success' => true,
+            'message' => 'Atendimento encerrado com sucesso. A instância foi liberada.'
         ]);
     }
 }

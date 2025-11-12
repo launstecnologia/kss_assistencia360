@@ -99,6 +99,7 @@ $router->get('/admin/solicitacoes/{id}', 'SolicitacoesController@show', ['auth']
 // Rotas do chat
 $router->get('/admin/chat/{solicitacao_id}/mensagens', 'ChatController@getMensagens', ['auth']);
 $router->post('/admin/chat/{solicitacao_id}/enviar', 'ChatController@enviarMensagem', ['auth']);
+$router->post('/admin/chat/{solicitacao_id}/encerrar', 'ChatController@encerrarAtendimento', ['auth']);
 $router->get('/admin/chat/instancias', 'ChatController@getInstancias', ['auth']);
 $router->post('/admin/solicitacoes/{id}/status', 'SolicitacoesController@updateStatus', ['auth']);
 $router->post('/admin/solicitacoes/{id}/confirmar-horario', 'SolicitacoesController@confirmarHorario', ['auth']);
