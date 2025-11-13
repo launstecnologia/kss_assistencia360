@@ -161,7 +161,7 @@ $steps = [
                                     }
                                 }
                                 ?>
-                                <div class="endereco-item-<?= $index ?>" data-endereco="<?= $index ?>" style="margin-bottom:12px;">
+                                <div class="endereco-item-<?= $index ?>" data-endereco="<?= $index ?>" data-contrato="<?= htmlspecialchars($contratoInfo) ?>" style="margin-bottom:12px;">
                                     <input type="radio" name="endereco_selecionado" value="<?= $index ?>" id="end-<?= $index ?>" style="position:absolute;opacity:0;" <?= $index == 0 ? 'checked' : '' ?>>
                                     <label for="end-<?= $index ?>" style="display:block;border:2px solid <?= $index == 0 ? '#10b981' : '#d1d5db' ?>;background:<?= $index == 0 ? '#ecfdf5' : '#fff' ?>;border-radius:8px;padding:16px;cursor:pointer;">
                                         <div style="display:flex;justify-content:space-between;align-items:flex-start;">
@@ -308,11 +308,11 @@ $steps = [
                     <div class="space-y-3">
                         <?php if (!empty($categorias)): ?>
                             <?php foreach ($categorias as $categoria): ?>
-                                <label class="relative block">
+                                <label class="relative block categoria-label" data-categoria-label="<?= $categoria['id'] ?>" style="position: relative;">
                                     <input type="radio" name="categoria_id" value="<?= $categoria['id'] ?>" 
                                            class="sr-only categoria-radio" data-categoria="<?= $categoria['id'] ?>">
-                                    <div class="border-2 rounded-lg p-4 cursor-pointer transition-all hover:border-blue-300 categoria-card" 
-                                         data-categoria="<?= $categoria['id'] ?>">
+                                    <div class="border-2 rounded-lg p-4 cursor-pointer transition-all hover:border-blue-300 categoria-card relative" 
+                                         data-categoria="<?= $categoria['id'] ?>" style="position: relative;">
                                         <div class="flex items-center justify-between">
                                             <div class="flex items-center">
                                                 <i class="<?= $categoria['icone'] ?? 'fas fa-cog' ?> text-xl text-gray-600 mr-3"></i>
@@ -505,20 +505,6 @@ $steps = [
         <div class="p-6">
             <!-- Avisos Importantes (não desaparecem mais) -->
             <div class="mb-6 space-y-3 relative z-0">
-                <?php if ($isEmergencial): ?>
-                    <div class="bg-red-50 border border-red-200 rounded-lg p-4">
-                        <div class="flex items-start">
-                            <i class="fas fa-exclamation-triangle text-red-600 mr-3 mt-0.5"></i>
-                            <div>
-                                <h4 class="text-sm font-medium text-red-800">Atendimento Emergencial</h4>
-                                <p class="text-sm text-red-700 mt-1">
-                                    Esta é uma solicitação de emergência. O atendimento será processado imediatamente sem necessidade de agendamento. Você receberá retorno em até 120 minutos.
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                <?php endif; ?>
-                
                 <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                     <div class="flex items-start">
                         <i class="fas fa-exclamation-triangle text-yellow-600 mr-3 mt-0.5"></i>
@@ -549,29 +535,34 @@ $steps = [
                 <input type="hidden" name="is_emergencial" value="<?= $isEmergencial ? '1' : '0' ?>">
                 
                 <?php if ($isEmergencial): ?>
-                    <!-- Emergencial: Duas opções -->
+                    <!-- Emergencial: Duas opções (ou uma se fora do horário) -->
                     <div class="space-y-4">
-                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                            <div class="text-sm text-blue-800">
-                                <p class="font-medium mb-2">Escolha como deseja prosseguir:</p>
+                        <?php if (!$isForaHorario): ?>
+                            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                                <div class="text-sm text-blue-800">
+                                    <p class="font-medium mb-2">Escolha como deseja prosseguir:</p>
+                                </div>
                             </div>
-                        </div>
+                        <?php endif; ?>
                         
-                        <!-- Opção 1: Atendimento em 120 minutos -->
+                        <!-- Opção 1: Atendimento em 120 minutos / Atendimento Emergencial -->
                         <label class="relative block cursor-pointer">
-                            <input type="radio" name="tipo_atendimento_emergencial" value="120_minutos" checked 
-                                   class="sr-only tipo-atendimento-radio" id="opcao_120_minutos">
-                            <div class="border-2 border-green-500 rounded-lg p-4 bg-green-50 hover:bg-green-100 transition-colors tipo-atendimento-card">
+                            <input type="radio" name="tipo_atendimento_emergencial" value="120_minutos" 
+                                   class="sr-only tipo-atendimento-radio" id="opcao_120_minutos"
+                                   <?= $isForaHorario ? 'checked' : '' ?>>
+                            <div class="border-2 <?= $isForaHorario ? 'border-green-500 bg-green-50' : 'border-gray-200 bg-white' ?> rounded-lg p-4 hover:border-green-300 hover:bg-green-50 transition-colors tipo-atendimento-card">
                                 <div class="flex items-start">
                                     <div class="flex-shrink-0 mt-1">
-                                        <div class="w-5 h-5 border-2 border-green-600 rounded-full bg-green-600 flex items-center justify-center tipo-atendimento-check">
-                                            <i class="fas fa-check text-white text-xs"></i>
+                                        <div class="w-5 h-5 border-2 <?= $isForaHorario ? 'border-green-600 bg-green-600 flex items-center justify-center rounded-full' : 'border-gray-300 rounded-full' ?> tipo-atendimento-check">
+                                            <?php if ($isForaHorario): ?>
+                                                <i class="fas fa-check text-white text-xs"></i>
+                                            <?php endif; ?>
                                         </div>
                                     </div>
                                     <div class="ml-3 flex-1">
                                         <h4 class="text-sm font-semibold text-gray-900 mb-1">
                                             <i class="fas fa-bolt text-yellow-500 mr-2"></i>
-                                            Solicitar Atendimento em 120 minutos
+                                            <?= $isForaHorario ? 'Solicitar atendimento emergencial' : 'Solicitar Atendimento em 120 minutos' ?>
                                         </h4>
                                         <p class="text-xs text-gray-600">
                                             Sua solicitação será processada imediatamente. O atendimento será agendado automaticamente e você receberá retorno em até 120 minutos.
@@ -581,35 +572,43 @@ $steps = [
                             </div>
                         </label>
                         
-                        <!-- Opção 2: Agendar -->
-                        <label class="relative block cursor-pointer">
-                            <input type="radio" name="tipo_atendimento_emergencial" value="agendar" 
-                                   class="sr-only tipo-atendimento-radio" id="opcao_agendar">
-                            <div class="border-2 border-gray-200 rounded-lg p-4 bg-white hover:border-blue-300 hover:bg-blue-50 transition-colors tipo-atendimento-card">
+                        <!-- Box de Atendimento Emergencial (aparece quando "120 minutos" está selecionado) -->
+                        <div id="box-atendimento-emergencial" class="<?= $isForaHorario ? '' : 'hidden' ?> mt-3">
+                            <div class="bg-red-50 border border-red-200 rounded-lg p-4">
                                 <div class="flex items-start">
-                                    <div class="flex-shrink-0 mt-1">
-                                        <div class="w-5 h-5 border-2 border-gray-300 rounded-full tipo-atendimento-check"></div>
-                                    </div>
-                                    <div class="ml-3 flex-1">
-                                        <h4 class="text-sm font-semibold text-gray-900 mb-1">
-                                            <i class="fas fa-calendar-alt text-blue-500 mr-2"></i>
-                                            Agendar
-                                        </h4>
-                                        <p class="text-xs text-gray-600">
-                                            Se preferir, você pode agendar um horário específico para o atendimento.
+                                    <i class="fas fa-exclamation-triangle text-red-600 mr-3 mt-0.5"></i>
+                                    <div>
+                                        <h4 class="text-sm font-medium text-red-800">Atendimento Emergencial</h4>
+                                        <p class="text-sm text-red-700 mt-1">
+                                            Esta é uma solicitação de emergência. O atendimento será processado imediatamente sem necessidade de agendamento. Você receberá retorno em até 120 minutos.
                                         </p>
                                     </div>
                                 </div>
                             </div>
-                        </label>
+                        </div>
                         
-                        <?php if ($isForaHorario && $telefoneEmergencia): ?>
-                            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-                                <p class="text-sm text-yellow-800">
-                                    <i class="fas fa-phone mr-2"></i>
-                                    <strong>Fora do horário comercial:</strong> Ligue para <strong><?= htmlspecialchars($telefoneEmergencia['numero']) ?></strong>
-                                </p>
-                            </div>
+                        <!-- Opção 2: Agendar (oculta quando fora do horário) -->
+                        <?php if (!$isForaHorario): ?>
+                            <label class="relative block cursor-pointer">
+                                <input type="radio" name="tipo_atendimento_emergencial" value="agendar" 
+                                       class="sr-only tipo-atendimento-radio" id="opcao_agendar">
+                                <div class="border-2 border-gray-200 rounded-lg p-4 bg-white hover:border-blue-300 hover:bg-blue-50 transition-colors tipo-atendimento-card">
+                                    <div class="flex items-start">
+                                        <div class="flex-shrink-0 mt-1">
+                                            <div class="w-5 h-5 border-2 border-gray-300 rounded-full tipo-atendimento-check"></div>
+                                        </div>
+                                        <div class="ml-3 flex-1">
+                                            <h4 class="text-sm font-semibold text-gray-900 mb-1">
+                                                <i class="fas fa-calendar-alt text-blue-500 mr-2"></i>
+                                                Agendar
+                                            </h4>
+                                            <p class="text-xs text-gray-600">
+                                                Se preferir, você pode agendar um horário específico para o atendimento.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </label>
                         <?php endif; ?>
                         
                         <!-- Seção de Agendamento (oculta por padrão, aparece quando selecionar "Agendar") -->
@@ -906,14 +905,8 @@ $steps = [
             <?php
             // Verificar se é emergencial e fora do horário comercial
             $dados = $_SESSION['nova_solicitacao'] ?? [];
-            $subcategoriaModel = new \App\Models\Subcategoria();
-            $subcategoriaId = $dados['subcategoria_id'] ?? 0;
-            $subcategoria = $subcategoriaModel->find($subcategoriaId);
-            $isEmergencial = !empty($subcategoria['is_emergencial']);
-            
-            // Verificar se está fora do horário comercial usando configurações
-            $configuracaoModel = new \App\Models\Configuracao();
-            $isForaHorario = $configuracaoModel->isForaHorarioComercial();
+            $isEmergencial = !empty($dados['is_emergencial']);
+            $isForaHorario = !empty($dados['is_fora_horario']);
             
             // Buscar telefone de emergência
             $telefoneEmergenciaModel = new \App\Models\TelefoneEmergencia();
@@ -934,27 +927,6 @@ $steps = [
                     </label>
                 </div>
                 
-                <?php if ($isEmergencial && $isForaHorario && $telefoneEmergencia): ?>
-                    <!-- Botão para ligar 0800 (emergencial fora do horário comercial) -->
-                    <div class="bg-red-50 border border-red-200 rounded-lg p-4">
-                        <div class="flex items-start">
-                            <i class="fas fa-phone-alt text-red-600 mr-3 mt-0.5"></i>
-                            <div class="flex-1">
-                                <h4 class="text-sm font-medium text-red-800 mb-2">Atendimento Fora do Horário Comercial</h4>
-                                <p class="text-sm text-red-700 mb-3">
-                                    Como sua solicitação é emergencial e está sendo feita fora do horário comercial, ligue para o nosso telefone de emergência:
-                                </p>
-                                <a href="tel:<?= preg_replace('/[^0-9+]/', '', $telefoneEmergencia['numero']) ?>" 
-                                   class="inline-flex items-center px-6 py-3 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition-colors"
-                                   onclick="if(navigator.userAgent.match(/iPhone|iPad|iPod/i)) { window.location.href='tel:<?= preg_replace('/[^0-9+]/', '', $telefoneEmergencia['numero']) ?>'; return false; }">
-                                    <i class="fas fa-phone mr-2"></i>
-                                    Ligar <?= htmlspecialchars($telefoneEmergencia['numero']) ?>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                <?php endif; ?>
-                
                 <!-- Navigation -->
                 <div class="flex justify-between pt-6">
                     <a href="<?= url($locatario['instancia'] . '/nova-solicitacao/etapa/4') ?>" 
@@ -962,8 +934,12 @@ $steps = [
                         Voltar
                     </a>
                     <button type="submit" id="btn-finalizar"
-                            class="px-6 py-3 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors">
-                        Finalizar Solicitação
+                            class="px-6 py-3 <?= ($isEmergencial && $isForaHorario) ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700' ?> text-white font-medium rounded-lg transition-colors"
+                            <?php if ($isEmergencial && $isForaHorario && $telefoneEmergencia): ?>
+                            data-emergencia-fora-horario="true"
+                            data-telefone="<?= htmlspecialchars($telefoneEmergencia['numero']) ?>"
+                            <?php endif; ?>>
+                        <?= ($isEmergencial && $isForaHorario) ? 'Solicitar Emergência' : 'Finalizar Solicitação' ?>
                     </button>
                 </div>
             </form>
@@ -1129,7 +1105,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (btnFinalizar) {
         const formFinalizar = btnFinalizar.closest('form');
         if (formFinalizar) {
-            formFinalizar.addEventListener('submit', function(e) {
+            formFinalizar.addEventListener('submit', async function(e) {
                 // Verificar se o termo foi aceito
                 const termoAceite = formFinalizar.querySelector('input[name="termo_aceite"]');
                 if (!termoAceite || !termoAceite.checked) {
@@ -1139,27 +1115,73 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 
                 // Verificar se é emergencial e fora do horário
-                const telefoneEmergenciaLink = document.querySelector('a[href^="tel:"]');
-                if (telefoneEmergenciaLink) {
-                    const telefoneNumero = telefoneEmergenciaLink.textContent.replace('Ligar ', '').trim();
-                    const telefoneHref = telefoneEmergenciaLink.getAttribute('href');
+                const isEmergenciaForaHorario = btnFinalizar.getAttribute('data-emergencia-fora-horario') === 'true';
+                const telefone = btnFinalizar.getAttribute('data-telefone');
+                
+                if (isEmergenciaForaHorario && telefone) {
+                    e.preventDefault();
                     
-                    // Mostrar modal/confirmação com o número
-                    const confirmar = confirm(
-                        '⚠️ ATENÇÃO: Sua solicitação é emergencial e está sendo feita fora do horário comercial.\n\n' +
-                        '📞 Ligue para o nosso telefone de emergência:\n' +
-                        telefoneNumero + '\n\n' +
-                        'Deseja continuar com a finalização da solicitação?'
-                    );
-                    
-                    if (!confirmar) {
-                        e.preventDefault();
-                        // Abrir o link de telefone
-                        window.location.href = telefoneHref;
-                        return;
+                    // Mostrar loading
+                    const loadingOverlay = document.getElementById('loading-overlay');
+                    if (loadingOverlay) {
+                        loadingOverlay.classList.remove('hidden');
                     }
+                    
+                    // Desabilitar botão
+                    btnFinalizar.disabled = true;
+                    btnFinalizar.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Salvando...';
+                    
+                    try {
+                        // Criar FormData e enviar para salvar no kanban
+                        const formData = new FormData(formFinalizar);
+                        
+                        const response = await fetch(formFinalizar.action, {
+                            method: 'POST',
+                            body: formData,
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest'
+                            }
+                        });
+                        
+                        const result = await response.json();
+                        
+                        if (result.success) {
+                            // Após salvar, abrir o telefone imediatamente
+                            const telefoneHref = 'tel:' + telefone.replace(/[^0-9+]/g, '');
+                            
+                            // Abrir o link de telefone
+                            window.location.href = telefoneHref;
+                            
+                            // Redirecionar após um pequeno delay (para dar tempo do telefone abrir)
+                            setTimeout(() => {
+                                if (result.redirect) {
+                                    window.location.href = result.redirect;
+                                } else {
+                                    window.location.href = '<?= url($locatario['instancia'] . '/solicitacoes') ?>';
+                                }
+                            }, 2000);
+                        } else {
+                            alert('Erro ao salvar solicitação: ' + (result.message || 'Erro desconhecido'));
+                            btnFinalizar.disabled = false;
+                            btnFinalizar.innerHTML = 'Solicitar Emergência';
+                            if (loadingOverlay) {
+                                loadingOverlay.classList.add('hidden');
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Erro:', error);
+                        alert('Erro ao processar solicitação. Tente novamente.');
+                        btnFinalizar.disabled = false;
+                        btnFinalizar.innerHTML = 'Solicitar Emergência';
+                        if (loadingOverlay) {
+                            loadingOverlay.classList.add('hidden');
+                        }
+                    }
+                    
+                    return;
                 }
                 
+                // Para solicitações normais, continuar com o fluxo padrão
                 // Mostrar loading
                 const loadingOverlay = document.getElementById('loading-overlay');
                 if (loadingOverlay) {
@@ -1203,6 +1225,143 @@ document.addEventListener('DOMContentLoaded', function() {
     const categoriaRadios = document.querySelectorAll('.categoria-radio');
     const categoriaCards = document.querySelectorAll('.categoria-card');
     
+    // Função para mostrar modal de limite atingido (definida aqui para estar disponível)
+    window.mostrarModalLimite = function(totalAtual, limite) {
+        const modal = document.getElementById('modal-limite-atingido');
+        const mensagem = document.getElementById('modal-limite-mensagem');
+        
+        if (!modal || !mensagem) {
+            // Fallback para alert se modal não estiver disponível
+            alert(`Você já possui ${totalAtual} solicitação${totalAtual > 1 ? 'ões' : ''} desta categoria nos últimos 12 meses. O limite permitido é de ${limite} solicitação${limite > 1 ? 'ões' : ''}.`);
+            return;
+        }
+        
+        const textoMensagem = `Você já possui <strong>${totalAtual}</strong> solicitação${totalAtual > 1 ? 'ões' : ''} desta categoria nos últimos 12 meses. O limite permitido é de <strong>${limite}</strong> solicitação${limite > 1 ? 'ões' : ''}.`;
+        
+        mensagem.innerHTML = textoMensagem;
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        
+        // Prevenir scroll do body quando modal estiver aberto
+        document.body.style.overflow = 'hidden';
+    };
+    
+    // Verificar limites de todas as categorias ao carregar a página
+    function verificarLimitesCategorias() {
+        const enderecoSelecionado = document.querySelector('input[name="endereco_selecionado"]:checked');
+        if (!enderecoSelecionado) {
+            return;
+        }
+        
+        const enderecoIndex = enderecoSelecionado.value;
+        const enderecoItem = document.querySelector(`.endereco-item-${enderecoIndex}`);
+        if (!enderecoItem) {
+            return;
+        }
+        
+        const numeroContrato = enderecoItem.getAttribute('data-contrato') || '';
+        if (!numeroContrato) {
+            return;
+        }
+        
+        const instancia = '<?= $locatario["instancia"] ?? "" ?>';
+        
+        categoriaCards.forEach(card => {
+            const categoriaId = card.getAttribute('data-categoria');
+            if (!categoriaId) return;
+            
+            fetch(`/${instancia}/verificar-limite-categoria?categoria_id=${categoriaId}&numero_contrato=${encodeURIComponent(numeroContrato)}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && !data.permitido) {
+                        // Apenas desabilitar visualmente a categoria (sem bloquear cliques)
+                        card.classList.add('opacity-60', 'cursor-not-allowed', 'bg-gray-50', 'border-gray-300');
+                        card.classList.remove('hover:border-blue-300', 'cursor-pointer', 'border-gray-200');
+                        card.style.cursor = 'not-allowed';
+                        
+                        // Adicionar ícone de bloqueio visual
+                        const iconContainer = card.querySelector('.flex.items-center');
+                        if (iconContainer && !iconContainer.querySelector('.fa-lock')) {
+                            const lockIcon = document.createElement('i');
+                            lockIcon.className = 'fas fa-lock text-gray-400 mr-2';
+                            iconContainer.insertBefore(lockIcon, iconContainer.firstChild);
+                        }
+                        
+                        // Adicionar atributo para identificar como desabilitada
+                        card.setAttribute('data-limite-atingido', 'true');
+                        card.setAttribute('data-total-atual', data.total_atual);
+                        card.setAttribute('data-limite', data.limite);
+                        
+                        // Desabilitar o radio
+                        const radio = document.querySelector(`.categoria-radio[value="${categoriaId}"]`);
+                        if (radio) {
+                            radio.disabled = true;
+                            radio.setAttribute('data-limite-atingido', 'true');
+                            radio.setAttribute('data-total-atual', data.total_atual);
+                            radio.setAttribute('data-limite', data.limite);
+                        }
+                        
+                        // Apenas visual no label
+                        const label = card.closest('label.categoria-label');
+                        if (label) {
+                            label.style.cursor = 'not-allowed';
+                            label.classList.add('opacity-60');
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro ao verificar limite da categoria:', error);
+                });
+        });
+    }
+    
+    // Verificar limites quando a página carregar
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', verificarLimitesCategorias);
+    } else {
+        verificarLimitesCategorias();
+    }
+    
+    // Verificar limites quando mudar o endereço selecionado
+    document.querySelectorAll('input[name="endereco_selecionado"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            // Reabilitar todas as categorias primeiro
+            categoriaCards.forEach(card => {
+                card.classList.remove('opacity-60', 'cursor-not-allowed', 'bg-gray-50', 'border-gray-300', 'pointer-events-none');
+                card.classList.add('hover:border-blue-300', 'cursor-pointer', 'border-gray-200');
+                card.style.pointerEvents = '';
+                card.style.cursor = '';
+                card.removeAttribute('data-limite-atingido');
+                card.removeAttribute('tabindex');
+                
+                // Remover ícone de bloqueio se existir
+                const lockIcon = card.querySelector('.fa-lock');
+                if (lockIcon) {
+                    lockIcon.remove();
+                }
+                
+                const categoriaId = card.getAttribute('data-categoria');
+                const radioInput = document.querySelector(`.categoria-radio[value="${categoriaId}"]`);
+                if (radioInput) {
+                    radioInput.disabled = false;
+                    radioInput.removeAttribute('data-limite-atingido');
+                    radioInput.removeAttribute('data-total-atual');
+                    radioInput.removeAttribute('data-limite');
+                }
+                
+                // Reabilitar o label também
+                const label = card.closest('label.categoria-label');
+                if (label) {
+                    label.style.cursor = '';
+                    label.classList.remove('opacity-60');
+                }
+            });
+            
+            // Verificar limites novamente
+            setTimeout(verificarLimitesCategorias, 100);
+        });
+    });
+    
     categoriaRadios.forEach(radio => {
         radio.addEventListener('change', function() {
             const categoriaId = this.value;
@@ -1224,37 +1383,43 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             });
             
-            // Selecionar o card atual (específico para .categoria-card)
+            // Selecionar o card atual
             const currentCard = document.querySelector(`.categoria-card[data-categoria="${categoriaId}"]`);
             if (currentCard) {
-                currentCard.classList.remove('border-gray-200');
-                currentCard.classList.add('border-blue-500', 'bg-blue-50');
-                
-                const check = currentCard.querySelector('.categoria-check');
-                if (check) {
-                    check.classList.remove('border-gray-300');
-                    check.classList.add('bg-blue-500', 'border-blue-500');
-                }
-                
-                const details = currentCard.querySelector('.categoria-details');
-                if (details) {
-                    details.classList.remove('hidden');
-                }
+                selecionarCardCategoria(categoriaId, currentCard);
             }
         });
     });
     
+    // Função auxiliar para selecionar card de categoria
+    function selecionarCardCategoria(categoriaId, cardElement) {
+        cardElement.classList.remove('border-gray-200');
+        cardElement.classList.add('border-blue-500', 'bg-blue-50');
+        
+        const check = cardElement.querySelector('.categoria-check');
+        if (check) {
+            check.classList.remove('border-gray-300');
+            check.classList.add('bg-blue-500', 'border-blue-500');
+        }
+        
+        const details = cardElement.querySelector('.categoria-details');
+        if (details) {
+            details.classList.remove('hidden');
+        }
+    }
+    
     // Click no card também seleciona o radio
     categoriaCards.forEach(card => {
-        card.addEventListener('click', function() {
+        card.addEventListener('click', function(e) {
             const categoriaId = this.getAttribute('data-categoria');
             const radio = document.querySelector(`.categoria-radio[value="${categoriaId}"]`);
-            if (radio) {
+            if (radio && !radio.disabled) {
                 radio.checked = true;
                 radio.dispatchEvent(new Event('change'));
             }
         });
     });
+    
     
     // === SUBCATEGORIAS: Seleção visual ===
     document.addEventListener('change', function(e) {
@@ -1356,6 +1521,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Sistema de agendamento para emergencial
     const tipoAtendimentoRadios = document.querySelectorAll('.tipo-atendimento-radio');
     const secaoAgendamentoEmergencial = document.getElementById('secao-agendamento-emergencial');
+    const boxAtendimentoEmergencial = document.getElementById('box-atendimento-emergencial');
     const btnContinuar = document.getElementById('btn-continuar');
     
     // Função para atualizar visual e exibição baseado no tipo selecionado
@@ -1404,6 +1570,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 check.style.display = 'flex';
                 console.log('✅ Check 120 minutos atualizado');
             }
+            // Mostrar box de atendimento emergencial
+            if (boxAtendimentoEmergencial) {
+                boxAtendimentoEmergencial.classList.remove('hidden');
+                boxAtendimentoEmergencial.style.display = 'block';
+            }
             // Ocultar seção de agendamento
             if (secaoAgendamentoEmergencial) {
                 secaoAgendamentoEmergencial.classList.add('hidden');
@@ -1427,6 +1598,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 check.innerHTML = '<i class="fas fa-check text-white text-xs"></i>';
                 check.style.display = 'flex';
                 console.log('✅ Check Agendar atualizado');
+            }
+            // Ocultar box de atendimento emergencial
+            if (boxAtendimentoEmergencial) {
+                boxAtendimentoEmergencial.classList.add('hidden');
+                boxAtendimentoEmergencial.style.display = 'none';
             }
             // Mostrar seção de agendamento
             if (secaoAgendamentoEmergencial) {
@@ -1509,21 +1685,33 @@ document.addEventListener('DOMContentLoaded', function() {
         const radioAgendar = document.getElementById('opcao_agendar');
         
         if (radio120Minutos && radio120Minutos.checked) {
-            // Se "120 minutos" está selecionado, ocultar seção de agendamento
+            // Se "120 minutos" está selecionado, mostrar box de emergência e ocultar seção de agendamento
+            if (boxAtendimentoEmergencial) {
+                boxAtendimentoEmergencial.classList.remove('hidden');
+                boxAtendimentoEmergencial.style.display = 'block';
+            }
             if (secaoAgendamentoEmergencial) {
                 secaoAgendamentoEmergencial.classList.add('hidden');
                 secaoAgendamentoEmergencial.style.display = 'none';
             }
             atualizarTipoAtendimento('120_minutos');
         } else if (radioAgendar && radioAgendar.checked) {
-            // Se "Agendar" está selecionado, mostrar seção de agendamento
+            // Se "Agendar" está selecionado, ocultar box de emergência e mostrar seção de agendamento
+            if (boxAtendimentoEmergencial) {
+                boxAtendimentoEmergencial.classList.add('hidden');
+                boxAtendimentoEmergencial.style.display = 'none';
+            }
             if (secaoAgendamentoEmergencial) {
                 secaoAgendamentoEmergencial.classList.remove('hidden');
                 secaoAgendamentoEmergencial.style.display = 'block';
             }
             atualizarTipoAtendimento('agendar');
         } else {
-            // Por padrão, se nenhum estiver selecionado, ocultar
+            // Por padrão, se nenhum estiver selecionado, ocultar ambos
+            if (boxAtendimentoEmergencial) {
+                boxAtendimentoEmergencial.classList.add('hidden');
+                boxAtendimentoEmergencial.style.display = 'none';
+            }
             if (secaoAgendamentoEmergencial) {
                 secaoAgendamentoEmergencial.classList.add('hidden');
                 secaoAgendamentoEmergencial.style.display = 'none';
@@ -1553,6 +1741,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (!horariosEscolhidosEmergencial.includes(horarioCompleto) && horariosEscolhidosEmergencial.length < 3) {
                     horariosEscolhidosEmergencial.push(horarioCompleto);
                     atualizarListaHorariosEmergencial();
+                    
+                    // Atualizar visual do card selecionado
+                    const label = this.closest('label');
+                    const card = label ? label.querySelector('.horario-card-emergencial') : null;
+                    if (card) {
+                        // Remover seleção de todos os cards primeiro
+                        horarioCardsEmergencial.forEach(c => {
+                            c.classList.remove('border-green-500', 'bg-green-50');
+                            c.classList.add('border-gray-200', 'bg-white');
+                        });
+                        // Destacar o card selecionado
+                        card.classList.remove('border-gray-200', 'bg-white');
+                        card.classList.add('border-green-500', 'bg-green-50');
+                    }
                 }
             }
         });
@@ -1587,13 +1789,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             
-            // Limpar horários selecionados quando mudar a data
-            horariosEscolhidosEmergencial = [];
-            atualizarListaHorariosEmergencial();
-            
-            // Desmarcar todos os horários
+            // Apenas desmarcar os radio buttons visuais, mas manter os horários já selecionados na lista
+            // Não limpar horariosEscolhidosEmergencial para manter os horários de datas anteriores
             horarioRadiosEmergencial.forEach(radio => {
                 radio.checked = false;
+            });
+            
+            // Atualizar visual dos cards de horário para remover seleção visual
+            horarioCardsEmergencial.forEach(card => {
+                card.classList.remove('border-green-500', 'bg-green-50');
+                card.classList.add('border-gray-200', 'bg-white');
             });
         });
     }
@@ -1851,6 +2056,99 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             });
         });
+    }
+});
+</script>
+
+<!-- Modal de Limite Atingido -->
+<div id="modal-limite-atingido" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
+        <div class="p-6">
+            <!-- Header do Modal -->
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center">
+                    <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mr-3">
+                        <i class="fas fa-exclamation-triangle text-red-600 text-xl"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900">Limite Atingido</h3>
+                </div>
+                <button type="button" id="fechar-modal-limite" class="text-gray-400 hover:text-gray-600 transition-colors">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <!-- Conteúdo do Modal -->
+            <div class="mb-6">
+                <p class="text-sm text-gray-700 mb-4" id="modal-limite-mensagem">
+                    <!-- Mensagem será inserida aqui via JavaScript -->
+                </p>
+                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                    <p class="text-xs text-yellow-800">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        <strong>Importante:</strong> O limite é calculado com base nas solicitações dos últimos 12 meses para esta categoria.
+                    </p>
+                </div>
+            </div>
+            
+            <!-- Botão de Fechar -->
+            <div class="flex justify-end">
+                <button type="button" id="btn-fechar-modal-limite" class="px-6 py-2 bg-gray-600 text-white font-medium rounded-lg hover:bg-gray-700 transition-colors">
+                    Entendi
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Função para fechar modal
+function fecharModalLimite() {
+    const modal = document.getElementById('modal-limite-atingido');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        document.body.style.overflow = '';
+    }
+}
+
+// Event listeners para fechar modal (aguardar DOM estar pronto)
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function() {
+        document.getElementById('fechar-modal-limite')?.addEventListener('click', fecharModalLimite);
+        document.getElementById('btn-fechar-modal-limite')?.addEventListener('click', fecharModalLimite);
+        
+        // Fechar modal ao clicar fora dele
+        const modal = document.getElementById('modal-limite-atingido');
+        if (modal) {
+            modal.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    fecharModalLimite();
+                }
+            });
+        }
+    });
+} else {
+    document.getElementById('fechar-modal-limite')?.addEventListener('click', fecharModalLimite);
+    document.getElementById('btn-fechar-modal-limite')?.addEventListener('click', fecharModalLimite);
+    
+    // Fechar modal ao clicar fora dele
+    const modal = document.getElementById('modal-limite-atingido');
+    if (modal) {
+        modal.addEventListener('click', function(e) {
+            if (e.target === this) {
+                fecharModalLimite();
+            }
+        });
+    }
+}
+
+// Fechar modal com ESC
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        const modal = document.getElementById('modal-limite-atingido');
+        if (modal && !modal.classList.contains('hidden')) {
+            fecharModalLimite();
+        }
     }
 });
 </script>

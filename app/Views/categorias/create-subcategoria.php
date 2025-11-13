@@ -80,13 +80,18 @@ ob_start();
                 <label for="nome" class="block text-sm font-medium text-gray-700">
                     Nome da Subcategoria <span class="text-red-500">*</span>
                 </label>
-                <input type="text" 
-                       name="nome" 
-                       id="nome" 
-                       value="<?= htmlspecialchars($data['nome'] ?? '') ?>"
-                       class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm <?= isset($errors['nome']) ? 'border-red-300' : '' ?>"
-                       placeholder="Ex: Troca de lâmpada, Vazamento no banheiro"
-                       required>
+                <div class="mt-1 relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fas fa-tag text-gray-400"></i>
+                    </div>
+                    <input type="text" 
+                           name="nome" 
+                           id="nome" 
+                           value="<?= htmlspecialchars($data['nome'] ?? '') ?>"
+                           class="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all sm:text-sm <?= isset($errors['nome']) ? 'border-red-300 focus:ring-red-500 focus:border-red-500' : '' ?>"
+                           placeholder="Ex: Troca de lâmpada, Vazamento no banheiro"
+                           required>
+                </div>
                 <?php if (isset($errors['nome'])): ?>
                     <p class="mt-1 text-sm text-red-600"><?= htmlspecialchars($errors['nome']) ?></p>
                 <?php endif; ?>
@@ -97,11 +102,16 @@ ob_start();
                 <label for="descricao" class="block text-sm font-medium text-gray-700">
                     Descrição
                 </label>
-                <textarea name="descricao" 
-                          id="descricao" 
-                          rows="3"
-                          class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm <?= isset($errors['descricao']) ? 'border-red-300' : '' ?>"
-                          placeholder="Descreva brevemente esta subcategoria de assistência"><?= htmlspecialchars($data['descricao'] ?? '') ?></textarea>
+                <div class="mt-1 relative">
+                    <div class="absolute top-3 left-3 pointer-events-none">
+                        <i class="fas fa-align-left text-gray-400"></i>
+                    </div>
+                    <textarea name="descricao" 
+                              id="descricao" 
+                              rows="4"
+                              class="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all sm:text-sm resize-y <?= isset($errors['descricao']) ? 'border-red-300 focus:ring-red-500 focus:border-red-500' : '' ?>"
+                              placeholder="Descreva brevemente esta subcategoria de assistência"><?= htmlspecialchars($data['descricao'] ?? '') ?></textarea>
+                </div>
                 <?php if (isset($errors['descricao'])): ?>
                     <p class="mt-1 text-sm text-red-600"><?= htmlspecialchars($errors['descricao']) ?></p>
                 <?php endif; ?>
@@ -112,14 +122,19 @@ ob_start();
                 <label for="prazo_minimo" class="block text-sm font-medium text-gray-700">
                     Prazo Mínimo (dias) <span class="text-red-500">*</span>
                 </label>
-                <input type="number" 
-                       name="prazo_minimo" 
-                       id="prazo_minimo" 
-                       value="<?= htmlspecialchars($data['prazo_minimo'] ?? '1') ?>"
-                       min="0"
-                       class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm <?= isset($errors['prazo_minimo']) ? 'border-red-300' : '' ?>"
-                       placeholder="1"
-                       required>
+                <div class="mt-1 relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fas fa-calendar-day text-gray-400"></i>
+                    </div>
+                    <input type="number" 
+                           name="prazo_minimo" 
+                           id="prazo_minimo" 
+                           value="<?= htmlspecialchars($data['prazo_minimo'] ?? '1') ?>"
+                           min="0"
+                           class="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all sm:text-sm <?= isset($errors['prazo_minimo']) ? 'border-red-300 focus:ring-red-500 focus:border-red-500' : '' ?>"
+                           placeholder="1"
+                           required>
+                </div>
                 <p class="mt-1 text-xs text-gray-500">
                     Dias mínimos a partir de hoje para poder agendar. Ex: 0 = hoje, 1 = amanhã, 2 = depois de amanhã. Sábados e domingos são automaticamente excluídos.
                 </p>
@@ -133,13 +148,18 @@ ob_start();
                 <label for="status" class="block text-sm font-medium text-gray-700">
                     Status <span class="text-red-500">*</span>
                 </label>
-                <select name="status" 
-                        id="status"
-                        class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm <?= isset($errors['status']) ? 'border-red-300' : '' ?>"
-                        required>
-                    <option value="ATIVA" <?= ($data['status'] ?? 'ATIVA') === 'ATIVA' ? 'selected' : '' ?>>Ativa</option>
-                    <option value="INATIVA" <?= ($data['status'] ?? '') === 'INATIVA' ? 'selected' : '' ?>>Inativa</option>
-                </select>
+                <div class="mt-1 relative">
+                    <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                        <i class="fas fa-chevron-down text-gray-400"></i>
+                    </div>
+                    <select name="status" 
+                            id="status"
+                            class="block w-full pl-3 pr-10 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all sm:text-sm appearance-none bg-white <?= isset($errors['status']) ? 'border-red-300 focus:ring-red-500 focus:border-red-500' : '' ?>"
+                            required>
+                        <option value="ATIVA" <?= ($data['status'] ?? 'ATIVA') === 'ATIVA' ? 'selected' : '' ?>>Ativa</option>
+                        <option value="INATIVA" <?= ($data['status'] ?? '') === 'INATIVA' ? 'selected' : '' ?>>Inativa</option>
+                    </select>
+                </div>
                 <?php if (isset($errors['status'])): ?>
                     <p class="mt-1 text-sm text-red-600"><?= htmlspecialchars($errors['status']) ?></p>
                 <?php endif; ?>
@@ -150,13 +170,18 @@ ob_start();
                 <label for="ordem" class="block text-sm font-medium text-gray-700">
                     Ordem de Exibição
                 </label>
-                <input type="number" 
-                       name="ordem" 
-                       id="ordem" 
-                       value="<?= htmlspecialchars($data['ordem'] ?? '0') ?>"
-                       min="0"
-                       class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm <?= isset($errors['ordem']) ? 'border-red-300' : '' ?>"
-                       placeholder="0">
+                <div class="mt-1 relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fas fa-sort-numeric-up text-gray-400"></i>
+                    </div>
+                    <input type="number" 
+                           name="ordem" 
+                           id="ordem" 
+                           value="<?= htmlspecialchars($data['ordem'] ?? '0') ?>"
+                           min="0"
+                           class="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all sm:text-sm <?= isset($errors['ordem']) ? 'border-red-300 focus:ring-red-500 focus:border-red-500' : '' ?>"
+                           placeholder="0">
+                </div>
                 <p class="mt-1 text-xs text-gray-500">
                     Subcategorias com menor número aparecem primeiro
                 </p>

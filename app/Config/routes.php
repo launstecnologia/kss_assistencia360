@@ -173,6 +173,7 @@ $router->get('/{instancia}/nova-solicitacao/etapa/{etapa}', 'LocatarioController
 $router->post('/{instancia}/nova-solicitacao/etapa/{etapa}', 'LocatarioController@processarEtapa');
 $router->get('/{instancia}/nova-solicitacao', 'LocatarioController@novaSolicitacao');
 $router->post('/{instancia}/nova-solicitacao', 'LocatarioController@novaSolicitacao');
+$router->get('/{instancia}/verificar-limite-categoria', 'LocatarioController@verificarLimiteCategoria');
 // Rotas de solicitação manual (sem autenticação)
 $router->get('/{instancia}/solicitacao-manual/etapa/{etapa}', 'LocatarioController@solicitacaoManualEtapa');
 $router->post('/{instancia}/solicitacao-manual/etapa/{etapa}', 'LocatarioController@solicitacaoManualEtapa');

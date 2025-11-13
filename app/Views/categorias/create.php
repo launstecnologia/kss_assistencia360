@@ -183,13 +183,18 @@ ob_start();
                 <label for="nome" class="block text-sm font-medium text-gray-700">
                     Nome da Categoria <span class="text-red-500">*</span>
                 </label>
-                <input type="text" 
-                       name="nome" 
-                       id="nome" 
-                       value="<?= htmlspecialchars($data['nome'] ?? '') ?>"
-                       class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm <?= isset($errors['nome']) ? 'border-red-300' : '' ?>"
-                       placeholder="Ex: Elétrica, Hidráulica, Estrutural"
-                       required>
+                <div class="mt-1 relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fas fa-tag text-gray-400"></i>
+                    </div>
+                    <input type="text" 
+                           name="nome" 
+                           id="nome" 
+                           value="<?= htmlspecialchars($data['nome'] ?? '') ?>"
+                           class="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all sm:text-sm <?= isset($errors['nome']) ? 'border-red-300 focus:ring-red-500 focus:border-red-500' : '' ?>"
+                           placeholder="Ex: Elétrica, Hidráulica, Estrutural"
+                           required>
+                </div>
                 <?php if (isset($errors['nome'])): ?>
                     <p class="mt-1 text-sm text-red-600"><?= htmlspecialchars($errors['nome']) ?></p>
                 <?php endif; ?>
@@ -200,11 +205,16 @@ ob_start();
                 <label for="descricao" class="block text-sm font-medium text-gray-700">
                     Descrição
                 </label>
-                <textarea name="descricao" 
-                          id="descricao" 
-                          rows="3"
-                          class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm <?= isset($errors['descricao']) ? 'border-red-300' : '' ?>"
-                          placeholder="Descreva brevemente o que esta categoria engloba"><?= htmlspecialchars($data['descricao'] ?? '') ?></textarea>
+                <div class="mt-1 relative">
+                    <div class="absolute top-3 left-3 pointer-events-none">
+                        <i class="fas fa-align-left text-gray-400"></i>
+                    </div>
+                    <textarea name="descricao" 
+                              id="descricao" 
+                              rows="4"
+                              class="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all sm:text-sm resize-y <?= isset($errors['descricao']) ? 'border-red-300 focus:ring-red-500 focus:border-red-500' : '' ?>"
+                              placeholder="Descreva brevemente o que esta categoria engloba"><?= htmlspecialchars($data['descricao'] ?? '') ?></textarea>
+                </div>
                 <?php if (isset($errors['descricao'])): ?>
                     <p class="mt-1 text-sm text-red-600"><?= htmlspecialchars($errors['descricao']) ?></p>
                 <?php endif; ?>
@@ -268,13 +278,18 @@ ob_start();
                 <label for="status" class="block text-sm font-medium text-gray-700">
                     Status <span class="text-red-500">*</span>
                 </label>
-                <select name="status" 
-                        id="status"
-                        class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm <?= isset($errors['status']) ? 'border-red-300' : '' ?>"
-                        required>
-                    <option value="ATIVA" <?= ($data['status'] ?? 'ATIVA') === 'ATIVA' ? 'selected' : '' ?>>Ativa</option>
-                    <option value="INATIVA" <?= ($data['status'] ?? '') === 'INATIVA' ? 'selected' : '' ?>>Inativa</option>
-                </select>
+                <div class="mt-1 relative">
+                    <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                        <i class="fas fa-chevron-down text-gray-400"></i>
+                    </div>
+                    <select name="status" 
+                            id="status"
+                            class="block w-full pl-3 pr-10 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all sm:text-sm appearance-none bg-white <?= isset($errors['status']) ? 'border-red-300 focus:ring-red-500 focus:border-red-500' : '' ?>"
+                            required>
+                        <option value="ATIVA" <?= ($data['status'] ?? 'ATIVA') === 'ATIVA' ? 'selected' : '' ?>>Ativa</option>
+                        <option value="INATIVA" <?= ($data['status'] ?? '') === 'INATIVA' ? 'selected' : '' ?>>Inativa</option>
+                    </select>
+                </div>
                 <?php if (isset($errors['status'])): ?>
                     <p class="mt-1 text-sm text-red-600"><?= htmlspecialchars($errors['status']) ?></p>
                 <?php endif; ?>
@@ -285,14 +300,19 @@ ob_start();
                 <label for="tipo_imovel" class="block text-sm font-medium text-gray-700">
                     Tipo de Imóvel <span class="text-red-500">*</span>
                 </label>
-                <select name="tipo_imovel" 
-                        id="tipo_imovel"
-                        class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm <?= isset($errors['tipo_imovel']) ? 'border-red-300' : '' ?>"
-                        required>
-                    <option value="AMBOS" <?= ($data['tipo_imovel'] ?? 'AMBOS') === 'AMBOS' ? 'selected' : '' ?>>Ambos (Residencial e Comercial)</option>
-                    <option value="RESIDENCIAL" <?= ($data['tipo_imovel'] ?? '') === 'RESIDENCIAL' ? 'selected' : '' ?>>Apenas Residencial</option>
-                    <option value="COMERCIAL" <?= ($data['tipo_imovel'] ?? '') === 'COMERCIAL' ? 'selected' : '' ?>>Apenas Comercial</option>
-                </select>
+                <div class="mt-1 relative">
+                    <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                        <i class="fas fa-chevron-down text-gray-400"></i>
+                    </div>
+                    <select name="tipo_imovel" 
+                            id="tipo_imovel"
+                            class="block w-full pl-3 pr-10 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all sm:text-sm appearance-none bg-white <?= isset($errors['tipo_imovel']) ? 'border-red-300 focus:ring-red-500 focus:border-red-500' : '' ?>"
+                            required>
+                        <option value="AMBOS" <?= ($data['tipo_imovel'] ?? 'AMBOS') === 'AMBOS' ? 'selected' : '' ?>>Ambos (Residencial e Comercial)</option>
+                        <option value="RESIDENCIAL" <?= ($data['tipo_imovel'] ?? '') === 'RESIDENCIAL' ? 'selected' : '' ?>>Apenas Residencial</option>
+                        <option value="COMERCIAL" <?= ($data['tipo_imovel'] ?? '') === 'COMERCIAL' ? 'selected' : '' ?>>Apenas Comercial</option>
+                    </select>
+                </div>
                 <p class="mt-1 text-xs text-gray-500">
                     Selecione para qual tipo de imóvel esta categoria se aplica
                 </p>
@@ -306,13 +326,18 @@ ob_start();
                 <label for="ordem" class="block text-sm font-medium text-gray-700">
                     Ordem de Exibição
                 </label>
-                <input type="number" 
-                       name="ordem" 
-                       id="ordem" 
-                       value="<?= htmlspecialchars($data['ordem'] ?? '0') ?>"
-                       min="0"
-                       class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm <?= isset($errors['ordem']) ? 'border-red-300' : '' ?>"
-                       placeholder="0">
+                <div class="mt-1 relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fas fa-sort-numeric-up text-gray-400"></i>
+                    </div>
+                    <input type="number" 
+                           name="ordem" 
+                           id="ordem" 
+                           value="<?= htmlspecialchars($data['ordem'] ?? '0') ?>"
+                           min="0"
+                           class="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all sm:text-sm <?= isset($errors['ordem']) ? 'border-red-300 focus:ring-red-500 focus:border-red-500' : '' ?>"
+                           placeholder="0">
+                </div>
                 <p class="mt-1 text-xs text-gray-500">
                     Categorias com menor número aparecem primeiro
                 </p>
@@ -326,13 +351,18 @@ ob_start();
                 <label for="limite_solicitacoes_12_meses" class="block text-sm font-medium text-gray-700">
                     Limite de Solicitações (12 meses)
                 </label>
-                <input type="number" 
-                       name="limite_solicitacoes_12_meses" 
-                       id="limite_solicitacoes_12_meses" 
-                       value="<?= htmlspecialchars($data['limite_solicitacoes_12_meses'] ?? '') ?>"
-                       min="0"
-                       class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm <?= isset($errors['limite_solicitacoes_12_meses']) ? 'border-red-300' : '' ?>"
-                       placeholder="Ex: 5 (deixe vazio para ilimitado)">
+                <div class="mt-1 relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fas fa-calendar-check text-gray-400"></i>
+                    </div>
+                    <input type="number" 
+                           name="limite_solicitacoes_12_meses" 
+                           id="limite_solicitacoes_12_meses" 
+                           value="<?= htmlspecialchars($data['limite_solicitacoes_12_meses'] ?? '') ?>"
+                           min="0"
+                           class="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all sm:text-sm <?= isset($errors['limite_solicitacoes_12_meses']) ? 'border-red-300 focus:ring-red-500 focus:border-red-500' : '' ?>"
+                           placeholder="Ex: 5 (deixe vazio para ilimitado)">
+                </div>
                 <p class="mt-1 text-xs text-gray-500">
                     Número máximo de solicitações permitidas por contrato nesta categoria em um período de 12 meses. Deixe vazio para permitir solicitações ilimitadas.
                 </p>
