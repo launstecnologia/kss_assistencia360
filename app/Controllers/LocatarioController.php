@@ -224,6 +224,57 @@ class LocatarioController extends Controller
     /**
      * Nova solicitação
      */
+    /**
+     * Endpoint para verificar limite de solicitações ao selecionar categoria
+     * GET /{instancia}/verificar-limite-categoria?categoria_id=X&numero_contrato=Y
+     */
+    public function verificarLimiteCategoria(string $instancia = ''): void
+    {
+        $this->requireLocatarioAuth();
+        
+        $categoriaId = $this->input('categoria_id');
+        $numeroContrato = $this->input('numero_contrato', '');
+        
+        if (empty($categoriaId)) {
+            $this->json([
+                'success' => false,
+                'message' => 'Categoria não informada'
+            ], 400);
+            return;
+        }
+        
+        if (empty($numeroContrato)) {
+            // Se não houver contrato, permitir (sem limite)
+            $this->json([
+                'success' => true,
+                'permitido' => true,
+                'limite' => null,
+                'total_atual' => 0,
+                'mensagem' => 'Sem contrato informado'
+            ]);
+            return;
+        }
+        
+        try {
+            $categoriaModel = new \App\Models\Categoria();
+            $verificacao = $categoriaModel->verificarLimiteSolicitacoes((int)$categoriaId, $numeroContrato);
+            
+            $this->json([
+                'success' => true,
+                'permitido' => $verificacao['permitido'],
+                'limite' => $verificacao['limite'],
+                'total_atual' => $verificacao['total_atual'],
+                'mensagem' => $verificacao['mensagem']
+            ]);
+        } catch (\Exception $e) {
+            error_log('Erro ao verificar limite de categoria: ' . $e->getMessage());
+            $this->json([
+                'success' => false,
+                'message' => 'Erro ao verificar limite'
+            ], 500);
+        }
+    }
+
     public function novaSolicitacao(string $instancia = ''): void
     {
         // LOG CRÍTICO: Verificar se método é chamado
@@ -754,6 +805,22 @@ class LocatarioController extends Controller
             // Limpar dados da sessão
             unset($_SESSION['nova_solicitacao']);
             
+            // Verificar se é requisição AJAX
+            $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
+            
+            if ($isAjax) {
+                // Retornar JSON para requisições AJAX
+                $this->json([
+                    'success' => true,
+                    'solicitacao_id' => $solicitacaoId,
+                    'message' => 'Solicitação criada com sucesso!',
+                    'redirect' => $isEmergencialForaHorario 
+                        ? url($instancia . '/solicitacao-emergencial/' . $solicitacaoId)
+                        : url($instancia . '/dashboard?success=' . urlencode('Solicitação criada com sucesso! ID: #' . $solicitacaoId))
+                ]);
+                return;
+            }
+            
             // Se for emergencial e fora do horário comercial, mostrar tela com telefone
             if ($isEmergencialForaHorario) {
                 $this->redirect(url($instancia . '/solicitacao-emergencial/' . $solicitacaoId));
@@ -762,6 +829,17 @@ class LocatarioController extends Controller
                 $this->redirect(url($instancia . '/dashboard?success=' . urlencode('Solicitação criada com sucesso! ID: #' . $solicitacaoId)));
             }
         } else {
+            // Verificar se é requisição AJAX
+            $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
+            
+            if ($isAjax) {
+                $this->json([
+                    'success' => false,
+                    'message' => 'Erro ao criar solicitação. Tente novamente.'
+                ]);
+                return;
+            }
+            
             $this->redirect(url($instancia . '/nova-solicitacao?error=' . urlencode('Erro ao criar solicitação. Tente novamente.')));
         }
     }
@@ -783,9 +861,36 @@ class LocatarioController extends Controller
             return;
         }
         
+        // Buscar fotos
+        try {
+            $fotos = $this->solicitacaoModel->getFotos($id);
+        } catch (\Exception $e) {
+            $fotos = [];
+        }
+        
+        // Buscar histórico de status (linha do tempo)
+        try {
+            $historicoStatus = $this->solicitacaoModel->getHistoricoStatus($id);
+        } catch (\Exception $e) {
+            $historicoStatus = [];
+        }
+        
+        // Buscar histórico de WhatsApp (se método existir)
+        $whatsappHistorico = [];
+        if (method_exists($this->solicitacaoModel, 'getWhatsAppHistorico')) {
+            try {
+                $whatsappHistorico = $this->solicitacaoModel->getWhatsAppHistorico($id);
+            } catch (\Exception $e) {
+                $whatsappHistorico = [];
+            }
+        }
+        
         $this->view('locatario.show-solicitacao', [
             'locatario' => $locatario,
-            'solicitacao' => $solicitacao
+            'solicitacao' => $solicitacao,
+            'fotos' => $fotos,
+            'historicoStatus' => $historicoStatus,
+            'whatsappHistorico' => $whatsappHistorico
         ]);
     }
     

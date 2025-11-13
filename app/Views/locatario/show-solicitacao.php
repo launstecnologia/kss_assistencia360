@@ -34,83 +34,175 @@ ob_start();
 
 <!-- Solicitation Details -->
 <div class="bg-white rounded-lg shadow-sm">
-    <div class="px-6 py-4 border-b border-gray-200">
-        <div class="flex items-center justify-between">
-            <h2 class="text-lg font-medium text-gray-900">
-                <?= htmlspecialchars($solicitacao['categoria_nome']) ?>
-            </h2>
-            <span class="status-badge status-<?= strtolower(str_replace([' ', '(', ')'], ['-', '', ''], $solicitacao['status_nome'])) ?>">
+    <div class="px-4 sm:px-6 py-4 border-b border-gray-200">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div class="flex-1">
+                <h2 class="text-lg font-medium text-gray-900">
+                    <?= htmlspecialchars($solicitacao['categoria_nome']) ?>
+                </h2>
+            </div>
+            <span class="status-badge status-<?= strtolower(str_replace([' ', '(', ')'], ['-', '', ''], $solicitacao['status_nome'])) ?> self-start sm:self-auto">
                 <?= htmlspecialchars($solicitacao['status_nome']) ?>
             </span>
         </div>
     </div>
     
-    <div class="p-6">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <!-- Service Information -->
-            <div>
-                <h3 class="text-sm font-medium text-gray-700 mb-3">Informações do Serviço</h3>
-                <div class="space-y-2">
-                    <div>
-                        <span class="text-sm text-gray-500">Categoria:</span>
-                        <p class="text-sm font-medium text-gray-900"><?= htmlspecialchars($solicitacao['categoria_nome']) ?></p>
-                    </div>
-                    <?php if (!empty($solicitacao['subcategoria_nome'])): ?>
-                    <div>
-                        <span class="text-sm text-gray-500">Tipo:</span>
-                        <p class="text-sm font-medium text-gray-900"><?= htmlspecialchars($solicitacao['subcategoria_nome']) ?></p>
-                    </div>
-                    <?php endif; ?>
-                    <div>
-                        <span class="text-sm text-gray-500">Prioridade:</span>
-                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium
-                            <?= $solicitacao['prioridade'] === 'ALTA' ? 'bg-red-100 text-red-800' : 
-                               ($solicitacao['prioridade'] === 'MEDIA' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800') ?>">
-                            <?= $solicitacao['prioridade'] ?>
-                        </span>
-                    </div>
-                </div>
-            </div>
+    <!-- Ações Disponíveis - Movido para o topo -->
+    <div class="px-4 sm:px-6 py-4 border-b border-gray-200 bg-gray-50">
+        <h3 class="text-sm font-medium text-gray-700 mb-3">Ações Disponíveis</h3>
+        <div class="flex flex-wrap gap-2 sm:gap-3">
+            <?php
+            $statusNome = $solicitacao['status_nome'] ?? '';
+            $condicaoNome = $solicitacao['condicao_nome'] ?? '';
+            $dataAgendamento = $solicitacao['data_agendamento'] ?? null;
             
-            <!-- Dates -->
-            <div>
-                <h3 class="text-sm font-medium text-gray-700 mb-3">Datas</h3>
-                <div class="space-y-2">
-                    <div>
-                        <span class="text-sm text-gray-500">Criado em:</span>
-                        <p class="text-sm font-medium text-gray-900">
-                            <?= date('d/m/Y \à\s H:i', strtotime($solicitacao['created_at'])) ?>
-                        </p>
-                    </div>
-                    <?php if (!empty($solicitacao['data_agendamento'])): ?>
-                    <div>
-                        <span class="text-sm text-gray-500">Agendado para:</span>
-                        <p class="text-sm font-medium text-gray-900">
-                            <?= date('d/m/Y', strtotime($solicitacao['data_agendamento'])) ?>
-                        </p>
-                    </div>
-                    <?php endif; ?>
+            // Verificar se pode cancelar (até 1 dia antes da data agendada)
+            $podeCancelar = false;
+            if ($dataAgendamento) {
+                $dataAgendamentoObj = new \DateTime($dataAgendamento);
+                $hoje = new \DateTime();
+                $diferenca = $hoje->diff($dataAgendamentoObj);
+                // Pode cancelar se a data agendada for pelo menos 1 dia no futuro
+                $podeCancelar = $diferenca->days >= 1 && $dataAgendamentoObj > $hoje;
+            }
+            
+            // Status: Nova Solicitação
+            if ($statusNome === 'Nova Solicitação' || stripos($statusNome, 'Nova Solicitação') !== false) {
+                // Botão Cancelar
+                ?>
+                <button onclick="executarAcao(<?= $solicitacao['id'] ?>, 'cancelado')" 
+                        class="flex-1 sm:flex-none px-3 sm:px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition-colors">
+                    <i class="fas fa-times-circle mr-2"></i>
+                    <span class="hidden sm:inline">Cancelar</span>
+                    <span class="sm:hidden">Cancelar</span>
+                </button>
+                <?php
+            }
+            // Status: Aguardando Prestador / Buscando Prestador
+            elseif (stripos($statusNome, 'Aguardando Prestador') !== false || 
+                    stripos($statusNome, 'Buscando Prestador') !== false ||
+                    stripos($statusNome, 'Aguardando prestador') !== false) {
+                // Botão Cancelar
+                ?>
+                <button onclick="executarAcao(<?= $solicitacao['id'] ?>, 'cancelado')" 
+                        class="flex-1 sm:flex-none px-3 sm:px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition-colors">
+                    <i class="fas fa-times-circle mr-2"></i>
+                    <span class="hidden sm:inline">Cancelar</span>
+                    <span class="sm:hidden">Cancelar</span>
+                </button>
+                <?php
+                // Botão Reagendar (se condição permitir)
+                if (stripos($condicaoNome, 'reagendar') !== false || 
+                    stripos($condicaoNome, 'Reagendar') !== false) {
+                    ?>
+                    <button onclick="executarAcao(<?= $solicitacao['id'] ?>, 'reagendar')" 
+                            class="flex-1 sm:flex-none px-3 sm:px-4 py-2 bg-yellow-600 text-white text-sm font-medium rounded-lg hover:bg-yellow-700 transition-colors">
+                        <i class="fas fa-calendar-alt mr-2"></i>
+                        <span class="hidden sm:inline">Reagendar</span>
+                        <span class="sm:hidden">Reagendar</span>
+                    </button>
+                    <?php
+                }
+            }
+            // Status: Serviço Agendado
+            elseif (stripos($statusNome, 'Serviço Agendado') !== false || 
+                    stripos($statusNome, 'Servico Agendado') !== false) {
+                // Botão Cancelar (até 1 dia antes)
+                if ($podeCancelar) {
+                    ?>
+                    <button onclick="executarAcao(<?= $solicitacao['id'] ?>, 'cancelado')" 
+                            class="flex-1 sm:flex-none px-3 sm:px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition-colors">
+                        <i class="fas fa-times-circle mr-2"></i>
+                        <span class="hidden sm:inline">Cancelar</span>
+                        <span class="sm:hidden">Cancelar</span>
+                    </button>
+                    <?php
+                }
+                // Botão Concluído
+                ?>
+                <button onclick="executarAcao(<?= $solicitacao['id'] ?>, 'concluido')" 
+                        class="flex-1 sm:flex-none px-3 sm:px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors">
+                    <i class="fas fa-check-circle mr-2"></i>
+                    <span class="hidden sm:inline">Concluído</span>
+                    <span class="sm:hidden">Concluído</span>
+                </button>
+                
+                <!-- Serviço não realizado -->
+                <button onclick="executarAcao(<?= $solicitacao['id'] ?>, 'servico_nao_realizado')" 
+                        class="flex-1 sm:flex-none px-3 sm:px-4 py-2 bg-orange-600 text-white text-sm font-medium rounded-lg hover:bg-orange-700 transition-colors">
+                    <i class="fas fa-exclamation-triangle mr-2"></i>
+                    <span class="hidden sm:inline">Serviço não realizado</span>
+                    <span class="sm:hidden">Não realizado</span>
+                </button>
+                
+                <!-- Comprar peças -->
+                <button onclick="executarAcao(<?= $solicitacao['id'] ?>, 'comprar_pecas')" 
+                        class="flex-1 sm:flex-none px-3 sm:px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors">
+                    <i class="fas fa-shopping-cart mr-2"></i>
+                    <span class="hidden sm:inline">Comprar peças</span>
+                    <span class="sm:hidden">Peças</span>
+                </button>
+                
+                <!-- Reembolso -->
+                <button onclick="executarAcao(<?= $solicitacao['id'] ?>, 'reembolso')" 
+                        class="flex-1 sm:flex-none px-3 sm:px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 transition-colors">
+                    <i class="fas fa-money-bill-wave mr-2"></i>
+                    <span class="hidden sm:inline">Reembolso</span>
+                    <span class="sm:hidden">Reembolso</span>
+                </button>
+                <?php
+            }
+            ?>
+        </div>
+    </div>
+</div>
+
+<!-- Bloco 1: Informações do Cliente e Endereço -->
+<div class="bg-white rounded-lg p-5 shadow-sm mt-6">
+    <h3 class="text-lg font-semibold text-gray-900 mb-4">
+        <i class="fas fa-user mr-2 text-blue-600"></i>
+        Informações do Cliente e Endereço
+    </h3>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Informações do Cliente -->
+        <div>
+            <h4 class="text-sm font-medium text-gray-700 mb-3">Informações do Cliente</h4>
+            <div class="space-y-3">
+                <div>
+                    <span class="text-sm text-gray-500">Nome:</span>
+                    <p class="text-sm font-medium text-gray-900"><?= htmlspecialchars($solicitacao['locatario_nome']) ?></p>
                 </div>
+                <?php if (!empty($solicitacao['locatario_cpf'])): ?>
+                <div>
+                    <span class="text-sm text-gray-500">CPF:</span>
+                    <p class="text-sm font-medium text-gray-900"><?= htmlspecialchars($solicitacao['locatario_cpf']) ?></p>
+                </div>
+                <?php endif; ?>
+                <?php if (!empty($solicitacao['locatario_telefone'])): ?>
+                <div>
+                    <span class="text-sm text-gray-500">Telefone:</span>
+                    <p class="text-sm font-medium text-gray-900"><?= htmlspecialchars($solicitacao['locatario_telefone']) ?></p>
+                </div>
+                <?php endif; ?>
+                <?php if (!empty($solicitacao['imobiliaria_nome'])): ?>
+                <div>
+                    <span class="text-sm text-gray-500">Imobiliária:</span>
+                    <p class="text-sm font-medium text-gray-900"><?= htmlspecialchars($solicitacao['imobiliaria_nome']) ?></p>
+                </div>
+                <?php endif; ?>
             </div>
         </div>
         
-        <!-- Description -->
-        <?php if (!empty($solicitacao['descricao_problema'])): ?>
-        <div class="mt-6">
-            <h3 class="text-sm font-medium text-gray-700 mb-3">Descrição do Problema</h3>
-            <div class="bg-gray-50 rounded-lg p-4">
-                <p class="text-sm text-gray-900"><?= nl2br(htmlspecialchars($solicitacao['descricao_problema'])) ?></p>
-            </div>
-        </div>
-        <?php endif; ?>
-        
-        <!-- Address -->
+        <!-- Endereço -->
         <?php if (!empty($solicitacao['imovel_endereco'])): ?>
-        <div class="mt-6">
-            <h3 class="text-sm font-medium text-gray-700 mb-3">Endereço do Imóvel</h3>
-            <div class="bg-gray-50 rounded-lg p-4">
+        <div>
+            <h4 class="text-sm font-medium text-gray-700 mb-3">
+                <i class="fas fa-map-marker-alt mr-2 text-gray-400"></i>
+                Endereço do Imóvel
+            </h4>
+            <div class="space-y-2">
                 <p class="text-sm text-gray-900">
-                    <i class="fas fa-map-marker-alt mr-2 text-gray-400"></i>
                     <?= htmlspecialchars($solicitacao['imovel_endereco']) ?>
                     <?php if (!empty($solicitacao['imovel_numero'])): ?>
                         , <?= htmlspecialchars($solicitacao['imovel_numero']) ?>
@@ -119,7 +211,7 @@ ob_start();
                         - <?= htmlspecialchars($solicitacao['imovel_complemento']) ?>
                     <?php endif; ?>
                 </p>
-                <p class="text-sm text-gray-600 mt-1">
+                <p class="text-sm text-gray-600">
                     <?= htmlspecialchars($solicitacao['imovel_bairro']) ?> - 
                     <?= htmlspecialchars($solicitacao['imovel_cidade']) ?>/<?= htmlspecialchars($solicitacao['imovel_estado']) ?>
                 </p>
@@ -129,74 +221,355 @@ ob_start();
             </div>
         </div>
         <?php endif; ?>
+    </div>
+</div>
+
+<!-- Bloco 2: Descrição do Problema, Informação do Serviço, Obs do Segurado e Fotos -->
+<div class="bg-white rounded-lg p-5 shadow-sm mt-6">
+    <h3 class="text-lg font-semibold text-gray-900 mb-4">
+        <i class="fas fa-info-circle mr-2 text-blue-600"></i>
+        Informações do Serviço
+    </h3>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Descrição do Problema -->
+        <?php if (!empty($solicitacao['descricao_problema'])): ?>
+        <div>
+            <h4 class="text-sm font-medium text-gray-700 mb-3">
+                <i class="fas fa-file-alt mr-2 text-gray-400"></i>
+                Descrição do Problema
+            </h4>
+            <div class="bg-gray-50 rounded-lg p-4">
+                <p class="text-sm text-gray-900"><?= nl2br(htmlspecialchars($solicitacao['descricao_problema'])) ?></p>
+            </div>
+        </div>
+        <?php endif; ?>
         
-        <!-- Contact Information -->
-        <div class="mt-6">
-            <h3 class="text-sm font-medium text-gray-700 mb-3">Informações de Contato</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="bg-gray-50 rounded-lg p-4">
-                    <p class="text-sm text-gray-500">Nome</p>
-                    <p class="text-sm font-medium text-gray-900"><?= htmlspecialchars($solicitacao['locatario_nome']) ?></p>
+        <!-- Informação do Serviço -->
+        <div>
+            <h4 class="text-sm font-medium text-gray-700 mb-3">Informações do Serviço</h4>
+            <div class="space-y-2">
+                <div>
+                    <span class="text-sm text-gray-500">Categoria:</span>
+                    <p class="text-sm font-medium text-gray-900"><?= htmlspecialchars($solicitacao['categoria_nome']) ?></p>
                 </div>
-                <?php if (!empty($solicitacao['locatario_telefone'])): ?>
-                <div class="bg-gray-50 rounded-lg p-4">
-                    <p class="text-sm text-gray-500">Telefone</p>
-                    <p class="text-sm font-medium text-gray-900"><?= htmlspecialchars($solicitacao['locatario_telefone']) ?></p>
+                <?php if (!empty($solicitacao['subcategoria_nome'])): ?>
+                <div>
+                    <span class="text-sm text-gray-500">Tipo:</span>
+                    <p class="text-sm font-medium text-gray-900"><?= htmlspecialchars($solicitacao['subcategoria_nome']) ?></p>
+                </div>
+                <?php endif; ?>
+                <div>
+                    <span class="text-sm text-gray-500">Prioridade:</span>
+                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium
+                        <?= $solicitacao['prioridade'] === 'ALTA' ? 'bg-red-100 text-red-800' : 
+                           ($solicitacao['prioridade'] === 'MEDIA' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800') ?>">
+                        <?= $solicitacao['prioridade'] ?>
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Observações do Segurado -->
+    <?php if (!empty($solicitacao['observacoes'])): ?>
+    <div class="mt-6">
+        <h4 class="text-sm font-medium text-gray-700 mb-3">
+            <i class="fas fa-comment-dots mr-2 text-gray-400"></i>
+            Observações do Segurado
+        </h4>
+        <div class="bg-gray-50 rounded-lg p-4">
+            <p class="text-sm text-gray-900"><?= nl2br(htmlspecialchars($solicitacao['observacoes'])) ?></p>
+        </div>
+    </div>
+    <?php endif; ?>
+    
+    <!-- Fotos Enviadas -->
+    <?php if (!empty($fotos) && count($fotos) > 0): ?>
+    <div class="mt-6">
+        <h4 class="text-sm font-medium text-gray-700 mb-3">
+            <i class="fas fa-camera mr-2 text-gray-400"></i>
+            Fotos Enviadas (<?= count($fotos) ?>)
+        </h4>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <?php foreach ($fotos as $foto): ?>
+            <div class="relative">
+                <img src="<?= url('Public/uploads/fotos/' . $foto['arquivo']) ?>" 
+                     alt="Foto da solicitação" 
+                     class="w-full h-32 object-cover rounded-lg cursor-pointer hover:opacity-75 transition-opacity"
+                     onclick="abrirModalFoto('<?= url('Public/uploads/fotos/' . $foto['arquivo']) ?>')">
+            </div>
+            <?php endforeach; ?>
+        </div>
+    </div>
+    <?php else: ?>
+    <div class="mt-6">
+        <h4 class="text-sm font-medium text-gray-700 mb-3">
+            <i class="fas fa-camera mr-2 text-gray-400"></i>
+            Fotos Enviadas (0)
+        </h4>
+        <p class="text-sm text-gray-500">Nenhuma foto foi enviada</p>
+    </div>
+    <?php endif; ?>
+</div>
+
+<!-- Bloco 3: Disponibilidade de Data, Status da Solicitação, Condições, Protocolo da Seguradora -->
+<div class="bg-white rounded-lg p-5 shadow-sm mt-6">
+    <h3 class="text-lg font-semibold text-gray-900 mb-4">
+        <i class="fas fa-calendar-alt mr-2 text-blue-600"></i>
+        Status e Agendamento
+    </h3>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Status da Solicitação -->
+        <div>
+            <h4 class="text-sm font-medium text-gray-700 mb-3">Status da Solicitação</h4>
+            <div class="space-y-2">
+                <div>
+                    <span class="text-sm text-gray-500">Status Atual:</span>
+                    <p class="text-sm font-medium text-gray-900">
+                        <span class="status-badge status-<?= strtolower(str_replace([' ', '(', ')'], ['-', '', ''], $solicitacao['status_nome'])) ?>">
+                            <?= htmlspecialchars($solicitacao['status_nome']) ?>
+                        </span>
+                    </p>
+                </div>
+                <?php if (!empty($solicitacao['condicao_nome'])): ?>
+                <div>
+                    <span class="text-sm text-gray-500">Condição:</span>
+                    <p class="text-sm font-medium text-gray-900">
+                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium" 
+                              style="background-color: <?= htmlspecialchars($solicitacao['condicao_cor'] ?? '#6B7280') ?>20; color: <?= htmlspecialchars($solicitacao['condicao_cor'] ?? '#6B7280') ?>;">
+                            <?= htmlspecialchars($solicitacao['condicao_nome']) ?>
+                        </span>
+                    </p>
                 </div>
                 <?php endif; ?>
             </div>
         </div>
         
-        <!-- Actions -->
-        <div class="mt-8">
-            <div class="flex flex-wrap justify-end gap-3 mb-4">
-                <a href="<?= url($locatario['instancia'] . '/solicitacoes') ?>" 
-                   class="px-4 py-2 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors">
-                    <i class="fas fa-arrow-left mr-2"></i>
-                    Voltar para Lista
-                </a>
-            </div>
-            
-            <div class="border-t border-gray-200 pt-6">
-                <h3 class="text-sm font-medium text-gray-700 mb-4">Ações Disponíveis</h3>
-                <div class="flex flex-wrap gap-3">
-                    <!-- Concluído -->
-                    <button onclick="executarAcao(<?= $solicitacao['id'] ?>, 'concluido')" 
-                            class="px-4 py-2 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors">
-                        <i class="fas fa-check-circle mr-2"></i>
-                        Concluído
-                    </button>
-                    
-                    <!-- Cancelado -->
-                    <button onclick="executarAcao(<?= $solicitacao['id'] ?>, 'cancelado')" 
-                            class="px-4 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition-colors">
-                        <i class="fas fa-times-circle mr-2"></i>
-                        Cancelando
-                    </button>
-                    
-                    <!-- Serviço não realizado -->
-                    <button onclick="executarAcao(<?= $solicitacao['id'] ?>, 'servico_nao_realizado')" 
-                            class="px-4 py-2 bg-orange-600 text-white font-medium rounded-lg hover:bg-orange-700 transition-colors">
-                        <i class="fas fa-exclamation-triangle mr-2"></i>
-                        Serviço não realizado
-                    </button>
-                    
-                    <!-- Comprar peças -->
-                    <button onclick="executarAcao(<?= $solicitacao['id'] ?>, 'comprar_pecas')" 
-                            class="px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors">
-                        <i class="fas fa-shopping-cart mr-2"></i>
-                        Comprar peças
-                    </button>
-                    
-                    <!-- Reembolso -->
-                    <button onclick="executarAcao(<?= $solicitacao['id'] ?>, 'reembolso')" 
-                            class="px-4 py-2 bg-purple-600 text-white font-medium rounded-lg hover:bg-purple-700 transition-colors">
-                        <i class="fas fa-money-bill-wave mr-2"></i>
-                        Reembolso
-                    </button>
+        <!-- Datas -->
+        <div>
+            <h4 class="text-sm font-medium text-gray-700 mb-3">Datas</h4>
+            <div class="space-y-2">
+                <div>
+                    <span class="text-sm text-gray-500">Criado em:</span>
+                    <p class="text-sm font-medium text-gray-900">
+                        <?= date('d/m/Y \à\s H:i', strtotime($solicitacao['created_at'])) ?>
+                    </p>
                 </div>
+                <?php if (!empty($solicitacao['data_agendamento'])): ?>
+                <div>
+                    <span class="text-sm text-gray-500">Agendado para:</span>
+                    <p class="text-sm font-medium text-gray-900">
+                        <?= date('d/m/Y', strtotime($solicitacao['data_agendamento'])) ?>
+                    </p>
+                </div>
+                <?php endif; ?>
             </div>
         </div>
+    </div>
+    
+    <!-- Disponibilidade de Data -->
+    <?php 
+    $horariosOpcoes = [];
+    if (!empty($solicitacao['horarios_opcoes'])) {
+        $horariosOpcoes = is_string($solicitacao['horarios_opcoes']) ? json_decode($solicitacao['horarios_opcoes'], true) : $solicitacao['horarios_opcoes'];
+    }
+    if (!empty($solicitacao['datas_opcoes'])) {
+        $datasOpcoes = is_string($solicitacao['datas_opcoes']) ? json_decode($solicitacao['datas_opcoes'], true) : $solicitacao['datas_opcoes'];
+    }
+    ?>
+    <?php if (!empty($horariosOpcoes) || !empty($datasOpcoes)): ?>
+    <div class="mt-6">
+        <h4 class="text-sm font-medium text-gray-700 mb-3">Disponibilidade de Data</h4>
+        <div class="bg-gray-50 rounded-lg p-4">
+            <?php if (!empty($datasOpcoes) && is_array($datasOpcoes)): ?>
+                <?php foreach ($datasOpcoes as $data): ?>
+                <p class="text-sm text-gray-900"><?= htmlspecialchars($data) ?></p>
+                <?php endforeach; ?>
+            <?php elseif (!empty($horariosOpcoes) && is_array($horariosOpcoes)): ?>
+                <?php foreach ($horariosOpcoes as $horario): ?>
+                <p class="text-sm text-gray-900"><?= htmlspecialchars($horario) ?></p>
+                <?php endforeach; ?>
+            <?php endif; ?>
+        </div>
+    </div>
+    <?php endif; ?>
+    
+    <!-- Protocolo da Seguradora -->
+    <?php if (!empty($solicitacao['protocolo_seguradora'])): ?>
+    <div class="mt-6">
+        <h4 class="text-sm font-medium text-gray-700 mb-3">Protocolo da Seguradora</h4>
+        <div class="bg-gray-50 rounded-lg p-4">
+            <p class="text-sm font-medium text-gray-900"><?= htmlspecialchars($solicitacao['protocolo_seguradora']) ?></p>
+        </div>
+    </div>
+    <?php endif; ?>
+</div>
+
+<!-- Bloco 4: Anexar Documentos com Campo de Obs -->
+<div class="bg-white rounded-lg p-5 shadow-sm mt-6">
+    <h3 class="text-lg font-semibold text-gray-900 mb-4">
+        <i class="fas fa-paperclip mr-2 text-blue-600"></i>
+        Anexar Documentos
+    </h3>
+    
+    <form id="formAnexarDocumentos" onsubmit="processarAnexarDocumentos(event)" enctype="multipart/form-data">
+        <input type="hidden" name="solicitacao_id" value="<?= $solicitacao['id'] ?>">
+        
+        <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Observação</label>
+            <textarea name="observacao" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Adicione uma observação sobre os documentos..."></textarea>
+        </div>
+        
+        <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Anexos</label>
+            <input type="file" name="anexos[]" multiple accept="image/*,.pdf,.doc,.docx" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+            <p class="text-xs text-gray-500 mt-1">Você pode selecionar múltiplos arquivos (imagens, PDF, Word)</p>
+        </div>
+        
+        <div class="flex justify-end">
+            <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                <i class="fas fa-upload mr-2"></i>
+                Enviar Documentos
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Bloco 5: Reembolso -->
+<div class="bg-white rounded-lg p-5 shadow-sm mt-6">
+    <h3 class="text-lg font-semibold text-gray-900 mb-4">
+        <i class="fas fa-money-bill-wave mr-2 text-blue-600"></i>
+        Reembolso
+    </h3>
+    
+    <?php if (!empty($solicitacao['precisa_reembolso']) || !empty($solicitacao['valor_reembolso'])): ?>
+    <!-- Reembolso já solicitado -->
+    <div class="bg-gray-50 rounded-lg p-4 mb-4">
+        <div class="space-y-2">
+            <?php if (!empty($solicitacao['valor_reembolso'])): ?>
+            <div>
+                <span class="text-sm text-gray-500">Valor do Reembolso:</span>
+                <p class="text-sm font-medium text-gray-900">R$ <?= number_format($solicitacao['valor_reembolso'], 2, ',', '.') ?></p>
+            </div>
+            <?php endif; ?>
+            <?php if (!empty($solicitacao['observacoes'])): ?>
+            <div>
+                <span class="text-sm text-gray-500">Observação:</span>
+                <p class="text-sm text-gray-900"><?= nl2br(htmlspecialchars($solicitacao['observacoes'])) ?></p>
+            </div>
+            <?php endif; ?>
+        </div>
+    </div>
+    <?php endif; ?>
+    
+    <!-- Formulário para registrar/criar reembolso -->
+    <form id="formReembolsoBloco" onsubmit="processarReembolsoBloco(event)" enctype="multipart/form-data">
+        <input type="hidden" name="solicitacao_id" value="<?= $solicitacao['id'] ?>">
+        
+        <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Observação</label>
+            <textarea name="observacao" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="Justifique o motivo do reembolso..."></textarea>
+        </div>
+        
+        <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Valor do Reembolso</label>
+            <div class="relative">
+                <span class="absolute left-3 top-2 text-gray-500">R$</span>
+                <input type="number" name="valor_reembolso" step="0.01" min="0" class="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="0,00">
+            </div>
+        </div>
+        
+        <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Anexos</label>
+            <input type="file" name="anexos[]" multiple accept="image/*,.pdf,.doc,.docx" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+            <p class="text-xs text-gray-500 mt-1">Você pode selecionar múltiplos arquivos (imagens, PDF, Word)</p>
+        </div>
+        
+        <div class="flex justify-end">
+            <button type="submit" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
+                <i class="fas fa-save mr-2"></i>
+                Registrar Reembolso
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Bloco 6: Linha do Tempo -->
+<div class="bg-white rounded-lg p-5 shadow-sm mt-6">
+    <h3 class="text-lg font-semibold text-gray-900 mb-4">
+        <i class="fas fa-history mr-2 text-blue-600"></i>
+        Linha do Tempo
+    </h3>
+    
+    <?php if (!empty($historicoStatus) && count($historicoStatus) > 0): ?>
+    <div class="space-y-4">
+        <?php foreach ($historicoStatus as $index => $item): ?>
+        <div class="flex items-start gap-4 relative">
+            <?php if ($index < count($historicoStatus) - 1): ?>
+            <div class="absolute left-3 top-8 w-0.5 h-full bg-gray-200"></div>
+            <?php endif; ?>
+            <div class="relative z-10 flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center" 
+                 style="background-color: <?= htmlspecialchars($item['status_cor'] ?? '#3B82F6') ?>; box-shadow: 0 0 0 2px <?= htmlspecialchars($item['status_cor'] ?? '#3B82F6') ?>;">
+            </div>
+            <div class="flex-1">
+                <p class="text-sm font-medium text-gray-900"><?= htmlspecialchars($item['status_nome'] ?? 'Status') ?></p>
+                <?php if (!empty($item['observacao'])): ?>
+                <p class="text-xs text-gray-500 mt-1"><?= htmlspecialchars($item['observacao']) ?></p>
+                <?php endif; ?>
+                <p class="text-xs text-gray-400 mt-1">
+                    <?= date('d/m/Y, H:i', strtotime($item['created_at'])) ?>
+                </p>
+            </div>
+        </div>
+        <?php endforeach; ?>
+    </div>
+    <?php else: ?>
+    <p class="text-sm text-gray-500">Nenhum histórico disponível</p>
+    <?php endif; ?>
+</div>
+
+<!-- Bloco 7: Histórico do WhatsApp -->
+<div class="bg-white rounded-lg p-5 shadow-sm mt-6">
+    <h3 class="text-lg font-semibold text-gray-900 mb-4">
+        <i class="fab fa-whatsapp mr-2 text-green-600"></i>
+        Histórico do WhatsApp
+    </h3>
+    
+    <?php if (!empty($whatsappHistorico) && count($whatsappHistorico) > 0): ?>
+    <div class="space-y-3 max-h-96 overflow-y-auto">
+        <?php foreach ($whatsappHistorico as $envio): ?>
+        <div class="bg-gray-50 rounded-lg p-3">
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-xs font-medium text-gray-700">
+                    <?= date('d/m/Y H:i', strtotime($envio['created_at'] ?? 'now')) ?>
+                </span>
+                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium
+                    <?= ($envio['status'] ?? '') === 'sucesso' ? 'bg-green-100 text-green-800' : 
+                       (($envio['status'] ?? '') === 'erro' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800') ?>">
+                    <?= ($envio['status'] ?? '') === 'sucesso' ? 'Enviado' : 
+                       (($envio['status'] ?? '') === 'erro' ? 'Erro' : 'Pendente') ?>
+                </span>
+            </div>
+            <?php if (!empty($envio['mensagem'])): ?>
+            <p class="text-sm text-gray-900"><?= htmlspecialchars($envio['mensagem']) ?></p>
+            <?php endif; ?>
+        </div>
+        <?php endforeach; ?>
+    </div>
+    <?php else: ?>
+    <p class="text-sm text-gray-500">Nenhum histórico de WhatsApp disponível</p>
+    <?php endif; ?>
+</div>
+
+<!-- Modal para visualizar foto em tamanho maior -->
+<div id="modalFoto" class="hidden fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center p-4">
+    <div class="relative max-w-4xl max-h-full">
+        <button onclick="fecharModalFoto()" class="absolute top-2 right-2 text-white bg-black bg-opacity-50 rounded-full p-2 hover:bg-opacity-75">
+            <i class="fas fa-times"></i>
+        </button>
+        <img id="fotoModal" src="" alt="Foto" class="max-w-full max-h-[90vh] rounded-lg">
     </div>
 </div>
 
@@ -298,6 +671,24 @@ ob_start();
     </div>
 </div>
 
+<!-- Modal Reagendar -->
+<div id="modalReagendar" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+    <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Reagendar Serviço</h3>
+        <p class="text-sm text-gray-600 mb-4">
+            Você será redirecionado para a página de agendamento para selecionar uma nova data e horário.
+        </p>
+        <div class="flex justify-end gap-3">
+            <button type="button" onclick="fecharModal('modalReagendar')" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
+                Cancelar
+            </button>
+            <button onclick="confirmarReagendar(<?= $solicitacao['id'] ?>)" class="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700">
+                Confirmar Reagendamento
+            </button>
+        </div>
+    </div>
+</div>
+
 <!-- Modal Reembolso -->
 <div id="modalReembolso" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
     <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
@@ -348,6 +739,15 @@ function fecharModal(modalId) {
     }
 }
 
+function abrirModalFoto(url) {
+    document.getElementById('fotoModal').src = url;
+    document.getElementById('modalFoto').classList.remove('hidden');
+}
+
+function fecharModalFoto() {
+    document.getElementById('modalFoto').classList.add('hidden');
+}
+
 function executarAcao(solicitacaoId, acao) {
     solicitacaoIdAtual = solicitacaoId;
     
@@ -356,7 +756,8 @@ function executarAcao(solicitacaoId, acao) {
         'cancelado': 'modalCancelando',
         'servico_nao_realizado': 'modalServicoNaoRealizado',
         'comprar_pecas': 'modalComprarPecas',
-        'reembolso': 'modalReembolso'
+        'reembolso': 'modalReembolso',
+        'reagendar': 'modalReagendar'
     };
     
     const modalId = modais[acao];
@@ -495,6 +896,62 @@ function processarReembolso(event) {
         console.error('Erro:', error);
         alert('Erro ao processar. Tente novamente.');
     });
+}
+
+function processarAnexarDocumentos(event) {
+    event.preventDefault();
+    const form = event.target;
+    const formData = new FormData(form);
+    formData.append('acao', 'anexar_documentos');
+    
+    fetch('<?= url($locatario['instancia']) ?>/solicitacoes/' + solicitacaoIdAtual + '/acao', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message || 'Documentos anexados com sucesso!');
+            location.reload();
+        } else {
+            alert('Erro: ' + (data.message || 'Erro ao processar'));
+        }
+    })
+    .catch(error => {
+        console.error('Erro:', error);
+        alert('Erro ao processar. Tente novamente.');
+    });
+}
+
+function processarReembolsoBloco(event) {
+    event.preventDefault();
+    const form = event.target;
+    const formData = new FormData(form);
+    formData.append('acao', 'reembolso');
+    
+    fetch('<?= url($locatario['instancia']) ?>/solicitacoes/' + solicitacaoIdAtual + '/acao', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message || 'Reembolso registrado com sucesso!');
+            location.reload();
+        } else {
+            alert('Erro: ' + (data.message || 'Erro ao processar'));
+        }
+    })
+    .catch(error => {
+        console.error('Erro:', error);
+        alert('Erro ao processar. Tente novamente.');
+    });
+}
+
+function confirmarReagendar(solicitacaoId) {
+    // Redirecionar para a página de nova solicitação com os dados pré-preenchidos
+    // ou para uma página específica de reagendamento
+    window.location.href = '<?= url($locatario['instancia']) ?>/nova-solicitacao?reagendar=' + solicitacaoId;
 }
 
 // Fechar modal ao clicar fora

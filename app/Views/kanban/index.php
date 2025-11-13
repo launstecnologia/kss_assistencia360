@@ -68,12 +68,6 @@ ob_start();
                                     <?= htmlspecialchars($solicitacao['numero_solicitacao'] ?? 'KSS' . $solicitacao['id']) ?>
                                 </h4>
                                 <span class="chat-badge-<?= $solicitacao['id'] ?> hidden ml-1 px-1.5 py-0.5 text-xs font-bold text-white bg-red-500 rounded-full" title="Mensagens não lidas"></span>
-                                <?php if (!empty($solicitacao['is_emergencial_fora_horario'])): ?>
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800" title="Emergencial fora do horário comercial">
-                                        <i class="fas fa-exclamation-triangle mr-1"></i>
-                                        Fora do Horário
-                                    </span>
-                                <?php endif; ?>
                                 <?php if (!empty($solicitacao['numero_contrato'])): ?>
                                     <span class="text-xs text-gray-500">
                                         Contrato: <?= htmlspecialchars($solicitacao['numero_contrato']) ?>
@@ -146,11 +140,137 @@ ob_start();
                             <i class="fas fa-calendar w-4 mr-1 text-gray-400"></i>
                             <span title="Data de Registro"><?= date('d/m/Y', strtotime($solicitacao['created_at'])) ?></span>
                         </div>
+                        
+                        <!-- Datas e Horários Selecionados pelo Locatário -->
+                        <?php
+                        $horariosExibir = [];
+                        
+                        // Se houver horário confirmado, mostrar apenas esse
+                        if (!empty($solicitacao['horario_confirmado_raw'])) {
+                            // Formato esperado: "13/11/2025 - 08:00-11:00"
+                            $horariosExibir[] = $solicitacao['horario_confirmado_raw'];
+                        } elseif (!empty($solicitacao['confirmed_schedules'])) {
+                            // Se houver confirmed_schedules, usar o raw de cada um
+                            $confirmed = json_decode($solicitacao['confirmed_schedules'], true);
+                            if (is_array($confirmed)) {
+                                foreach ($confirmed as $conf) {
+                                    if (!empty($conf['raw'])) {
+                                        $horariosExibir[] = $conf['raw'];
+                                    }
+                                }
+                            }
+                        } else {
+                            // Se não houver confirmado, buscar horários do locatário
+                            $horariosLocatario = [];
+                            
+                            // Verificar se horarios_indisponiveis = 1 (horários originais em datas_opcoes)
+                            if (!empty($solicitacao['horarios_indisponiveis']) && !empty($solicitacao['datas_opcoes'])) {
+                                $horariosLocatario = json_decode($solicitacao['datas_opcoes'], true);
+                            } elseif (!empty($solicitacao['horarios_opcoes'])) {
+                                $horariosLocatario = json_decode($solicitacao['horarios_opcoes'], true);
+                            }
+                            
+                            // Processar horários para formato de exibição
+                            if (is_array($horariosLocatario)) {
+                                foreach ($horariosLocatario as $horario) {
+                                    if (is_string($horario)) {
+                                        // Formato já esperado: "13/11/2025 - 08:00-11:00"
+                                        if (strpos($horario, ' - ') !== false) {
+                                            $horariosExibir[] = $horario;
+                                        } 
+                                        // Formato timestamp: "2025-11-13 08:00:00"
+                                        elseif (preg_match('/^(\d{4})-(\d{2})-(\d{2})\s+(\d{2}):(\d{2}):\d{2}$/', $horario, $matches)) {
+                                            $data = $matches[3] . '/' . $matches[2] . '/' . $matches[1];
+                                            
+                                            // Determinar faixa de horário baseado na hora
+                                            $horaInt = (int)$matches[4];
+                                            if ($horaInt >= 8 && $horaInt < 11) {
+                                                $faixa = '08:00-11:00';
+                                            } elseif ($horaInt >= 11 && $horaInt < 14) {
+                                                $faixa = '11:00-14:00';
+                                            } elseif ($horaInt >= 14 && $horaInt < 17) {
+                                                $faixa = '14:00-17:00';
+                                            } elseif ($horaInt >= 17 && $horaInt < 20) {
+                                                $faixa = '17:00-20:00';
+                                            } else {
+                                                $faixa = $matches[4] . ':' . $matches[5] . '-20:00';
+                                            }
+                                            
+                                            $horariosExibir[] = $data . ' - ' . $faixa;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        
+                        // Limitar a 3 horários
+                        $horariosExibir = array_slice($horariosExibir, 0, 3);
+                        
+                        if (!empty($horariosExibir)):
+                            $isAgendado = !empty($solicitacao['horario_confirmado_raw']) || !empty($solicitacao['confirmed_schedules']);
+                        ?>
+                        <div class="mt-2 pt-2 border-t border-gray-200">
+                            <?php if ($isAgendado): ?>
+                                <!-- Quando já foi agendado -->
+                                <div class="text-xs">
+                                    <div class="text-gray-500 mb-1">Serviço agendado em:</div>
+                                    <?php foreach ($horariosExibir as $horario): ?>
+                                        <?php
+                                        $partes = explode(' - ', $horario);
+                                        $data = $partes[0] ?? '';
+                                        $horarioTexto = $partes[1] ?? '';
+                                        
+                                        // Converter formato de horário se necessário
+                                        if (preg_match('/^(\d{2}):(\d{2})-(\d{2}):(\d{2})$/', $horarioTexto, $matches)) {
+                                            $horarioTexto = $matches[1] . 'h' . $matches[2] . ' às ' . $matches[3] . 'h' . $matches[4];
+                                        }
+                                        ?>
+                                        <div class="font-medium text-gray-900"><?= htmlspecialchars($data) ?></div>
+                                        <div class="text-gray-600"><?= htmlspecialchars($horarioTexto) ?></div>
+                                    <?php endforeach; ?>
+                                </div>
+                            <?php else: ?>
+                                <!-- Quando ainda não foi agendado (múltiplas opções) -->
+                                <!-- Linha de Datas -->
+                                <div class="grid grid-cols-3 gap-2 text-xs mb-1">
+                                    <?php foreach ($horariosExibir as $index => $horario): ?>
+                                        <?php
+                                        $partes = explode(' - ', $horario);
+                                        $data = $partes[0] ?? '';
+                                        ?>
+                                        <div class="font-medium text-gray-900 text-center"><?= htmlspecialchars($data) ?></div>
+                                    <?php endforeach; ?>
+                                    <?php for ($i = count($horariosExibir); $i < 3; $i++): ?>
+                                        <div></div>
+                                    <?php endfor; ?>
+                                </div>
+                                <!-- Linha de Horários -->
+                                <div class="grid grid-cols-3 gap-2 text-xs">
+                                    <?php foreach ($horariosExibir as $index => $horario): ?>
+                                        <?php
+                                        $partes = explode(' - ', $horario);
+                                        $horarioTexto = $partes[1] ?? '';
+                                        
+                                        // Converter formato de horário se necessário (08:00-11:00 -> 08h00 às 11h00)
+                                        if (preg_match('/^(\d{2}):(\d{2})-(\d{2}):(\d{2})$/', $horarioTexto, $matches)) {
+                                            $horarioTexto = $matches[1] . 'h' . $matches[2] . ' às ' . $matches[3] . 'h' . $matches[4];
+                                        }
+                                        ?>
+                                        <div class="text-gray-600 text-center whitespace-nowrap truncate" title="<?= htmlspecialchars($horarioTexto) ?>"><?= htmlspecialchars($horarioTexto) ?></div>
+                                    <?php endforeach; ?>
+                                    <?php for ($i = count($horariosExibir); $i < 3; $i++): ?>
+                                        <div></div>
+                                    <?php endfor; ?>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                        <?php endif; ?>
                     </div>
                     
                     <!-- Prioridade / Emergencial -->
                     <?php 
                     $isEmergencial = !empty($solicitacao['subcategoria_is_emergencial']) || !empty($solicitacao['is_emergencial']);
+                    $isEmergencialForaHorario = !empty($solicitacao['is_emergencial_fora_horario']);
                     $mostrarPrioridade = false;
                     $textoPrioridade = '';
                     $corPrioridade = '';
@@ -163,15 +283,21 @@ ob_start();
                         $mostrarPrioridade = true;
                         $textoPrioridade = $solicitacao['prioridade'];
                         $corPrioridade = $solicitacao['prioridade'] === 'ALTA' ? 'bg-red-100 text-red-800' : 
-                                        ($solicitacao['prioridade'] === 'MEDIA' ? 'bg-yellow-100 text-yellow-800' : 'bg-blue-100 text-blue-800');
+                                       ($solicitacao['prioridade'] === 'MEDIA' ? 'bg-yellow-100 text-yellow-800' : 'bg-blue-100 text-blue-800');
                     }
                     ?>
                     <?php if ($mostrarPrioridade): ?>
-                    <div class="mt-3">
+                    <div class="mt-3 flex items-center gap-2 flex-wrap">
                         <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium <?= $corPrioridade ?>">
                             <i class="fas fa-<?= $isEmergencial ? 'exclamation-triangle' : 'exclamation-circle' ?> mr-1"></i>
                             <?= htmlspecialchars($textoPrioridade) ?>
                         </span>
+                        <?php if ($isEmergencialForaHorario): ?>
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                <i class="fas fa-phone mr-1"></i>
+                                0800
+                            </span>
+                        <?php endif; ?>
                     </div>
                     <?php endif; ?>
                 </div>
@@ -848,17 +974,16 @@ function renderizarDetalhes(solicitacao) {
             </div>
         </div>
         
-        <!-- Layout 2 Colunas -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
-            <!-- COLUNA ESQUERDA -->
-            <div class="space-y-4">
-                
+        <!-- Bloco 1: Informações do Cliente e Endereço -->
+        <div class="bg-white rounded-lg p-5 mb-4">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                <i class="fas fa-user mr-2 text-blue-600"></i>
+                Informações do Cliente e Endereço
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <!-- Informações do Cliente -->
-                <div class="bg-white rounded-lg p-5">
-                    <div class="flex items-center gap-2 mb-4">
-                        <i class="fas fa-user text-gray-600"></i>
-                        <h3 class="font-semibold text-gray-900">Informações do Cliente</h3>
-                    </div>
+                <div>
+                    <h4 class="text-sm font-medium text-gray-700 mb-3">Informações do Cliente</h4>
                     <div class="space-y-3 text-sm">
                         <div>
                             <p class="text-gray-500 mb-1">Nome:</p>
@@ -878,24 +1003,47 @@ function renderizarDetalhes(solicitacao) {
                         ` : ''}
                     </div>
                 </div>
-                
-                <!-- Descrição do Problema -->
-                <div class="bg-white rounded-lg p-5">
-                    <div class="flex items-center gap-2 mb-3">
-                        <i class="fas fa-clipboard-list text-gray-600"></i>
-                        <h3 class="font-semibold text-gray-900">Descrição do Problema</h3>
+                <!-- Endereço -->
+                ${solicitacao.imovel_endereco ? `
+                <div>
+                    <h4 class="text-sm font-medium text-gray-700 mb-3">
+                        <i class="fas fa-map-marker-alt mr-2 text-gray-400"></i>
+                        Endereço
+                    </h4>
+                    <div class="text-sm text-gray-900">
+                        <p class="font-medium">${solicitacao.imovel_endereco}${solicitacao.imovel_numero ? ', ' + solicitacao.imovel_numero : ''}</p>
+                        ${solicitacao.imovel_bairro || solicitacao.imovel_cidade ? `
+                            <p class="text-gray-600 mt-1">${solicitacao.imovel_bairro || ''}${solicitacao.imovel_bairro && solicitacao.imovel_cidade ? ' - ' : ''}${solicitacao.imovel_cidade || ''}${solicitacao.imovel_estado ? '/' + solicitacao.imovel_estado : ''}</p>
+                        ` : ''}
+                        ${solicitacao.imovel_cep ? `
+                            <p class="text-gray-600">CEP: ${solicitacao.imovel_cep}</p>
+                        ` : ''}
                     </div>
+                </div>
+                ` : ''}
+            </div>
+        </div>
+        
+        <!-- Bloco 2: Descrição do Problema, Informação do Serviço, Obs do Segurado e Fotos -->
+        <div class="bg-white rounded-lg p-5 mb-4">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                <i class="fas fa-info-circle mr-2 text-blue-600"></i>
+                Informações do Serviço
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Descrição do Problema -->
+                <div>
+                    <h4 class="text-sm font-medium text-gray-700 mb-3">
+                        <i class="fas fa-clipboard-list mr-2 text-gray-400"></i>
+                        Descrição do Problema
+                    </h4>
                     <div class="bg-gray-50 border border-gray-200 rounded p-3 text-sm text-gray-900 min-h-[80px]">
                         ${solicitacao.descricao_problema || 'Nenhuma descrição fornecida.'}
                     </div>
                 </div>
-                
-                <!-- Serviço -->
-                <div class="bg-white rounded-lg p-5">
-                    <div class="flex items-center gap-2 mb-4">
-                        <i class="fas fa-tools text-gray-600"></i>
-                        <h3 class="font-semibold text-gray-900">Informações do Serviço</h3>
-                    </div>
+                <!-- Informação do Serviço -->
+                <div>
+                    <h4 class="text-sm font-medium text-gray-700 mb-3">Informações do Serviço</h4>
                     <div class="space-y-3 text-sm">
                         <div>
                             <p class="text-gray-500 mb-1">Categoria:</p>
@@ -903,7 +1051,7 @@ function renderizarDetalhes(solicitacao) {
                         </div>
                         ${solicitacao.subcategoria_nome ? `
                         <div>
-                            <p class="text-gray-500 mb-1">Subcategoria:</p>
+                            <p class="text-gray-500 mb-1">Tipo:</p>
                             <p class="font-medium text-gray-900">${solicitacao.subcategoria_nome}</p>
                         </div>
                         ` : ''}
@@ -937,414 +1085,67 @@ function renderizarDetalhes(solicitacao) {
                         </div>
                     </div>
                 </div>
-                
-                <!-- Disponibilidade Informada -->
-                ${horariosOpcoes.length > 0 ? `
-                <div class="bg-white rounded-lg p-5">
-                    <div class="flex items-center gap-2 mb-3">
-                        <i class="fas fa-clock text-gray-600"></i>
-                        <div>
-                            <h3 class="font-semibold text-gray-900">Disponibilidade Informada</h3>
-                            <p class="text-xs text-gray-500">Horários informados pelo locatário e prestador</p>
-                        </div>
-                    </div>
-                    <div class="space-y-2">
-                        ${horariosOpcoes.map((horario, index) => {
-                            try {
-                                let dt, textoHorario;
-                                
-                                // Verificar se horario é uma string no formato "dd/mm/yyyy - HH:00-HH:00"
-                                if (typeof horario === 'string' && horario.includes(' - ')) {
-                                    // Já está no formato correto, usar diretamente
-                                    textoHorario = horario;
-                                    // Extrair data para comparação
-                                    const match = horario.match(/(\d{2})\/(\d{2})\/(\d{4})/);
-                                    if (match) {
-                                        dt = new Date(`${match[3]}-${match[2]}-${match[1]}`);
-                                    } else {
-                                        dt = new Date();
-                                    }
-                                } else {
-                                    // É uma data ISO, converter para o formato esperado
-                                    dt = new Date(horario);
-                                    if (isNaN(dt.getTime())) {
-                                        // Se não for uma data válida, pular
-                                        return '';
-                                    }
-                                    const dia = String(dt.getDate()).padStart(2, '0');
-                                    const mes = String(dt.getMonth() + 1).padStart(2, '0');
-                                    const ano = dt.getFullYear();
-                                    const hora = String(dt.getHours()).padStart(2, '0');
-                                    const faixaHora = hora + ':00-' + (parseInt(hora) + 3) + ':00';
-                                    textoHorario = `${dia}/${mes}/${ano} - ${faixaHora}`;
-                                }
-                                
-                                // ✅ Verificar se este horário está confirmado
-                                let isConfirmed = false;
-                                
-                                // DEBUG: Log para verificar dados
-                                console.log('🔍 DEBUG Horário atual:', textoHorario);
-                                console.log('🔍 confirmed_schedules:', solicitacao.confirmed_schedules);
-                                console.log('🔍 horario_confirmado_raw:', solicitacao.horario_confirmado_raw);
-                                
-                                // ✅ Função auxiliar para comparar horários de forma precisa
-                                const compararHorarios = (raw1, raw2) => {
-                                    const raw1Norm = String(raw1).trim().replace(/\s+/g, ' ');
-                                    const raw2Norm = String(raw2).trim().replace(/\s+/g, ' ');
-                                    
-                                    // Comparação exata primeiro (mais precisa)
-                                    if (raw1Norm === raw2Norm) {
-                                        return true;
-                                    }
-                                    
-                                    // Comparação por regex - extrair data e hora inicial E FINAL EXATAS
-                                    // Formato esperado: "dd/mm/yyyy - HH:MM-HH:MM"
-                                    const regex = /(\d{2}\/\d{2}\/\d{4})\s*-\s*(\d{2}:\d{2})-(\d{2}:\d{2})/;
-                                    const match1 = raw1Norm.match(regex);
-                                    const match2 = raw2Norm.match(regex);
-                                    
-                                    if (match1 && match2) {
-                                        // ✅ Comparar data, hora inicial E hora final EXATAS (não apenas data e hora inicial)
-                                        // Isso garante que apenas horários EXATOS sejam considerados iguais
-                                        return (match1[1] === match2[1] && match1[2] === match2[2] && match1[3] === match2[3]);
-                                    }
-                                    
-                                    // Se não conseguir comparar por regex, retornar false (não é match)
-                                    return false;
-                                };
-                                
-                                // 1. Verificar em confirmed_schedules (JSON) - PRIORIDADE
-                                if (solicitacao.confirmed_schedules) {
-                                    try {
-                                        // Pode ser string JSON ou já um objeto
-                                        const confirmed = typeof solicitacao.confirmed_schedules === 'string' 
-                                            ? JSON.parse(solicitacao.confirmed_schedules) 
-                                            : solicitacao.confirmed_schedules;
-                                        
-                                        if (Array.isArray(confirmed) && confirmed.length > 0) {
-                                            // Comparar raw de cada horário confirmado
-                                            isConfirmed = confirmed.some(s => {
-                                                if (!s || !s.raw) return false;
-                                                
-                                                // ✅ Usar função de comparação precisa
-                                                return compararHorarios(String(s.raw), textoHorario);
-                                            });
-                                        }
-                                    } catch (e) {
-                                        console.error('Erro ao parsear confirmed_schedules:', e);
-                                    }
-                                }
-                                
-                                // 2. Verificar em horario_confirmado_raw (texto direto) - IMPORTANTE se confirmed_schedules está null
-                                if (!isConfirmed && solicitacao.horario_confirmado_raw) {
-                                    // ✅ Usar função de comparação precisa
-                                    isConfirmed = compararHorarios(solicitacao.horario_confirmado_raw, textoHorario);
-                                }
-                                
-                                // 3. Verificar por data_agendamento + horario_agendamento (compatibilidade)
-                                if (!isConfirmed && solicitacao.data_agendamento && solicitacao.horario_agendamento) {
-                                    try {
-                                        const dataAg = new Date(solicitacao.data_agendamento);
-                                        const horaAg = String(solicitacao.horario_agendamento).trim();
-                                        
-                                        // Comparar data
-                                        if (dataAg.getDate() === dt.getDate() &&
-                                            dataAg.getMonth() === dt.getMonth() &&
-                                            dataAg.getFullYear() === dt.getFullYear()) {
-                                            // Comparar hora (primeira hora do horário atual)
-                                            const hora = String(dt.getHours()).padStart(2, '0');
-                                            if (horaAg.includes(hora)) {
-                                                isConfirmed = true;
-                                            }
-                                        }
-                                    } catch (e) {
-                                        // Ignorar erro de data
-                                    }
-                                }
-                                
-                                console.log('🔍 Resultado final isConfirmed para', textoHorario, ':', isConfirmed);
-                                
-                                return `
-                                <div class="flex items-center gap-3 py-2 ${isConfirmed ? 'bg-green-50 rounded px-2' : ''}">
-                                    <input type="checkbox" 
-                                           class="w-4 h-4 text-blue-600 rounded horario-offcanvas" 
-                                           data-raw="${textoHorario}" 
-                                           id="horario-${index}"
-                                           ${isConfirmed ? 'checked' : ''}>
-                                    <label for="horario-${index}" class="text-sm text-gray-700 flex items-center gap-2">
-                                        ${isConfirmed ? '<i class="fas fa-check-circle text-green-600"></i>' : ''}
-                                        <span>${textoHorario}</span>
-                                        ${isConfirmed ? '<span class="text-xs text-green-700 font-semibold">(Confirmado)</span>' : ''}
-                                    </label>
-                                </div>
-                                `;
-                            } catch (e) {
-                                return '';
-                            }
-                        }).join('')}
-                    </div>
-                    <div class="mt-4 pt-3 border-t">
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="checkbox" 
-                                   id="horarios-indisponiveis-kanban" 
-                                   class="w-4 h-4 text-blue-600 rounded"
-                                   ${solicitacao.horarios_indisponiveis ? 'checked' : ''}
-                                   onchange="toggleAdicionarHorariosSeguradoraKanban(${solicitacao.id}, this.checked)">
-                            <span class="text-sm text-gray-700">Nenhum horário está disponível</span>
-                        </label>
-                    </div>
-                    
-                    <!-- Seção: Adicionar Horários da Seguradora (aparece quando checkbox está marcado) -->
-                    <div id="secao-adicionar-horarios-seguradora-kanban" 
-                         class="mt-4 ${solicitacao.horarios_indisponiveis ? '' : 'hidden'}"
-                         style="${solicitacao.horarios_indisponiveis ? 'display: block;' : 'display: none;'}">
-                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                            <h3 class="text-sm font-semibold text-blue-900 mb-2">
-                                <i class="fas fa-clock mr-2"></i>Adicionar Horário da Seguradora
-                            </h3>
-                            <p class="text-xs text-blue-700 mb-4">
-                                Adicione horários alternativos que a seguradora pode oferecer
-                            </p>
-                            
-                            <!-- Formulário para adicionar horário -->
-                            <div class="space-y-3">
-                                <div>
-                                    <label class="block text-xs font-medium text-gray-700 mb-1">Data</label>
-                                    <div class="relative">
-                                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                            <i class="fas fa-calendar-alt text-gray-400"></i>
-                                        </div>
-                                        <input type="date" 
-                                               id="data-seguradora-kanban" 
-                                               class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
-                                               min="${new Date(Date.now() + 86400000).toISOString().split('T')[0]}"
-                                               max="${new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0]}">
-                                    </div>
-                                </div>
-                                
-                                <div>
-                                    <label class="block text-xs font-medium text-gray-700 mb-2">Horário</label>
-                                    <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
-                                        <label class="relative cursor-pointer">
-                                            <input type="radio" name="horario-seguradora-kanban" value="08:00-11:00" class="sr-only">
-                                            <div class="border-2 border-gray-200 rounded-lg p-2 text-center hover:border-blue-300 transition-colors horario-seguradora-card-kanban">
-                                                <div class="text-xs font-medium text-gray-900">08h00 às 11h00</div>
-                                            </div>
-                                        </label>
-                                        
-                                        <label class="relative cursor-pointer">
-                                            <input type="radio" name="horario-seguradora-kanban" value="11:00-14:00" class="sr-only">
-                                            <div class="border-2 border-gray-200 rounded-lg p-2 text-center hover:border-blue-300 transition-colors horario-seguradora-card-kanban">
-                                                <div class="text-xs font-medium text-gray-900">11h00 às 14h00</div>
-                                            </div>
-                                        </label>
-                                        
-                                        <label class="relative cursor-pointer">
-                                            <input type="radio" name="horario-seguradora-kanban" value="14:00-17:00" class="sr-only">
-                                            <div class="border-2 border-gray-200 rounded-lg p-2 text-center hover:border-blue-300 transition-colors horario-seguradora-card-kanban">
-                                                <div class="text-xs font-medium text-gray-900">14h00 às 17h00</div>
-                                            </div>
-                                        </label>
-                                        
-                                        <label class="relative cursor-pointer">
-                                            <input type="radio" name="horario-seguradora-kanban" value="17:00-20:00" class="sr-only">
-                                            <div class="border-2 border-gray-200 rounded-lg p-2 text-center hover:border-blue-300 transition-colors horario-seguradora-card-kanban">
-                                                <div class="text-xs font-medium text-gray-900">17h00 às 20h00</div>
-                                            </div>
-                                        </label>
-                                    </div>
-                                </div>
-                                
-                                <button type="button" 
-                                        onclick="adicionarHorarioSeguradoraKanban(${solicitacao.id})" 
-                                        class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium">
-                                    <i class="fas fa-plus mr-2"></i>Salvar Horário
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                ` : ''}
-                
-                <!-- Anexar Documento -->
-                <div class="bg-white rounded-lg p-5">
-                    <div class="flex items-center gap-2 mb-3">
-                        <i class="fas fa-paperclip text-gray-600"></i>
-                        <h3 class="font-semibold text-gray-900">Anexar Documento</h3>
-                    </div>
-                    <p class="text-xs text-gray-500 mb-3">(PDF, DOC, DOCX, JPG, PNG - máx 5MB)</p>
-                    <button class="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg transition-colors">
-                        Anexar Documento
-                    </button>
-                    <p class="text-xs text-gray-500 mt-2">0/3 documentos</p>
-                </div>
-                
-                <!-- Histórico de WhatsApp -->
-                <div class="bg-white rounded-lg p-5">
-                    <div class="flex items-center gap-2 mb-4">
-                        <i class="fab fa-whatsapp text-green-600"></i>
-                        <h3 class="font-semibold text-gray-900">Histórico WhatsApp</h3>
-                    </div>
-                    <div class="space-y-2 max-h-64 overflow-y-auto">
-                        ${solicitacao.whatsapp_historico && solicitacao.whatsapp_historico.length > 0 ? 
-                            solicitacao.whatsapp_historico.map((envio, index) => {
-                                const statusIcon = envio.status === 'sucesso' ? 'fa-check-circle text-green-600' : 
-                                                  envio.status === 'erro' ? 'fa-times-circle text-red-600' : 
-                                                  'fa-clock text-yellow-600';
-                                const statusText = envio.status === 'sucesso' ? 'Enviado' : 
-                                                  envio.status === 'erro' ? 'Erro' : 
-                                                  'Pendente';
-                                return `
-                                    <div class="border border-gray-200 rounded-lg p-3 hover:bg-gray-50 cursor-pointer transition-colors" 
-                                         onclick="verMensagemWhatsApp(${index})">
-                                        <div class="flex items-start justify-between mb-2">
-                                            <div class="flex items-center gap-2">
-                                                <i class="fas ${statusIcon} text-sm"></i>
-                                                <span class="text-xs font-medium text-gray-700">${envio.tipo}</span>
-                                                <span class="text-xs px-2 py-0.5 rounded ${envio.status === 'sucesso' ? 'bg-green-100 text-green-700' : envio.status === 'erro' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'}">${statusText}</span>
-                                            </div>
-                                            <span class="text-xs text-gray-500">${formatarDataHora(envio.timestamp)}</span>
-                                        </div>
-                                        ${envio.telefone ? `
-                                            <div class="text-xs text-gray-600 mb-1">
-                                                <i class="fas fa-phone mr-1"></i>
-                                                ${envio.telefone}
-                                            </div>
-                                        ` : ''}
-                                        ${envio.erro ? `
-                                            <div class="text-xs text-red-600 mt-1">
-                                                <i class="fas fa-exclamation-triangle mr-1"></i>
-                                                ${envio.erro}
-                                            </div>
-                                        ` : ''}
-                                        <div class="text-xs text-blue-600 mt-2 flex items-center">
-                                            <i class="fas fa-eye mr-1"></i>
-                                            Ver mensagem
-                                        </div>
-                                    </div>
-                                `;
-                            }).join('') : 
-                            `
-                            <div class="text-center py-6 text-gray-400">
-                                <i class="fab fa-whatsapp text-2xl mb-2 block"></i>
-                                <p class="text-sm">Nenhum envio de WhatsApp registrado</p>
-                            </div>
-                            `
-                        }
-                    </div>
-                </div>
-                
             </div>
-            
-            <!-- COLUNA DIREITA -->
-            <div class="space-y-4">
-                
-                <!-- Endereço -->
-                ${solicitacao.imovel_endereco ? `
-                <div class="bg-white rounded-lg p-5">
-                    <div class="flex items-center gap-2 mb-3">
-                        <i class="fas fa-map-marker-alt text-gray-600"></i>
-                        <h3 class="font-semibold text-gray-900">Endereço</h3>
-                    </div>
-                    <div class="text-sm text-gray-900">
-                        <p class="font-medium">${solicitacao.imovel_endereco}${solicitacao.imovel_numero ? ', ' + solicitacao.imovel_numero : ''}</p>
-                    </div>
-                </div>
-                ` : ''}
-                
-                <!-- Observações do Segurado -->
-                <div class="bg-white rounded-lg p-5">
-                    <div class="flex items-center gap-2 mb-3">
-                        <i class="fas fa-comment-dots text-gray-600"></i>
-                        <h3 class="font-semibold text-gray-900">Observações do Segurado</h3>
-                    </div>
-                    <textarea class="w-full bg-gray-50 border border-gray-200 rounded p-3 text-sm text-gray-700 min-h-[120px] resize-none" 
-                              placeholder="Descreva qualquer situação adicional (ex: prestador não compareceu, precisa comprar peças, etc.)">${solicitacao.observacoes || ''}</textarea>
-                </div>
-                
-                <!-- Fotos -->
-                <div class="bg-white rounded-lg p-5">
-                    <div class="flex items-center gap-2 mb-3">
-                        <i class="fas fa-camera text-gray-600"></i>
-                        <h3 class="font-semibold text-gray-900">Fotos Enviadas</h3>
-                        <span class="text-xs text-gray-500" id="fotos-count">(${solicitacao.fotos && Array.isArray(solicitacao.fotos) ? solicitacao.fotos.length : 0})</span>
-                    </div>
-                    ${solicitacao.fotos && Array.isArray(solicitacao.fotos) && solicitacao.fotos.length > 0 ? `
-                    <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
-                        ${solicitacao.fotos.map((foto, index) => {
-                            // Construir URL correta da foto
-                            let urlFoto = '';
-                            
-                            // Obter nome do arquivo (priorizar nome_arquivo)
-                            const nomeArquivo = foto.nome_arquivo || (foto.url_arquivo ? foto.url_arquivo.split('/').pop() : '');
-                            
-                            if (nomeArquivo) {
-                                // Construir URL usando a função url() do PHP
-                                urlFoto = '<?= url("Public/uploads/solicitacoes/") ?>' + nomeArquivo;
-                                
-                                // Log para debug
-                                console.log('📸 Construindo URL da foto:', {
-                                    foto: foto,
-                                    nomeArquivo: nomeArquivo,
-                                    urlFinal: urlFoto
-                                });
-                            } else {
-                                console.error('❌ Erro: Nome do arquivo não encontrado', foto);
-                                return '';
-                            }
-                            
-                            // Escapar aspas para evitar problemas no JavaScript
-                            const urlFotoEscapada = urlFoto.replace(/'/g, "\\'").replace(/"/g, '&quot;');
-                            
-                            return `
-                                <div class="relative group">
-                                    <img src="${urlFotoEscapada}" 
-                                         alt="Foto ${index + 1} da solicitação" 
-                                         class="w-full h-32 object-cover rounded-lg border border-gray-200 cursor-pointer hover:opacity-80 transition-opacity shadow-sm"
-                                         onclick="abrirFotoModal('${urlFotoEscapada}')"
-                                         onerror="console.error('Erro ao carregar foto:', '${urlFotoEscapada}'); this.parentElement.innerHTML='<div class=\\'w-full h-32 bg-gray-100 rounded-lg flex items-center justify-center text-gray-400 text-xs\\'><i class=\\'fas fa-image mr-2\\'></i>Erro ao carregar</div>';">
-                                    <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 rounded-lg transition-all flex items-center justify-center">
-                                        <i class="fas fa-search-plus text-white opacity-0 group-hover:opacity-100 transition-opacity text-2xl"></i>
-                                    </div>
+            <!-- Observações do Segurado -->
+            <div class="mt-6">
+                <h4 class="text-sm font-medium text-gray-700 mb-3">
+                    <i class="fas fa-comment-dots mr-2 text-gray-400"></i>
+                    Observações do Segurado
+                </h4>
+                <textarea class="w-full bg-gray-50 border border-gray-200 rounded p-3 text-sm text-gray-700 min-h-[120px] resize-none" 
+                          placeholder="Descreva qualquer situação adicional (ex: prestador não compareceu, precisa comprar peças, etc.)">${solicitacao.observacoes || ''}</textarea>
+            </div>
+            <!-- Fotos Enviadas -->
+            <div class="mt-6">
+                <h4 class="text-sm font-medium text-gray-700 mb-3">
+                    <i class="fas fa-camera mr-2 text-gray-400"></i>
+                    Fotos Enviadas
+                    <span class="text-xs text-gray-500" id="fotos-count">(${solicitacao.fotos && Array.isArray(solicitacao.fotos) ? solicitacao.fotos.length : 0})</span>
+                </h4>
+                ${solicitacao.fotos && Array.isArray(solicitacao.fotos) && solicitacao.fotos.length > 0 ? `
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    ${solicitacao.fotos.map((foto, index) => {
+                        let urlFoto = '';
+                        const nomeArquivo = foto.nome_arquivo || (foto.url_arquivo ? foto.url_arquivo.split('/').pop() : '');
+                        if (nomeArquivo) {
+                            urlFoto = '<?= url("Public/uploads/solicitacoes/") ?>' + nomeArquivo;
+                        } else {
+                            return '';
+                        }
+                        const urlFotoEscapada = urlFoto.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                        return `
+                            <div class="relative group">
+                                <img src="${urlFotoEscapada}" 
+                                     alt="Foto ${index + 1}" 
+                                     class="w-full h-32 object-cover rounded-lg border border-gray-200 cursor-pointer hover:opacity-80 transition-opacity shadow-sm"
+                                     onclick="abrirFotoModal('${urlFotoEscapada}')"
+                                     onerror="this.parentElement.innerHTML='<div class=\\'w-full h-32 bg-gray-100 rounded-lg flex items-center justify-center text-gray-400 text-xs\\'><i class=\\'fas fa-image mr-2\\'></i>Erro</div>';">
+                                <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 rounded-lg transition-all flex items-center justify-center">
+                                    <i class="fas fa-search-plus text-white opacity-0 group-hover:opacity-100 transition-opacity text-2xl"></i>
                                 </div>
-                            `;
-                        }).join('')}
-                    </div>
-                    ` : `
-                    <div class="text-center py-8 text-gray-400">
-                        <i class="fas fa-camera text-3xl mb-2 block"></i>
-                        <p class="text-sm">Nenhuma foto enviada</p>
-                    </div>
-                    `}
+                            </div>
+                        `;
+                    }).join('')}
                 </div>
-                
-                <!-- Precisa de Reembolso -->
-                <div class="bg-white rounded-lg p-5">
-                    <label class="flex items-center gap-2 mb-3">
-                        <input type="checkbox" 
-                               id="checkboxReembolso" 
-                               class="w-4 h-4 text-blue-600 rounded" 
-                               onchange="toggleCampoReembolso()"
-                               ${solicitacao.precisa_reembolso ? 'checked' : ''}>
-                        <span class="text-sm font-medium text-gray-900">Precisa de Reembolso?</span>
-                    </label>
-                    <div id="campoValorReembolso" class="${solicitacao.precisa_reembolso ? '' : 'hidden'} mt-3">
-                        <label class="text-xs text-gray-600 mb-1 block">Valor do Reembolso (R$)</label>
-                        <input type="text" 
-                               id="valorReembolso"
-                               placeholder="R$ 0,00" 
-                               value="${solicitacao.valor_reembolso ? formatarValorMoeda(solicitacao.valor_reembolso) : ''}"
-                               class="w-full bg-gray-50 border border-gray-200 rounded px-3 py-2 text-sm text-gray-900"
-                               onkeyup="formatarMoeda(this)">
-                    </div>
+                ` : `
+                <div class="text-center py-8 text-gray-400">
+                    <i class="fas fa-camera text-3xl mb-2 block"></i>
+                    <p class="text-sm">Nenhuma foto enviada</p>
                 </div>
-                
+                `}
+            </div>
+        </div>
+        
+        <!-- Bloco 3: Disponibilidade de Data, Status da Solicitação, Condições, Protocolo da Seguradora -->
+        <div class="bg-white rounded-lg p-5 mb-4">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                <i class="fas fa-calendar-alt mr-2 text-blue-600"></i>
+                Status e Agendamento
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <!-- Status da Solicitação -->
-                <div class="bg-white rounded-lg p-5">
-                    <div class="flex items-center gap-2 mb-3">
-                        <i class="fas fa-info-circle text-gray-600"></i>
-                        <h3 class="font-semibold text-gray-900">Status da Solicitação</h3>
-                    </div>
+                <div>
+                    <h4 class="text-sm font-medium text-gray-700 mb-3">Status da Solicitação</h4>
                     <select id="statusSelectKanban" 
                             onchange="marcarMudancaStatus()"
                             class="w-full bg-gray-50 border border-gray-200 rounded px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500">
@@ -1355,13 +1156,9 @@ function renderizarDetalhes(solicitacao) {
                         `).join('')}
                     </select>
                 </div>
-                
                 <!-- Condições -->
-                <div class="bg-white rounded-lg p-5">
-                    <div class="flex items-center gap-2 mb-3">
-                        <i class="fas fa-tag text-gray-600"></i>
-                        <h3 class="font-semibold text-gray-900">Condições</h3>
-                    </div>
+                <div>
+                    <h4 class="text-sm font-medium text-gray-700 mb-3">Condições</h4>
                     <select id="condicaoSelectKanban" 
                             onchange="marcarMudancaCondicao()"
                             class="w-full bg-gray-50 border border-gray-200 rounded px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500">
@@ -1373,31 +1170,329 @@ function renderizarDetalhes(solicitacao) {
                         `).join('')}
                     </select>
                 </div>
-                
-                <!-- Protocolo da Seguradora -->
-                <div class="bg-white rounded-lg p-5">
-                    <div class="flex items-center gap-2 mb-3">
-                        <i class="fas fa-hashtag text-gray-600"></i>
-                        <h3 class="font-semibold text-gray-900">Protocolo da Seguradora</h3>
+            </div>
+            <!-- Protocolo da Seguradora -->
+            <div class="mt-6">
+                <h4 class="text-sm font-medium text-gray-700 mb-3">Protocolo da Seguradora</h4>
+                <input type="text" 
+                       id="protocoloSeguradora"
+                       placeholder="Ex.: 123456/2025" 
+                       value="${solicitacao.protocolo_seguradora || ''}"
+                       class="w-full bg-gray-50 border border-gray-200 rounded px-3 py-2 text-sm text-gray-900">
+            </div>
+            <!-- Disponibilidade de Data -->
+            ${horariosOpcoes.length > 0 ? `
+            <div class="mt-6">
+                <h4 class="text-sm font-medium text-gray-700 mb-3">
+                    <i class="fas fa-clock mr-2 text-gray-400"></i>
+                    Disponibilidade Informada
+                </h4>
+                <div class="space-y-2">
+                    ${horariosOpcoes.map((horario, index) => {
+                        try {
+                            let dt, textoHorario;
+                            if (typeof horario === 'string' && horario.includes(' - ')) {
+                                textoHorario = horario;
+                                const match = horario.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+                                if (match) {
+                                    dt = new Date(`${match[3]}-${match[2]}-${match[1]}`);
+                                } else {
+                                    dt = new Date();
+                                }
+                            } else {
+                                dt = new Date(horario);
+                                if (isNaN(dt.getTime())) {
+                                    return '';
+                                }
+                                const dia = String(dt.getDate()).padStart(2, '0');
+                                const mes = String(dt.getMonth() + 1).padStart(2, '0');
+                                const ano = dt.getFullYear();
+                                const hora = String(dt.getHours()).padStart(2, '0');
+                                const faixaHora = hora + ':00-' + (parseInt(hora) + 3) + ':00';
+                                textoHorario = `${dia}/${mes}/${ano} - ${faixaHora}`;
+                            }
+                            
+                            let isConfirmed = false;
+                            const compararHorarios = (raw1, raw2) => {
+                                const raw1Norm = String(raw1).trim().replace(/\s+/g, ' ');
+                                const raw2Norm = String(raw2).trim().replace(/\s+/g, ' ');
+                                if (raw1Norm === raw2Norm) {
+                                    return true;
+                                }
+                                const regex = /(\d{2}\/\d{2}\/\d{4})\s*-\s*(\d{2}:\d{2})-(\d{2}:\d{2})/;
+                                const match1 = raw1Norm.match(regex);
+                                const match2 = raw2Norm.match(regex);
+                                if (match1 && match2) {
+                                    return (match1[1] === match2[1] && match1[2] === match2[2] && match1[3] === match2[3]);
+                                }
+                                return false;
+                            };
+                            
+                            if (solicitacao.confirmed_schedules) {
+                                try {
+                                    const confirmed = typeof solicitacao.confirmed_schedules === 'string' 
+                                        ? JSON.parse(solicitacao.confirmed_schedules) 
+                                        : solicitacao.confirmed_schedules;
+                                    if (Array.isArray(confirmed) && confirmed.length > 0) {
+                                        isConfirmed = confirmed.some(s => {
+                                            if (!s || !s.raw) return false;
+                                            return compararHorarios(String(s.raw), textoHorario);
+                                        });
+                                    }
+                                } catch (e) {
+                                    console.error('Erro ao parsear confirmed_schedules:', e);
+                                }
+                            }
+                            
+                            if (!isConfirmed && solicitacao.horario_confirmado_raw) {
+                                isConfirmed = compararHorarios(solicitacao.horario_confirmado_raw, textoHorario);
+                            }
+                            
+                            if (!isConfirmed && solicitacao.data_agendamento && solicitacao.horario_agendamento) {
+                                try {
+                                    const dataAg = new Date(solicitacao.data_agendamento);
+                                    const horaAg = String(solicitacao.horario_agendamento).trim();
+                                    if (dataAg.getDate() === dt.getDate() &&
+                                        dataAg.getMonth() === dt.getMonth() &&
+                                        dataAg.getFullYear() === dt.getFullYear()) {
+                                        const hora = String(dt.getHours()).padStart(2, '0');
+                                        if (horaAg.includes(hora)) {
+                                            isConfirmed = true;
+                                        }
+                                    }
+                                } catch (e) {}
+                            }
+                            
+                            return `
+                            <div class="flex items-center gap-3 py-2 ${isConfirmed ? 'bg-green-50 rounded px-2' : ''}">
+                                <input type="checkbox" 
+                                       class="w-4 h-4 text-blue-600 rounded horario-offcanvas" 
+                                       data-raw="${textoHorario}" 
+                                       id="horario-${index}"
+                                       ${isConfirmed ? 'checked' : ''}>
+                                <label for="horario-${index}" class="text-sm text-gray-700 flex items-center gap-2">
+                                    ${isConfirmed ? '<i class="fas fa-check-circle text-green-600"></i>' : ''}
+                                    <span>${textoHorario}</span>
+                                    ${isConfirmed ? '<span class="text-xs text-green-700 font-semibold">(Confirmado)</span>' : ''}
+                                </label>
+                            </div>
+                            `;
+                        } catch (e) {
+                            return '';
+                        }
+                    }).join('')}
+                </div>
+                <div class="mt-4 pt-3 border-t">
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" 
+                               id="horarios-indisponiveis-kanban" 
+                               class="w-4 h-4 text-blue-600 rounded"
+                               ${solicitacao.horarios_indisponiveis ? 'checked' : ''}
+                               onchange="toggleAdicionarHorariosSeguradoraKanban(${solicitacao.id}, this.checked)">
+                        <span class="text-sm text-gray-700">Nenhum horário está disponível</span>
+                    </label>
+                </div>
+                <div id="secao-adicionar-horarios-seguradora-kanban" 
+                     class="mt-4 ${solicitacao.horarios_indisponiveis ? '' : 'hidden'}"
+                     style="${solicitacao.horarios_indisponiveis ? 'display: block;' : 'display: none;'}">
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <h3 class="text-sm font-semibold text-blue-900 mb-2">
+                            <i class="fas fa-clock mr-2"></i>Adicionar Horário da Seguradora
+                        </h3>
+                        <p class="text-xs text-blue-700 mb-4">
+                            Adicione horários alternativos que a seguradora pode oferecer
+                        </p>
+                        <div class="space-y-3">
+                            <div>
+                                <label class="block text-xs font-medium text-gray-700 mb-1">Data</label>
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <i class="fas fa-calendar-alt text-gray-400"></i>
+                                    </div>
+                                    <input type="date" 
+                                           id="data-seguradora-kanban" 
+                                           class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+                                           min="${new Date(Date.now() + 86400000).toISOString().split('T')[0]}"
+                                           max="${new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0]}">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-700 mb-2">Horário</label>
+                                <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+                                    <label class="relative cursor-pointer">
+                                        <input type="radio" name="horario-seguradora-kanban" value="08:00-11:00" class="sr-only">
+                                        <div class="border-2 border-gray-200 rounded-lg p-2 text-center hover:border-blue-300 transition-colors horario-seguradora-card-kanban">
+                                            <div class="text-xs font-medium text-gray-900">08h00 às 11h00</div>
+                                        </div>
+                                    </label>
+                                    <label class="relative cursor-pointer">
+                                        <input type="radio" name="horario-seguradora-kanban" value="11:00-14:00" class="sr-only">
+                                        <div class="border-2 border-gray-200 rounded-lg p-2 text-center hover:border-blue-300 transition-colors horario-seguradora-card-kanban">
+                                            <div class="text-xs font-medium text-gray-900">11h00 às 14h00</div>
+                                        </div>
+                                    </label>
+                                    <label class="relative cursor-pointer">
+                                        <input type="radio" name="horario-seguradora-kanban" value="14:00-17:00" class="sr-only">
+                                        <div class="border-2 border-gray-200 rounded-lg p-2 text-center hover:border-blue-300 transition-colors horario-seguradora-card-kanban">
+                                            <div class="text-xs font-medium text-gray-900">14h00 às 17h00</div>
+                                        </div>
+                                    </label>
+                                    <label class="relative cursor-pointer">
+                                        <input type="radio" name="horario-seguradora-kanban" value="17:00-20:00" class="sr-only">
+                                        <div class="border-2 border-gray-200 rounded-lg p-2 text-center hover:border-blue-300 transition-colors horario-seguradora-card-kanban">
+                                            <div class="text-xs font-medium text-gray-900">17h00 às 20h00</div>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                            <button type="button" 
+                                    onclick="adicionarHorarioSeguradoraKanban(${solicitacao.id})" 
+                                    class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium">
+                                <i class="fas fa-plus mr-2"></i>Salvar Horário
+                            </button>
+                        </div>
                     </div>
+                </div>
+            </div>
+            ` : ''}
+        </div>
+        
+        <!-- Bloco 4: Anexar Documentos com Campo de Obs -->
+        <div class="bg-white rounded-lg p-5 mb-4">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                <i class="fas fa-paperclip mr-2 text-blue-600"></i>
+                Anexar Documentos
+            </h3>
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Observação</label>
+                <textarea id="obsAnexoDocumento" rows="3" class="w-full bg-gray-50 border border-gray-200 rounded p-3 text-sm text-gray-700 resize-none" 
+                          placeholder="Adicione uma observação sobre os documentos..."></textarea>
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Anexos</label>
+                <input type="file" id="anexoDocumento" multiple accept="image/*,.pdf,.doc,.docx" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                <p class="text-xs text-gray-500 mt-1">Você pode selecionar múltiplos arquivos (imagens, PDF, Word) - máx 5MB cada</p>
+            </div>
+            <button onclick="anexarDocumento(${solicitacao.id})" class="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg transition-colors">
+                <i class="fas fa-upload mr-2"></i>
+                Enviar Documentos
+            </button>
+        </div>
+        
+        <!-- Bloco 5: Reembolso -->
+        <div class="bg-white rounded-lg p-5 mb-4">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                <i class="fas fa-money-bill-wave mr-2 text-blue-600"></i>
+                Reembolso
+            </h3>
+            ${solicitacao.precisa_reembolso || solicitacao.valor_reembolso ? `
+            <div class="bg-gray-50 rounded-lg p-4 mb-4">
+                <div class="space-y-2">
+                    ${solicitacao.valor_reembolso ? `
+                    <div>
+                        <span class="text-sm text-gray-500">Valor do Reembolso:</span>
+                        <p class="text-sm font-medium text-gray-900">R$ ${formatarValorMoeda(solicitacao.valor_reembolso)}</p>
+                    </div>
+                    ` : ''}
+                    ${solicitacao.observacoes ? `
+                    <div>
+                        <span class="text-sm text-gray-500">Observação:</span>
+                        <p class="text-sm text-gray-900">${solicitacao.observacoes}</p>
+                    </div>
+                    ` : ''}
+                </div>
+            </div>
+            ` : ''}
+            <div class="mb-4">
+                <label class="flex items-center gap-2 mb-3">
+                    <input type="checkbox" 
+                           id="checkboxReembolso" 
+                           class="w-4 h-4 text-blue-600 rounded" 
+                           onchange="toggleCampoReembolso()"
+                           ${solicitacao.precisa_reembolso ? 'checked' : ''}>
+                    <span class="text-sm font-medium text-gray-900">Precisa de Reembolso?</span>
+                </label>
+                <div id="campoValorReembolso" class="${solicitacao.precisa_reembolso ? '' : 'hidden'} mt-3">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Observação</label>
+                    <textarea id="obsReembolso" rows="3" class="w-full bg-gray-50 border border-gray-200 rounded p-3 text-sm text-gray-700 resize-none" 
+                              placeholder="Justifique o motivo do reembolso..."></textarea>
+                    <label class="block text-sm font-medium text-gray-700 mb-2 mt-3">Valor do Reembolso (R$)</label>
                     <input type="text" 
-                           id="protocoloSeguradora"
-                           placeholder="Ex.: 123456/2025" 
-                           value="${solicitacao.protocolo_seguradora || ''}"
-                           class="w-full bg-gray-50 border border-gray-200 rounded px-3 py-2 text-sm text-gray-900">
+                           id="valorReembolso"
+                           placeholder="R$ 0,00" 
+                           value="${solicitacao.valor_reembolso ? formatarValorMoeda(solicitacao.valor_reembolso) : ''}"
+                           class="w-full bg-gray-50 border border-gray-200 rounded px-3 py-2 text-sm text-gray-900"
+                           onkeyup="formatarMoeda(this)">
+                    <label class="block text-sm font-medium text-gray-700 mb-2 mt-3">Anexos</label>
+                    <input type="file" id="anexoReembolso" multiple accept="image/*,.pdf,.doc,.docx" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                    <p class="text-xs text-gray-500 mt-1">Você pode selecionar múltiplos arquivos (imagens, PDF, Word)</p>
                 </div>
-                
-                <!-- Linha do Tempo -->
-                <div class="bg-white rounded-lg p-5">
-                    <div class="flex items-center gap-2 mb-4">
-                        <i class="fas fa-history text-gray-600"></i>
-                        <h3 class="font-semibold text-gray-900">Linha do Tempo</h3>
+            </div>
+        </div>
+        
+        <!-- Bloco 6: Linha do Tempo -->
+        <div class="bg-white rounded-lg p-5 mb-4">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                <i class="fas fa-history mr-2 text-blue-600"></i>
+                Linha do Tempo
+            </h3>
+            <div class="space-y-4">
+                ${timelineHtml}
+            </div>
+        </div>
+        
+        <!-- Bloco 7: Histórico do WhatsApp -->
+        <div class="bg-white rounded-lg p-5 mb-4">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                <i class="fab fa-whatsapp mr-2 text-green-600"></i>
+                Histórico do WhatsApp
+            </h3>
+            <div class="space-y-2 max-h-64 overflow-y-auto">
+                ${solicitacao.whatsapp_historico && solicitacao.whatsapp_historico.length > 0 ? 
+                    solicitacao.whatsapp_historico.map((envio, index) => {
+                        const statusIcon = envio.status === 'sucesso' ? 'fa-check-circle text-green-600' : 
+                                          envio.status === 'erro' ? 'fa-times-circle text-red-600' : 
+                                          'fa-clock text-yellow-600';
+                        const statusText = envio.status === 'sucesso' ? 'Enviado' : 
+                                          envio.status === 'erro' ? 'Erro' : 
+                                          'Pendente';
+                        return `
+                            <div class="border border-gray-200 rounded-lg p-3 hover:bg-gray-50 cursor-pointer transition-colors" 
+                                 onclick="verMensagemWhatsApp(${index})">
+                                <div class="flex items-start justify-between mb-2">
+                                    <div class="flex items-center gap-2">
+                                        <i class="fas ${statusIcon} text-sm"></i>
+                                        <span class="text-xs font-medium text-gray-700">${envio.tipo}</span>
+                                        <span class="text-xs px-2 py-0.5 rounded ${envio.status === 'sucesso' ? 'bg-green-100 text-green-700' : envio.status === 'erro' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'}">${statusText}</span>
+                                    </div>
+                                    <span class="text-xs text-gray-500">${formatarDataHora(envio.timestamp)}</span>
+                                </div>
+                                ${envio.telefone ? `
+                                    <div class="text-xs text-gray-600 mb-1">
+                                        <i class="fas fa-phone mr-1"></i>
+                                        ${envio.telefone}
+                                    </div>
+                                ` : ''}
+                                ${envio.erro ? `
+                                    <div class="text-xs text-red-600 mt-1">
+                                        <i class="fas fa-exclamation-triangle mr-1"></i>
+                                        ${envio.erro}
+                                    </div>
+                                ` : ''}
+                                <div class="text-xs text-blue-600 mt-2 flex items-center">
+                                    <i class="fas fa-eye mr-1"></i>
+                                    Ver mensagem
+                                </div>
+                            </div>
+                        `;
+                    }).join('') : 
+                    `
+                    <div class="text-center py-6 text-gray-400">
+                        <i class="fab fa-whatsapp text-2xl mb-2 block"></i>
+                        <p class="text-sm">Nenhum envio de WhatsApp registrado</p>
                     </div>
-                    <div class="space-y-4">
-                        ${timelineHtml}
-                    </div>
-                </div>
-                
+                    `
+                }
             </div>
         </div>
         
@@ -1975,6 +2070,62 @@ function formatarValorMoeda(valor) {
     valorFormatado = valorFormatado.replace('.', ',');
     valorFormatado = valorFormatado.replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.');
     return 'R$ ' + valorFormatado;
+}
+
+function anexarDocumento(solicitacaoId) {
+    const obsAnexo = document.getElementById('obsAnexoDocumento')?.value || '';
+    const anexoInput = document.getElementById('anexoDocumento');
+    
+    if (!anexoInput || !anexoInput.files || anexoInput.files.length === 0) {
+        alert('Por favor, selecione pelo menos um arquivo para anexar.');
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('solicitacao_id', solicitacaoId);
+    formData.append('observacao', obsAnexo);
+    
+    for (let i = 0; i < anexoInput.files.length; i++) {
+        formData.append('anexos[]', anexoInput.files[i]);
+    }
+    
+    // Mostrar loading
+    const btn = document.querySelector('button[onclick*="anexarDocumento"]');
+    const originalText = btn ? btn.innerHTML : '';
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Enviando...';
+    }
+    
+    fetch('<?= url('admin/solicitacoes/') ?>' + solicitacaoId + '/anexar-documento', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Documentos anexados com sucesso!');
+            // Limpar campos
+            const obsField = document.getElementById('obsAnexoDocumento');
+            const anexoField = document.getElementById('anexoDocumento');
+            if (obsField) obsField.value = '';
+            if (anexoField) anexoField.value = '';
+            // Recarregar detalhes
+            abrirDetalhes(solicitacaoId);
+        } else {
+            alert('Erro: ' + (data.message || 'Erro ao anexar documentos'));
+        }
+    })
+    .catch(error => {
+        console.error('Erro:', error);
+        alert('Erro ao anexar documentos. Tente novamente.');
+    })
+    .finally(() => {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        }
+    });
 }
 
 function salvarAlteracoes(solicitacaoId) {
@@ -2731,12 +2882,6 @@ document.addEventListener('change', function(e) {
                         <div class="flex items-center gap-2 mb-1">
                             <h4 class="font-semibold text-gray-900 text-sm">${numeroSolicitacao}</h4>
                             <span class="chat-badge-${solicitacao.id} hidden ml-1 px-1.5 py-0.5 text-xs font-bold text-white bg-red-500 rounded-full" title="Mensagens não lidas"></span>
-                            ${isEmergencial ? `
-                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800" title="Emergencial fora do horário comercial">
-                                    <i class="fas fa-exclamation-triangle mr-1"></i>
-                                    Fora do Horário
-                                </span>
-                            ` : ''}
                             ${numeroContrato ? `
                                 <span class="text-xs text-gray-500">Contrato: ${numeroContrato}</span>
                             ` : ''}
@@ -2788,14 +2933,166 @@ document.addEventListener('change', function(e) {
                         <i class="fas fa-calendar w-4 mr-1 text-gray-400"></i>
                         <span title="Data de Registro">${dataCriacao}</span>
                     </div>
+                    
+                    ${(() => {
+                        // Processar horários para exibição
+                        let horariosExibir = [];
+                        
+                        // Se houver horário confirmado, mostrar apenas esse
+                        if (solicitacao.horario_confirmado_raw) {
+                            horariosExibir.push(solicitacao.horario_confirmado_raw);
+                        } else if (solicitacao.confirmed_schedules) {
+                            try {
+                                const confirmed = typeof solicitacao.confirmed_schedules === 'string' 
+                                    ? JSON.parse(solicitacao.confirmed_schedules) 
+                                    : solicitacao.confirmed_schedules;
+                                if (Array.isArray(confirmed)) {
+                                    confirmed.forEach(conf => {
+                                        if (conf.raw) horariosExibir.push(conf.raw);
+                                    });
+                                }
+                            } catch (e) {
+                                console.error('Erro ao parsear confirmed_schedules:', e);
+                            }
+                        } else {
+                            // Buscar horários do locatário
+                            let horariosLocatario = [];
+                            
+                            if (solicitacao.horarios_indisponiveis && solicitacao.datas_opcoes) {
+                                try {
+                                    horariosLocatario = typeof solicitacao.datas_opcoes === 'string' 
+                                        ? JSON.parse(solicitacao.datas_opcoes) 
+                                        : solicitacao.datas_opcoes;
+                                } catch (e) {
+                                    console.error('Erro ao parsear datas_opcoes:', e);
+                                }
+                            } else if (solicitacao.horarios_opcoes) {
+                                try {
+                                    horariosLocatario = typeof solicitacao.horarios_opcoes === 'string' 
+                                        ? JSON.parse(solicitacao.horarios_opcoes) 
+                                        : solicitacao.horarios_opcoes;
+                                } catch (e) {
+                                    console.error('Erro ao parsear horarios_opcoes:', e);
+                                }
+                            }
+                            
+                            // Processar horários
+                            if (Array.isArray(horariosLocatario)) {
+                                horariosLocatario.forEach(horario => {
+                                    if (typeof horario === 'string') {
+                                        // Formato já esperado: "13/11/2025 - 08:00-11:00"
+                                        if (horario.includes(' - ')) {
+                                            horariosExibir.push(horario);
+                                        }
+                                        // Formato timestamp: "2025-11-13 08:00:00"
+                                        else {
+                                            const match = horario.match(/^(\d{4})-(\d{2})-(\d{2})\s+(\d{2}):(\d{2}):\d{2}$/);
+                                            if (match) {
+                                                const data = match[3] + '/' + match[2] + '/' + match[1];
+                                                const horaInt = parseInt(match[4]);
+                                                
+                                                let faixa = '';
+                                                if (horaInt >= 8 && horaInt < 11) {
+                                                    faixa = '08:00-11:00';
+                                                } else if (horaInt >= 11 && horaInt < 14) {
+                                                    faixa = '11:00-14:00';
+                                                } else if (horaInt >= 14 && horaInt < 17) {
+                                                    faixa = '14:00-17:00';
+                                                } else if (horaInt >= 17 && horaInt < 20) {
+                                                    faixa = '17:00-20:00';
+                                                } else {
+                                                    faixa = match[4] + ':' + match[5] + '-20:00';
+                                                }
+                                                
+                                                horariosExibir.push(data + ' - ' + faixa);
+                                            }
+                                        }
+                                    }
+                                });
+                            }
+                        }
+                        
+                        // Limitar a 3 horários
+                        horariosExibir = horariosExibir.slice(0, 3);
+                        
+                        if (horariosExibir.length === 0) return '';
+                        
+                        const isAgendado = solicitacao.horario_confirmado_raw || solicitacao.confirmed_schedules;
+                        
+                        let html = '<div class="mt-2 pt-2 border-t border-gray-200">';
+                        
+                        if (isAgendado) {
+                            // Quando já foi agendado
+                            html += '<div class="text-xs">';
+                            html += '<div class="text-gray-500 mb-1">Serviço agendado em:</div>';
+                            horariosExibir.forEach(horario => {
+                                const partes = horario.split(' - ');
+                                const data = partes[0] || '';
+                                let horarioTexto = partes[1] || '';
+                                
+                                // Converter formato de horário se necessário
+                                const matchHorario = horarioTexto.match(/^(\d{2}):(\d{2})-(\d{2}):(\d{2})$/);
+                                if (matchHorario) {
+                                    horarioTexto = matchHorario[1] + 'h' + matchHorario[2] + ' às ' + matchHorario[3] + 'h' + matchHorario[4];
+                                }
+                                
+                                html += `<div class="font-medium text-gray-900">${data}</div>`;
+                                html += `<div class="text-gray-600">${horarioTexto}</div>`;
+                            });
+                            html += '</div>';
+                        } else {
+                            // Quando ainda não foi agendado (múltiplas opções)
+                            // Linha de Datas
+                            html += '<div class="grid grid-cols-3 gap-2 text-xs mb-1">';
+                            horariosExibir.forEach(horario => {
+                                const partes = horario.split(' - ');
+                                const data = partes[0] || '';
+                                html += `<div class="font-medium text-gray-900 text-center">${data}</div>`;
+                            });
+                            // Preencher espaços vazios se houver menos de 3
+                            for (let i = horariosExibir.length; i < 3; i++) {
+                                html += '<div></div>';
+                            }
+                            html += '</div>';
+                            
+                            // Linha de Horários
+                            html += '<div class="grid grid-cols-3 gap-2 text-xs">';
+                            horariosExibir.forEach(horario => {
+                                const partes = horario.split(' - ');
+                                let horarioTexto = partes[1] || '';
+                                
+                                // Converter formato de horário se necessário
+                                const matchHorario = horarioTexto.match(/^(\d{2}):(\d{2})-(\d{2}):(\d{2})$/);
+                                if (matchHorario) {
+                                    horarioTexto = matchHorario[1] + 'h' + matchHorario[2] + ' às ' + matchHorario[3] + 'h' + matchHorario[4];
+                                }
+                                
+                                html += `<div class="text-gray-600 text-center whitespace-nowrap truncate" title="${horarioTexto}">${horarioTexto}</div>`;
+                            });
+                            // Preencher espaços vazios se houver menos de 3
+                            for (let i = horariosExibir.length; i < 3; i++) {
+                                html += '<div></div>';
+                            }
+                            html += '</div>';
+                        }
+                        
+                        html += '</div>';
+                        return html;
+                    })()}
                 </div>
                 
                 ${mostrarPrioridade ? `
-                    <div class="mt-3">
+                    <div class="mt-3 flex items-center gap-2 flex-wrap">
                         <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${corPrioridade}">
                             <i class="fas fa-${(isEmergencialSubcategoria || isEmergencial) ? 'exclamation-triangle' : 'exclamation-circle'} mr-1"></i>
                             ${textoPrioridade}
                         </span>
+                        ${solicitacao.is_emergencial_fora_horario ? `
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                <i class="fas fa-phone mr-1"></i>
+                                0800
+                            </span>
+                        ` : ''}
                     </div>
                 ` : ''}
             </div>

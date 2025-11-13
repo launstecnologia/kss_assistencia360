@@ -41,6 +41,7 @@ class SolicitacaoManual extends Model
                 c.nome as categoria_nome,
                 sc.nome as subcategoria_nome,
                 i.nome as imobiliaria_nome,
+                i.logo as imobiliaria_logo,
                 u.nome as migrada_por_nome,
                 CASE WHEN sm.migrada_para_solicitacao_id IS NOT NULL THEN 1 ELSE 0 END as migrada
             FROM solicitacoes_manuais sm

@@ -174,6 +174,9 @@ ob_start();
                 <thead class="bg-gray-50">
                     <tr>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Imobiliária
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Cliente
                         </th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -196,6 +199,16 @@ ob_start();
                 <tbody class="bg-white divide-y divide-gray-200">
                     <?php foreach ($solicitacoes as $solicitacao): ?>
                         <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4">
+                                <?php if (!empty($solicitacao['imobiliaria_logo'])): ?>
+                                    <img src="<?= url('Public/uploads/logos/' . $solicitacao['imobiliaria_logo']) ?>" 
+                                         alt="<?= htmlspecialchars($solicitacao['imobiliaria_nome'] ?? 'Imobiliária') ?>" 
+                                         class="h-8 w-auto object-contain max-w-[100px]"
+                                         onerror="this.style.display='none';">
+                                <?php else: ?>
+                                    <span class="text-xs text-gray-400">-</span>
+                                <?php endif; ?>
+                            </td>
                             <td class="px-6 py-4">
                                 <div class="text-sm font-medium text-gray-900">
                                     <?= htmlspecialchars($solicitacao['nome_completo']) ?>
