@@ -115,7 +115,8 @@
                 
                 <a href="<?= url('admin/kanban') ?>" class="flex items-center px-4 py-2 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors <?= $currentPage === 'kanban' ? 'bg-blue-50 text-blue-700 font-medium' : '' ?>">
                     <i class="fas fa-columns mr-3 w-5 text-center"></i>
-                    Kanban
+                    <span class="flex-1">Kanban</span>
+                    <span id="kanbanBadge" class="hidden ml-2 px-2 py-0.5 text-xs font-bold text-white bg-red-500 rounded-full">0</span>
                 </a>
                 
                 <!-- OPERAÇÕES -->
@@ -356,6 +357,33 @@
                 }, 500);
             });
         }, 5000);
+        
+        // Atualizar badge de novas solicitações no Kanban
+        function atualizarBadgeKanban() {
+            fetch('<?= url("admin/kanban/novas-solicitacoes") ?>')
+                .then(response => response.json())
+                .then(data => {
+                    const badge = document.getElementById('kanbanBadge');
+                    if (badge) {
+                        const count = data.count || 0;
+                        if (count > 0) {
+                            badge.textContent = count;
+                            badge.classList.remove('hidden');
+                        } else {
+                            badge.classList.add('hidden');
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro ao atualizar badge do Kanban:', error);
+                });
+        }
+        
+        // Atualizar badge ao carregar a página
+        atualizarBadgeKanban();
+        
+        // Atualizar badge a cada 10 segundos
+        setInterval(atualizarBadgeKanban, 10000);
     </script>
 </body>
 </html>

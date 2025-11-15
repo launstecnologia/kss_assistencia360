@@ -37,9 +37,9 @@ ob_start();
     <div class="px-4 sm:px-6 py-4 border-b border-gray-200">
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div class="flex-1">
-                <h2 class="text-lg font-medium text-gray-900">
-                    <?= htmlspecialchars($solicitacao['categoria_nome']) ?>
-                </h2>
+            <h2 class="text-lg font-medium text-gray-900">
+                <?= htmlspecialchars($solicitacao['categoria_nome']) ?>
+            </h2>
             </div>
             <span class="status-badge status-<?= strtolower(str_replace([' ', '(', ')'], ['-', '', ''], $solicitacao['status_nome'])) ?> self-start sm:self-auto">
                 <?= htmlspecialchars($solicitacao['status_nome']) ?>
@@ -143,13 +143,6 @@ ob_start();
                     <span class="sm:hidden">Peças</span>
                 </button>
                 
-                <!-- Reembolso -->
-                <button onclick="executarAcao(<?= $solicitacao['id'] ?>, 'reembolso')" 
-                        class="flex-1 sm:flex-none px-3 sm:px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 transition-colors">
-                    <i class="fas fa-money-bill-wave mr-2"></i>
-                    <span class="hidden sm:inline">Reembolso</span>
-                    <span class="sm:hidden">Reembolso</span>
-                </button>
                 <?php
             }
             ?>
@@ -231,7 +224,7 @@ ob_start();
         Informações do Serviço
     </h3>
     
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <!-- Descrição do Problema -->
         <?php if (!empty($solicitacao['descricao_problema'])): ?>
         <div>
@@ -246,29 +239,29 @@ ob_start();
         <?php endif; ?>
         
         <!-- Informação do Serviço -->
-        <div>
+            <div>
             <h4 class="text-sm font-medium text-gray-700 mb-3">Informações do Serviço</h4>
-            <div class="space-y-2">
-                <div>
-                    <span class="text-sm text-gray-500">Categoria:</span>
-                    <p class="text-sm font-medium text-gray-900"><?= htmlspecialchars($solicitacao['categoria_nome']) ?></p>
-                </div>
-                <?php if (!empty($solicitacao['subcategoria_nome'])): ?>
-                <div>
-                    <span class="text-sm text-gray-500">Tipo:</span>
-                    <p class="text-sm font-medium text-gray-900"><?= htmlspecialchars($solicitacao['subcategoria_nome']) ?></p>
-                </div>
-                <?php endif; ?>
-                <div>
-                    <span class="text-sm text-gray-500">Prioridade:</span>
-                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium
-                        <?= $solicitacao['prioridade'] === 'ALTA' ? 'bg-red-100 text-red-800' : 
-                           ($solicitacao['prioridade'] === 'MEDIA' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800') ?>">
-                        <?= $solicitacao['prioridade'] ?>
-                    </span>
+                <div class="space-y-2">
+                    <div>
+                        <span class="text-sm text-gray-500">Categoria:</span>
+                        <p class="text-sm font-medium text-gray-900"><?= htmlspecialchars($solicitacao['categoria_nome']) ?></p>
+                    </div>
+                    <?php if (!empty($solicitacao['subcategoria_nome'])): ?>
+                    <div>
+                        <span class="text-sm text-gray-500">Tipo:</span>
+                        <p class="text-sm font-medium text-gray-900"><?= htmlspecialchars($solicitacao['subcategoria_nome']) ?></p>
+                    </div>
+                    <?php endif; ?>
+                    <div>
+                        <span class="text-sm text-gray-500">Prioridade:</span>
+                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium
+                            <?= $solicitacao['prioridade'] === 'ALTA' ? 'bg-red-100 text-red-800' : 
+                               ($solicitacao['prioridade'] === 'MEDIA' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800') ?>">
+                            <?= $solicitacao['prioridade'] ?>
+                        </span>
+                    </div>
                 </div>
             </div>
-        </div>
     </div>
     
     <!-- Observações do Segurado -->
@@ -344,31 +337,31 @@ ob_start();
                     </p>
                 </div>
                 <?php endif; ?>
+                </div>
+            </div>
+            
+        <!-- Datas -->
+            <div>
+            <h4 class="text-sm font-medium text-gray-700 mb-3">Datas</h4>
+                <div class="space-y-2">
+                    <div>
+                        <span class="text-sm text-gray-500">Criado em:</span>
+                        <p class="text-sm font-medium text-gray-900">
+                            <?= date('d/m/Y \à\s H:i', strtotime($solicitacao['created_at'])) ?>
+                        </p>
+                    </div>
+                    <?php if (!empty($solicitacao['data_agendamento'])): ?>
+                    <div>
+                        <span class="text-sm text-gray-500">Agendado para:</span>
+                        <p class="text-sm font-medium text-gray-900">
+                            <?= date('d/m/Y', strtotime($solicitacao['data_agendamento'])) ?>
+                        </p>
+                    </div>
+                    <?php endif; ?>
+                </div>
             </div>
         </div>
         
-        <!-- Datas -->
-        <div>
-            <h4 class="text-sm font-medium text-gray-700 mb-3">Datas</h4>
-            <div class="space-y-2">
-                <div>
-                    <span class="text-sm text-gray-500">Criado em:</span>
-                    <p class="text-sm font-medium text-gray-900">
-                        <?= date('d/m/Y \à\s H:i', strtotime($solicitacao['created_at'])) ?>
-                    </p>
-                </div>
-                <?php if (!empty($solicitacao['data_agendamento'])): ?>
-                <div>
-                    <span class="text-sm text-gray-500">Agendado para:</span>
-                    <p class="text-sm font-medium text-gray-900">
-                        <?= date('d/m/Y', strtotime($solicitacao['data_agendamento'])) ?>
-                    </p>
-                </div>
-                <?php endif; ?>
-            </div>
-        </div>
-    </div>
-    
     <!-- Disponibilidade de Data -->
     <?php 
     $horariosOpcoes = [];
@@ -380,9 +373,9 @@ ob_start();
     }
     ?>
     <?php if (!empty($horariosOpcoes) || !empty($datasOpcoes)): ?>
-    <div class="mt-6">
+        <div class="mt-6">
         <h4 class="text-sm font-medium text-gray-700 mb-3">Disponibilidade de Data</h4>
-        <div class="bg-gray-50 rounded-lg p-4">
+            <div class="bg-gray-50 rounded-lg p-4">
             <?php if (!empty($datasOpcoes) && is_array($datasOpcoes)): ?>
                 <?php foreach ($datasOpcoes as $data): ?>
                 <p class="text-sm text-gray-900"><?= htmlspecialchars($data) ?></p>
@@ -392,20 +385,20 @@ ob_start();
                 <p class="text-sm text-gray-900"><?= htmlspecialchars($horario) ?></p>
                 <?php endforeach; ?>
             <?php endif; ?>
+            </div>
         </div>
-    </div>
-    <?php endif; ?>
-    
+        <?php endif; ?>
+        
     <!-- Protocolo da Seguradora -->
     <?php if (!empty($solicitacao['protocolo_seguradora'])): ?>
-    <div class="mt-6">
+        <div class="mt-6">
         <h4 class="text-sm font-medium text-gray-700 mb-3">Protocolo da Seguradora</h4>
-        <div class="bg-gray-50 rounded-lg p-4">
+            <div class="bg-gray-50 rounded-lg p-4">
             <p class="text-sm font-medium text-gray-900"><?= htmlspecialchars($solicitacao['protocolo_seguradora']) ?></p>
         </div>
     </div>
-    <?php endif; ?>
-</div>
+                <?php endif; ?>
+            </div>
 
 <!-- Bloco 4: Anexar Documentos com Campo de Obs -->
 <div class="bg-white rounded-lg p-5 shadow-sm mt-6">
@@ -416,11 +409,6 @@ ob_start();
     
     <form id="formAnexarDocumentos" onsubmit="processarAnexarDocumentos(event)" enctype="multipart/form-data">
         <input type="hidden" name="solicitacao_id" value="<?= $solicitacao['id'] ?>">
-        
-        <div class="mb-4">
-            <label class="block text-sm font-medium text-gray-700 mb-2">Observação</label>
-            <textarea name="observacao" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Adicione uma observação sobre os documentos..."></textarea>
-        </div>
         
         <div class="mb-4">
             <label class="block text-sm font-medium text-gray-700 mb-2">Anexos</label>
@@ -435,66 +423,7 @@ ob_start();
             </button>
         </div>
     </form>
-</div>
-
-<!-- Bloco 5: Reembolso -->
-<div class="bg-white rounded-lg p-5 shadow-sm mt-6">
-    <h3 class="text-lg font-semibold text-gray-900 mb-4">
-        <i class="fas fa-money-bill-wave mr-2 text-blue-600"></i>
-        Reembolso
-    </h3>
-    
-    <?php if (!empty($solicitacao['precisa_reembolso']) || !empty($solicitacao['valor_reembolso'])): ?>
-    <!-- Reembolso já solicitado -->
-    <div class="bg-gray-50 rounded-lg p-4 mb-4">
-        <div class="space-y-2">
-            <?php if (!empty($solicitacao['valor_reembolso'])): ?>
-            <div>
-                <span class="text-sm text-gray-500">Valor do Reembolso:</span>
-                <p class="text-sm font-medium text-gray-900">R$ <?= number_format($solicitacao['valor_reembolso'], 2, ',', '.') ?></p>
-            </div>
-            <?php endif; ?>
-            <?php if (!empty($solicitacao['observacoes'])): ?>
-            <div>
-                <span class="text-sm text-gray-500">Observação:</span>
-                <p class="text-sm text-gray-900"><?= nl2br(htmlspecialchars($solicitacao['observacoes'])) ?></p>
-            </div>
-            <?php endif; ?>
-        </div>
-    </div>
-    <?php endif; ?>
-    
-    <!-- Formulário para registrar/criar reembolso -->
-    <form id="formReembolsoBloco" onsubmit="processarReembolsoBloco(event)" enctype="multipart/form-data">
-        <input type="hidden" name="solicitacao_id" value="<?= $solicitacao['id'] ?>">
-        
-        <div class="mb-4">
-            <label class="block text-sm font-medium text-gray-700 mb-2">Observação</label>
-            <textarea name="observacao" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="Justifique o motivo do reembolso..."></textarea>
-        </div>
-        
-        <div class="mb-4">
-            <label class="block text-sm font-medium text-gray-700 mb-2">Valor do Reembolso</label>
-            <div class="relative">
-                <span class="absolute left-3 top-2 text-gray-500">R$</span>
-                <input type="number" name="valor_reembolso" step="0.01" min="0" class="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="0,00">
-            </div>
-        </div>
-        
-        <div class="mb-4">
-            <label class="block text-sm font-medium text-gray-700 mb-2">Anexos</label>
-            <input type="file" name="anexos[]" multiple accept="image/*,.pdf,.doc,.docx" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
-            <p class="text-xs text-gray-500 mt-1">Você pode selecionar múltiplos arquivos (imagens, PDF, Word)</p>
-        </div>
-        
-        <div class="flex justify-end">
-            <button type="submit" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
-                <i class="fas fa-save mr-2"></i>
-                Registrar Reembolso
-            </button>
-        </div>
-    </form>
-</div>
+                </div>
 
 <!-- Bloco 6: Linha do Tempo -->
 <div class="bg-white rounded-lg p-5 shadow-sm mt-6">
@@ -512,7 +441,7 @@ ob_start();
             <?php endif; ?>
             <div class="relative z-10 flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center" 
                  style="background-color: <?= htmlspecialchars($item['status_cor'] ?? '#3B82F6') ?>; box-shadow: 0 0 0 2px <?= htmlspecialchars($item['status_cor'] ?? '#3B82F6') ?>;">
-            </div>
+                </div>
             <div class="flex-1">
                 <p class="text-sm font-medium text-gray-900"><?= htmlspecialchars($item['status_nome'] ?? 'Status') ?></p>
                 <?php if (!empty($item['observacao'])): ?>
@@ -528,8 +457,8 @@ ob_start();
     <?php else: ?>
     <p class="text-sm text-gray-500">Nenhum histórico disponível</p>
     <?php endif; ?>
-</div>
-
+            </div>
+            
 <!-- Bloco 7: Histórico do WhatsApp -->
 <div class="bg-white rounded-lg p-5 shadow-sm mt-6">
     <h3 class="text-lg font-semibold text-gray-900 mb-4">
