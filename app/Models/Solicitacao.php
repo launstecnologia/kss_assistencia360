@@ -163,7 +163,11 @@ class Solicitacao extends Model
                 i.telefone as imobiliaria_telefone,
                 l.cpf as locatario_cpf,
                 cond.nome as condicao_nome,
-                cond.cor as condicao_cor
+                cond.cor as condicao_cor,
+                wi.id as whatsapp_instance_id,
+                wi.nome as whatsapp_instance_nome,
+                wi.status as whatsapp_instance_status,
+                s.chat_atendimento_ativo
             FROM solicitacoes s
             LEFT JOIN status st ON s.status_id = st.id
             LEFT JOIN categorias c ON s.categoria_id = c.id
@@ -171,6 +175,7 @@ class Solicitacao extends Model
             LEFT JOIN imobiliarias i ON s.imobiliaria_id = i.id
             LEFT JOIN locatarios l ON (s.locatario_id = l.id OR s.locatario_id = l.ksi_cliente_id)
             LEFT JOIN condicoes cond ON s.condicao_id = cond.id
+            LEFT JOIN whatsapp_instances wi ON s.chat_whatsapp_instance_id = wi.id
             WHERE s.id = ?
         ";
         

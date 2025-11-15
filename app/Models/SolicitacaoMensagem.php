@@ -10,7 +10,7 @@ class SolicitacaoMensagem extends Model
     protected array $fillable = [
         'solicitacao_id', 'whatsapp_instance_id', 'instance_name',
         'numero_remetente', 'numero_destinatario', 'mensagem',
-        'tipo', 'status', 'message_id', 'erro', 'metadata',
+        'tipo', 'status', 'message_id', 'erro', 'metadata', 'is_lida',
         'created_at', 'updated_at'
     ];
 
@@ -36,7 +36,7 @@ class SolicitacaoMensagem extends Model
             SELECT * FROM {$this->table}
             WHERE solicitacao_id = ?
               AND tipo = 'RECEBIDA'
-              AND status != 'LIDA'
+              AND (is_lida = 0 OR is_lida IS NULL)
             ORDER BY created_at ASC
         ";
         return Database::fetchAll($sql, [$solicitacaoId]);
@@ -50,10 +50,10 @@ class SolicitacaoMensagem extends Model
         try {
             $sql = "
                 UPDATE {$this->table}
-                SET status = 'LIDA', updated_at = NOW()
+                SET is_lida = 1, status = 'LIDA', updated_at = NOW()
                 WHERE solicitacao_id = ?
                   AND tipo = 'RECEBIDA'
-                  AND status != 'LIDA'
+                  AND (is_lida = 0 OR is_lida IS NULL)
             ";
             Database::query($sql, [$solicitacaoId]);
             return true;
@@ -72,7 +72,7 @@ class SolicitacaoMensagem extends Model
             SELECT COUNT(*) as total FROM {$this->table}
             WHERE solicitacao_id = ?
               AND tipo = 'RECEBIDA'
-              AND status != 'LIDA'
+              AND (is_lida = 0 OR is_lida IS NULL)
         ";
         $result = Database::fetch($sql, [$solicitacaoId]);
         return (int) ($result['total'] ?? 0);

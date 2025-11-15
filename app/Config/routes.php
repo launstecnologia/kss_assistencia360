@@ -103,6 +103,7 @@ $router->post('/admin/chat/{solicitacao_id}/enviar', 'ChatController@enviarMensa
 $router->post('/admin/chat/{solicitacao_id}/encerrar', 'ChatController@encerrarAtendimento', ['auth']);
 $router->get('/admin/chat/instancias', 'ChatController@getInstancias', ['auth']);
 $router->get('/admin/chat/mensagens-nao-lidas', 'ChatController@getMensagensNaoLidas', ['auth']);
+$router->get('/admin/chat/whatsapp-status', 'ChatController@getWhatsAppStatus', ['auth']);
 $router->post('/admin/solicitacoes/{id}/status', 'SolicitacoesController@updateStatus', ['auth']);
 $router->post('/admin/solicitacoes/{id}/confirmar-horario', 'SolicitacoesController@confirmarHorario', ['auth']);
 $router->post('/admin/solicitacoes/{id}/desconfirmar-horario', 'SolicitacoesController@desconfirmarHorario', ['auth']);

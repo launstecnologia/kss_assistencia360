@@ -361,6 +361,54 @@ class SolicitacoesController extends Controller
         }
 
         try {
+            // Buscar a solicitação atual
+            $solicitacao = $this->solicitacaoModel->find($id);
+            if (!$solicitacao) {
+                $this->json(['error' => 'Solicitação não encontrada'], 404);
+                return;
+            }
+            
+            // Buscar status atual e novo status
+            $sqlAtual = "SELECT nome FROM status WHERE id = ?";
+            $statusAtualObj = \App\Core\Database::fetch($sqlAtual, [$solicitacao['status_id']]);
+            $statusAtual = $statusAtualObj['nome'] ?? null;
+            
+            $sqlNovo = "SELECT nome FROM status WHERE id = ?";
+            $statusNovoObj = \App\Core\Database::fetch($sqlNovo, [$statusId]);
+            $statusNovo = $statusNovoObj['nome'] ?? null;
+            
+            // Validação: Se está em "Buscando Prestador" e tentando mudar para "Serviço Agendado"
+            if ($statusAtual === 'Buscando Prestador' && $statusNovo === 'Serviço Agendado') {
+                // Verificar se há horário confirmado
+                $temHorarioConfirmado = false;
+                
+                // Verificar horario_confirmado_raw
+                if (!empty($solicitacao['horario_confirmado_raw']) && trim($solicitacao['horario_confirmado_raw'])) {
+                    $temHorarioConfirmado = true;
+                }
+                
+                // Verificar confirmed_schedules
+                if (!$temHorarioConfirmado && !empty($solicitacao['confirmed_schedules'])) {
+                    $confirmed = json_decode($solicitacao['confirmed_schedules'], true);
+                    if (is_array($confirmed) && count($confirmed) > 0) {
+                        $temHorarioConfirmado = true;
+                    }
+                }
+                
+                // Verificar data_agendamento e horario_agendamento
+                if (!$temHorarioConfirmado && !empty($solicitacao['data_agendamento']) && !empty($solicitacao['horario_agendamento'])) {
+                    $temHorarioConfirmado = true;
+                }
+                
+                if (!$temHorarioConfirmado) {
+                    $this->json([
+                        'error' => 'É necessário ter um horário confirmado para mudar de "Buscando Prestador" para "Serviço Agendado"',
+                        'requires_schedule' => true
+                    ], 400);
+                    return;
+                }
+            }
+            
             $success = $this->solicitacaoModel->updateStatus($id, $statusId, $user['id'], $observacoes);
             
             if ($success) {

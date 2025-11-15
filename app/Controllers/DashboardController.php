@@ -186,13 +186,18 @@ class DashboardController extends Controller
                     st.nome as status_nome,
                     st.cor as status_cor,
                     cond.nome as condicao_nome,
-                    cond.cor as condicao_cor
+                    cond.cor as condicao_cor,
+                    wi.id as whatsapp_instance_id,
+                    wi.nome as whatsapp_instance_nome,
+                    wi.status as whatsapp_instance_status,
+                    s.chat_atendimento_ativo
                 FROM solicitacoes s
                 LEFT JOIN categorias c ON s.categoria_id = c.id
                 LEFT JOIN subcategorias sc ON s.subcategoria_id = sc.id
                 LEFT JOIN imobiliarias i ON s.imobiliaria_id = i.id
                 LEFT JOIN status st ON s.status_id = st.id
                 LEFT JOIN condicoes cond ON s.condicao_id = cond.id
+                LEFT JOIN whatsapp_instances wi ON s.chat_whatsapp_instance_id = wi.id
                 WHERE s.status_id = ?
             ";
             
@@ -258,13 +263,18 @@ class DashboardController extends Controller
                 st.nome as status_nome,
                 st.cor as status_cor,
                 cond.nome as condicao_nome,
-                cond.cor as condicao_cor
+                cond.cor as condicao_cor,
+                wi.id as whatsapp_instance_id,
+                wi.nome as whatsapp_instance_nome,
+                wi.status as whatsapp_instance_status,
+                s.chat_atendimento_ativo
             FROM solicitacoes s
             LEFT JOIN categorias c ON s.categoria_id = c.id
             LEFT JOIN subcategorias sc ON s.subcategoria_id = sc.id
             LEFT JOIN imobiliarias i ON s.imobiliaria_id = i.id
             LEFT JOIN status st ON s.status_id = st.id
             LEFT JOIN condicoes cond ON s.condicao_id = cond.id
+            LEFT JOIN whatsapp_instances wi ON s.chat_whatsapp_instance_id = wi.id
             WHERE s.status_id = ?
         ";
         

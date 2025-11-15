@@ -48,17 +48,23 @@ class ChatController extends Controller
 
         $mensagens = $this->mensagemModel->getBySolicitacao($solicitacaoId);
         
-        // Marcar mensagens recebidas como lidas
+        // Contar mensagens não lidas ANTES de marcar como lidas
+        $naoLidas = $this->mensagemModel->countNaoLidas($solicitacaoId);
+        
+        // Marcar mensagens recebidas como lidas apenas quando o chat é aberto
+        // Isso garante que o contador apareça até que o chat seja visualizado
         $this->mensagemModel->marcarComoLidas($solicitacaoId);
         
         // Debug: Log dos valores
         error_log("🔍 getMensagens - Solicitação: $solicitacaoId");
         error_log("   instanceId: " . ($solicitacao['chat_whatsapp_instance_id'] ?? 'null'));
         error_log("   atendimentoAtivo: " . ($solicitacao['chat_atendimento_ativo'] ?? 'null'));
+        error_log("   mensagensNaoLidas: $naoLidas");
 
         $this->json([
             'success' => true,
             'mensagens' => $mensagens,
+            'mensagens_nao_lidas_antes' => $naoLidas,
             'solicitacao' => [
                 'id' => $solicitacao['id'],
                 'protocol' => '',
@@ -492,6 +498,7 @@ class ChatController extends Controller
                     'mensagem' => $mensagemTexto ?: '[Mídia ou mensagem sem texto]',
                     'tipo' => 'RECEBIDA',
                     'status' => 'ENTREGUE',
+                    'is_lida' => 0, // Mensagem recebida começa como não lida
                     'message_id' => $message['key']['id'] ?? $message['id'] ?? null,
                     'metadata' => json_encode($message, JSON_UNESCAPED_UNICODE),
                     'created_at' => date('Y-m-d H:i:s')
@@ -733,7 +740,7 @@ class ChatController extends Controller
             FROM solicitacao_mensagens
             WHERE solicitacao_id IN ($placeholders)
               AND tipo = 'RECEBIDA'
-              AND status != 'LIDA'
+              AND (is_lida = 0 OR is_lida IS NULL)
             GROUP BY solicitacao_id
         ";
         
@@ -748,6 +755,69 @@ class ChatController extends Controller
         $this->json([
             'success' => true,
             'contagens' => $contagens
+        ]);
+    }
+    
+    /**
+     * Retorna status do WhatsApp (instância ativa) para múltiplas solicitações
+     * GET /admin/chat/whatsapp-status?solicitacao_ids=1,2,3
+     */
+    public function getWhatsAppStatus(): void
+    {
+        $this->requireAdmin();
+        
+        $solicitacaoIds = $this->input('solicitacao_ids', '');
+        
+        if (empty($solicitacaoIds)) {
+            $this->json([
+                'success' => true,
+                'status' => []
+            ]);
+            return;
+        }
+        
+        // Converter string de IDs separados por vírgula em array
+        $ids = array_map('intval', explode(',', $solicitacaoIds));
+        $ids = array_filter($ids, fn($id) => $id > 0);
+        
+        if (empty($ids)) {
+            $this->json([
+                'success' => true,
+                'status' => []
+            ]);
+            return;
+        }
+        
+        // Buscar status do WhatsApp para cada solicitação
+        $placeholders = implode(',', array_fill(0, count($ids), '?'));
+        $sql = "
+            SELECT 
+                s.id as solicitacao_id,
+                s.chat_whatsapp_instance_id,
+                s.chat_atendimento_ativo,
+                wi.nome as whatsapp_instance_nome,
+                wi.status as whatsapp_instance_status
+            FROM solicitacoes s
+            LEFT JOIN whatsapp_instances wi ON s.chat_whatsapp_instance_id = wi.id
+            WHERE s.id IN ($placeholders)
+        ";
+        
+        $resultados = \App\Core\Database::fetchAll($sql, $ids);
+        
+        // Converter para formato chave-valor
+        $status = [];
+        foreach ($resultados as $resultado) {
+            $status[$resultado['solicitacao_id']] = [
+                'has_instance' => !empty($resultado['chat_whatsapp_instance_id']),
+                'is_active' => !empty($resultado['chat_atendimento_ativo']),
+                'instance_name' => $resultado['whatsapp_instance_nome'] ?? null,
+                'instance_status' => $resultado['whatsapp_instance_status'] ?? null
+            ];
+        }
+        
+        $this->json([
+            'success' => true,
+            'status' => $status
         ]);
     }
 }

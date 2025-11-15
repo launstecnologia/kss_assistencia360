@@ -5,6 +5,24 @@ $pageTitle = 'Kanban - Gerenciamento de Solicitações';
 ob_start();
 ?>
 
+<style>
+@keyframes blink-border {
+    0%, 100% {
+        border-color: #FCD34D;
+        box-shadow: 0 0 0 0 rgba(252, 211, 77, 0.7);
+    }
+    50% {
+        border-color: #FBBF24;
+        box-shadow: 0 0 0 4px rgba(252, 211, 77, 0.3);
+    }
+}
+
+.kanban-card-mensagem-nao-lida {
+    border-color: #FCD34D !important;
+    animation: blink-border 1.5s ease-in-out infinite;
+}
+</style>
+
 <!-- Filtros -->
 <div class="mb-6 bg-white rounded-lg shadow-sm p-4">
     <div class="flex items-center justify-between">
@@ -58,7 +76,8 @@ ob_start();
                 <div class="kanban-card bg-white rounded-lg shadow-sm p-4 cursor-pointer hover:shadow-md transition-shadow border-l-4" 
                      style="border-color: <?= $status['cor'] ?>"
                      data-solicitacao-id="<?= $solicitacao['id'] ?>"
-                     data-status-id="<?= $solicitacao['status_id'] ?>">
+                     data-status-id="<?= $solicitacao['status_id'] ?>"
+                     id="kanban-card-<?= $solicitacao['id'] ?>">
                     
                     <!-- Header do Card -->
                     <div class="flex items-start justify-between mb-3">
@@ -68,6 +87,10 @@ ob_start();
                                     <?= htmlspecialchars($solicitacao['numero_solicitacao'] ?? 'KSS' . $solicitacao['id']) ?>
                                 </h4>
                                 <span class="chat-badge-<?= $solicitacao['id'] ?> hidden ml-1 px-1.5 py-0.5 text-xs font-bold text-white bg-red-500 rounded-full" title="Mensagens não lidas"></span>
+                                <?php if (!empty($solicitacao['chat_whatsapp_instance_id']) && !empty($solicitacao['chat_atendimento_ativo'])): ?>
+                                    <i class="fab fa-whatsapp text-green-500 text-sm" 
+                                       title="WhatsApp ativo: <?= htmlspecialchars($solicitacao['whatsapp_instance_nome'] ?? 'Instância ativa') ?>"></i>
+                                <?php endif; ?>
                                 <?php if (!empty($solicitacao['numero_contrato'])): ?>
                                     <span class="text-xs text-gray-500">
                                         Contrato: <?= htmlspecialchars($solicitacao['numero_contrato']) ?>
@@ -374,7 +397,7 @@ ob_start();
             </div>
             <div id="detalhesContent" class="hidden"></div>
             <!-- Conteúdo do Chat -->
-            <div id="chatContent" class="hidden flex flex-col" style="height: calc(100vh - 250px); max-height: calc(100vh - 250px);">
+            <div id="chatContent" class="hidden flex flex-col" style="height: calc(100vh - 200px); max-height: calc(100vh - 200px);">
                 <!-- Seleção de Instância WhatsApp -->
                 <div id="chatInstanceSelector" class="flex-shrink-0 mb-4 p-4 bg-gray-50 rounded-lg">
                     <div class="flex items-center justify-between mb-2">
@@ -397,16 +420,16 @@ ob_start();
                     <p id="chatInstanceInfo" class="text-xs text-gray-500 mt-2">Instância selecionada no modal de seleção</p>
                 </div>
                 <!-- Container para mensagens e empty state -->
-                <div class="flex-1 flex flex-col min-h-0 overflow-hidden">
+                <div class="flex-1 flex flex-col min-h-0 overflow-hidden" style="min-height: 400px;">
                     <!-- Área de Mensagens -->
-                    <div id="chatMessages" class="flex-1 overflow-y-auto mb-4 p-4 bg-white rounded-lg border border-gray-200 space-y-3 hidden" style="min-height: 0;">
+                    <div id="chatMessages" class="flex-1 overflow-y-auto mb-6 p-4 bg-white rounded-lg border border-gray-200 space-y-3 hidden" style="min-height: 400px; max-height: calc(100vh - 400px);">
                         <div class="text-center text-gray-500 py-8">
                             <i class="fab fa-whatsapp text-4xl mb-2 text-gray-300"></i>
                             <p>Carregando mensagens...</p>
                         </div>
                     </div>
                     <!-- Mensagem quando não há conversa -->
-                    <div id="chatEmptyState" class="flex-1 flex items-center justify-center mb-4 p-8 bg-white rounded-lg border border-gray-200 overflow-y-auto" style="min-height: 0;">
+                    <div id="chatEmptyState" class="flex-1 flex items-center justify-center mb-6 p-8 bg-white rounded-lg border border-gray-200 overflow-y-auto" style="min-height: 400px;">
                         <div class="text-center">
                             <i class="fab fa-whatsapp text-6xl mb-4 text-gray-300"></i>
                             <p class="text-gray-600 mb-2">Nenhuma conversa iniciada</p>
@@ -415,7 +438,7 @@ ob_start();
                     </div>
                 </div>
                 <!-- Input de Mensagem -->
-                <div id="chatInputContainer" class="flex-shrink-0 flex gap-2 mt-4 hidden">
+                <div id="chatInputContainer" class="flex-shrink-0 flex gap-2 mt-6 mb-4 hidden">
                     <textarea id="chatMessageInput" placeholder="Digite sua mensagem... (Enter para enviar, Shift+Enter para nova linha)" 
                            class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 resize-none"
                            rows="1"
@@ -1638,72 +1661,86 @@ function copiarInformacoes() {
     // Formatar localização (Bairro/Cidade/Estado)
     const localizacao = [solicitacao.imovel_bairro, solicitacao.imovel_cidade, solicitacao.imovel_estado].filter(Boolean).join(' - ');
     
-    // Buscar horários informados pelo locatário
-    let horariosLocatario = [];
-    if (solicitacao.horarios_indisponiveis) {
-        horariosLocatario = solicitacao.datas_opcoes ? JSON.parse(solicitacao.datas_opcoes) : [];
-    } else {
-        horariosLocatario = solicitacao.horarios_opcoes ? JSON.parse(solicitacao.horarios_opcoes) : [];
+    // Formatar data da visita do prestador (horário confirmado)
+    let dataVisitaPrestador = '';
+    if (solicitacao.data_agendamento && solicitacao.horario_agendamento) {
+        const dataAg = new Date(solicitacao.data_agendamento);
+        const dataFormatada = dataAg.toISOString().split('T')[0]; // YYYY-MM-DD
+        const horaFormatada = String(solicitacao.horario_agendamento).trim();
+        dataVisitaPrestador = `${dataFormatada} ${horaFormatada}`;
+    } else if (solicitacao.horario_confirmado_raw) {
+        // Tentar extrair data e hora do horario_confirmado_raw
+        const match = String(solicitacao.horario_confirmado_raw).match(/(\d{2}\/\d{2}\/\d{4})\s*-\s*(\d{2}:\d{2})/);
+        if (match) {
+            const [dia, mes, ano] = match[1].split('/');
+            const hora = match[2];
+            dataVisitaPrestador = `${ano}-${mes}-${dia} ${hora}:00`;
+        }
+    } else if (solicitacao.confirmed_schedules) {
+        try {
+            const confirmed = typeof solicitacao.confirmed_schedules === 'string' 
+                ? JSON.parse(solicitacao.confirmed_schedules) 
+                : solicitacao.confirmed_schedules;
+            if (Array.isArray(confirmed) && confirmed.length > 0) {
+                const ultimo = confirmed[confirmed.length - 1];
+                if (ultimo && ultimo.raw) {
+                    const match = String(ultimo.raw).match(/(\d{2}\/\d{2}\/\d{4})\s*-\s*(\d{2}:\d{2})/);
+                    if (match) {
+                        const [dia, mes, ano] = match[1].split('/');
+                        const hora = match[2];
+                        dataVisitaPrestador = `${ano}-${mes}-${dia} ${hora}:00`;
+                    }
+                }
+            }
+        } catch (e) {
+            console.error('Erro ao parsear confirmed_schedules:', e);
+        }
     }
-    const horariosTexto = Array.isArray(horariosLocatario) ? horariosLocatario.filter(Boolean).join('\n') : '';
     
-    // Montar informações completas do locatário para enviar ao prestador
-    let info = `═══════════════════════════════════════
+    // Montar informações no formato solicitado
+    let info = `📋 INFORMAÇÕES DA SOLICITAÇÃO
 
-📋 INFORMAÇÕES DA SOLICITAÇÃO
-
-═══════════════════════════════════════
-
-
-
-🔢 Número da Solicitação: ${solicitacao.numero_solicitacao || 'KS' + solicitacao.id}
+🔢 Número da Solicitação VGT/KSS: ${solicitacao.numero_solicitacao || 'KS' + solicitacao.id}
 
 📊 Status: ${solicitacao.status_nome || 'Não informado'}
 
-📅 Data de Criação: ${dataCriacaoFormatada}
+📅 Data da solicitação: ${dataCriacaoFormatada}
 
-
-
-═══════════════════════════════════════
-
-👤 DADOS DO LOCATÁRIO
-
-═══════════════════════════════════════
-
-
+👤 DADOS DO SEGURADO
 
 Nome: ${solicitacao.locatario_nome || 'Não informado'}
 
-${solicitacao.locatario_cpf ? `CPF: ${solicitacao.locatario_cpf}\n` : ''}${solicitacao.locatario_telefone ? `Telefone: ${solicitacao.locatario_telefone}\n` : ''}Nº do Contrato: ${solicitacao.numero_contrato || ''}
+CPF: ${solicitacao.locatario_cpf || ''}
+Telefone: ${solicitacao.locatario_telefone || ''}
+Nº do Contrato KSI: ${solicitacao.numero_contrato || ''}
 
-${solicitacao.imobiliaria_nome ? `Imobiliária: ${solicitacao.imobiliaria_nome}\n` : ''}
+Imobiliária: ${solicitacao.imobiliaria_nome || ''}
 
-${horariosTexto ? `═══════════════════════════════════════
+📅 DATA DA VISITA DO PRESTADOR SOLICITADO PELO SEGURADO
 
-📅 Data Informada pelo Locatário
+${dataVisitaPrestador || ''}
 
-═══════════════════════════════════════
-${horariosTexto}
+📍 ENDEREÇO DO IMÓVEL SEGURADO
 
-═══════════════════════════════════════
+Endereço: ${enderecoCompleto || ''}
+Bairro/Cidade/Estado: ${localizacao || ''}
+CEP: ${solicitacao.imovel_cep || ''}
 
-` : ''}📍 ENDEREÇO DO IMÓVEL
+📝 PRESTADOR SOLICITADO
 
-═══════════════════════════════════════
+${solicitacao.categoria_nome || ''}
 
+📝 PROBLEMA RECLAMADO
 
+${solicitacao.descricao_problema || ''}
 
-${enderecoCompleto ? `Endereço: ${enderecoCompleto}\n` : ''}${localizacao ? `Bairro/Cidade/Estado: ${localizacao}\n` : ''}${solicitacao.imovel_cep ? `CEP: ${solicitacao.imovel_cep}\n` : ''}
+📝 LOCAL DO IMÓVEL ONDE ESTÁ O PROBLEMA RECLAMADO
 
-═══════════════════════════════════════
+${solicitacao.local_problema || solicitacao.subcategoria_nome || ''}
 
-📝 DESCRIÇÃO DO PROBLEMA
+📝 OBSERVAÇÃO / ANEXO
 
-═══════════════════════════════════════
-
-
-
-${solicitacao.descricao_problema || 'Nenhuma descrição fornecida.'}`.trim();
+${solicitacao.observacoes || ''}`.trim();
     
     navigator.clipboard.writeText(info).then(() => {
         alert('✅ Informações copiadas para a área de transferência!');
@@ -1779,40 +1816,86 @@ function enviarInformacoesNoChat() {
     
     const localizacao = [solicitacao.imovel_bairro, solicitacao.imovel_cidade, solicitacao.imovel_estado].filter(Boolean).join(' - ');
     
-    let horariosLocatario = [];
-    if (solicitacao.horarios_indisponiveis) {
-        horariosLocatario = solicitacao.datas_opcoes ? JSON.parse(solicitacao.datas_opcoes) : [];
-    } else {
-        horariosLocatario = solicitacao.horarios_opcoes ? JSON.parse(solicitacao.horarios_opcoes) : [];
+    // Formatar data da visita do prestador (horário confirmado)
+    let dataVisitaPrestador = '';
+    if (solicitacao.data_agendamento && solicitacao.horario_agendamento) {
+        const dataAg = new Date(solicitacao.data_agendamento);
+        const dataFormatada = dataAg.toISOString().split('T')[0]; // YYYY-MM-DD
+        const horaFormatada = String(solicitacao.horario_agendamento).trim();
+        dataVisitaPrestador = `${dataFormatada} ${horaFormatada}`;
+    } else if (solicitacao.horario_confirmado_raw) {
+        // Tentar extrair data e hora do horario_confirmado_raw
+        const match = String(solicitacao.horario_confirmado_raw).match(/(\d{2}\/\d{2}\/\d{4})\s*-\s*(\d{2}:\d{2})/);
+        if (match) {
+            const [dia, mes, ano] = match[1].split('/');
+            const hora = match[2];
+            dataVisitaPrestador = `${ano}-${mes}-${dia} ${hora}:00`;
+        }
+    } else if (solicitacao.confirmed_schedules) {
+        try {
+            const confirmed = typeof solicitacao.confirmed_schedules === 'string' 
+                ? JSON.parse(solicitacao.confirmed_schedules) 
+                : solicitacao.confirmed_schedules;
+            if (Array.isArray(confirmed) && confirmed.length > 0) {
+                const ultimo = confirmed[confirmed.length - 1];
+                if (ultimo && ultimo.raw) {
+                    const match = String(ultimo.raw).match(/(\d{2}\/\d{2}\/\d{4})\s*-\s*(\d{2}:\d{2})/);
+                    if (match) {
+                        const [dia, mes, ano] = match[1].split('/');
+                        const hora = match[2];
+                        dataVisitaPrestador = `${ano}-${mes}-${dia} ${hora}:00`;
+                    }
+                }
+            }
+        } catch (e) {
+            console.error('Erro ao parsear confirmed_schedules:', e);
+        }
     }
-    const horariosTexto = Array.isArray(horariosLocatario) ? horariosLocatario.filter(Boolean).join('\n') : '';
     
-    // Montar informações formatadas com quebras de linha preservadas
-    let mensagem = `═══════════════════════════════════════
-📋 *INFORMAÇÕES DA SOLICITAÇÃO*
-═══════════════════════════════════════
-🔢 *Número da Solicitação:* ${solicitacao.numero_solicitacao || 'KS' + solicitacao.id}
-📊 *Status:* ${solicitacao.status_nome || 'Não informado'}
-📅 *Data de Criação:* ${dataCriacaoFormatada}
+    // Montar informações formatadas no formato solicitado
+    let mensagem = `📋 INFORMAÇÕES DA SOLICITAÇÃO
 
-═══════════════════════════════════════
-👤 *DADOS DO LOCATÁRIO*
-═══════════════════════════════════════
-*Nome:* ${solicitacao.locatario_nome || 'Não informado'}
-${solicitacao.locatario_cpf ? `*CPF:* ${solicitacao.locatario_cpf}\n` : ''}${solicitacao.locatario_telefone ? `*Telefone:* ${solicitacao.locatario_telefone}\n` : ''}*Nº do Contrato:* ${solicitacao.numero_contrato || 'Não informado'}
-${solicitacao.imobiliaria_nome ? `*Imobiliária:* ${solicitacao.imobiliaria_nome}\n` : ''}${horariosTexto ? `
-═══════════════════════════════════════
-📅 *Data Informada pelo Locatário*
-═══════════════════════════════════════
-${horariosTexto}
-═══════════════════════════════════════
-` : ''}📍 *ENDEREÇO DO IMÓVEL*
-═══════════════════════════════════════
-${enderecoCompleto ? `*Endereço:* ${enderecoCompleto}\n` : ''}${localizacao ? `*Bairro/Cidade/Estado:* ${localizacao}\n` : ''}${solicitacao.imovel_cep ? `*CEP:* ${solicitacao.imovel_cep}\n` : ''}═══════════════════════════════════════
-📝 *DESCRIÇÃO DO PROBLEMA*
-═══════════════════════════════════════
-${solicitacao.descricao_problema || 'Nenhuma descrição fornecida.'}
-═══════════════════════════════════════`.trim();
+🔢 Número da Solicitação VGT/KSS: ${solicitacao.numero_solicitacao || 'KS' + solicitacao.id}
+
+📊 Status: ${solicitacao.status_nome || 'Não informado'}
+
+📅 Data da solicitação: ${dataCriacaoFormatada}
+
+👤 DADOS DO SEGURADO
+
+Nome: ${solicitacao.locatario_nome || 'Não informado'}
+
+CPF: ${solicitacao.locatario_cpf || ''}
+Telefone: ${solicitacao.locatario_telefone || ''}
+Nº do Contrato KSI: ${solicitacao.numero_contrato || ''}
+
+Imobiliária: ${solicitacao.imobiliaria_nome || ''}
+
+📅 DATA DA VISITA DO PRESTADOR SOLICITADO PELO SEGURADO
+
+${dataVisitaPrestador || ''}
+
+📍 ENDEREÇO DO IMÓVEL SEGURADO
+
+Endereço: ${enderecoCompleto || ''}
+Bairro/Cidade/Estado: ${localizacao || ''}
+CEP: ${solicitacao.imovel_cep || ''}
+
+📝 PRESTADOR SOLICITADO
+
+${solicitacao.categoria_nome || ''}
+
+📝 PROBLEMA RECLAMADO
+
+${solicitacao.descricao_problema || ''}
+
+📝 LOCAL DO IMÓVEL ONDE ESTÁ O PROBLEMA RECLAMADO
+
+${solicitacao.local_problema || solicitacao.subcategoria_nome || ''}
+
+📝 OBSERVAÇÃO / ANEXO
+
+${solicitacao.observacoes || ''}`.trim();
     
     // Preencher o campo de mensagem e enviar
     // Abrir aba de chat se não estiver aberta
@@ -2159,30 +2242,84 @@ function salvarAlteracoes(solicitacaoId) {
     const statusId = document.getElementById('statusSelectKanban')?.value || '';
     const condicaoId = document.getElementById('condicaoSelectKanban')?.value || '';
     
-    // ✅ Validação: Verificar se está tentando mudar para "Serviço Agendado" sem protocolo
+    // ✅ Validação: Verificar se está tentando mudar para "Serviço Agendado"
     if (statusId) {
         const statusSelect = document.getElementById('statusSelectKanban');
         const statusNome = statusSelect.options[statusSelect.selectedIndex]?.text || '';
+        const solicitacao = window.solicitacaoAtual || null;
+        const statusAtual = solicitacao?.status_nome || '';
         
-        if (statusNome === 'Serviço Agendado' && !protocoloSeguradora.trim()) {
-            // Restaurar botão
-            btnSalvar.innerHTML = originalText;
-            btnSalvar.disabled = originalDisabled;
-            btnSalvar.classList.add('hover:bg-blue-700');
-            
-            mostrarNotificacao('É obrigatório preencher o protocolo da seguradora para mudar para "Serviço Agendado"', 'error');
-            
-            // Destacar o campo de protocolo
-            const protocoloInput = document.getElementById('protocoloSeguradora');
-            if (protocoloInput) {
-                protocoloInput.focus();
-                protocoloInput.classList.add('border-red-500', 'ring-2', 'ring-red-500');
-                setTimeout(() => {
-                    protocoloInput.classList.remove('border-red-500', 'ring-2', 'ring-red-500');
-                }, 3000);
+        if (statusNome === 'Serviço Agendado') {
+            // Verificar se está vindo de "Buscando Prestador"
+            if (statusAtual === 'Buscando Prestador') {
+                // Verificar se há horário confirmado (salvo no banco ou marcado na interface)
+                let temHorarioConfirmado = false;
+                
+                // Verificar horario_confirmado_raw
+                if (solicitacao?.horario_confirmado_raw && solicitacao.horario_confirmado_raw.trim()) {
+                    temHorarioConfirmado = true;
+                }
+                
+                // Verificar confirmed_schedules
+                if (!temHorarioConfirmado && solicitacao?.confirmed_schedules) {
+                    try {
+                        const confirmed = typeof solicitacao.confirmed_schedules === 'string' 
+                            ? JSON.parse(solicitacao.confirmed_schedules) 
+                            : solicitacao.confirmed_schedules;
+                        if (Array.isArray(confirmed) && confirmed.length > 0) {
+                            temHorarioConfirmado = true;
+                        }
+                    } catch (e) {
+                        console.error('Erro ao parsear confirmed_schedules:', e);
+                    }
+                }
+                
+                // Verificar data_agendamento e horario_agendamento
+                if (!temHorarioConfirmado && solicitacao?.data_agendamento && solicitacao?.horario_agendamento) {
+                    temHorarioConfirmado = true;
+                }
+                
+                // Verificar se há checkboxes marcados na interface (horários que serão salvos)
+                if (!temHorarioConfirmado) {
+                    const checkboxesMarcados = document.querySelectorAll('.horario-offcanvas:checked');
+                    if (checkboxesMarcados.length > 0) {
+                        temHorarioConfirmado = true;
+                    }
+                }
+                
+                if (!temHorarioConfirmado) {
+                    // Restaurar botão
+                    btnSalvar.innerHTML = originalText;
+                    btnSalvar.disabled = originalDisabled;
+                    btnSalvar.classList.add('hover:bg-blue-700');
+                    
+                    mostrarNotificacao('É necessário ter um horário confirmado para mudar de "Buscando Prestador" para "Serviço Agendado". Marque pelo menos um horário na seção "Disponibilidade Informada".', 'error');
+                    
+                    return;
+                }
             }
             
-            return;
+            // Verificar protocolo
+            if (!protocoloSeguradora.trim()) {
+                // Restaurar botão
+                btnSalvar.innerHTML = originalText;
+                btnSalvar.disabled = originalDisabled;
+                btnSalvar.classList.add('hover:bg-blue-700');
+                
+                mostrarNotificacao('É obrigatório preencher o protocolo da seguradora para mudar para "Serviço Agendado"', 'error');
+                
+                // Destacar o campo de protocolo
+                const protocoloInput = document.getElementById('protocoloSeguradora');
+                if (protocoloInput) {
+                    protocoloInput.focus();
+                    protocoloInput.classList.add('border-red-500', 'ring-2', 'ring-red-500');
+                    setTimeout(() => {
+                        protocoloInput.classList.remove('border-red-500', 'ring-2', 'ring-red-500');
+                    }, 3000);
+                }
+                
+                return;
+            }
         }
     }
     
@@ -2874,6 +3011,7 @@ document.addEventListener('change', function(e) {
                  style="border-color: ${statusCor}"
                  data-solicitacao-id="${solicitacao.id}"
                  data-status-id="${solicitacao.status_id}"
+                 id="kanban-card-${solicitacao.id}"
                  onclick="abrirDetalhes(${solicitacao.id})">
                 
                 <!-- Header do Card -->
@@ -2882,6 +3020,10 @@ document.addEventListener('change', function(e) {
                         <div class="flex items-center gap-2 mb-1">
                             <h4 class="font-semibold text-gray-900 text-sm">${numeroSolicitacao}</h4>
                             <span class="chat-badge-${solicitacao.id} hidden ml-1 px-1.5 py-0.5 text-xs font-bold text-white bg-red-500 rounded-full" title="Mensagens não lidas"></span>
+                            ${solicitacao.chat_whatsapp_instance_id && solicitacao.chat_atendimento_ativo ? `
+                                <i class="fab fa-whatsapp text-green-500 text-sm" 
+                                   title="WhatsApp ativo: ${solicitacao.whatsapp_instance_nome || 'Instância ativa'}"></i>
+                            ` : ''}
                             ${numeroContrato ? `
                                 <span class="text-xs text-gray-500">Contrato: ${numeroContrato}</span>
                             ` : ''}
@@ -3602,7 +3744,9 @@ document.addEventListener('change', function(e) {
                 if (data.success) {
                     renderizarMensagens(data.mensagens);
                     atualizarBadgeChat(data.mensagens);
-                    // Atualizar badge no card do kanban também
+                    // Atualizar badge no card do kanban - marcar como 0 já que o chat foi aberto
+                    atualizarBadgeCardEspecifico(chatSolicitacaoId);
+                    // Atualizar todos os badges também
                     atualizarBadgesMensagensNaoLidas();
                     
                     const select = document.getElementById('chatWhatsappInstance');
@@ -3788,10 +3932,16 @@ document.addEventListener('change', function(e) {
             return;
         }
 
+        // Verificar se o usuário está próximo do final antes de atualizar
+        const estavaNoFinal = container.scrollHeight - container.scrollTop <= container.clientHeight + 100;
+
         container.innerHTML = mensagens.map(msg => {
             const isEnviada = msg.tipo === 'ENVIADA';
             const dataHora = new Date(msg.created_at).toLocaleString('pt-BR');
-            const statusIcon = msg.status === 'LIDA' ? '✓✓' : msg.status === 'ENTREGUE' ? '✓' : '';
+            // Para mensagens enviadas, usar status. Para recebidas, usar is_lida
+            const statusIcon = isEnviada 
+                ? (msg.status === 'LIDA' ? '✓✓' : msg.status === 'ENTREGUE' ? '✓' : '')
+                : (msg.is_lida ? '✓✓' : '');
             
             return `
                 <div class="flex ${isEnviada ? 'justify-end' : 'justify-start'}">
@@ -3806,28 +3956,90 @@ document.addEventListener('change', function(e) {
             `;
         }).join('');
 
-        // Scroll para o final
-        container.scrollTop = container.scrollHeight;
+        // Só fazer scroll automático se o usuário estava no final ou se for a primeira renderização
+        if (estavaNoFinal || container.scrollTop === 0) {
+            // Usar setTimeout para garantir que o DOM foi atualizado
+            setTimeout(() => {
+                container.scrollTop = container.scrollHeight;
+            }, 0);
+        }
     }
 
     function atualizarBadgeChat(mensagens) {
-        const naoLidas = mensagens.filter(m => m.tipo === 'RECEBIDA' && m.status !== 'LIDA').length;
+        // Após abrir o chat, todas as mensagens foram marcadas como lidas
+        // Então sempre esconder o badge quando o chat está aberto
         const badge = document.getElementById('chatBadge');
         const badgeHeader = document.getElementById('chatBadgeHeader');
         
-        if (naoLidas > 0) {
-            if (badge) {
-                badge.textContent = naoLidas;
-                badge.classList.remove('hidden');
-            }
-            if (badgeHeader) {
-                badgeHeader.textContent = naoLidas;
-                badgeHeader.classList.remove('hidden');
+        if (badge) badge.classList.add('hidden');
+        if (badgeHeader) badgeHeader.classList.add('hidden');
+    }
+    
+    // Função para atualizar ícone do WhatsApp nos cards
+    function atualizarIconeWhatsApp(solicitacaoId, hasInstance, isActive, instanceName) {
+        const card = document.querySelector(`.kanban-card[data-solicitacao-id="${solicitacaoId}"]`);
+        if (!card) return;
+        
+        // Buscar ou criar o ícone do WhatsApp
+        const header = card.querySelector('.flex.items-center.gap-2.mb-1');
+        if (!header) return;
+        
+        let icon = header.querySelector('.fab.fa-whatsapp');
+        
+        if (hasInstance && isActive) {
+            // Mostrar ícone
+            if (!icon) {
+                icon = document.createElement('i');
+                icon.className = 'fab fa-whatsapp text-green-500 text-sm';
+                icon.title = `WhatsApp ativo: ${instanceName || 'Instância ativa'}`;
+                // Inserir após o badge de mensagens não lidas
+                const badge = header.querySelector(`.chat-badge-${solicitacaoId}`);
+                if (badge && badge.nextSibling) {
+                    header.insertBefore(icon, badge.nextSibling);
+                } else {
+                    header.appendChild(icon);
+                }
+            } else {
+                icon.classList.remove('hidden');
+                icon.title = `WhatsApp ativo: ${instanceName || 'Instância ativa'}`;
             }
         } else {
-            if (badge) badge.classList.add('hidden');
-            if (badgeHeader) badgeHeader.classList.add('hidden');
+            // Esconder ícone
+            if (icon) {
+                icon.classList.add('hidden');
+            }
         }
+    }
+    
+    // Função para atualizar ícones do WhatsApp de todos os cards
+    function atualizarIconesWhatsApp() {
+        const cards = document.querySelectorAll('.kanban-card[data-solicitacao-id]');
+        const solicitacaoIds = Array.from(cards).map(card => card.getAttribute('data-solicitacao-id')).filter(Boolean);
+        
+        if (solicitacaoIds.length === 0) {
+            return;
+        }
+        
+        fetch(`<?= url('admin/chat/whatsapp-status') ?>?solicitacao_ids=${solicitacaoIds.join(',')}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.status) {
+                    solicitacaoIds.forEach(solicitacaoId => {
+                        const status = data.status[solicitacaoId];
+                        if (status) {
+                            atualizarIconeWhatsApp(
+                                solicitacaoId,
+                                status.has_instance,
+                                status.is_active,
+                                status.instance_name
+                            );
+                        }
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Erro ao buscar status do WhatsApp:', error);
+            });
     }
 
     function handleChatInputKeydown(event) {
@@ -3875,6 +4087,11 @@ document.addEventListener('change', function(e) {
                 input.style.height = 'auto';
                 input.style.height = '42px';
                 carregarMensagensChat();
+                // Atualizar badge do card imediatamente após enviar mensagem
+                // (pode haver uma resposta não lida)
+                setTimeout(() => {
+                    atualizarBadgeCardEspecifico(chatSolicitacaoId);
+                }, 1000);
             } else {
                 alert('Erro ao enviar mensagem: ' + data.message);
             }
@@ -3925,6 +4142,7 @@ document.addEventListener('change', function(e) {
                 if (data.success && data.contagens) {
                     const count = data.contagens[solicitacaoId] || 0;
                     const badge = document.querySelector(`.chat-badge-${solicitacaoId}`);
+                    const card = document.getElementById(`kanban-card-${solicitacaoId}`);
                     
                     if (badge) {
                         if (count > 0) {
@@ -3932,6 +4150,15 @@ document.addEventListener('change', function(e) {
                             badge.classList.remove('hidden');
                         } else {
                             badge.classList.add('hidden');
+                        }
+                    }
+                    
+                    // Atualizar borda do card
+                    if (card) {
+                        if (count > 0) {
+                            card.classList.add('kanban-card-mensagem-nao-lida');
+                        } else {
+                            card.classList.remove('kanban-card-mensagem-nao-lida');
                         }
                     }
                 }
@@ -3956,10 +4183,11 @@ document.addEventListener('change', function(e) {
             .then(response => response.json())
             .then(data => {
                 if (data.success && data.contagens) {
-                    // Atualizar badges em cada card
+                    // Atualizar badges e bordas em cada card
                     solicitacaoIds.forEach(solicitacaoId => {
                         const count = data.contagens[solicitacaoId] || 0;
                         const badge = document.querySelector(`.chat-badge-${solicitacaoId}`);
+                        const card = document.getElementById(`kanban-card-${solicitacaoId}`);
                         
                         if (badge) {
                             if (count > 0) {
@@ -3967,6 +4195,15 @@ document.addEventListener('change', function(e) {
                                 badge.classList.remove('hidden');
                             } else {
                                 badge.classList.add('hidden');
+                            }
+                        }
+                        
+                        // Atualizar borda do card
+                        if (card) {
+                            if (count > 0) {
+                                card.classList.add('kanban-card-mensagem-nao-lida');
+                            } else {
+                                card.classList.remove('kanban-card-mensagem-nao-lida');
                             }
                         }
                     });
@@ -3977,21 +4214,24 @@ document.addEventListener('change', function(e) {
             });
     }
     
-    // Atualizar badges periodicamente (a cada 5 segundos para ser mais responsivo)
+    // Atualizar badges e ícones do WhatsApp periodicamente (a cada 3 segundos para ser mais responsivo)
     setInterval(() => {
         atualizarBadgesMensagensNaoLidas();
-    }, 5000);
+        atualizarIconesWhatsApp();
+    }, 3000);
     
-    // Atualizar badges quando a página carregar
+    // Atualizar badges e ícones quando a página carregar
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', () => {
             setTimeout(() => {
                 atualizarBadgesMensagensNaoLidas();
+                atualizarIconesWhatsApp();
             }, 2000);
         });
     } else {
         setTimeout(() => {
             atualizarBadgesMensagensNaoLidas();
+            atualizarIconesWhatsApp();
         }, 2000);
     }
     
