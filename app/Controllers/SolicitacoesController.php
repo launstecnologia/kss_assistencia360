@@ -2318,7 +2318,12 @@ class SolicitacoesController extends Controller
             
             // ✅ Adicionar condicao_id se foi alterado
             if ($condicaoId !== null && $condicaoId !== '') {
-                $dados['condicao_id'] = $condicaoId ?: null;
+                $condicaoIdValue = $condicaoId ?: null;
+                // Verificar se a condição realmente mudou
+                $condicaoAtual = $solicitacaoAtual['condicao_id'] ?? null;
+                if ($condicaoAtual != $condicaoIdValue) {
+                    $dados['condicao_id'] = $condicaoIdValue;
+                }
             }
 
             // Adicionar protocolo se fornecido
@@ -2697,9 +2702,10 @@ class SolicitacoesController extends Controller
                 $resultado = $this->solicitacaoModel->update($id, $dados);
                 
                 if ($resultado) {
+                    $user = $this->getUser();
+                    
                     // ✅ Registrar no histórico e enviar WhatsApp se status foi alterado
                     if (isset($dados['status_id']) && $dados['status_id'] != $solicitacaoAtual['status_id']) {
-                        $user = $this->getUser();
                         $observacaoStatus = 'Status alterado via detalhes da solicitação';
                         if (isset($dados['observacoes']) && !empty($dados['observacoes'])) {
                             $observacaoStatus .= '. ' . $dados['observacoes'];
@@ -2744,6 +2750,17 @@ class SolicitacoesController extends Controller
                         } catch (\Exception $e) {
                             error_log('Erro ao enviar WhatsApp de atualização de status [ID:' . $id . ']: ' . $e->getMessage());
                             // Não bloquear o salvamento se falhar o WhatsApp
+                        }
+                    }
+                    
+                    // ✅ Registrar no histórico se condição foi alterada
+                    if (isset($dados['condicao_id'])) {
+                        $condicaoAtual = $solicitacaoAtual['condicao_id'] ?? null;
+                        if ($dados['condicao_id'] != $condicaoAtual) {
+                            $observacaoCondicao = isset($dados['observacoes']) && !empty($dados['observacoes']) 
+                                ? $dados['observacoes'] 
+                                : null;
+                            $this->solicitacaoModel->registrarMudancaCondicao($id, $dados['condicao_id'], $user['id'] ?? null, $observacaoCondicao);
                         }
                     }
                     

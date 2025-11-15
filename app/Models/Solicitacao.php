@@ -258,6 +258,51 @@ class Solicitacao extends Model
         }
     }
 
+    /**
+     * Registra mudança de condição no histórico
+     */
+    public function registrarMudancaCondicao(int $id, int $condicaoId, int $usuarioId, string $observacoes = null): bool
+    {
+        try {
+            // Buscar solicitação atual
+            $solicitacaoAtual = $this->find($id);
+            if (!$solicitacaoAtual) {
+                return false;
+            }
+            
+            // Buscar nome da condição
+            $condicaoNome = '';
+            if ($condicaoId) {
+                $sqlCondicao = "SELECT nome FROM condicoes WHERE id = ?";
+                $condicao = Database::fetch($sqlCondicao, [$condicaoId]);
+                $condicaoNome = $condicao['nome'] ?? '';
+            }
+            
+            // Usar o status atual da solicitação para o histórico
+            $statusId = $solicitacaoAtual['status_id'];
+            
+            // Montar observação
+            $observacao = $observacoes ?? '';
+            if ($condicaoNome) {
+                $observacao = ($observacao ? $observacao . '. ' : '') . "Condição alterada para: {$condicaoNome}";
+            } else {
+                $observacao = ($observacao ? $observacao . '. ' : '') . "Condição removida";
+            }
+            
+            // Registrar no histórico usando o status atual
+            $sql = "
+                INSERT INTO historico_status (solicitacao_id, status_id, usuario_id, observacoes, created_at)
+                VALUES (?, ?, ?, ?, NOW())
+            ";
+            Database::query($sql, [$id, $statusId, $usuarioId, $observacao]);
+            
+            return true;
+        } catch (\Exception $e) {
+            error_log("Erro ao registrar mudança de condição: " . $e->getMessage());
+            return false;
+        }
+    }
+
     public function create(array $data): int
     {
         $data['created_at'] = date('Y-m-d H:i:s');

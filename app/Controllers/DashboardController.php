@@ -317,8 +317,27 @@ class DashboardController extends Controller
         }
         
         try {
+            // Buscar solicitação atual para verificar se a condição mudou
+            $solicitacaoAtual = $this->solicitacaoModel->find($solicitacaoId);
+            if (!$solicitacaoAtual) {
+                $this->json(['error' => 'Solicitação não encontrada'], 404);
+                return;
+            }
+            
             // Converter condicaoId vazio para null
             $condicaoIdValue = (!empty($condicaoId) && $condicaoId !== '0' && $condicaoId !== '') ? (int)$condicaoId : null;
+            
+            // Verificar se a condição realmente mudou
+            $condicaoAtual = $solicitacaoAtual['condicao_id'] ?? null;
+            if ($condicaoAtual == $condicaoIdValue) {
+                // Condição não mudou, não fazer nada
+                $this->json([
+                    'success' => true,
+                    'message' => 'Condição não foi alterada',
+                    'condicao_id' => $condicaoIdValue
+                ]);
+                return;
+            }
             
             // Atualizar condição da solicitação
             $updateData = ['condicao_id' => $condicaoIdValue];
@@ -328,6 +347,10 @@ class DashboardController extends Controller
             $result = $this->solicitacaoModel->update($solicitacaoId, $updateData);
             
             error_log("✅ Resultado do update: " . ($result ? 'SUCESSO' : 'FALHOU'));
+            
+            // Registrar mudança de condição no histórico
+            $user = $this->getUser();
+            $this->solicitacaoModel->registrarMudancaCondicao($solicitacaoId, $condicaoIdValue, $user['id'] ?? null);
             
             // Verificar se foi salvo corretamente
             $solicitacaoAtualizada = $this->solicitacaoModel->find($solicitacaoId);
