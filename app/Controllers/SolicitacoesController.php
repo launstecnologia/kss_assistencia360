@@ -1432,13 +1432,35 @@ class SolicitacoesController extends Controller
                 return;
             }
 
-            // Buscar status "Serviço Agendado"
-            $sql = "SELECT id FROM status WHERE nome = 'Serviço Agendado' LIMIT 1";
-            $statusAgendado = \App\Core\Database::fetch($sql);
+            // ✅ Buscar status "Agendamento Confirmado" ou "Serviço Agendado"
+            $statusModel = new \App\Models\Status();
+            $statusAgendado = $statusModel->findByNome('Agendamento Confirmado');
+            if (!$statusAgendado) {
+                $statusAgendado = $statusModel->findByNome('Agendamento confirmado');
+            }
+            if (!$statusAgendado) {
+                // Fallback para "Serviço Agendado"
+                $statusAgendado = $statusModel->findByNome('Serviço Agendado');
+            }
+            if (!$statusAgendado) {
+                $sql = "SELECT * FROM status WHERE (nome LIKE '%Agendamento Confirmado%' OR nome LIKE '%Serviço Agendado%') AND status = 'ATIVO' LIMIT 1";
+                $statusAgendado = \App\Core\Database::fetch($sql);
+            }
             
             if (!$statusAgendado || !isset($statusAgendado['id'])) {
-                $retornarJson(false, '', 'Status "Serviço Agendado" não encontrado');
+                $retornarJson(false, '', 'Status "Agendamento Confirmado" ou "Serviço Agendado" não encontrado');
                 return;
+            }
+            
+            // ✅ Buscar condição "Data Aceita pelo Prestador" ou "Agendamento Confirmado"
+            $condicaoModel = new \App\Models\Condicao();
+            $condicaoConfirmada = $condicaoModel->findByNome('Data Aceita pelo Prestador');
+            if (!$condicaoConfirmada) {
+                $condicaoConfirmada = $condicaoModel->findByNome('Agendamento Confirmado');
+            }
+            if (!$condicaoConfirmada) {
+                $sqlCondicao = "SELECT * FROM condicoes WHERE (nome LIKE '%Agendamento Confirmado%' OR nome LIKE '%Data Aceita pelo Prestador%') AND status = 'ATIVO' LIMIT 1";
+                $condicaoConfirmada = \App\Core\Database::fetch($sqlCondicao);
             }
             
             // ✅ Validação: Protocolo da seguradora é obrigatório para mudar para "Serviço Agendado"
@@ -1585,6 +1607,11 @@ class SolicitacoesController extends Controller
                 'confirmed_schedules' => json_encode($confirmedExistentes),
                 'protocolo_seguradora' => trim($protocoloSeguradora) // ✅ Salvar protocolo da seguradora
             ];
+            
+            // ✅ Adicionar condição "Data Aceita pelo Prestador" ou "Agendamento Confirmado" quando admin confirma
+            if ($condicaoConfirmada) {
+                $dadosUpdate['condicao_id'] = $condicaoConfirmada['id'];
+            }
             
             // ✅ DEBUG: Log antes de remover duplicatas
             error_log("DEBUG confirmarHorario [ID:{$id}] - confirmedExistentes ANTES de remover duplicatas: " . json_encode($confirmedExistentes));
@@ -2134,6 +2161,11 @@ class SolicitacoesController extends Controller
             // Adicionar novo horário da seguradora
             $horariosSeguradora[] = $horario;
 
+            // Buscar status atual
+            $sqlStatus = "SELECT nome FROM status WHERE id = ?";
+            $statusAtual = \App\Core\Database::fetch($sqlStatus, [$solicitacao['status_id']]);
+            $statusNome = $statusAtual['nome'] ?? '';
+            
             // Atualizar solicitação
             // IMPORTANTE: Quando admin adiciona horários, SUBSTITUI os horários do locatário
             // Limpar confirmed_schedules e dados de agendamento quando admin substitui horários
@@ -2141,6 +2173,22 @@ class SolicitacoesController extends Controller
                 'horarios_opcoes' => json_encode($horariosSeguradora),
                 'horarios_indisponiveis' => 1
             ];
+            
+            // ✅ Se status é "Buscando Prestador", mudar condição para "Aguardando Locatário"
+            if ($statusNome === 'Buscando Prestador') {
+                $condicaoModel = new \App\Models\Condicao();
+                $condicaoAguardando = $condicaoModel->findByNome('Aguardando Locatário');
+                
+                // Se não encontrar, buscar qualquer condição com "Aguardando" e "Locatário"
+                if (!$condicaoAguardando) {
+                    $sqlCondicao = "SELECT * FROM condicoes WHERE (nome LIKE '%Aguardando%Locatário%' OR nome LIKE '%Aguardando Locatário%') AND status = 'ATIVO' LIMIT 1";
+                    $condicaoAguardando = \App\Core\Database::fetch($sqlCondicao);
+                }
+                
+                if ($condicaoAguardando) {
+                    $updateData['condicao_id'] = $condicaoAguardando['id'];
+                }
+            }
             
             // Se é a primeira vez adicionando horários da seguradora, limpar confirmações anteriores
             if (empty($solicitacao['horarios_indisponiveis'])) {

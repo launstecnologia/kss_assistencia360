@@ -312,19 +312,26 @@ class TokenController extends Controller
             // Marcar token como usado
             $this->tokenModel->markAsUsed($token, 'confirmed');
 
-            // CICLO DE AGENDAMENTO: Atualizar condição para "Data Aceita pelo Locatário"
-            // IMPORTANTE: Não atualizar status para "Serviço Agendado" aqui - isso só acontece na confirmação final pelo admin
+            // ✅ CICLO DE AGENDAMENTO: Quando locatário confirma, mudar para "Agendamento Confirmado"
             $condicaoModel = new \App\Models\Condicao();
             $statusModel = new \App\Models\Status();
+            
+            // Buscar status "Agendamento Confirmado" ou "Serviço Agendado"
+            $statusAgendamentoConfirmado = $statusModel->findByNome('Agendamento Confirmado');
+            if (!$statusAgendamentoConfirmado) {
+                $statusAgendamentoConfirmado = $statusModel->findByNome('Agendamento confirmado');
+            }
+            if (!$statusAgendamentoConfirmado) {
+                // Fallback para "Serviço Agendado"
+                $statusAgendamentoConfirmado = $statusModel->findByNome('Serviço Agendado');
+            }
+            if (!$statusAgendamentoConfirmado) {
+                $sqlStatus = "SELECT * FROM status WHERE (nome LIKE '%Agendamento Confirmado%' OR nome LIKE '%Serviço Agendado%') AND status = 'ATIVO' LIMIT 1";
+                $statusAgendamentoConfirmado = \App\Core\Database::fetch($sqlStatus);
+            }
+            
+            // Buscar condição "Data Aceita pelo Locatário"
             $condicaoAceita = $condicaoModel->findByNome('Data Aceita pelo Locatário');
-            $statusAgendado = $statusModel->findByNome('Serviço Agendado');
-            if (!$statusAgendado) {
-                $statusAgendado = $statusModel->findByNome('Servico Agendado');
-            }
-            if (!$statusAgendado) {
-                $sqlStatus = "SELECT * FROM status WHERE (nome LIKE '%Serviço Agendado%' OR nome LIKE '%Servico Agendado%') AND status = 'ATIVO' LIMIT 1";
-                $statusAgendado = \App\Core\Database::fetch($sqlStatus);
-            }
             
             $dadosUpdate = [
                 'horario_confirmado' => 1
@@ -333,8 +340,8 @@ class TokenController extends Controller
             if ($condicaoAceita) {
                 $dadosUpdate['condicao_id'] = $condicaoAceita['id'];
             }
-            if ($statusAgendado) {
-                $dadosUpdate['status_id'] = $statusAgendado['id'];
+            if ($statusAgendamentoConfirmado) {
+                $dadosUpdate['status_id'] = $statusAgendamentoConfirmado['id'];
             }
             
             // Atualizar data e horário se foram selecionados
@@ -1228,6 +1235,13 @@ class TokenController extends Controller
                 $condicaoId = $condicaoRecusada['id'];
             }
 
+            // ✅ Quando locatário informa outras datas, mudar condição para "Aguardando Prestador"
+            $condicaoAguardandoPrestador = $condicaoModel->findByNome('Aguardando Prestador');
+            if (!$condicaoAguardandoPrestador) {
+                $sqlCondicao = "SELECT * FROM condicoes WHERE (nome LIKE '%Aguardando%Prestador%' OR nome LIKE '%Aguardando Prestador%') AND status = 'ATIVO' LIMIT 1";
+                $condicaoAguardandoPrestador = \App\Core\Database::fetch($sqlCondicao);
+            }
+            
             $updateData = [
                 'horarios_opcoes' => json_encode($novasDatasSanitizadas, JSON_UNESCAPED_UNICODE), // SUBSTITUIR horários do admin pelos do locatário
                 'datas_opcoes' => null, // Limpar datas_opcoes (não é mais necessário preservar)
@@ -1238,7 +1252,7 @@ class TokenController extends Controller
                 'confirmed_schedules' => null,
                 'horarios_indisponiveis' => 0, // Resetar flag de horários indisponíveis (locatário substituiu)
                 'status_id' => $this->getStatusId('Buscando Prestador'),
-                'condicao_id' => $condicaoId,
+                'condicao_id' => $condicaoAguardandoPrestador ? $condicaoAguardandoPrestador['id'] : $condicaoId, // Usar "Aguardando Prestador" se existir, senão usar "Datas recusadas"
                 'observacoes' => ($solicitacao['observacoes'] ?? '') . "\n\nREAGENDADO VIA TOKEN: Cliente solicitou reagendamento com novas datas: " . implode(', ', $novasDatasSanitizadas),
                 'updated_at' => date('Y-m-d H:i:s')
             ];
