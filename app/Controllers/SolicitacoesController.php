@@ -462,11 +462,34 @@ class SolicitacoesController extends Controller
                 // Buscar nome do status
                 $sql = "SELECT nome FROM status WHERE id = ?";
                 $status = \App\Core\Database::fetch($sql, [$statusId]);
+                $statusNome = $status['nome'] ?? 'Atualizado';
                 
-                // Enviar notificação WhatsApp
-                $this->enviarNotificacaoWhatsApp($id, 'Atualização de Status', [
-                    'status_atual' => $status['nome'] ?? 'Atualizado'
-                ]);
+                // ✅ Se mudou de "Buscando Prestador" para "Serviço Agendado", enviar "Horário Confirmado"
+                if ($statusAtual === 'Buscando Prestador' && $statusNovo === 'Serviço Agendado') {
+                    // Buscar dados de agendamento da solicitação atualizada
+                    $solicitacaoAtualizada = $this->solicitacaoModel->find($id);
+                    $dataAgendamento = $solicitacaoAtualizada['data_agendamento'] ?? null;
+                    $horarioAgendamento = $solicitacaoAtualizada['horario_agendamento'] ?? null;
+                    
+                    // Formatar horário completo
+                    $horarioCompleto = '';
+                    if ($dataAgendamento && $horarioAgendamento) {
+                        $dataFormatada = date('d/m/Y', strtotime($dataAgendamento));
+                        $horarioCompleto = $dataFormatada . ' - ' . $horarioAgendamento;
+                    }
+                    
+                    // Enviar apenas "Horário Confirmado"
+                    $this->enviarNotificacaoWhatsApp($id, 'Horário Confirmado', [
+                        'data_agendamento' => $dataAgendamento ? date('d/m/Y', strtotime($dataAgendamento)) : '',
+                        'horario_agendamento' => $horarioAgendamento ?? '',
+                        'horario_servico' => $horarioCompleto
+                    ]);
+                } else {
+                    // Para outras mudanças de status, enviar "Atualização de Status"
+                    $this->enviarNotificacaoWhatsApp($id, 'Atualização de Status', [
+                        'status_atual' => $statusNome
+                    ]);
+                }
                 
                 $this->json(['success' => true, 'message' => 'Status atualizado com sucesso']);
             } else {

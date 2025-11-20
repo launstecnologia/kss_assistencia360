@@ -391,15 +391,24 @@ class DashboardController extends Controller
         }
 
         try {
-            // Buscar nome do status de destino
+            // Buscar a solicitação para verificar status atual
+            $solicitacao = $this->solicitacaoModel->find($solicitacaoId);
+            if (!$solicitacao) {
+                $this->json(['error' => 'Solicitação não encontrada'], 404);
+                return;
+            }
+            
+            // Buscar nome do status atual e de destino
+            $sqlAtual = "SELECT nome FROM status WHERE id = ?";
+            $statusAtualObj = \App\Core\Database::fetch($sqlAtual, [$solicitacao['status_id']]);
+            $statusAtual = $statusAtualObj['nome'] ?? null;
+            
             $sql = "SELECT nome FROM status WHERE id = ?";
             $statusDestino = \App\Core\Database::fetch($sql, [$novoStatusId]);
+            $statusNovo = $statusDestino['nome'] ?? null;
             
             // Verificar se está tentando mover para "Serviço Agendado"
             if ($statusDestino && $statusDestino['nome'] === 'Serviço Agendado') {
-                // Buscar a solicitação para verificar se tem protocolo da seguradora
-                $solicitacao = $this->solicitacaoModel->find($solicitacaoId);
-                
                 if (empty($solicitacao['protocolo_seguradora'])) {
                     $this->json([
                         'error' => 'É obrigatório preencher o protocolo da seguradora para mover para "Serviço Agendado"',
@@ -412,10 +421,32 @@ class DashboardController extends Controller
             $success = $this->solicitacaoModel->updateStatus($solicitacaoId, $novoStatusId, $user['id']);
             
             if ($success) {
-                // Enviar notificação WhatsApp
-                $this->enviarNotificacaoWhatsApp($solicitacaoId, 'Atualização de Status', [
-                    'status_atual' => $statusDestino['nome'] ?? 'Atualizado'
-                ]);
+                // ✅ Se mudou de "Buscando Prestador" para "Serviço Agendado", enviar "Horário Confirmado"
+                if ($statusAtual === 'Buscando Prestador' && $statusNovo === 'Serviço Agendado') {
+                    // Buscar dados de agendamento da solicitação atualizada
+                    $solicitacaoAtualizada = $this->solicitacaoModel->find($solicitacaoId);
+                    $dataAgendamento = $solicitacaoAtualizada['data_agendamento'] ?? null;
+                    $horarioAgendamento = $solicitacaoAtualizada['horario_agendamento'] ?? null;
+                    
+                    // Formatar horário completo
+                    $horarioCompleto = '';
+                    if ($dataAgendamento && $horarioAgendamento) {
+                        $dataFormatada = date('d/m/Y', strtotime($dataAgendamento));
+                        $horarioCompleto = $dataFormatada . ' - ' . $horarioAgendamento;
+                    }
+                    
+                    // Enviar apenas "Horário Confirmado"
+                    $this->enviarNotificacaoWhatsApp($solicitacaoId, 'Horário Confirmado', [
+                        'data_agendamento' => $dataAgendamento ? date('d/m/Y', strtotime($dataAgendamento)) : '',
+                        'horario_agendamento' => $horarioAgendamento ?? '',
+                        'horario_servico' => $horarioCompleto
+                    ]);
+                } else {
+                    // Para outras mudanças de status, enviar "Atualização de Status"
+                    $this->enviarNotificacaoWhatsApp($solicitacaoId, 'Atualização de Status', [
+                        'status_atual' => $statusNovo ?? 'Atualizado'
+                    ]);
+                }
                 
                 $this->json(['success' => true, 'message' => 'Status atualizado com sucesso']);
             } else {
