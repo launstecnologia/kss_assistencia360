@@ -2187,7 +2187,12 @@ class SolicitacoesController extends Controller
                 
                 if ($condicaoAguardando) {
                     $updateData['condicao_id'] = $condicaoAguardando['id'];
+                    error_log("DEBUG adicionarHorarioSeguradora [ID:{$id}] - ✅ Condição alterada para 'Aguardando Locatário' (ID: {$condicaoAguardando['id']})");
+                } else {
+                    error_log("DEBUG adicionarHorarioSeguradora [ID:{$id}] - ⚠️ Condição 'Aguardando Locatário' não encontrada no banco de dados");
                 }
+            } else {
+                error_log("DEBUG adicionarHorarioSeguradora [ID:{$id}] - Status atual: '{$statusNome}' (não é 'Buscando Prestador')");
             }
             
             // Se é a primeira vez adicionando horários da seguradora, limpar confirmações anteriores
@@ -2525,6 +2530,31 @@ class SolicitacoesController extends Controller
                         $dados['horario_agendamento'] = null;
                     }
                     $horariosSeguradoraSalvos = true;
+                    
+                    // ✅ Se status é "Buscando Prestador", mudar condição para "Aguardando Locatário"
+                    $sqlStatus = "SELECT nome FROM status WHERE id = ?";
+                    $statusAtual = \App\Core\Database::fetch($sqlStatus, [$solicitacaoAtual['status_id']]);
+                    $statusNome = $statusAtual['nome'] ?? '';
+                    
+                    if ($statusNome === 'Buscando Prestador') {
+                        $condicaoModel = new \App\Models\Condicao();
+                        $condicaoAguardando = $condicaoModel->findByNome('Aguardando Locatário');
+                        
+                        // Se não encontrar, buscar qualquer condição com "Aguardando" e "Locatário"
+                        if (!$condicaoAguardando) {
+                            $sqlCondicao = "SELECT * FROM condicoes WHERE (nome LIKE '%Aguardando%Locatário%' OR nome LIKE '%Aguardando Locatário%') AND status = 'ATIVO' LIMIT 1";
+                            $condicaoAguardando = \App\Core\Database::fetch($sqlCondicao);
+                        }
+                        
+                        if ($condicaoAguardando) {
+                            $dados['condicao_id'] = $condicaoAguardando['id'];
+                            error_log("DEBUG atualizarDetalhes [ID:{$id}] - ✅ Condição alterada para 'Aguardando Locatário' (ID: {$condicaoAguardando['id']})");
+                        } else {
+                            error_log("DEBUG atualizarDetalhes [ID:{$id}] - ⚠️ Condição 'Aguardando Locatário' não encontrada no banco de dados");
+                        }
+                    } else {
+                        error_log("DEBUG atualizarDetalhes [ID:{$id}] - Status atual: '{$statusNome}' (não é 'Buscando Prestador')");
+                    }
                     
                     // Se é a primeira vez marcando "Nenhum horário disponível" e há horários, enviar notificação
                     if ($eraPrimeiraVez) {
