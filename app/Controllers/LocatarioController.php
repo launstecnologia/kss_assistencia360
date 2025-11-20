@@ -1665,24 +1665,74 @@ class LocatarioController extends Controller
                         return;
                     }
                     
+                    // Buscar status "Cancelado"
                     $statusCancelado = $statusModel->findByNome('Cancelado');
                     if (!$statusCancelado) {
                         $statusCancelado = $statusModel->findByNome('Cancelada');
                     }
-                    if ($statusCancelado) {
-                        $observacaoFinal = $observacaoBase . "\n\n[Cancelado em {$timestamp}] Motivo: {$observacaoInput}";
-                        if (!empty($anexosSalvos)) {
-                            $observacaoFinal .= "\nAnexos: " . implode(', ', $anexosSalvos);
-                        }
-                        
-                        $this->solicitacaoModel->update($id, [
-                            'status_id' => $statusCancelado['id'],
-                            'observacoes' => $observacaoFinal
-                        ]);
-                        $this->json(['success' => true, 'message' => 'Solicitação cancelada com sucesso!']);
-                    } else {
+                    
+                    if (!$statusCancelado) {
                         $this->json(['success' => false, 'message' => 'Status "Cancelado" não encontrado no sistema']);
+                        return;
                     }
+                    
+                    // Buscar categoria "Cancelado"
+                    $categoriaModel = new \App\Models\Categoria();
+                    $sqlCategoria = "SELECT * FROM categorias WHERE nome = 'Cancelado' AND status = 'ATIVA' LIMIT 1";
+                    $categoriaCancelado = \App\Core\Database::fetch($sqlCategoria);
+                    
+                    // Se não encontrar, buscar qualquer categoria com "Cancelado" no nome
+                    if (!$categoriaCancelado) {
+                        $sqlCategoria = "SELECT * FROM categorias WHERE nome LIKE '%Cancelado%' AND status = 'ATIVA' LIMIT 1";
+                        $categoriaCancelado = \App\Core\Database::fetch($sqlCategoria);
+                    }
+                    
+                    // Buscar condição "Cancelado pelo Locatário"
+                    $condicaoModel = new \App\Models\Condicao();
+                    $condicaoCancelado = $condicaoModel->findByNome('Cancelado pelo Locatário');
+                    
+                    // Se não encontrar, buscar qualquer condição com "Cancelado" no nome
+                    if (!$condicaoCancelado) {
+                        $sqlCondicao = "SELECT * FROM condicoes WHERE nome LIKE '%Cancelado%' AND status = 'ATIVO' LIMIT 1";
+                        $condicaoCancelado = \App\Core\Database::fetch($sqlCondicao);
+                    }
+                    
+                    $observacaoFinal = $observacaoBase . "\n\n[Cancelado em {$timestamp}] Motivo: {$observacaoInput}";
+                    if (!empty($anexosSalvos)) {
+                        $observacaoFinal .= "\nAnexos: " . implode(', ', $anexosSalvos);
+                    }
+                    
+                    $updateData = [
+                        'status_id' => $statusCancelado['id'],
+                        'observacoes' => $observacaoFinal,
+                        'motivo_cancelamento' => $observacaoInput
+                    ];
+                    
+                    // Adicionar categoria se encontrada
+                    if ($categoriaCancelado) {
+                        $updateData['categoria_id'] = $categoriaCancelado['id'];
+                    }
+                    
+                    // Adicionar condição se encontrada
+                    if ($condicaoCancelado) {
+                        $updateData['condicao_id'] = $condicaoCancelado['id'];
+                    }
+                    
+                    $this->solicitacaoModel->update($id, $updateData);
+                    
+                    // Registrar no histórico
+                    $sqlHistorico = "
+                        INSERT INTO historico_status (solicitacao_id, status_id, usuario_id, observacoes, created_at)
+                        VALUES (?, ?, ?, ?, NOW())
+                    ";
+                    \App\Core\Database::query($sqlHistorico, [
+                        $id,
+                        $statusCancelado['id'],
+                        null,
+                        'Solicitação cancelada pelo locatário. Motivo: ' . $observacaoInput
+                    ]);
+                    
+                    $this->json(['success' => true, 'message' => 'Solicitação cancelada com sucesso!']);
                     break;
                     
                 case 'servico_nao_realizado':

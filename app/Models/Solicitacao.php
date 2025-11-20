@@ -167,7 +167,8 @@ class Solicitacao extends Model
                 wi.id as whatsapp_instance_id,
                 wi.nome as whatsapp_instance_nome,
                 wi.status as whatsapp_instance_status,
-                s.chat_atendimento_ativo
+                s.chat_atendimento_ativo,
+                s.motivo_cancelamento
             FROM solicitacoes s
             LEFT JOIN status st ON s.status_id = st.id
             LEFT JOIN categorias c ON s.categoria_id = c.id

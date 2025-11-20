@@ -859,6 +859,26 @@ class TokenController extends Controller
 
             error_log('Cancelamento Solicitação - Status encontrado: ' . $statusCancelado['nome'] . ' (ID: ' . $statusCancelado['id'] . ')');
 
+            // Buscar categoria "Cancelado"
+            $sqlCategoria = "SELECT * FROM categorias WHERE nome = 'Cancelado' AND status = 'ATIVA' LIMIT 1";
+            $categoriaCancelado = \App\Core\Database::fetch($sqlCategoria);
+            
+            // Se não encontrar, buscar qualquer categoria com "Cancelado" no nome
+            if (!$categoriaCancelado) {
+                $sqlCategoria = "SELECT * FROM categorias WHERE nome LIKE '%Cancelado%' AND status = 'ATIVA' LIMIT 1";
+                $categoriaCancelado = \App\Core\Database::fetch($sqlCategoria);
+            }
+            
+            // Buscar condição "Cancelado pelo Locatário"
+            $condicaoModel = new \App\Models\Condicao();
+            $condicaoCancelado = $condicaoModel->findByNome('Cancelado pelo Locatário');
+            
+            // Se não encontrar, buscar qualquer condição com "Cancelado" no nome
+            if (!$condicaoCancelado) {
+                $sqlCondicao = "SELECT * FROM condicoes WHERE nome LIKE '%Cancelado%' AND status = 'ATIVO' LIMIT 1";
+                $condicaoCancelado = \App\Core\Database::fetch($sqlCondicao);
+            }
+            
             // Atualizar observações
             $observacoesAtualizadas = ($solicitacao['observacoes'] ?? '');
             if (!empty($observacoesAtualizadas)) {
@@ -866,21 +886,30 @@ class TokenController extends Controller
             }
             $observacoesAtualizadas .= "CANCELADO VIA LINK PERMANENTE: " . $motivo;
 
-            // Fechar a solicitação: atualizar status para "Cancelado"
+            // Fechar a solicitação: atualizar status, categoria e condição para "Cancelado"
+            $updateFields = ['status_id = ?', 'observacoes = ?', 'motivo_cancelamento = ?', 'updated_at = NOW()'];
+            $updateParams = [$statusCancelado['id'], $observacoesAtualizadas, $motivo];
+            
+            if ($categoriaCancelado) {
+                $updateFields[] = 'categoria_id = ?';
+                $updateParams[] = $categoriaCancelado['id'];
+            }
+            
+            if ($condicaoCancelado) {
+                $updateFields[] = 'condicao_id = ?';
+                $updateParams[] = $condicaoCancelado['id'];
+            }
+            
+            $updateParams[] = $solicitacao['id'];
+            
             $updateSql = "
                 UPDATE solicitacoes 
-                SET status_id = ?,
-                    observacoes = ?,
-                    updated_at = NOW()
+                SET " . implode(', ', $updateFields) . "
                 WHERE id = ?
             ";
             
             try {
-                \App\Core\Database::query($updateSql, [
-                    $statusCancelado['id'],
-                    $observacoesAtualizadas,
-                    $solicitacao['id']
-                ]);
+                \App\Core\Database::query($updateSql, $updateParams);
 
                 error_log('Cancelamento Solicitação - Solicitação cancelada com sucesso. Status: ' . $statusCancelado['nome'] . ' (ID: ' . $statusCancelado['id'] . ')');
 

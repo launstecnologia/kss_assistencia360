@@ -1109,6 +1109,17 @@ function renderizarDetalhes(solicitacao) {
                     </div>
                 </div>
             </div>
+            <!-- Motivo do Cancelamento (se cancelado) -->
+            ${solicitacao.status_nome && solicitacao.status_nome.includes('Cancelado') && solicitacao.motivo_cancelamento ? `
+            <div class="mt-6 bg-red-50 border border-red-200 rounded-lg p-4">
+                <h4 class="text-sm font-medium text-red-700 mb-2">
+                    <i class="fas fa-times-circle mr-2"></i>
+                    Motivo do Cancelamento
+                </h4>
+                <p class="text-sm text-red-900">${solicitacao.motivo_cancelamento}</p>
+            </div>
+            ` : ''}
+            
             <!-- Observações do Segurado -->
             <div class="mt-6">
                 <h4 class="text-sm font-medium text-gray-700 mb-3">

@@ -609,6 +609,7 @@ class WhatsAppService
     
     /**
      * Gera o link de rastreamento da solicitação com a instância correta
+     * Usa URL encurtada se disponível
      * 
      * @param string $baseUrl URL base
      * @param array $solicitacao Dados da solicitação
@@ -633,10 +634,19 @@ class WhatsAppService
             $instancia = 'demo'; // Fallback padrão
         }
         
-        // Formato: /{instancia}/solicitacoes/{id}
-        $link = $baseUrl . '/' . $instancia . '/solicitacoes/' . $solicitacaoId;
+        // Formato original: /{instancia}/solicitacoes/{id}
+        $urlOriginal = $baseUrl . '/' . $instancia . '/solicitacoes/' . $solicitacaoId;
         
-        return $this->cleanUrl($link);
+        // Tentar criar ou buscar URL encurtada
+        try {
+            $urlEncurtadaModel = new \App\Models\UrlEncurtada();
+            $urlEncurtada = $urlEncurtadaModel->criarOuBuscar($solicitacaoId, $urlOriginal, 'rastreamento');
+            return $this->cleanUrl($urlEncurtada);
+        } catch (\Exception $e) {
+            // Se falhar, usar URL original
+            error_log('Erro ao criar URL encurtada: ' . $e->getMessage());
+            return $this->cleanUrl($urlOriginal);
+        }
     }
 
     /**

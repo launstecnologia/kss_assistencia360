@@ -626,6 +626,17 @@ function safe($value, $default = 'Não informado') {
             </div>
         </div>
 
+        <!-- Motivo do Cancelamento (se cancelado) -->
+        <?php if (!empty($solicitacao['status_nome']) && stripos($solicitacao['status_nome'], 'Cancelado') !== false && !empty($solicitacao['motivo_cancelamento'])): ?>
+        <div class="section-card bg-red-50 border border-red-200">
+            <div class="section-title text-red-700">
+                <i class="fas fa-times-circle"></i>
+                Motivo do Cancelamento
+            </div>
+            <p class="text-sm text-red-900"><?= htmlspecialchars($solicitacao['motivo_cancelamento']) ?></p>
+        </div>
+        <?php endif; ?>
+        
         <!-- Observações da Seguradora -->
         <div class="section-card">
             <div class="section-title">
