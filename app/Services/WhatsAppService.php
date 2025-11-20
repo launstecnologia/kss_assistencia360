@@ -532,6 +532,10 @@ class WhatsAppService
         // Remover espaços
         $url = trim($url);
         
+        // ✅ CORRIGIR PRIMEIRO: Garantir que o protocolo sempre tenha :// (duas barras)
+        // Corrigir https:/ ou http:/ para https:// ou http://
+        $url = preg_replace('/^(https?):\/([^\/])/', '$1://$2', $url);
+        
         // Remover URLs duplicadas ANTES de processar barras
         // Padrão especial: http://localhost/http:/localhost/... (URL malformada com : duplicado)
         $url = preg_replace('/(https?:\/\/[^\/\s]+)\/(https?:\/\/?[^\s]+)/', '$2', $url);
@@ -541,14 +545,21 @@ class WhatsAppService
         $url = preg_replace('/http:\/localhost/', 'http://localhost', $url);
         $url = preg_replace('/https:\/localhost/', 'https://localhost', $url);
         
-        // Garantir que não tem barras duplicadas
-        $url = preg_replace('/\/+/', '/', $url);
+        // ✅ CORRIGIR NOVAMENTE: Garantir que o protocolo sempre tenha :// após outras operações
+        $url = preg_replace('/^(https?):\/([^\/])/', '$1://$2', $url);
+        
+        // Garantir que não tem barras duplicadas (mas preservar :// do protocolo)
+        // Substituir múltiplas barras, mas não as duas barras do protocolo
+        $url = preg_replace('/(?<!:)\/\/+/', '/', $url);
+        
         // Remover barra final
         $url = rtrim($url, '/');
-        // Garantir que tem protocolo
+        
+        // Garantir que tem protocolo correto
         if (!preg_match('/^https?:\/\//', $url)) {
             $url = 'http://localhost' . ($url ? '/' . ltrim($url, '/') : '');
         }
+        
         return $url;
     }
     
