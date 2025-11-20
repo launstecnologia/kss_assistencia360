@@ -421,6 +421,26 @@ class DashboardController extends Controller
             $success = $this->solicitacaoModel->updateStatus($solicitacaoId, $novoStatusId, $user['id']);
             
             if ($success) {
+                // ✅ Se mudou para "Serviço Agendado", atualizar condição para "Agendamento Confirmado"
+                if ($statusNovo === 'Serviço Agendado') {
+                    $condicaoModel = new \App\Models\Condicao();
+                    $condicaoConfirmada = $condicaoModel->findByNome('Agendamento Confirmado');
+                    if (!$condicaoConfirmada) {
+                        $condicaoConfirmada = $condicaoModel->findByNome('Data Aceita pelo Prestador');
+                    }
+                    if (!$condicaoConfirmada) {
+                        $sqlCondicao = "SELECT * FROM condicoes WHERE (nome LIKE '%Agendamento Confirmado%' OR nome LIKE '%Data Aceita pelo Prestador%') AND status = 'ATIVO' LIMIT 1";
+                        $condicaoConfirmada = \App\Core\Database::fetch($sqlCondicao);
+                    }
+                    
+                    if ($condicaoConfirmada) {
+                        $this->solicitacaoModel->update($solicitacaoId, ['condicao_id' => $condicaoConfirmada['id']]);
+                        error_log("DEBUG moverCard [ID:{$solicitacaoId}] - ✅ Condição alterada para 'Agendamento Confirmado' (ID: {$condicaoConfirmada['id']})");
+                    } else {
+                        error_log("DEBUG moverCard [ID:{$solicitacaoId}] - ⚠️ Condição 'Agendamento Confirmado' não encontrada no banco de dados");
+                    }
+                }
+                
                 // ✅ Se mudou de "Buscando Prestador" para "Serviço Agendado", enviar "Horário Confirmado"
                 if ($statusAtual === 'Buscando Prestador' && $statusNovo === 'Serviço Agendado') {
                     // Buscar dados de agendamento da solicitação atualizada

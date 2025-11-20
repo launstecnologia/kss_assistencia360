@@ -464,6 +464,26 @@ class SolicitacoesController extends Controller
                 $status = \App\Core\Database::fetch($sql, [$statusId]);
                 $statusNome = $status['nome'] ?? 'Atualizado';
                 
+                // ✅ Se mudou para "Serviço Agendado", atualizar condição para "Agendamento Confirmado"
+                if ($statusNovo === 'Serviço Agendado') {
+                    $condicaoModel = new \App\Models\Condicao();
+                    $condicaoConfirmada = $condicaoModel->findByNome('Agendamento Confirmado');
+                    if (!$condicaoConfirmada) {
+                        $condicaoConfirmada = $condicaoModel->findByNome('Data Aceita pelo Prestador');
+                    }
+                    if (!$condicaoConfirmada) {
+                        $sqlCondicao = "SELECT * FROM condicoes WHERE (nome LIKE '%Agendamento Confirmado%' OR nome LIKE '%Data Aceita pelo Prestador%') AND status = 'ATIVO' LIMIT 1";
+                        $condicaoConfirmada = \App\Core\Database::fetch($sqlCondicao);
+                    }
+                    
+                    if ($condicaoConfirmada) {
+                        $this->solicitacaoModel->update($id, ['condicao_id' => $condicaoConfirmada['id']]);
+                        error_log("DEBUG updateStatus [ID:{$id}] - ✅ Condição alterada para 'Agendamento Confirmado' (ID: {$condicaoConfirmada['id']})");
+                    } else {
+                        error_log("DEBUG updateStatus [ID:{$id}] - ⚠️ Condição 'Agendamento Confirmado' não encontrada no banco de dados");
+                    }
+                }
+                
                 // ✅ Se mudou de "Buscando Prestador" para "Serviço Agendado", enviar "Horário Confirmado"
                 if ($statusAtual === 'Buscando Prestador' && $statusNovo === 'Serviço Agendado') {
                     // Buscar dados de agendamento da solicitação atualizada
@@ -1611,6 +1631,9 @@ class SolicitacoesController extends Controller
             // ✅ Adicionar condição "Data Aceita pelo Prestador" ou "Agendamento Confirmado" quando admin confirma
             if ($condicaoConfirmada) {
                 $dadosUpdate['condicao_id'] = $condicaoConfirmada['id'];
+                error_log("DEBUG confirmarHorario [ID:{$id}] - ✅ Condição alterada para 'Agendamento Confirmado' (ID: {$condicaoConfirmada['id']})");
+            } else {
+                error_log("DEBUG confirmarHorario [ID:{$id}] - ⚠️ Condição 'Agendamento Confirmado' não encontrada no banco de dados");
             }
             
             // ✅ DEBUG: Log antes de remover duplicatas
@@ -2798,10 +2821,48 @@ class SolicitacoesController extends Controller
                             // Se não foi definido manualmente, mudar para "Serviço Agendado"
                             $dados['status_id'] = $this->getStatusId('Serviço Agendado');
                             error_log("DEBUG atualizarDetalhes [ID:{$id}] - Status alterado automaticamente para 'Serviço Agendado' (há horários confirmados)");
+                            
+                            // ✅ Quando muda para "Serviço Agendado", atualizar condição para "Agendamento Confirmado"
+                            $condicaoModel = new \App\Models\Condicao();
+                            $condicaoConfirmada = $condicaoModel->findByNome('Agendamento Confirmado');
+                            if (!$condicaoConfirmada) {
+                                $condicaoConfirmada = $condicaoModel->findByNome('Data Aceita pelo Prestador');
+                            }
+                            if (!$condicaoConfirmada) {
+                                $sqlCondicao = "SELECT * FROM condicoes WHERE (nome LIKE '%Agendamento Confirmado%' OR nome LIKE '%Data Aceita pelo Prestador%') AND status = 'ATIVO' LIMIT 1";
+                                $condicaoConfirmada = \App\Core\Database::fetch($sqlCondicao);
+                            }
+                            
+                            if ($condicaoConfirmada) {
+                                $dados['condicao_id'] = $condicaoConfirmada['id'];
+                                error_log("DEBUG atualizarDetalhes [ID:{$id}] - ✅ Condição alterada para 'Agendamento Confirmado' (ID: {$condicaoConfirmada['id']})");
+                            } else {
+                                error_log("DEBUG atualizarDetalhes [ID:{$id}] - ⚠️ Condição 'Agendamento Confirmado' não encontrada no banco de dados");
+                            }
                         } else {
                             // Se foi definido manualmente, manter o status escolhido pelo usuário
                             $dados['status_id'] = $statusIdManual;
                             error_log("DEBUG atualizarDetalhes [ID:{$id}] - Status mantido pelo usuário: " . $statusIdManual);
+                            
+                            // ✅ Se o status manual escolhido for "Serviço Agendado", também atualizar condição
+                            $sqlStatusManual = "SELECT nome FROM status WHERE id = ?";
+                            $statusManual = \App\Core\Database::fetch($sqlStatusManual, [$statusIdManual]);
+                            if ($statusManual && $statusManual['nome'] === 'Serviço Agendado') {
+                                $condicaoModel = new \App\Models\Condicao();
+                                $condicaoConfirmada = $condicaoModel->findByNome('Agendamento Confirmado');
+                                if (!$condicaoConfirmada) {
+                                    $condicaoConfirmada = $condicaoModel->findByNome('Data Aceita pelo Prestador');
+                                }
+                                if (!$condicaoConfirmada) {
+                                    $sqlCondicao = "SELECT * FROM condicoes WHERE (nome LIKE '%Agendamento Confirmado%' OR nome LIKE '%Data Aceita pelo Prestador%') AND status = 'ATIVO' LIMIT 1";
+                                    $condicaoConfirmada = \App\Core\Database::fetch($sqlCondicao);
+                                }
+                                
+                                if ($condicaoConfirmada) {
+                                    $dados['condicao_id'] = $condicaoConfirmada['id'];
+                                    error_log("DEBUG atualizarDetalhes [ID:{$id}] - ✅ Condição alterada para 'Agendamento Confirmado' (status manual: Serviço Agendado)");
+                                }
+                            }
                         }
                         
                         // ✅ Enviar notificação WhatsApp quando horários são adicionados pelo admin
