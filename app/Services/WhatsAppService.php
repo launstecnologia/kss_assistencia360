@@ -154,6 +154,13 @@ class WhatsAppService
             // Preparar variáveis (incluindo links com token)
             $variables = $this->prepareVariables($solicitacao, $extraData, $token);
             
+            // Log de debug para verificar variáveis
+            if ($messageType === 'Horário Sugerido') {
+                error_log("DEBUG WhatsAppService [ID:{$solicitacaoId}] - data_agendamento: " . ($variables['data_agendamento'] ?? 'VAZIO'));
+                error_log("DEBUG WhatsAppService [ID:{$solicitacaoId}] - horario_agendamento: " . ($variables['horario_agendamento'] ?? 'VAZIO'));
+                error_log("DEBUG WhatsAppService [ID:{$solicitacaoId}] - extraData recebido: " . json_encode($extraData));
+            }
+            
             // Substituir variáveis no template
             $message = $this->replaceVariables($template['corpo'], $variables);
             

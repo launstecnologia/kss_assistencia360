@@ -2085,9 +2085,46 @@ class SolicitacoesController extends Controller
 
             // Enviar notificação WhatsApp com horário sugerido
             try {
+                // Formatar data corretamente (aceitar diferentes formatos)
+                $dataFormatada = '';
+                if (!empty($data)) {
+                    // Tentar formato YYYY-MM-DD primeiro
+                    $dataObj = \DateTime::createFromFormat('Y-m-d', $data);
+                    if ($dataObj) {
+                        $dataFormatada = $dataObj->format('d/m/Y');
+                    } else {
+                        // Tentar formato dd/mm/YYYY
+                        $dataObj = \DateTime::createFromFormat('d/m/Y', $data);
+                        if ($dataObj) {
+                            $dataFormatada = $data;
+                        } else {
+                            // Tentar strtotime como fallback
+                            $timestamp = strtotime($data);
+                            if ($timestamp !== false) {
+                                $dataFormatada = date('d/m/Y', $timestamp);
+                            }
+                        }
+                    }
+                }
+                
+                // Formatar horário corretamente
+                $horarioFormatado = '';
+                if (!empty($horaInicio) && !empty($horaFim)) {
+                    // Remover segundos se houver
+                    $horaInicioLimpa = preg_replace('/:\d{2}$/', '', $horaInicio);
+                    $horaFimLimpa = preg_replace('/:\d{2}$/', '', $horaFim);
+                    $horarioFormatado = $horaInicioLimpa . '-' . $horaFimLimpa;
+                } elseif (!empty($horario)) {
+                    // Tentar extrair horário do campo 'horario' se não tiver horaInicio/horaFim
+                    // Formato esperado: "dd/mm/yyyy - HH:MM-HH:MM"
+                    if (preg_match('/(\d{2}:\d{2})-(\d{2}:\d{2})/', $horario, $matches)) {
+                        $horarioFormatado = $matches[1] . '-' . $matches[2];
+                    }
+                }
+                
                 $this->enviarNotificacaoWhatsApp($id, 'Horário Sugerido', [
-                    'data_agendamento' => date('d/m/Y', strtotime($data)),
-                    'horario_agendamento' => $horaInicio . ':00-' . $horaFim . ':00'
+                    'data_agendamento' => $dataFormatada,
+                    'horario_agendamento' => $horarioFormatado
                 ]);
             } catch (\Exception $e) {
                 error_log('Erro ao enviar WhatsApp: ' . $e->getMessage());
@@ -2665,17 +2702,62 @@ class SolicitacoesController extends Controller
                                     $horariosLista = [];
                                     foreach ($horariosNovos as $horarioNovo) {
                                         $raw = $horarioNovo['raw'] ?? '';
-                                        // Remover segundos se houver
-                                        if (strpos($raw, ':00:00') !== false) {
-                                            $raw = preg_replace('/(\d{2}:\d{2}):\d{2}-(\d{2}:\d{2}):\d{2}/', '$1-$2', $raw);
-                                        }
+                                        // Remover segundos se houver (qualquer segundo, não apenas :00)
+                                        $raw = preg_replace('/(\d{2}:\d{2}):\d{2}-(\d{2}:\d{2}):\d{2}/', '$1-$2', $raw);
                                         $horariosLista[] = $raw;
                                     }
                                     $horariosTexto = implode(', ', $horariosLista);
                                     
+                                    // Extrair data e horário do primeiro horário novo para a mensagem
+                                    $primeiroHorario = $horariosNovos[0] ?? null;
+                                    $dataAgendamento = '';
+                                    $horarioAgendamento = '';
+                                    
+                                    if ($primeiroHorario) {
+                                        // Tentar extrair do campo 'date' e 'time'
+                                        if (!empty($primeiroHorario['date'])) {
+                                            // Converter de YYYY-MM-DD para dd/mm/YYYY
+                                            $dataObj = \DateTime::createFromFormat('Y-m-d', $primeiroHorario['date']);
+                                            if ($dataObj) {
+                                                $dataAgendamento = $dataObj->format('d/m/Y');
+                                            } else {
+                                                // Tentar formato dd/mm/yyyy
+                                                $dataObj = \DateTime::createFromFormat('d/m/Y', $primeiroHorario['date']);
+                                                if ($dataObj) {
+                                                    $dataAgendamento = $primeiroHorario['date'];
+                                                }
+                                            }
+                                        }
+                                        
+                                        if (!empty($primeiroHorario['time'])) {
+                                            $horarioAgendamento = $primeiroHorario['time'];
+                                            // Remover segundos se houver (qualquer segundo, não apenas :00)
+                                            $horarioAgendamento = preg_replace('/(\d{2}:\d{2}):\d{2}-(\d{2}:\d{2}):\d{2}/', '$1-$2', $horarioAgendamento);
+                                        }
+                                        
+                                        // Se não conseguiu extrair de 'date' e 'time', tentar extrair do 'raw'
+                                        if (empty($dataAgendamento) || empty($horarioAgendamento)) {
+                                            $raw = $primeiroHorario['raw'] ?? '';
+                                            // Formato esperado: "dd/mm/yyyy - HH:MM-HH:MM" ou "dd/mm/yyyy - HH:MM:SS-HH:MM:SS"
+                                            if (preg_match('/(\d{2}\/\d{2}\/\d{4})\s*-\s*(\d{2}:\d{2})(?::\d{2})?-(\d{2}:\d{2})(?::\d{2})?/', $raw, $matches)) {
+                                                $dataAgendamento = $matches[1];
+                                                // Remover segundos se houver
+                                                $horaInicio = preg_replace('/:\d{2}$/', '', $matches[2]);
+                                                $horaFim = preg_replace('/:\d{2}$/', '', $matches[3]);
+                                                $horarioAgendamento = $horaInicio . '-' . $horaFim;
+                                            }
+                                        }
+                                    }
+                                    
                                     // Enviar notificação "Horário Sugerido" para o locatário escolher
+                                    error_log("DEBUG atualizarDetalhes [ID:{$id}] - Primeiro horário novo: " . json_encode($primeiroHorario));
+                                    error_log("DEBUG atualizarDetalhes [ID:{$id}] - Data extraída: " . $dataAgendamento);
+                                    error_log("DEBUG atualizarDetalhes [ID:{$id}] - Horário extraído: " . $horarioAgendamento);
+                                    
                                     $this->enviarNotificacaoWhatsApp($id, 'Horário Sugerido', [
-                                        'horarios_sugeridos' => $horariosTexto
+                                        'horarios_sugeridos' => $horariosTexto,
+                                        'data_agendamento' => $dataAgendamento,
+                                        'horario_agendamento' => $horarioAgendamento
                                     ]);
                                     
                                     error_log("DEBUG atualizarDetalhes [ID:{$id}] - ✅ Notificação 'Horário Sugerido' enviada para telefone: {$telefone}");
@@ -2773,9 +2855,12 @@ class SolicitacoesController extends Controller
                             // Formatar horários para exibição
                             $horariosTexto = [];
                             foreach ($horariosSeguradora as $horario) {
-                                // Extrair data e horário do formato "dd/mm/yyyy - HH:MM-HH:MM"
-                                if (preg_match('/(\d{2}\/\d{2}\/\d{4})\s*-\s*(\d{2}:\d{2})-(\d{2}:\d{2})/', $horario, $matches)) {
-                                    $horariosTexto[] = $matches[1] . ' das ' . $matches[2] . ' às ' . $matches[3];
+                                // Extrair data e horário do formato "dd/mm/yyyy - HH:MM-HH:MM" ou "dd/mm/yyyy - HH:MM:SS-HH:MM:SS"
+                                if (preg_match('/(\d{2}\/\d{2}\/\d{4})\s*-\s*(\d{2}:\d{2})(?::\d{2})?-(\d{2}:\d{2})(?::\d{2})?/', $horario, $matches)) {
+                                    // Remover segundos se houver
+                                    $horaInicio = preg_replace('/:\d{2}$/', '', $matches[2]);
+                                    $horaFim = preg_replace('/:\d{2}$/', '', $matches[3]);
+                                    $horariosTexto[] = $matches[1] . ' das ' . $horaInicio . ' às ' . $horaFim;
                                 } else {
                                     $horariosTexto[] = $horario;
                                 }
@@ -2786,12 +2871,20 @@ class SolicitacoesController extends Controller
                             $dataAgendamento = '';
                             $horarioAgendamento = '';
                             
-                            if (preg_match('/(\d{2}\/\d{2}\/\d{4})\s*-\s*(\d{2}:\d{2})-(\d{2}:\d{2})/', $primeiroHorario, $matches)) {
+                            // Aceitar formato com ou sem segundos: "dd/mm/yyyy - HH:MM-HH:MM" ou "dd/mm/yyyy - HH:MM:SS-HH:MM:SS"
+                            if (preg_match('/(\d{2}\/\d{2}\/\d{4})\s*-\s*(\d{2}:\d{2})(?::\d{2})?-(\d{2}:\d{2})(?::\d{2})?/', $primeiroHorario, $matches)) {
                                 $dataAgendamento = $matches[1];
-                                $horarioAgendamento = $matches[2] . '-' . $matches[3];
+                                // Remover segundos se houver
+                                $horaInicio = preg_replace('/:\d{2}$/', '', $matches[2]);
+                                $horaFim = preg_replace('/:\d{2}$/', '', $matches[3]);
+                                $horarioAgendamento = $horaInicio . '-' . $horaFim;
                             }
                             
                             // Enviar WhatsApp com horários sugeridos pela seguradora (template "Horário Sugerido" com link para escolher)
+                            error_log("DEBUG horários seguradora [ID:{$id}] - Primeiro horário: " . $primeiroHorario);
+                            error_log("DEBUG horários seguradora [ID:{$id}] - Data extraída: " . $dataAgendamento);
+                            error_log("DEBUG horários seguradora [ID:{$id}] - Horário extraído: " . $horarioAgendamento);
+                            
                             $this->enviarNotificacaoWhatsApp($id, 'Horário Sugerido', [
                                 'data_agendamento' => $dataAgendamento,
                                 'horario_agendamento' => $horarioAgendamento,
