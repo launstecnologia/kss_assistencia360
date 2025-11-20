@@ -183,7 +183,7 @@
                 
                 <a href="<?= url('admin/condicoes') ?>" class="flex items-center px-4 py-2 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors <?= $currentPage === 'condicoes' ? 'bg-blue-50 text-blue-700 font-medium' : '' ?>">
                     <i class="fas fa-tag mr-3 w-5 text-center"></i>
-                    Condições
+                    Condições/Pendências
                 </a>
                 
                 <!-- SISTEMA -->
