@@ -3,7 +3,8 @@
     "description": "Sistema de assistências residenciais KSS Seguros",
     "type": "project",
     "require": {
-        "php": ">=8.2"
+        "php": ">=8.2",
+        "phpoffice/phpspreadsheet": "^2.0"
     },
     "autoload": {
         "psr-4": {

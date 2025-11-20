@@ -715,4 +715,162 @@ class ImobiliariasController extends Controller
 
         return $newFileName;
     }
+
+    /**
+     * Processar upload de Excel com CPF e número do imóvel
+     */
+    public function uploadExcel(int $id): void
+    {
+        if (!$this->isPost()) {
+            $this->json(['success' => false, 'error' => 'Método não permitido'], 405);
+            return;
+        }
+
+        $imobiliaria = $this->imobiliariaModel->find($id);
+        
+        if (!$imobiliaria) {
+            $this->json(['success' => false, 'error' => 'Imobiliária não encontrada'], 404);
+            return;
+        }
+
+        // Verificar se arquivo foi enviado
+        if (empty($_FILES['excel_file']['name']) || $_FILES['excel_file']['error'] !== UPLOAD_ERR_OK) {
+            $this->json(['success' => false, 'error' => 'Nenhum arquivo foi enviado ou ocorreu um erro no upload'], 400);
+            return;
+        }
+
+        $file = $_FILES['excel_file'];
+        $fileName = $file['name'];
+        $fileTmpName = $file['tmp_name'];
+        $fileSize = $file['size'];
+        $fileError = $file['error'];
+
+        // Validar tamanho (máximo 10MB)
+        $maxSize = 10 * 1024 * 1024; // 10MB
+        if ($fileSize > $maxSize) {
+            $this->json(['success' => false, 'error' => 'Arquivo muito grande. Tamanho máximo: 10MB'], 400);
+            return;
+        }
+
+        // Validar extensão
+        $extension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+        $allowedExtensions = ['xlsx', 'xls'];
+        
+        if (!in_array($extension, $allowedExtensions)) {
+            $this->json(['success' => false, 'error' => 'Formato de arquivo não permitido. Use .xlsx ou .xls'], 400);
+            return;
+        }
+
+        try {
+            // Carregar arquivo Excel usando PhpSpreadsheet
+            $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($fileTmpName);
+            $worksheet = $spreadsheet->getActiveSheet();
+            $rows = $worksheet->toArray();
+
+            if (empty($rows) || count($rows) < 2) {
+                $this->json(['success' => false, 'error' => 'O arquivo Excel está vazio ou não possui dados'], 400);
+                return;
+            }
+
+            // Remover cabeçalho (primeira linha)
+            array_shift($rows);
+
+            $locatarioModel = new \App\Models\Locatario();
+            $sucessos = 0;
+            $erros = 0;
+            $detalhesErros = [];
+
+            foreach ($rows as $index => $row) {
+                $linha = $index + 2; // +2 porque removemos o cabeçalho e arrays começam em 0
+                
+                // Extrair CPF e número do imóvel
+                $cpf = isset($row[0]) ? trim($row[0]) : '';
+                $numeroImovel = isset($row[1]) ? trim($row[1]) : '';
+
+                // Validar dados
+                if (empty($cpf)) {
+                    $erros++;
+                    $detalhesErros[] = "Linha {$linha}: CPF não informado";
+                    continue;
+                }
+
+                if (empty($numeroImovel)) {
+                    $erros++;
+                    $detalhesErros[] = "Linha {$linha}: Número do imóvel não informado";
+                    continue;
+                }
+
+                // Limpar CPF (remover pontos, traços, espaços)
+                $cpf = preg_replace('/[^0-9]/', '', $cpf);
+
+                if (strlen($cpf) !== 11) {
+                    $erros++;
+                    $detalhesErros[] = "Linha {$linha}: CPF inválido (deve ter 11 dígitos)";
+                    continue;
+                }
+
+                try {
+                    // Buscar locatário por CPF e imobiliária
+                    $locatario = $locatarioModel->findByCpfAndImobiliaria($cpf, $id);
+
+                    if (!$locatario) {
+                        $erros++;
+                        $detalhesErros[] = "Linha {$linha}: Locatário com CPF {$cpf} não encontrado para esta imobiliária";
+                        continue;
+                    }
+
+                    // Verificar se o imóvel já existe
+                    $sql = "SELECT * FROM imoveis_locatarios 
+                            WHERE locatario_id = ? AND ksi_imovel_cod = ? AND status = 'ATIVO'";
+                    $imovelExistente = \App\Core\Database::fetch($sql, [$locatario['id'], $numeroImovel]);
+
+                    if ($imovelExistente) {
+                        // Atualizar imóvel existente
+                        $updateSql = "UPDATE imoveis_locatarios 
+                                     SET updated_at = NOW() 
+                                     WHERE id = ?";
+                        \App\Core\Database::query($updateSql, [$imovelExistente['id']]);
+                        $sucessos++;
+                    } else {
+                        // Criar novo imóvel
+                        $imovelData = [
+                            'locatario_id' => $locatario['id'],
+                            'ksi_imovel_cod' => $numeroImovel,
+                            'endereco_logradouro' => 'Importado via Excel',
+                            'status' => 'ATIVO',
+                            'created_at' => date('Y-m-d H:i:s'),
+                            'updated_at' => date('Y-m-d H:i:s')
+                        ];
+
+                        $locatarioModel->addImovel($locatario['id'], $imovelData);
+                        $sucessos++;
+                    }
+                } catch (\Exception $e) {
+                    $erros++;
+                    $detalhesErros[] = "Linha {$linha}: Erro ao processar - " . $e->getMessage();
+                    error_log("Erro ao processar linha {$linha} do Excel: " . $e->getMessage());
+                }
+            }
+
+            $mensagem = "Processamento concluído: {$sucessos} registro(s) processado(s) com sucesso";
+            if ($erros > 0) {
+                $mensagem .= ", {$erros} erro(s) encontrado(s)";
+            }
+
+            $this->json([
+                'success' => true,
+                'message' => $mensagem,
+                'sucessos' => $sucessos,
+                'erros' => $erros,
+                'detalhes_erros' => $detalhesErros
+            ]);
+
+        } catch (\Exception $e) {
+            error_log("Erro ao processar Excel: " . $e->getMessage());
+            $this->json([
+                'success' => false,
+                'error' => 'Erro ao processar arquivo Excel: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }

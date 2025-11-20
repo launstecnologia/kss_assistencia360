@@ -108,6 +108,12 @@ ob_start();
                         
                         <!-- Ações -->
                         <div class="flex items-center space-x-2">
+                            <button onclick="abrirModalUploadExcel(<?= $imobiliaria['id'] ?>)" 
+                                    class="inline-flex items-center px-3 py-1 border border-blue-300 rounded-md text-sm font-medium text-blue-700 bg-white hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                <i class="fas fa-file-excel mr-1"></i>
+                                Upload Excel
+                            </button>
+                            
                             <button onclick="abrirOffcanvasVer(<?= $imobiliaria['id'] ?>)" 
                                     class="inline-flex items-center px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                                 <i class="fas fa-eye mr-1"></i>
@@ -168,6 +174,41 @@ ob_start();
                 </div>
             </div>
             <div id="formImobiliaria" class="hidden"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Upload Excel -->
+<div id="upload-excel-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+    <div class="relative top-20 mx-auto p-5 border w-full max-w-md shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-blue-100">
+                <i class="fas fa-file-excel text-blue-600 text-xl"></i>
+            </div>
+            <h3 class="text-lg font-medium text-gray-900 mt-4 text-center">Upload de Excel</h3>
+            <p class="text-sm text-gray-500 mt-2 text-center">
+                Envie um arquivo Excel (.xlsx ou .xls) com duas colunas:<br>
+                <strong>CPF</strong> e <strong>Número do Imóvel</strong>
+            </p>
+            <div class="mt-4">
+                <form id="form-upload-excel" enctype="multipart/form-data">
+                    <input type="file" name="excel_file" id="excel_file" accept=".xlsx,.xls" 
+                           class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 focus:ring-2 focus:ring-blue-500 focus:outline-none" required>
+                    <p class="mt-2 text-xs text-gray-500">Primeira linha deve conter os cabeçalhos (CPF, Número do Imóvel)</p>
+                </form>
+            </div>
+            <div class="items-center px-4 py-3 mt-4">
+                <button id="upload-excel-button" 
+                        class="px-4 py-2 bg-blue-500 text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-300">
+                    <i class="fas fa-upload mr-2"></i>
+                    Enviar Arquivo
+                </button>
+                <button onclick="fecharModalUploadExcel()" 
+                        class="mt-3 px-4 py-2 bg-gray-300 text-gray-800 text-base font-medium rounded-md w-full shadow-sm hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300">
+                    Cancelar
+                </button>
+            </div>
+            <div id="upload-excel-result" class="mt-4 hidden"></div>
         </div>
     </div>
 </div>
@@ -1475,6 +1516,100 @@ document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape' && !document.getElementById('offcanvasImobiliaria').classList.contains('hidden')) {
         fecharOffcanvasImobiliaria();
     }
+});
+
+// ========== FUNÇÕES DE UPLOAD EXCEL ==========
+let imobiliariaUploadId = null;
+
+function abrirModalUploadExcel(id) {
+    imobiliariaUploadId = id;
+    const modal = document.getElementById('upload-excel-modal');
+    const form = document.getElementById('form-upload-excel');
+    const result = document.getElementById('upload-excel-result');
+    
+    // Resetar formulário
+    form.reset();
+    result.classList.add('hidden');
+    result.innerHTML = '';
+    
+    modal.classList.remove('hidden');
+}
+
+function fecharModalUploadExcel() {
+    const modal = document.getElementById('upload-excel-modal');
+    modal.classList.add('hidden');
+    imobiliariaUploadId = null;
+}
+
+document.getElementById('upload-excel-button').addEventListener('click', function() {
+    const form = document.getElementById('form-upload-excel');
+    const fileInput = document.getElementById('excel_file');
+    const button = this;
+    const result = document.getElementById('upload-excel-result');
+    
+    if (!fileInput.files || fileInput.files.length === 0) {
+        alert('Por favor, selecione um arquivo Excel');
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('excel_file', fileInput.files[0]);
+    
+    const originalText = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Enviando...';
+    button.disabled = true;
+    
+    fetch(`<?= url('admin/imobiliarias') ?>/${imobiliariaUploadId}/upload-excel`, {
+        method: 'POST',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            result.classList.remove('hidden');
+            let html = `<div class="p-4 rounded-md ${data.erros > 0 ? 'bg-yellow-50 border border-yellow-200' : 'bg-green-50 border border-green-200'}">`;
+            html += `<p class="font-medium ${data.erros > 0 ? 'text-yellow-800' : 'text-green-800'}">${data.message}</p>`;
+            
+            if (data.detalhes_erros && data.detalhes_erros.length > 0) {
+                html += `<div class="mt-2 text-sm text-yellow-700">`;
+                html += `<p class="font-medium mb-2">Detalhes dos erros:</p>`;
+                html += `<ul class="list-disc list-inside space-y-1 max-h-40 overflow-y-auto">`;
+                data.detalhes_erros.forEach(erro => {
+                    html += `<li>${erro}</li>`;
+                });
+                html += `</ul></div>`;
+            }
+            
+            html += `</div>`;
+            result.innerHTML = html;
+            
+            // Se não houver erros, recarregar a página após 2 segundos
+            if (data.erros === 0) {
+                setTimeout(() => {
+                    location.reload();
+                }, 2000);
+            }
+        } else {
+            result.classList.remove('hidden');
+            result.innerHTML = `<div class="p-4 rounded-md bg-red-50 border border-red-200">
+                <p class="font-medium text-red-800">Erro: ${data.error || 'Erro desconhecido'}</p>
+            </div>`;
+        }
+    })
+    .catch(error => {
+        console.error('Erro:', error);
+        result.classList.remove('hidden');
+        result.innerHTML = `<div class="p-4 rounded-md bg-red-50 border border-red-200">
+            <p class="font-medium text-red-800">Erro ao enviar arquivo</p>
+        </div>`;
+    })
+    .finally(() => {
+        button.innerHTML = originalText;
+        button.disabled = false;
+    });
 });
 </script>
 
