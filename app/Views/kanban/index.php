@@ -1480,8 +1480,7 @@ function renderizarDetalhes(solicitacao) {
                                           envio.status === 'erro' ? 'Erro' : 
                                           'Pendente';
                         return `
-                            <div class="border border-gray-200 rounded-lg p-3 hover:bg-gray-50 cursor-pointer transition-colors" 
-                                 onclick="verMensagemWhatsApp(${index})">
+                            <div class="border border-gray-200 rounded-lg p-3 hover:bg-gray-50 transition-colors">
                                 <div class="flex items-start justify-between mb-2">
                                     <div class="flex items-center gap-2">
                                         <i class="fas ${statusIcon} text-sm"></i>
@@ -1502,9 +1501,15 @@ function renderizarDetalhes(solicitacao) {
                                         ${envio.erro}
                                     </div>
                                 ` : ''}
-                                <div class="text-xs text-blue-600 mt-2 flex items-center">
-                                    <i class="fas fa-eye mr-1"></i>
-                                    Ver mensagem
+                                <div class="flex items-center gap-3 mt-2">
+                                    <button onclick="verMensagemWhatsApp(${index})" class="text-xs text-blue-600 hover:text-blue-800 flex items-center">
+                                        <i class="fas fa-eye mr-1"></i>
+                                        Ver mensagem
+                                    </button>
+                                    <button onclick="reenviarMensagemWhatsApp(${solicitacao.id}, ${index}, event)" class="text-xs text-green-600 hover:text-green-800 flex items-center">
+                                        <i class="fas fa-redo mr-1"></i>
+                                        Reenviar
+                                    </button>
                                 </div>
                             </div>
                         `;
@@ -2505,6 +2510,102 @@ function formatarDataHora(dateString) {
     if (!dateString) return '-';
     const date = new Date(dateString);
     return date.toLocaleDateString('pt-BR') + ' às ' + date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+}
+
+// Função para reenviar mensagem WhatsApp
+function reenviarMensagemWhatsApp(solicitacaoId, index, event) {
+    event.stopPropagation(); // Evitar que o clique no card abra a visualização
+    
+    if (!whatsappHistoricoGlobal || !whatsappHistoricoGlobal[index]) {
+        mostrarNotificacao('Mensagem não encontrada', 'error');
+        return;
+    }
+    
+    const envio = whatsappHistoricoGlobal[index];
+    const tipo = envio.tipo;
+    
+    if (!tipo || tipo === 'N/A') {
+        mostrarNotificacao('Tipo de mensagem não encontrado', 'error');
+        return;
+    }
+    
+    // Confirmar reenvio
+    if (!confirm(`Deseja reenviar a mensagem "${tipo}"?`)) {
+        return;
+    }
+    
+    // Extrair extraData dos detalhes se disponível
+    let extraData = {};
+    if (envio.detalhes) {
+        // Tentar extrair dados extras do histórico
+        const detalhes = envio.detalhes;
+        
+        // Extrair dados de agendamento se disponíveis
+        if (detalhes.data_agendamento) {
+            extraData.data_agendamento = detalhes.data_agendamento;
+        }
+        if (detalhes.horario_agendamento) {
+            extraData.horario_agendamento = detalhes.horario_agendamento;
+        }
+        if (detalhes.horarios_sugeridos) {
+            extraData.horarios_sugeridos = detalhes.horarios_sugeridos;
+        }
+        if (detalhes.horario_servico) {
+            extraData.horario_servico = detalhes.horario_servico;
+        }
+        if (detalhes.periodo_chegada) {
+            extraData.periodo_chegada = detalhes.periodo_chegada;
+        }
+        // Adicionar outros campos que possam estar nos detalhes
+        if (detalhes.status_atual) {
+            extraData.status_atual = detalhes.status_atual;
+        }
+        if (detalhes.prestador_nome) {
+            extraData.prestador_nome = detalhes.prestador_nome;
+        }
+        if (detalhes.prestador_telefone) {
+            extraData.prestador_telefone = detalhes.prestador_telefone;
+        }
+    }
+    
+    // Mostrar loading
+    const btn = event.target.closest('button');
+    const originalHtml = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>Enviando...';
+    
+    // Fazer requisição para reenviar
+    fetch(`<?= url('admin/solicitacoes/') ?>${solicitacaoId}/reenviar-whatsapp`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            tipo: tipo,
+            extra_data: extraData
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        btn.disabled = false;
+        btn.innerHTML = originalHtml;
+        
+        if (data.success) {
+            mostrarNotificacao('Mensagem reenviada com sucesso!', 'success');
+            // Recarregar detalhes para atualizar o histórico
+            setTimeout(() => {
+                carregarDetalhes(solicitacaoId);
+            }, 1000);
+        } else {
+            mostrarNotificacao(data.message || 'Erro ao reenviar mensagem', 'error');
+        }
+    })
+    .catch(error => {
+        btn.disabled = false;
+        btn.innerHTML = originalHtml;
+        console.error('Erro:', error);
+        mostrarNotificacao('Erro ao reenviar mensagem', 'error');
+    });
 }
 
 // Função para exibir mensagem completa do WhatsApp

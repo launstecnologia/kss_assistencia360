@@ -113,6 +113,7 @@ $router->post('/admin/solicitacoes/{id}/solicitar-novos-horarios', 'Solicitacoes
 $router->post('/admin/solicitacoes/{id}/adicionar-horario-seguradora', 'SolicitacoesController@adicionarHorarioSeguradora', ['auth']);
 $router->post('/admin/solicitacoes/{id}/remover-horario-seguradora', 'SolicitacoesController@removerHorarioSeguradora', ['auth']);
 $router->post('/admin/solicitacoes/{id}/atualizar', 'SolicitacoesController@atualizarDetalhes', ['auth']);
+$router->post('/admin/solicitacoes/{id}/reenviar-whatsapp', 'SolicitacoesController@reenviarWhatsapp', ['auth']);
 $router->get('/admin/solicitacoes/{id}/edit', 'SolicitacoesController@edit', ['auth']);
 $router->post('/admin/solicitacoes/{id}/edit', 'SolicitacoesController@update', ['auth']);
 

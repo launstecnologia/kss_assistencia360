@@ -186,6 +186,53 @@ class SolicitacoesController extends Controller
     }
 
     /**
+     * Reenvia mensagem WhatsApp
+     */
+    public function reenviarWhatsapp(int $id): void
+    {
+        if (!$this->isPost()) {
+            $this->json(['success' => false, 'message' => 'Método não permitido'], 405);
+            return;
+        }
+
+        try {
+            // Ler dados do JSON
+            $raw = file_get_contents('php://input');
+            $json = json_decode($raw, true);
+            
+            $tipo = $json['tipo'] ?? $this->input('tipo');
+            $extraData = $json['extra_data'] ?? $this->input('extra_data', []);
+            
+            if (empty($tipo)) {
+                $this->json(['success' => false, 'message' => 'Tipo de mensagem é obrigatório'], 400);
+                return;
+            }
+            
+            // Verificar se a solicitação existe
+            $solicitacao = $this->solicitacaoModel->find($id);
+            if (!$solicitacao) {
+                $this->json(['success' => false, 'message' => 'Solicitação não encontrada'], 404);
+                return;
+            }
+            
+            // Reenviar mensagem
+            $this->enviarNotificacaoWhatsApp($id, $tipo, $extraData);
+            
+            $this->json([
+                'success' => true,
+                'message' => 'Mensagem reenviada com sucesso'
+            ]);
+            
+        } catch (\Exception $e) {
+            error_log('Erro ao reenviar WhatsApp: ' . $e->getMessage());
+            $this->json([
+                'success' => false,
+                'message' => 'Erro ao reenviar mensagem: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
      * Retorna contagem de solicitações do mesmo contrato e categoria nos últimos 12 meses
      * GET /admin/solicitacoes/historico-utilizacao?numero_contrato=XXX&categoria_id=YYY
      */
