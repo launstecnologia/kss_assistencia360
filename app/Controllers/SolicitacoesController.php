@@ -506,9 +506,12 @@ class SolicitacoesController extends Controller
                     ]);
                 } else {
                     // Para outras mudanças de status, enviar "Atualização de Status"
-                    $this->enviarNotificacaoWhatsApp($id, 'Atualização de Status', [
-                        'status_atual' => $statusNome
-                    ]);
+                    // ✅ Não enviar WhatsApp quando mudar para "Buscando Prestador"
+                    if ($statusNome !== 'Buscando Prestador') {
+                        $this->enviarNotificacaoWhatsApp($id, 'Atualização de Status', [
+                            'status_atual' => $statusNome
+                        ]);
+                    }
                 }
                 
                 $this->json(['success' => true, 'message' => 'Status atualizado com sucesso']);

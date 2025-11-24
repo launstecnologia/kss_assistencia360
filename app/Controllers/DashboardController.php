@@ -467,9 +467,12 @@ class DashboardController extends Controller
                     ]);
                 } else {
                     // Para outras mudanças de status, enviar "Atualização de Status"
-                    $this->enviarNotificacaoWhatsApp($solicitacaoId, 'Atualização de Status', [
-                        'status_atual' => $statusNovo ?? 'Atualizado'
-                    ]);
+                    // ✅ Não enviar WhatsApp quando mudar para "Buscando Prestador"
+                    if ($statusNovo !== 'Buscando Prestador') {
+                        $this->enviarNotificacaoWhatsApp($solicitacaoId, 'Atualização de Status', [
+                            'status_atual' => $statusNovo ?? 'Atualizado'
+                        ]);
+                    }
                 }
                 
                 $this->json(['success' => true, 'message' => 'Status atualizado com sucesso']);
