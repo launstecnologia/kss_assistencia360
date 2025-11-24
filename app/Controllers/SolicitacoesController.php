@@ -89,92 +89,107 @@ class SolicitacoesController extends Controller
 
     public function buscarApi(): void
     {
-        $filtros = [
-            'numero_solicitacao' => $this->input('numero_solicitacao'),
-            'numero_contrato' => $this->input('numero_contrato'),
-            'locatario_nome' => $this->input('locatario_nome'),
-            'status_id' => $this->input('status_id'),
-            'imobiliaria_id' => $this->input('imobiliaria_id'),
-            'data_inicio' => $this->input('data_inicio'),
-            'data_fim' => $this->input('data_fim'),
-            'agendamento_inicio' => $this->input('agendamento_inicio'),
-            'agendamento_fim' => $this->input('agendamento_fim')
-        ];
+        error_log('DEBUG buscarApi - Método chamado');
+        try {
+            $filtros = [
+                'numero_solicitacao' => $this->input('numero_solicitacao'),
+                'numero_contrato' => $this->input('numero_contrato'),
+                'locatario_nome' => $this->input('locatario_nome'),
+                'status_id' => $this->input('status_id'),
+                'imobiliaria_id' => $this->input('imobiliaria_id'),
+                'data_inicio' => $this->input('data_inicio'),
+                'data_fim' => $this->input('data_fim'),
+                'agendamento_inicio' => $this->input('agendamento_inicio'),
+                'agendamento_fim' => $this->input('agendamento_fim')
+            ];
 
-        // Remover filtros vazios
-        $filtros = array_filter($filtros, fn($value) => !empty($value));
+            // Remover filtros vazios
+            $filtros = array_filter($filtros, fn($value) => !empty($value));
 
-        $sql = "
-            SELECT 
-                s.id,
-                s.numero_solicitacao,
-                s.numero_contrato,
-                s.data_agendamento,
-                s.horario_agendamento,
-                s.created_at,
-                l.nome as locatario_nome
-            FROM solicitacoes s
-            LEFT JOIN locatarios l ON s.locatario_id = l.id
-            WHERE 1=1
-        ";
+            $sql = "
+                SELECT 
+                    s.id,
+                    s.numero_solicitacao,
+                    s.numero_contrato,
+                    s.data_agendamento,
+                    s.horario_agendamento,
+                    s.created_at,
+                    l.nome as locatario_nome
+                FROM solicitacoes s
+                LEFT JOIN locatarios l ON s.locatario_id = l.id
+                WHERE 1=1
+            ";
 
-        $params = [];
+            $params = [];
 
-        if (!empty($filtros['numero_solicitacao'])) {
-            $sql .= " AND (s.numero_solicitacao LIKE ? OR CONCAT('KSS', s.id) LIKE ?)";
-            $search = '%' . $filtros['numero_solicitacao'] . '%';
-            $params[] = $search;
-            $params[] = $search;
+            if (!empty($filtros['numero_solicitacao'])) {
+                $sql .= " AND (s.numero_solicitacao LIKE ? OR CONCAT('KSS', s.id) LIKE ?)";
+                $search = '%' . $filtros['numero_solicitacao'] . '%';
+                $params[] = $search;
+                $params[] = $search;
+            }
+
+            if (!empty($filtros['numero_contrato'])) {
+                $sql .= " AND s.numero_contrato LIKE ?";
+                $params[] = '%' . $filtros['numero_contrato'] . '%';
+            }
+
+            if (!empty($filtros['locatario_nome'])) {
+                $sql .= " AND l.nome LIKE ?";
+                $params[] = '%' . $filtros['locatario_nome'] . '%';
+            }
+
+            if (!empty($filtros['status_id'])) {
+                $sql .= " AND s.status_id = ?";
+                $params[] = $filtros['status_id'];
+            }
+
+            if (!empty($filtros['imobiliaria_id'])) {
+                $sql .= " AND s.imobiliaria_id = ?";
+                $params[] = $filtros['imobiliaria_id'];
+            }
+
+            if (!empty($filtros['data_inicio'])) {
+                $sql .= " AND DATE(s.created_at) >= ?";
+                $params[] = $filtros['data_inicio'];
+            }
+
+            if (!empty($filtros['data_fim'])) {
+                $sql .= " AND DATE(s.created_at) <= ?";
+                $params[] = $filtros['data_fim'];
+            }
+
+            if (!empty($filtros['agendamento_inicio'])) {
+                $sql .= " AND DATE(s.data_agendamento) >= ?";
+                $params[] = $filtros['agendamento_inicio'];
+            }
+
+            if (!empty($filtros['agendamento_fim'])) {
+                $sql .= " AND DATE(s.data_agendamento) <= ?";
+                $params[] = $filtros['agendamento_fim'];
+            }
+
+            $sql .= " ORDER BY s.created_at DESC LIMIT 500";
+
+            error_log('DEBUG buscarApi - SQL: ' . $sql);
+            error_log('DEBUG buscarApi - Params: ' . json_encode($params));
+            
+            $solicitacoes = \App\Core\Database::fetchAll($sql, $params);
+            
+            error_log('DEBUG buscarApi - Solicitações encontradas: ' . count($solicitacoes));
+
+            $this->json([
+                'success' => true,
+                'solicitacoes' => $solicitacoes
+            ]);
+        } catch (\Exception $e) {
+            error_log('Erro em buscarApi: ' . $e->getMessage());
+            error_log('Stack trace: ' . $e->getTraceAsString());
+            $this->json([
+                'success' => false,
+                'error' => 'Erro ao buscar solicitações: ' . $e->getMessage()
+            ], 500);
         }
-
-        if (!empty($filtros['numero_contrato'])) {
-            $sql .= " AND s.numero_contrato LIKE ?";
-            $params[] = '%' . $filtros['numero_contrato'] . '%';
-        }
-
-        if (!empty($filtros['locatario_nome'])) {
-            $sql .= " AND l.nome LIKE ?";
-            $params[] = '%' . $filtros['locatario_nome'] . '%';
-        }
-
-        if (!empty($filtros['status_id'])) {
-            $sql .= " AND s.status_id = ?";
-            $params[] = $filtros['status_id'];
-        }
-
-        if (!empty($filtros['imobiliaria_id'])) {
-            $sql .= " AND s.imobiliaria_id = ?";
-            $params[] = $filtros['imobiliaria_id'];
-        }
-
-        if (!empty($filtros['data_inicio'])) {
-            $sql .= " AND DATE(s.created_at) >= ?";
-            $params[] = $filtros['data_inicio'];
-        }
-
-        if (!empty($filtros['data_fim'])) {
-            $sql .= " AND DATE(s.created_at) <= ?";
-            $params[] = $filtros['data_fim'];
-        }
-
-        if (!empty($filtros['agendamento_inicio'])) {
-            $sql .= " AND DATE(s.data_agendamento) >= ?";
-            $params[] = $filtros['agendamento_inicio'];
-        }
-
-        if (!empty($filtros['agendamento_fim'])) {
-            $sql .= " AND DATE(s.data_agendamento) <= ?";
-            $params[] = $filtros['agendamento_fim'];
-        }
-
-        $sql .= " ORDER BY s.created_at DESC LIMIT 500";
-
-        $solicitacoes = \App\Core\Database::fetchAll($sql, $params);
-
-        $this->json([
-            'success' => true,
-            'solicitacoes' => $solicitacoes
-        ]);
     }
 
     public function atualizarDataHoraBulk(): void
