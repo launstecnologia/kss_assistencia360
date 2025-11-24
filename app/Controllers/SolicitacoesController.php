@@ -22,7 +22,20 @@ class SolicitacoesController extends Controller
         // Não exigir autenticação para rotas de cron
         $requestUri = $_SERVER['REQUEST_URI'] ?? '';
         if (strpos($requestUri, '/cron/') === false) {
-            $this->requireAuth();
+            // Verificar se é uma requisição AJAX/API antes de redirecionar
+            $isAjax = $this->isAjax() || 
+                     (isset($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false) ||
+                     strpos($requestUri, '/api') !== false ||
+                     strpos($requestUri, '/buscar/api') !== false;
+            
+            if (!$this->isAuthenticated()) {
+                if ($isAjax) {
+                    // Para requisições AJAX, não redirecionar, apenas retornar JSON
+                    // O método específico vai tratar isso
+                } else {
+                    $this->redirect(url('login'));
+                }
+            }
         }
         
         $this->solicitacaoModel = new Solicitacao();
@@ -90,6 +103,19 @@ class SolicitacoesController extends Controller
     public function buscarApi(): void
     {
         error_log('DEBUG buscarApi - Método chamado');
+        error_log('DEBUG buscarApi - REQUEST_METHOD: ' . ($_SERVER['REQUEST_METHOD'] ?? 'N/A'));
+        error_log('DEBUG buscarApi - $_GET: ' . json_encode($_GET));
+        
+        // Verificar autenticação manualmente para retornar JSON em caso de erro
+        if (!$this->isAuthenticated()) {
+            error_log('DEBUG buscarApi - Usuário não autenticado');
+            $this->json([
+                'success' => false,
+                'error' => 'Não autenticado'
+            ], 401);
+            return;
+        }
+        
         try {
             // Para requisições GET, usar $_GET diretamente
             $filtros = [
@@ -175,9 +201,13 @@ class SolicitacoesController extends Controller
             error_log('DEBUG buscarApi - SQL: ' . $sql);
             error_log('DEBUG buscarApi - Params: ' . json_encode($params));
             
-            $solicitacoes = \App\Core\Database::fetchAll($sql, $params);
-            
-            error_log('DEBUG buscarApi - Solicitações encontradas: ' . count($solicitacoes));
+            try {
+                $solicitacoes = \App\Core\Database::fetchAll($sql, $params);
+                error_log('DEBUG buscarApi - Solicitações encontradas: ' . count($solicitacoes));
+            } catch (\Exception $dbError) {
+                error_log('DEBUG buscarApi - Erro no banco de dados: ' . $dbError->getMessage());
+                throw $dbError;
+            }
 
             $this->json([
                 'success' => true,
