@@ -261,10 +261,23 @@ class SolicitacoesController extends Controller
         $dataFim = $data['data_fim'] ?? null;
         $horarioFim = $data['horario_fim'] ?? null;
 
-        // Formatar horário completo
-        $horarioAgendamento = $horarioInicio;
-        if ($horarioFim) {
-            $horarioAgendamento = $horarioInicio . '-' . $horarioFim;
+        // Formatar data para exibição (dd/mm/yyyy)
+        $dataFormatada = date('d/m/Y', strtotime($dataInicio));
+
+        // Formatar horários (remover segundos se houver)
+        $horarioInicioFormatado = substr($horarioInicio, 0, 5);
+        $horarioFimFormatado = $horarioFim ? substr($horarioFim, 0, 5) : null;
+
+        // Formatar horário completo no formato "08:00 às 11:00" para horario_agendamento
+        $horarioAgendamento = $horarioInicioFormatado;
+        if ($horarioFimFormatado) {
+            $horarioAgendamento = $horarioInicioFormatado . ' às ' . $horarioFimFormatado;
+        }
+
+        // Formatar horario_confirmado_raw no formato "dd/mm/yyyy - HH:MM-HH:MM" (com hífen)
+        $horarioConfirmadoRaw = $dataFormatada . ' - ' . $horarioInicioFormatado;
+        if ($horarioFimFormatado) {
+            $horarioConfirmadoRaw .= '-' . $horarioFimFormatado;
         }
 
         $atualizados = 0;
@@ -272,14 +285,56 @@ class SolicitacoesController extends Controller
 
         foreach ($ids as $id) {
             try {
+                // Buscar solicitação atual para preservar confirmed_schedules se existir
+                $solicitacaoAtual = $this->solicitacaoModel->find($id);
+                
                 $updateData = [
                     'data_agendamento' => $dataInicio,
-                    'horario_agendamento' => $horarioAgendamento
+                    'horario_agendamento' => $horarioAgendamento,
+                    'horario_confirmado_raw' => $horarioConfirmadoRaw,
+                    'horario_confirmado' => 1
                 ];
 
                 if ($dataFim) {
                     // Se tem data fim, usar ela, senão usar data início
                     $updateData['data_fim'] = $dataFim;
+                }
+
+                // Atualizar confirmed_schedules se existir
+                $timeValue = $horarioFimFormatado ? ($horarioInicioFormatado . '-' . $horarioFimFormatado) : $horarioInicioFormatado;
+                
+                if (!empty($solicitacaoAtual['confirmed_schedules'])) {
+                    $confirmedSchedules = json_decode($solicitacaoAtual['confirmed_schedules'], true);
+                    if (is_array($confirmedSchedules) && !empty($confirmedSchedules)) {
+                        // Atualizar o último horário confirmado
+                        $lastIndex = count($confirmedSchedules) - 1;
+                        $confirmedSchedules[$lastIndex] = [
+                            'date' => $dataInicio,
+                            'time' => $timeValue,
+                            'raw' => $horarioConfirmadoRaw,
+                            'source' => $confirmedSchedules[$lastIndex]['source'] ?? 'operator',
+                            'confirmed_at' => date('c')
+                        ];
+                        $updateData['confirmed_schedules'] = json_encode($confirmedSchedules);
+                    } else {
+                        // Se não existe ou está vazio, criar novo
+                        $updateData['confirmed_schedules'] = json_encode([[
+                            'date' => $dataInicio,
+                            'time' => $timeValue,
+                            'raw' => $horarioConfirmadoRaw,
+                            'source' => 'operator',
+                            'confirmed_at' => date('c')
+                        ]]);
+                    }
+                } else {
+                    // Criar novo confirmed_schedules
+                    $updateData['confirmed_schedules'] = json_encode([[
+                        'date' => $dataInicio,
+                        'time' => $timeValue,
+                        'raw' => $horarioConfirmadoRaw,
+                        'source' => 'operator',
+                        'confirmed_at' => date('c')
+                    ]]);
                 }
 
                 $this->solicitacaoModel->update($id, $updateData);

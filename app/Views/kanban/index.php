@@ -1316,6 +1316,8 @@ function renderizarDetalhes(solicitacao) {
                             // ✅ Formato 1: "25/11/2025 - 08:00-11:00" (já formatado)
                             if (typeof horario === 'string' && horario.includes(' - ')) {
                                 textoHorario = horario;
+                                // Converter hífen para "às" no formato de horário
+                                textoHorario = textoHorario.replace(/(\d{2}:\d{2})-(\d{2}:\d{2})/g, '$1 às $2');
                                 const match = horario.match(/(\d{2})\/(\d{2})\/(\d{4})/);
                                 if (match) {
                                     dt = new Date(`${match[3]}-${match[2]}-${match[1]}`);
@@ -1335,7 +1337,7 @@ function renderizarDetalhes(solicitacao) {
                                 const horaInicioFormatada = horaInicio.substring(0, 5); // "08:00"
                                 const horaFimFormatada = horaFim.substring(0, 5); // "11:00"
                                 
-                                textoHorario = `${dia}/${mes}/${ano} - ${horaInicioFormatada}-${horaFimFormatada}`;
+                                textoHorario = `${dia}/${mes}/${ano} - ${horaInicioFormatada} às ${horaFimFormatada}`;
                                 dt = new Date(`${ano}-${mes}-${dia}`);
                             }
                             // ✅ Formato 3: Date object ou string de data simples
@@ -1348,18 +1350,23 @@ function renderizarDetalhes(solicitacao) {
                                 const mes = String(dt.getMonth() + 1).padStart(2, '0');
                                 const ano = dt.getFullYear();
                                 const hora = String(dt.getHours()).padStart(2, '0');
-                                const faixaHora = hora + ':00-' + (parseInt(hora) + 3) + ':00';
+                                const faixaHora = hora + ':00 às ' + (parseInt(hora) + 3) + ':00';
                                 textoHorario = `${dia}/${mes}/${ano} - ${faixaHora}`;
                             }
                             
+                            // ✅ Converter hífen para "às" se ainda não foi convertido
+                            textoHorario = textoHorario.replace(/(\d{2}:\d{2})-(\d{2}:\d{2})/g, '$1 às $2');
+                            
                             let isConfirmed = false;
                             const compararHorarios = (raw1, raw2) => {
-                                const raw1Norm = String(raw1).trim().replace(/\s+/g, ' ');
-                                const raw2Norm = String(raw2).trim().replace(/\s+/g, ' ');
+                                // Normalizar ambos os formatos (com hífen ou com "às")
+                                const raw1Norm = String(raw1).trim().replace(/\s+/g, ' ').replace(/\s+às\s+/g, '-');
+                                const raw2Norm = String(raw2).trim().replace(/\s+/g, ' ').replace(/\s+às\s+/g, '-');
                                 if (raw1Norm === raw2Norm) {
                                     return true;
                                 }
-                                const regex = /(\d{2}\/\d{2}\/\d{4})\s*-\s*(\d{2}:\d{2})-(\d{2}:\d{2})/;
+                                // Aceitar tanto hífen quanto "às"
+                                const regex = /(\d{2}\/\d{2}\/\d{4})\s*-\s*(\d{2}:\d{2})(?:\s+às\s+|-)(\d{2}:\d{2})/;
                                 const match1 = raw1Norm.match(regex);
                                 const match2 = raw2Norm.match(regex);
                                 if (match1 && match2) {
@@ -1783,40 +1790,63 @@ function copiarInformacoes() {
     // Formatar localização (Bairro/Cidade/Estado)
     const localizacao = [solicitacao.imovel_bairro, solicitacao.imovel_cidade, solicitacao.imovel_estado].filter(Boolean).join(' - ');
     
-    // Formatar data da visita do prestador (horário confirmado)
+    // Buscar horários informados pelo locatário (mesma lógica de renderizarDetalhes)
+    let horariosLocatario = [];
+    try {
+        if (solicitacao.horarios_indisponiveis) {
+            // Quando horarios_indisponiveis = 1, horários originais do locatário estão em datas_opcoes
+            if (solicitacao.datas_opcoes) {
+                horariosLocatario = typeof solicitacao.datas_opcoes === 'string' 
+                    ? JSON.parse(solicitacao.datas_opcoes) 
+                    : solicitacao.datas_opcoes;
+                if (!Array.isArray(horariosLocatario)) {
+                    horariosLocatario = [];
+                }
+            } else if (solicitacao.horarios_opcoes) {
+                // Fallback: se datas_opcoes não existir, tentar buscar de horarios_opcoes
+                horariosLocatario = typeof solicitacao.horarios_opcoes === 'string' 
+                    ? JSON.parse(solicitacao.horarios_opcoes) 
+                    : solicitacao.horarios_opcoes;
+                if (!Array.isArray(horariosLocatario)) {
+                    horariosLocatario = [];
+                }
+            }
+        } else {
+            // Quando horarios_indisponiveis = 0, horários do locatário estão em horarios_opcoes
+            if (solicitacao.horarios_opcoes) {
+                horariosLocatario = typeof solicitacao.horarios_opcoes === 'string' 
+                    ? JSON.parse(solicitacao.horarios_opcoes) 
+                    : solicitacao.horarios_opcoes;
+                if (!Array.isArray(horariosLocatario)) {
+                    horariosLocatario = [];
+                }
+            }
+        }
+    } catch (e) {
+        console.error('Erro ao parsear horários do locatário:', e);
+        horariosLocatario = [];
+    }
+    
+    // Formatar data da visita do prestador (horários informados pelo locatário)
     let dataVisitaPrestador = '';
-    if (solicitacao.data_agendamento && solicitacao.horario_agendamento) {
+    if (horariosLocatario && horariosLocatario.length > 0) {
+        // Converter formato "dd/mm/yyyy - HH:MM-HH:MM" para "dd/mm/yyyy - HH:MM às HH:MM"
+        dataVisitaPrestador = horariosLocatario.map(horario => {
+            if (typeof horario === 'string') {
+                // Converter "08:00-11:00" para "08:00 às 11:00"
+                return horario.replace(/(\d{2}:\d{2})-(\d{2}:\d{2})/g, '$1 às $2');
+            }
+            return horario;
+        }).join('\n');
+    } else if (solicitacao.data_agendamento && solicitacao.horario_agendamento) {
+        // Fallback: usar data_agendamento se não houver horários do locatário
         const dataAg = new Date(solicitacao.data_agendamento);
-        const dataFormatada = dataAg.toISOString().split('T')[0]; // YYYY-MM-DD
+        const dataFormatada = dataAg.toLocaleDateString('pt-BR');
         const horaFormatada = String(solicitacao.horario_agendamento).trim();
         dataVisitaPrestador = `${dataFormatada} ${horaFormatada}`;
     } else if (solicitacao.horario_confirmado_raw) {
         // Tentar extrair data e hora do horario_confirmado_raw
-        const match = String(solicitacao.horario_confirmado_raw).match(/(\d{2}\/\d{2}\/\d{4})\s*-\s*(\d{2}:\d{2})/);
-        if (match) {
-            const [dia, mes, ano] = match[1].split('/');
-            const hora = match[2];
-            dataVisitaPrestador = `${ano}-${mes}-${dia} ${hora}:00`;
-        }
-    } else if (solicitacao.confirmed_schedules) {
-        try {
-            const confirmed = typeof solicitacao.confirmed_schedules === 'string' 
-                ? JSON.parse(solicitacao.confirmed_schedules) 
-                : solicitacao.confirmed_schedules;
-            if (Array.isArray(confirmed) && confirmed.length > 0) {
-                const ultimo = confirmed[confirmed.length - 1];
-                if (ultimo && ultimo.raw) {
-                    const match = String(ultimo.raw).match(/(\d{2}\/\d{2}\/\d{4})\s*-\s*(\d{2}:\d{2})/);
-                    if (match) {
-                        const [dia, mes, ano] = match[1].split('/');
-                        const hora = match[2];
-                        dataVisitaPrestador = `${ano}-${mes}-${dia} ${hora}:00`;
-                    }
-                }
-            }
-        } catch (e) {
-            console.error('Erro ao parsear confirmed_schedules:', e);
-        }
+        dataVisitaPrestador = String(solicitacao.horario_confirmado_raw).replace(/(\d{2}:\d{2})-(\d{2}:\d{2})/g, '$1 às $2');
     }
     
     // Montar informações no formato solicitado
@@ -1938,40 +1968,63 @@ function enviarInformacoesNoChat() {
     
     const localizacao = [solicitacao.imovel_bairro, solicitacao.imovel_cidade, solicitacao.imovel_estado].filter(Boolean).join(' - ');
     
-    // Formatar data da visita do prestador (horário confirmado)
+    // Buscar horários informados pelo locatário (mesma lógica de renderizarDetalhes)
+    let horariosLocatario = [];
+    try {
+        if (solicitacao.horarios_indisponiveis) {
+            // Quando horarios_indisponiveis = 1, horários originais do locatário estão em datas_opcoes
+            if (solicitacao.datas_opcoes) {
+                horariosLocatario = typeof solicitacao.datas_opcoes === 'string' 
+                    ? JSON.parse(solicitacao.datas_opcoes) 
+                    : solicitacao.datas_opcoes;
+                if (!Array.isArray(horariosLocatario)) {
+                    horariosLocatario = [];
+                }
+            } else if (solicitacao.horarios_opcoes) {
+                // Fallback: se datas_opcoes não existir, tentar buscar de horarios_opcoes
+                horariosLocatario = typeof solicitacao.horarios_opcoes === 'string' 
+                    ? JSON.parse(solicitacao.horarios_opcoes) 
+                    : solicitacao.horarios_opcoes;
+                if (!Array.isArray(horariosLocatario)) {
+                    horariosLocatario = [];
+                }
+            }
+        } else {
+            // Quando horarios_indisponiveis = 0, horários do locatário estão em horarios_opcoes
+            if (solicitacao.horarios_opcoes) {
+                horariosLocatario = typeof solicitacao.horarios_opcoes === 'string' 
+                    ? JSON.parse(solicitacao.horarios_opcoes) 
+                    : solicitacao.horarios_opcoes;
+                if (!Array.isArray(horariosLocatario)) {
+                    horariosLocatario = [];
+                }
+            }
+        }
+    } catch (e) {
+        console.error('Erro ao parsear horários do locatário:', e);
+        horariosLocatario = [];
+    }
+    
+    // Formatar data da visita do prestador (horários informados pelo locatário)
     let dataVisitaPrestador = '';
-    if (solicitacao.data_agendamento && solicitacao.horario_agendamento) {
+    if (horariosLocatario && horariosLocatario.length > 0) {
+        // Converter formato "dd/mm/yyyy - HH:MM-HH:MM" para "dd/mm/yyyy - HH:MM às HH:MM"
+        dataVisitaPrestador = horariosLocatario.map(horario => {
+            if (typeof horario === 'string') {
+                // Converter "08:00-11:00" para "08:00 às 11:00"
+                return horario.replace(/(\d{2}:\d{2})-(\d{2}:\d{2})/g, '$1 às $2');
+            }
+            return horario;
+        }).join('\n');
+    } else if (solicitacao.data_agendamento && solicitacao.horario_agendamento) {
+        // Fallback: usar data_agendamento se não houver horários do locatário
         const dataAg = new Date(solicitacao.data_agendamento);
-        const dataFormatada = dataAg.toISOString().split('T')[0]; // YYYY-MM-DD
+        const dataFormatada = dataAg.toLocaleDateString('pt-BR');
         const horaFormatada = String(solicitacao.horario_agendamento).trim();
         dataVisitaPrestador = `${dataFormatada} ${horaFormatada}`;
     } else if (solicitacao.horario_confirmado_raw) {
         // Tentar extrair data e hora do horario_confirmado_raw
-        const match = String(solicitacao.horario_confirmado_raw).match(/(\d{2}\/\d{2}\/\d{4})\s*-\s*(\d{2}:\d{2})/);
-        if (match) {
-            const [dia, mes, ano] = match[1].split('/');
-            const hora = match[2];
-            dataVisitaPrestador = `${ano}-${mes}-${dia} ${hora}:00`;
-        }
-    } else if (solicitacao.confirmed_schedules) {
-        try {
-            const confirmed = typeof solicitacao.confirmed_schedules === 'string' 
-                ? JSON.parse(solicitacao.confirmed_schedules) 
-                : solicitacao.confirmed_schedules;
-            if (Array.isArray(confirmed) && confirmed.length > 0) {
-                const ultimo = confirmed[confirmed.length - 1];
-                if (ultimo && ultimo.raw) {
-                    const match = String(ultimo.raw).match(/(\d{2}\/\d{2}\/\d{4})\s*-\s*(\d{2}:\d{2})/);
-                    if (match) {
-                        const [dia, mes, ano] = match[1].split('/');
-                        const hora = match[2];
-                        dataVisitaPrestador = `${ano}-${mes}-${dia} ${hora}:00`;
-                    }
-                }
-            }
-        } catch (e) {
-            console.error('Erro ao parsear confirmed_schedules:', e);
-        }
+        dataVisitaPrestador = String(solicitacao.horario_confirmado_raw).replace(/(\d{2}:\d{2})-(\d{2}:\d{2})/g, '$1 às $2');
     }
     
     // Montar informações formatadas no formato solicitado
