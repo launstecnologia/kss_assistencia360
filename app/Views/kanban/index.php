@@ -1147,12 +1147,13 @@ function renderizarDetalhes(solicitacao) {
                             return '';
                         }
                         const urlFotoEscapada = urlFoto.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                        const nomeArquivoEscapado = nomeArquivo.replace(/'/g, "\\'").replace(/"/g, '&quot;');
                         return `
                             <div class="relative group">
                                 <img src="${urlFotoEscapada}" 
                                      alt="Foto ${index + 1}" 
                                      class="w-full h-32 object-cover rounded-lg border border-gray-200 cursor-pointer hover:opacity-80 transition-opacity shadow-sm"
-                                     onclick="abrirFotoModal('${urlFotoEscapada}')"
+                                     onclick="abrirFotoModal('${urlFotoEscapada}', '${nomeArquivoEscapado}')"
                                      onerror="this.parentElement.innerHTML='<div class=\\'w-full h-32 bg-gray-100 rounded-lg flex items-center justify-center text-gray-400 text-xs\\'><i class=\\'fas fa-image mr-2\\'></i>Erro</div>';">
                                 <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 rounded-lg transition-all flex items-center justify-center">
                                     <i class="fas fa-search-plus text-white opacity-0 group-hover:opacity-100 transition-opacity text-2xl"></i>
@@ -2991,26 +2992,68 @@ function salvarStatusKanban(solicitacaoId, novoStatusId) {
 }
 
 // Função para abrir foto em modal
-function abrirFotoModal(urlFoto) {
+function abrirFotoModal(urlFoto, nomeArquivo = null) {
     const modal = document.createElement('div');
     modal.className = 'fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center p-4';
-    modal.innerHTML = `
-        <div class="relative max-w-6xl max-h-full w-full">
-            <button onclick="this.closest('.fixed').remove()" 
-                    class="absolute -top-12 right-0 text-white hover:text-gray-300 text-3xl z-10 bg-black bg-opacity-50 rounded-full w-10 h-10 flex items-center justify-center">
-                <i class="fas fa-times"></i>
-            </button>
-            <img src="${urlFoto}" 
-                 alt="Foto ampliada" 
-                 class="max-w-full max-h-[90vh] rounded-lg mx-auto block object-contain"
-                 onerror="this.onerror=null; this.src='data:image/svg+xml,%3Csvg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'400\\' height=\\'300\\'%3E%3Crect fill=\\'%23ddd\\' width=\\'400\\' height=\\'300\\'/%3E%3Ctext fill=\\'%23999\\' font-family=\\'sans-serif\\' font-size=\\'18\\' x=\\'50%25\\' y=\\'50%25\\' text-anchor=\\'middle\\' dominant-baseline=\\'middle\\'%3EErro ao carregar imagem%3C/text%3E%3C/svg%3E';">
-        </div>
-    `;
+    
+    // Extrair nome do arquivo da URL para download se não foi fornecido
+    if (!nomeArquivo) {
+        nomeArquivo = urlFoto.split('/').pop() || 'foto.jpg';
+    }
+    
+    // Criar elementos do modal
+    const container = document.createElement('div');
+    container.className = 'relative max-w-6xl max-h-full w-full';
+    
+    // Botão de download
+    const btnDownload = document.createElement('button');
+    btnDownload.className = 'text-white hover:text-gray-300 text-xl bg-black bg-opacity-50 rounded-full w-10 h-10 flex items-center justify-center transition-all hover:bg-opacity-70';
+    btnDownload.title = 'Baixar foto';
+    btnDownload.innerHTML = '<i class="fas fa-download"></i>';
+    btnDownload.onclick = function(e) {
+        e.stopPropagation();
+        baixarFoto(urlFoto, nomeArquivo);
+    };
+    
+    // Botão de fechar
+    const btnFechar = document.createElement('button');
+    btnFechar.className = 'text-white hover:text-gray-300 text-3xl bg-black bg-opacity-50 rounded-full w-10 h-10 flex items-center justify-center transition-all hover:bg-opacity-70';
+    btnFechar.title = 'Fechar';
+    btnFechar.innerHTML = '<i class="fas fa-times"></i>';
+    btnFechar.onclick = function(e) {
+        e.stopPropagation();
+        modal.remove();
+    };
+    
+    // Container dos botões
+    const botoesContainer = document.createElement('div');
+    botoesContainer.className = 'absolute -top-12 right-0 flex gap-2 z-10';
+    botoesContainer.appendChild(btnDownload);
+    botoesContainer.appendChild(btnFechar);
+    
+    // Imagem
+    const img = document.createElement('img');
+    img.src = urlFoto;
+    img.alt = 'Foto ampliada';
+    img.className = 'max-w-full max-h-[90vh] rounded-lg mx-auto block object-contain cursor-zoom-in';
+    img.onclick = function(e) {
+        e.stopPropagation();
+    };
+    img.onerror = function() {
+        this.onerror = null;
+        this.src = 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'400\' height=\'300\'%3E%3Crect fill=\'%23ddd\' width=\'400\' height=\'300\'/%3E%3Ctext fill=\'%23999\' font-family=\'sans-serif\' font-size=\'18\' x=\'50%25\' y=\'50%25\' text-anchor=\'middle\' dominant-baseline=\'middle\'%3EErro ao carregar imagem%3C/text%3E%3C/svg%3E';
+    };
+    
+    container.appendChild(botoesContainer);
+    container.appendChild(img);
+    modal.appendChild(container);
+    
     modal.onclick = function(e) {
-        if (e.target === modal || e.target.tagName === 'BUTTON') {
+        if (e.target === modal) {
             modal.remove();
         }
     };
+    
     document.body.appendChild(modal);
     
     // Fechar com ESC
@@ -3021,6 +3064,27 @@ function abrirFotoModal(urlFoto) {
         }
     };
     document.addEventListener('keydown', escHandler);
+}
+
+// Função para baixar foto
+function baixarFoto(urlFoto, nomeArquivo) {
+    fetch(urlFoto)
+        .then(response => response.blob())
+        .then(blob => {
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = nomeArquivo;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        })
+        .catch(error => {
+            console.error('Erro ao baixar foto:', error);
+            // Fallback: abrir em nova aba
+            window.open(urlFoto, '_blank');
+        });
 }
 
 // Estilização dos cards de horário da seguradora (Kanban)
