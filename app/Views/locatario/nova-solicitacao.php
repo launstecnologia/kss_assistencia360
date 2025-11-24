@@ -662,7 +662,7 @@ function gerarResumoEtapas($etapaAtual, $locatario) {
                         <p class="text-xs text-gray-400 mt-1">PNG, JPG até 10MB</p>
                 </div>
                 
-                    <input type="file" id="fotos" name="fotos[]" multiple accept="image/*" capture="environment"
+                    <input type="file" id="fotos" name="fotos[]" multiple accept="image/*"
                            class="hidden" onchange="previewPhotos(this)">
                     
                     <!-- Preview das fotos -->

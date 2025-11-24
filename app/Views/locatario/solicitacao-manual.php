@@ -453,7 +453,7 @@ $steps = [
                                         <p class="text-sm text-gray-600 font-medium">Clique para adicionar uma foto</p>
                                         <p class="text-xs text-gray-400 mt-1">PNG, JPG até 10MB</p>
                                     </div>
-                                    <input type="file" id="fotos" name="fotos[]" multiple accept="image/*" capture="environment" class="hidden" onchange="previewPhotos(this)">
+                                    <input type="file" id="fotos" name="fotos[]" multiple accept="image/*" class="hidden" onchange="previewPhotos(this)">
                                     <div id="fotos-preview" class="mt-4 grid grid-cols-2 md:grid-cols-5 gap-4 hidden"></div>
                                 </div>
                             </div>
