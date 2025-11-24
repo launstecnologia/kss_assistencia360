@@ -227,6 +227,56 @@ class Solicitacao extends Model
         return Database::fetchAll($sql, [$solicitacaoId]);
     }
 
+    /**
+     * Sobrescreve o método update para registrar automaticamente mudanças de status no histórico
+     */
+    private static $updatingStatus = false;
+    private static $skipHistoryRegistration = false;
+    
+    public function update(int $id, array $data): bool
+    {
+        // Verificar se há mudança de status
+        if (isset($data['status_id']) && !self::$updatingStatus && !self::$skipHistoryRegistration) {
+            // Buscar status atual antes da atualização
+            $solicitacaoAtual = $this->find($id);
+            $statusAnterior = $solicitacaoAtual['status_id'] ?? null;
+            $statusNovo = $data['status_id'];
+            
+            // Se o status está mudando, registrar no histórico
+            if ($statusAnterior != $statusNovo) {
+                // Obter usuário atual da sessão se disponível
+                $usuarioId = null;
+                if (session_status() === PHP_SESSION_ACTIVE) {
+                    $usuarioId = $_SESSION['user']['id'] ?? null;
+                }
+                
+                // Fazer o update primeiro
+                $resultado = parent::update($id, $data);
+                
+                // Registrar no histórico
+                if ($resultado) {
+                    try {
+                        $sql = "
+                            INSERT INTO historico_status (solicitacao_id, status_id, usuario_id, observacoes, created_at)
+                            VALUES (?, ?, ?, ?, NOW())
+                        ";
+                        // Não usar observacoes do data para não sobrescrever observações existentes
+                        $observacoes = null;
+                        Database::query($sql, [$id, $statusNovo, $usuarioId, $observacoes]);
+                    } catch (\Exception $e) {
+                        // Log do erro mas não falha o update
+                        error_log("Erro ao registrar histórico de status: " . $e->getMessage());
+                    }
+                }
+                
+                return $resultado;
+            }
+        }
+        
+        // Se não há mudança de status ou já está atualizando, usar o método pai
+        return parent::update($id, $data);
+    }
+
     public function updateStatus(int $id, int $statusId, int $usuarioId, string $observacoes = null): bool
     {
         Database::beginTransaction();
@@ -241,19 +291,25 @@ class Solicitacao extends Model
                 return true; // Retorna sucesso, mas sem fazer alterações
             }
             
-            // Atualizar status da solicitação
-            $this->update($id, ['status_id' => $statusId]);
+            // Marcar flag para evitar registro automático duplicado
+            self::$skipHistoryRegistration = true;
             
-            // Registrar no histórico
+            // Atualizar status da solicitação (não vai registrar no histórico automaticamente)
+            parent::update($id, ['status_id' => $statusId]);
+            
+            // Registrar no histórico com observações específicas
             $sql = "
                 INSERT INTO historico_status (solicitacao_id, status_id, usuario_id, observacoes, created_at)
                 VALUES (?, ?, ?, ?, NOW())
             ";
             Database::query($sql, [$id, $statusId, $usuarioId, $observacoes]);
             
+            self::$skipHistoryRegistration = false;
+            
             Database::commit();
             return true;
         } catch (\Exception $e) {
+            self::$skipHistoryRegistration = false;
             Database::rollback();
             return false;
         }
