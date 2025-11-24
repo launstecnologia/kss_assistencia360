@@ -389,7 +389,7 @@ function gerarResumoEtapas($etapaAtual, $locatario) {
         </div>
         
         <div class="p-6">
-            <form method="POST" action="<?= url($locatario['instancia'] . '/nova-solicitacao/etapa/2') ?>" class="space-y-6">
+            <form method="POST" action="<?= url($locatario['instancia'] . '/nova-solicitacao/etapa/2') ?>" class="space-y-6" onsubmit="combinarFotosAntesEnvio(event)">
                 <?= \App\Core\View::csrfField() ?>
                 
                 <!-- Categoria do Serviço -->
@@ -656,7 +656,7 @@ function gerarResumoEtapas($etapaAtual, $locatario) {
                     <p class="text-sm text-gray-500 mb-3">Adicione fotos para ajudar a entender melhor o problema</p>
                     
                     <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-green-400 transition-colors cursor-pointer" 
-                         onclick="document.getElementById('fotos').click()">
+                         onclick="abrirModalFoto()">
                         <i class="fas fa-camera text-3xl text-gray-400 mb-2"></i>
                         <p class="text-sm text-gray-600">Clique para adicionar uma foto</p>
                         <p class="text-xs text-gray-400 mt-1">PNG, JPG até 10MB</p>
@@ -664,6 +664,31 @@ function gerarResumoEtapas($etapaAtual, $locatario) {
                 
                     <input type="file" id="fotos" name="fotos[]" multiple accept="image/*"
                            class="hidden" onchange="previewPhotos(this)">
+                    <input type="file" id="fotos-camera" name="fotos[]" multiple accept="image/*" capture="environment"
+                           class="hidden" onchange="previewPhotos(this)">
+                    
+                    <!-- Modal para escolher entre câmera ou arquivos -->
+                    <div id="modal-foto" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center">
+                        <div class="bg-white rounded-lg p-6 max-w-sm w-full mx-4">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">Adicionar Foto</h3>
+                            <div class="space-y-3">
+                                <button type="button" onclick="escolherCamera()" 
+                                        class="w-full flex items-center justify-center gap-3 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                                    <i class="fas fa-camera text-xl"></i>
+                                    <span>Abrir Câmera</span>
+                                </button>
+                                <button type="button" onclick="escolherArquivo()" 
+                                        class="w-full flex items-center justify-center gap-3 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                                    <i class="fas fa-folder-open text-xl"></i>
+                                    <span>Carregar Arquivos do Dispositivo</span>
+                                </button>
+                                <button type="button" onclick="fecharModalFoto()" 
+                                        class="w-full px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors">
+                                    Cancelar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                     
                     <!-- Preview das fotos -->
                     <div id="fotos-preview" class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4 hidden">
@@ -1726,15 +1751,95 @@ document.addEventListener('DOMContentLoaded', function() {
     }, true); // Captura na fase de captura
     
     // Preview de fotos
+    // Funções para modal de foto
+    window.abrirModalFoto = function() {
+        const modal = document.getElementById('modal-foto');
+        if (modal) {
+            modal.classList.remove('hidden');
+        }
+    };
+    
+    window.fecharModalFoto = function() {
+        const modal = document.getElementById('modal-foto');
+        if (modal) {
+            modal.classList.add('hidden');
+        }
+    };
+    
+    window.escolherCamera = function() {
+        const inputCamera = document.getElementById('fotos-camera');
+        if (inputCamera) {
+            inputCamera.click();
+        }
+        fecharModalFoto();
+    };
+    
+    window.escolherArquivo = function() {
+        const inputArquivo = document.getElementById('fotos');
+        if (inputArquivo) {
+            inputArquivo.click();
+        }
+        fecharModalFoto();
+    };
+    
+    // Combinar fotos de ambos os inputs antes de enviar o formulário
+    window.combinarFotosAntesEnvio = function(event) {
+        const inputArquivo = document.getElementById('fotos');
+        const inputCamera = document.getElementById('fotos-camera');
+        
+        if (inputArquivo && inputCamera) {
+            const dt = new DataTransfer();
+            
+            // Adicionar arquivos do input de arquivo
+            if (inputArquivo.files) {
+                Array.from(inputArquivo.files).forEach(file => {
+                    dt.items.add(file);
+                });
+            }
+            
+            // Adicionar arquivos do input de câmera
+            if (inputCamera.files) {
+                Array.from(inputCamera.files).forEach(file => {
+                    dt.items.add(file);
+                });
+            }
+            
+            // Atualizar o input principal com todos os arquivos
+            inputArquivo.files = dt.files;
+        }
+    };
+    
+    // Fechar modal ao clicar fora
+    document.addEventListener('DOMContentLoaded', function() {
+        const modal = document.getElementById('modal-foto');
+        if (modal) {
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    fecharModalFoto();
+                }
+            });
+        }
+    });
+    
     window.previewPhotos = function(input) {
         const preview = document.getElementById('fotos-preview');
-        const files = input.files;
+        const inputArquivo = document.getElementById('fotos');
+        const inputCamera = document.getElementById('fotos-camera');
         
-        if (files.length > 0) {
+        // Combinar arquivos de ambos os inputs
+        let allFiles = [];
+        if (inputArquivo && inputArquivo.files) {
+            allFiles = Array.from(inputArquivo.files);
+        }
+        if (inputCamera && inputCamera.files) {
+            allFiles = allFiles.concat(Array.from(inputCamera.files));
+        }
+        
+        if (allFiles.length > 0) {
             preview.classList.remove('hidden');
             preview.innerHTML = '';
             
-            Array.from(files).forEach((file, index) => {
+            allFiles.forEach((file, index) => {
                 if (file.type.startsWith('image/')) {
                     const reader = new FileReader();
                     reader.onload = function(e) {
@@ -1760,16 +1865,33 @@ document.addEventListener('DOMContentLoaded', function() {
     // Remover foto
     window.removePhoto = function(index) {
         const input = document.getElementById('fotos');
+        const inputCamera = document.getElementById('fotos-camera');
         const dt = new DataTransfer();
         
-        Array.from(input.files).forEach((file, i) => {
+        // Combinar arquivos de ambos os inputs
+        let allFiles = [];
+        if (input && input.files) {
+            allFiles = Array.from(input.files);
+        }
+        if (inputCamera && inputCamera.files) {
+            allFiles = allFiles.concat(Array.from(inputCamera.files));
+        }
+        
+        // Remover o arquivo no índice especificado
+        allFiles.forEach((file, i) => {
             if (i !== index) {
                 dt.items.add(file);
             }
         });
         
-        input.files = dt.files;
-        previewPhotos(input);
+        // Atualizar ambos os inputs
+        if (input) {
+            input.files = dt.files;
+            previewPhotos(input);
+        }
+        if (inputCamera) {
+            inputCamera.files = dt.files;
+        }
     };
     
     // Sistema de agendamento para emergencial
