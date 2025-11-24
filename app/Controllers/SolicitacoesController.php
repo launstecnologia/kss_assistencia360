@@ -91,16 +91,17 @@ class SolicitacoesController extends Controller
     {
         error_log('DEBUG buscarApi - Método chamado');
         try {
+            // Para requisições GET, usar $_GET diretamente
             $filtros = [
-                'numero_solicitacao' => $this->input('numero_solicitacao'),
-                'numero_contrato' => $this->input('numero_contrato'),
-                'locatario_nome' => $this->input('locatario_nome'),
-                'status_id' => $this->input('status_id'),
-                'imobiliaria_id' => $this->input('imobiliaria_id'),
-                'data_inicio' => $this->input('data_inicio'),
-                'data_fim' => $this->input('data_fim'),
-                'agendamento_inicio' => $this->input('agendamento_inicio'),
-                'agendamento_fim' => $this->input('agendamento_fim')
+                'numero_solicitacao' => $_GET['numero_solicitacao'] ?? null,
+                'numero_contrato' => $_GET['numero_contrato'] ?? null,
+                'locatario_nome' => $_GET['locatario_nome'] ?? null,
+                'status_id' => $_GET['status_id'] ?? null,
+                'imobiliaria_id' => $_GET['imobiliaria_id'] ?? null,
+                'data_inicio' => $_GET['data_inicio'] ?? null,
+                'data_fim' => $_GET['data_fim'] ?? null,
+                'agendamento_inicio' => $_GET['agendamento_inicio'] ?? null,
+                'agendamento_fim' => $_GET['agendamento_fim'] ?? null
             ];
 
             // Remover filtros vazios
@@ -185,9 +186,15 @@ class SolicitacoesController extends Controller
         } catch (\Exception $e) {
             error_log('Erro em buscarApi: ' . $e->getMessage());
             error_log('Stack trace: ' . $e->getTraceAsString());
+            error_log('File: ' . $e->getFile() . ' Line: ' . $e->getLine());
             $this->json([
                 'success' => false,
-                'error' => 'Erro ao buscar solicitações: ' . $e->getMessage()
+                'error' => 'Erro ao buscar solicitações: ' . $e->getMessage(),
+                'debug' => [
+                    'message' => $e->getMessage(),
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine()
+                ]
             ], 500);
         }
     }
