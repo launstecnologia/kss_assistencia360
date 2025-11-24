@@ -54,6 +54,8 @@ $router->post('/compra-peca', 'TokenController@compraPeca');
 $router->get('/status-servico', 'TokenController@statusServico');
 $router->get('/acoes-servico', 'TokenController@acoesServico');
 $router->post('/acoes-servico', 'TokenController@processarAcaoServico');
+$router->get('/avaliacao', 'TokenController@avaliacao');
+$router->post('/avaliacao', 'TokenController@salvarAvaliacao');
 
 // Rotas do admin/operador
 $router->get('/admin', 'AuthController@showLogin'); // Admin vai para login de operador

@@ -162,6 +162,7 @@ class Solicitacao extends Model
                 i.url_base as imobiliaria_url,
                 i.telefone as imobiliaria_telefone,
                 i.logo as imobiliaria_logo,
+                i.instancia as imobiliaria_instancia,
                 l.cpf as locatario_cpf,
                 cond.nome as condicao_nome,
                 cond.cor as condicao_cor,

@@ -1693,11 +1693,11 @@ class TokenController extends Controller
                     // Marcar token como usado
                     $this->tokenModel->markAsUsed($token);
                     
-                    // Redirecionar para avaliação (pode ser uma página de avaliação)
+                    // Redirecionar para avaliação pública (via token)
                     $this->json([
                         'success' => true,
                         'message' => 'Obrigado! Redirecionando para avaliação...',
-                        'redirect' => '/avaliacao?token=' . $token
+                        'redirect' => url('avaliacao?token=' . $token)
                     ]);
                     break;
 
@@ -2264,6 +2264,121 @@ class TokenController extends Controller
                 'title' => 'Informar Compra de Peça e Selecionar Horários',
                 'error' => $errorMessage
             ]);
+        }
+    }
+
+    /**
+     * GET /avaliacao?token=xxx
+     * Página de avaliação pública (via token)
+     */
+    public function avaliacao(): void
+    {
+        $token = $this->input('token');
+
+        if (!$token) {
+            $this->view('token.error', [
+                'title' => 'Token Inválido',
+                'message' => 'Token não fornecido. Por favor, use o link completo enviado.',
+                'error_type' => 'missing_token'
+            ]);
+            return;
+        }
+
+        // Validar token
+        $tokenData = $this->tokenModel->validateToken($token);
+
+        if (!$tokenData) {
+            $this->view('token.error', [
+                'title' => 'Token Inválido ou Expirado',
+                'message' => 'Este link é inválido ou expirou. Por favor, entre em contato conosco.',
+                'error_type' => 'invalid_token'
+            ]);
+            return;
+        }
+
+        // Buscar dados da solicitação
+        $solicitacao = $this->solicitacaoModel->getDetalhes($tokenData['solicitacao_id']);
+
+        if (!$solicitacao) {
+            $this->view('token.error', [
+                'title' => 'Solicitação Não Encontrada',
+                'message' => 'A solicitação associada a este link não foi encontrada.',
+                'error_type' => 'solicitacao_not_found'
+            ]);
+            return;
+        }
+
+        // Verificar se já foi avaliada
+        if (!empty($solicitacao['avaliacao_satisfacao'])) {
+            $this->view('token.sucesso', [
+                'title' => 'Avaliação Já Realizada',
+                'message' => 'Obrigado! Você já avaliou este serviço.',
+                'solicitacao' => $solicitacao,
+                'action' => 'avaliacao'
+            ]);
+            return;
+        }
+
+        $this->view('token.avaliacao', [
+            'title' => 'Avaliar Serviço',
+            'token' => $token,
+            'solicitacao' => $solicitacao
+        ]);
+    }
+
+    /**
+     * POST /avaliacao
+     * Salvar avaliação via token
+     */
+    public function salvarAvaliacao(): void
+    {
+        $token = $this->input('token');
+        $npsScore = $this->input('nps_score');
+        $comentario = $this->input('comentario', '');
+
+        if (!$token) {
+            $this->json(['success' => false, 'message' => 'Token não fornecido'], 400);
+            return;
+        }
+
+        // Validar token
+        $tokenData = $this->tokenModel->validateToken($token);
+
+        if (!$tokenData) {
+            $this->json(['success' => false, 'message' => 'Token inválido ou expirado'], 400);
+            return;
+        }
+
+        if (empty($npsScore) || !is_numeric($npsScore)) {
+            $this->json(['success' => false, 'message' => 'Score NPS é obrigatório'], 400);
+            return;
+        }
+
+        $solicitacaoId = $tokenData['solicitacao_id'];
+        $solicitacao = $this->solicitacaoModel->find($solicitacaoId);
+
+        if (!$solicitacao) {
+            $this->json(['success' => false, 'message' => 'Solicitação não encontrada'], 404);
+            return;
+        }
+
+        try {
+            // Atualizar avaliação
+            $this->solicitacaoModel->update($solicitacaoId, [
+                'avaliacao_satisfacao' => (int)$npsScore,
+                'comentarios_avaliacao' => $comentario
+            ]);
+
+            // Marcar token como usado
+            $this->tokenModel->markAsUsed($token);
+
+            $this->json([
+                'success' => true,
+                'message' => 'Obrigado pela sua avaliação!'
+            ]);
+        } catch (\Exception $e) {
+            error_log('Erro ao salvar avaliação: ' . $e->getMessage());
+            $this->json(['success' => false, 'message' => 'Erro ao salvar avaliação. Tente novamente.'], 500);
         }
     }
 }
