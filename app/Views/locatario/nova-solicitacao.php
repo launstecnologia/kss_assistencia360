@@ -421,6 +421,7 @@ function gerarResumoEtapas($etapaAtual, $locatario) {
                                             <div class="flex items-center">
                                                 <i class="<?= $categoriaPai['icone'] ?? 'fas fa-cog' ?> text-xl text-gray-600 mr-3"></i>
                                                 <span class="text-sm font-medium text-gray-900"><?= htmlspecialchars($categoriaPai['nome']) ?></span>
+                                                <span class="ml-2 text-xs text-gray-500">(<?= count($categoriaPai['filhas']) ?> categorias)</span>
                                             </div>
                                             <div class="flex items-center">
                                                 <i class="fas fa-chevron-down text-gray-400 categoria-pai-chevron" id="chevron-<?= $categoriaPai['id'] ?>"></i>
