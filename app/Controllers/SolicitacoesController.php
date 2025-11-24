@@ -76,6 +76,164 @@ class SolicitacoesController extends Controller
         ]);
     }
 
+    public function alterarDataHora(): void
+    {
+        $status = $this->statusModel->getAtivos();
+        $imobiliarias = $this->imobiliariaModel->getAtivas();
+
+        $this->view('solicitacoes.alterar-data-hora', [
+            'status' => $status,
+            'imobiliarias' => $imobiliarias
+        ]);
+    }
+
+    public function buscarApi(): void
+    {
+        $filtros = [
+            'numero_solicitacao' => $this->input('numero_solicitacao'),
+            'numero_contrato' => $this->input('numero_contrato'),
+            'locatario_nome' => $this->input('locatario_nome'),
+            'status_id' => $this->input('status_id'),
+            'imobiliaria_id' => $this->input('imobiliaria_id'),
+            'data_inicio' => $this->input('data_inicio'),
+            'data_fim' => $this->input('data_fim'),
+            'agendamento_inicio' => $this->input('agendamento_inicio'),
+            'agendamento_fim' => $this->input('agendamento_fim')
+        ];
+
+        // Remover filtros vazios
+        $filtros = array_filter($filtros, fn($value) => !empty($value));
+
+        $sql = "
+            SELECT 
+                s.id,
+                s.numero_solicitacao,
+                s.numero_contrato,
+                s.data_agendamento,
+                s.horario_agendamento,
+                s.created_at,
+                l.nome as locatario_nome
+            FROM solicitacoes s
+            LEFT JOIN locatarios l ON s.locatario_id = l.id
+            WHERE 1=1
+        ";
+
+        $params = [];
+
+        if (!empty($filtros['numero_solicitacao'])) {
+            $sql .= " AND (s.numero_solicitacao LIKE ? OR CONCAT('KSS', s.id) LIKE ?)";
+            $search = '%' . $filtros['numero_solicitacao'] . '%';
+            $params[] = $search;
+            $params[] = $search;
+        }
+
+        if (!empty($filtros['numero_contrato'])) {
+            $sql .= " AND s.numero_contrato LIKE ?";
+            $params[] = '%' . $filtros['numero_contrato'] . '%';
+        }
+
+        if (!empty($filtros['locatario_nome'])) {
+            $sql .= " AND l.nome LIKE ?";
+            $params[] = '%' . $filtros['locatario_nome'] . '%';
+        }
+
+        if (!empty($filtros['status_id'])) {
+            $sql .= " AND s.status_id = ?";
+            $params[] = $filtros['status_id'];
+        }
+
+        if (!empty($filtros['imobiliaria_id'])) {
+            $sql .= " AND s.imobiliaria_id = ?";
+            $params[] = $filtros['imobiliaria_id'];
+        }
+
+        if (!empty($filtros['data_inicio'])) {
+            $sql .= " AND DATE(s.created_at) >= ?";
+            $params[] = $filtros['data_inicio'];
+        }
+
+        if (!empty($filtros['data_fim'])) {
+            $sql .= " AND DATE(s.created_at) <= ?";
+            $params[] = $filtros['data_fim'];
+        }
+
+        if (!empty($filtros['agendamento_inicio'])) {
+            $sql .= " AND DATE(s.data_agendamento) >= ?";
+            $params[] = $filtros['agendamento_inicio'];
+        }
+
+        if (!empty($filtros['agendamento_fim'])) {
+            $sql .= " AND DATE(s.data_agendamento) <= ?";
+            $params[] = $filtros['agendamento_fim'];
+        }
+
+        $sql .= " ORDER BY s.created_at DESC LIMIT 500";
+
+        $solicitacoes = \App\Core\Database::fetchAll($sql, $params);
+
+        $this->json([
+            'success' => true,
+            'solicitacoes' => $solicitacoes
+        ]);
+    }
+
+    public function atualizarDataHoraBulk(): void
+    {
+        $data = json_decode(file_get_contents('php://input'), true);
+
+        if (empty($data['ids']) || !is_array($data['ids'])) {
+            $this->json(['success' => false, 'error' => 'IDs não fornecidos'], 400);
+            return;
+        }
+
+        if (empty($data['data_inicio']) || empty($data['horario_inicio'])) {
+            $this->json(['success' => false, 'error' => 'Data e horário de início são obrigatórios'], 400);
+            return;
+        }
+
+        $ids = $data['ids'];
+        $dataInicio = $data['data_inicio'];
+        $horarioInicio = $data['horario_inicio'];
+        $dataFim = $data['data_fim'] ?? null;
+        $horarioFim = $data['horario_fim'] ?? null;
+
+        // Formatar horário completo
+        $horarioAgendamento = $horarioInicio;
+        if ($horarioFim) {
+            $horarioAgendamento = $horarioInicio . '-' . $horarioFim;
+        }
+
+        $atualizados = 0;
+        $erros = [];
+
+        foreach ($ids as $id) {
+            try {
+                $updateData = [
+                    'data_agendamento' => $dataInicio,
+                    'horario_agendamento' => $horarioAgendamento
+                ];
+
+                if ($dataFim) {
+                    // Se tem data fim, usar ela, senão usar data início
+                    $updateData['data_fim'] = $dataFim;
+                }
+
+                $this->solicitacaoModel->update($id, $updateData);
+                $atualizados++;
+            } catch (\Exception $e) {
+                $erros[] = "Solicitação #{$id}: " . $e->getMessage();
+                error_log("Erro ao atualizar solicitação #{$id}: " . $e->getMessage());
+            }
+        }
+
+        $this->json([
+            'success' => true,
+            'message' => "{$atualizados} solicitação(ões) atualizada(s) com sucesso",
+            'atualizados' => $atualizados,
+            'erros' => $erros
+        ]);
+    }
+
     public function show(int $id): void
     {
         $solicitacao = $this->solicitacaoModel->getDetalhes($id);

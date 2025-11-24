@@ -97,6 +97,9 @@ $router->post('/admin/whatsapp-instances/{id}/logout', 'WhatsappInstancesControl
 $router->post('/admin/whatsapp-instances/{id}/desconectar', 'WhatsappInstancesController@desconectar', ['auth']);
 $router->post('/admin/whatsapp-instances/{id}/delete', 'WhatsappInstancesController@destroy', ['auth']);
 $router->get('/admin/solicitacoes', 'SolicitacoesController@index', ['auth']);
+$router->get('/admin/solicitacoes/alterar-data-hora', 'SolicitacoesController@alterarDataHora', ['auth']);
+$router->get('/admin/solicitacoes/buscar/api', 'SolicitacoesController@buscarApi', ['auth']);
+$router->post('/admin/solicitacoes/atualizar-data-hora-bulk', 'SolicitacoesController@atualizarDataHoraBulk', ['auth']);
 $router->get('/admin/solicitacoes/{id}/api', 'SolicitacoesController@api', ['auth']);
 $router->get('/admin/solicitacoes/historico-utilizacao', 'SolicitacoesController@historicoUtilizacao', ['auth']);
 $router->get('/admin/solicitacoes/{id}', 'SolicitacoesController@show', ['auth']);
