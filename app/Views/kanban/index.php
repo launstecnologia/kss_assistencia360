@@ -754,6 +754,9 @@ function abrirDetalhes(solicitacaoId) {
         .then(data => {
             console.log('📡 Resposta da API:', data);
             if (data.success) {
+                console.log('📅 Horários - horarios_indisponiveis:', data.solicitacao.horarios_indisponiveis);
+                console.log('📅 Horários - datas_opcoes:', data.solicitacao.datas_opcoes);
+                console.log('📅 Horários - horarios_opcoes:', data.solicitacao.horarios_opcoes);
                 console.log('📸 Fotos recebidas da API:', data.solicitacao.fotos);
                 console.log('📸 Quantidade de fotos:', data.solicitacao.fotos ? data.solicitacao.fotos.length : 0);
                 // Armazenar histórico de WhatsApp globalmente
@@ -1299,16 +1302,18 @@ function renderizarDetalhes(solicitacao) {
                        class="w-full bg-gray-50 border border-gray-200 rounded px-3 py-2 text-sm text-gray-900">
             </div>
             <!-- Disponibilidade de Data -->
-            ${horariosOpcoes.length > 0 ? `
             <div class="mt-6">
                 <h4 class="text-sm font-medium text-gray-700 mb-3">
                     <i class="fas fa-clock mr-2 text-gray-400"></i>
                     Disponibilidade Informada
                 </h4>
+                ${horariosOpcoes.length > 0 ? `
                 <div class="space-y-2">
-                    ${horariosOpcoes.map((horario, index) => {
+                    ${horariosOpcoes.filter(h => h && h.trim()).map((horario, index) => {
                         try {
                             let dt, textoHorario;
+                            
+                            // ✅ Formato 1: "25/11/2025 - 08:00-11:00" (já formatado)
                             if (typeof horario === 'string' && horario.includes(' - ')) {
                                 textoHorario = horario;
                                 const match = horario.match(/(\d{2})\/(\d{2})\/(\d{4})/);
@@ -1317,7 +1322,24 @@ function renderizarDetalhes(solicitacao) {
                                 } else {
                                     dt = new Date();
                                 }
-                            } else {
+                            }
+                            // ✅ Formato 2: "2025-11-25 08:00:00-11:00:00" (formato ISO do banco)
+                            else if (typeof horario === 'string' && horario.match(/^\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}-\d{2}:\d{2}:\d{2}$/)) {
+                                // Converter formato ISO para formato de exibição
+                                const partes = horario.split(' ');
+                                const dataParte = partes[0]; // "2025-11-25"
+                                const horaParte = partes[1]; // "08:00:00-11:00:00"
+                                
+                                const [ano, mes, dia] = dataParte.split('-');
+                                const [horaInicio, horaFim] = horaParte.split('-');
+                                const horaInicioFormatada = horaInicio.substring(0, 5); // "08:00"
+                                const horaFimFormatada = horaFim.substring(0, 5); // "11:00"
+                                
+                                textoHorario = `${dia}/${mes}/${ano} - ${horaInicioFormatada}-${horaFimFormatada}`;
+                                dt = new Date(`${ano}-${mes}-${dia}`);
+                            }
+                            // ✅ Formato 3: Date object ou string de data simples
+                            else {
                                 dt = new Date(horario);
                                 if (isNaN(dt.getTime())) {
                                     return '';

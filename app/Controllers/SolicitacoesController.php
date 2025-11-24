@@ -162,6 +162,11 @@ class SolicitacoesController extends Controller
         $linksAcoes = $this->getLinksAcoes($id, $solicitacao);
         $solicitacao['links_acoes'] = $linksAcoes;
         
+        // Debug: Log dos horários e datas
+        error_log("📅 API Solicitação #{$id} - horarios_indisponiveis: " . ($solicitacao['horarios_indisponiveis'] ?? 'null'));
+        error_log("📅 API Solicitação #{$id} - datas_opcoes: " . ($solicitacao['datas_opcoes'] ?? 'null'));
+        error_log("📅 API Solicitação #{$id} - horarios_opcoes: " . ($solicitacao['horarios_opcoes'] ?? 'null'));
+        
         // Debug: Log das fotos encontradas
         error_log("📸 API Solicitação #{$id} - Fotos encontradas: " . count($fotos));
         if (!empty($fotos)) {
