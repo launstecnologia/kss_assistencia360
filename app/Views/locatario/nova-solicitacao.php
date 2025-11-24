@@ -418,10 +418,10 @@ function gerarResumoEtapas($etapaAtual, $locatario) {
                                                 class="w-full flex items-center justify-between border-2 border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-all categoria-pai-toggle"
                                                 data-categoria-pai="<?= $categoriaPai['id'] ?>"
                                                 onclick="toggleCategoriaPai(<?= $categoriaPai['id'] ?>)">
-                                            <div class="flex items-center">
+                                            <div class="flex items-center flex-wrap">
                                                 <i class="<?= $categoriaPai['icone'] ?? 'fas fa-cog' ?> text-xl text-gray-600 mr-3"></i>
                                                 <span class="text-sm font-medium text-gray-900"><?= htmlspecialchars($categoriaPai['nome']) ?></span>
-                                                <span class="ml-2 text-xs text-gray-500">(<?= count($categoriaPai['filhas']) ?> categorias)</span>
+                                                <span class="ml-2 text-xs text-gray-500 whitespace-nowrap">(<?= count($categoriaPai['filhas']) ?> categorias)</span>
                                             </div>
                                             <div class="flex items-center">
                                                 <i class="fas fa-chevron-down text-gray-400 categoria-pai-chevron" id="chevron-<?= $categoriaPai['id'] ?>"></i>
