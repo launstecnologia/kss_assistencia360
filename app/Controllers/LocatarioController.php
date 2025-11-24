@@ -334,15 +334,25 @@ class LocatarioController extends Controller
         $categoriaModel = new \App\Models\Categoria();
         $subcategoriaModel = new \App\Models\Subcategoria();
         
-        // Na etapa 1, mostrar todas as categorias (ainda não há seleção de finalidade)
-        $categorias = $categoriaModel->getAtivas();
+        // ✅ Na etapa 1, mostrar todas as categorias em hierarquia (ainda não há seleção de finalidade)
+        $categorias = $categoriaModel->getHierarquicas();
         $subcategorias = $subcategoriaModel->getAtivas();
         
-        // Organizar subcategorias por categoria
+        // Organizar subcategorias por categoria (incluindo categorias filhas)
         foreach ($categorias as $key => $categoria) {
+            // Organizar subcategorias para a categoria pai
             $categorias[$key]['subcategorias'] = array_values(array_filter($subcategorias, function($sub) use ($categoria) {
                 return $sub['categoria_id'] == $categoria['id'];
             }));
+            
+            // Organizar subcategorias para cada categoria filha
+            if (!empty($categoria['filhas'])) {
+                foreach ($categoria['filhas'] as $filhaKey => $categoriaFilha) {
+                    $categorias[$key]['filhas'][$filhaKey]['subcategorias'] = array_values(array_filter($subcategorias, function($sub) use ($categoriaFilha) {
+                        return $sub['categoria_id'] == $categoriaFilha['id'];
+                    }));
+                }
+            }
         }
         
         $this->view('locatario.nova-solicitacao', [
@@ -393,25 +403,35 @@ class LocatarioController extends Controller
                 // Filtrar categorias baseado na finalidade da locação selecionada
                 $finalidadeLocacao = $novaSolicitacao['finalidade_locacao'] ?? 'RESIDENCIAL';
                 
-                // Buscar categorias que correspondem ao tipo de imóvel selecionado
+                // ✅ Usar getHierarquicas() para organizar categorias em hierarquia pai-filha
                 // Se for RESIDENCIAL, mostrar categorias com tipo_imovel = 'RESIDENCIAL' ou 'AMBOS'
                 // Se for COMERCIAL, mostrar categorias com tipo_imovel = 'COMERCIAL' ou 'AMBOS'
                 if ($finalidadeLocacao === 'RESIDENCIAL') {
-                    $categorias = $categoriaModel->getByTipoImovel('RESIDENCIAL');
+                    $categorias = $categoriaModel->getHierarquicas('RESIDENCIAL');
                 } elseif ($finalidadeLocacao === 'COMERCIAL') {
-                    $categorias = $categoriaModel->getByTipoImovel('COMERCIAL');
+                    $categorias = $categoriaModel->getHierarquicas('COMERCIAL');
                 } else {
                     // Fallback: mostrar todas se não houver seleção
-                    $categorias = $categoriaModel->getAtivas();
+                    $categorias = $categoriaModel->getHierarquicas();
                 }
                 
                 $subcategorias = $subcategoriaModel->getAtivas();
                 
-                // Organizar subcategorias por categoria
+                // Organizar subcategorias por categoria (incluindo categorias filhas)
                 foreach ($categorias as $key => $categoria) {
+                    // Organizar subcategorias para a categoria pai
                     $categorias[$key]['subcategorias'] = array_values(array_filter($subcategorias, function($sub) use ($categoria) {
                         return $sub['categoria_id'] == $categoria['id'];
                     }));
+                    
+                    // Organizar subcategorias para cada categoria filha
+                    if (!empty($categoria['filhas'])) {
+                        foreach ($categoria['filhas'] as $filhaKey => $categoriaFilha) {
+                            $categorias[$key]['filhas'][$filhaKey]['subcategorias'] = array_values(array_filter($subcategorias, function($sub) use ($categoriaFilha) {
+                                return $sub['categoria_id'] == $categoriaFilha['id'];
+                            }));
+                        }
+                    }
                 }
                 
                 $data['categorias'] = $categorias;
@@ -1263,14 +1283,25 @@ class LocatarioController extends Controller
         // Buscar categorias para as próximas etapas
         $categoriaModel = new \App\Models\Categoria();
         $subcategoriaModel = new \App\Models\Subcategoria();
-        $categorias = $categoriaModel->getAtivas();
+        // ✅ Usar getHierarquicas() para organizar categorias em hierarquia pai-filha
+        $categorias = $categoriaModel->getHierarquicas();
         $subcategorias = $subcategoriaModel->getAtivas();
         
-        // Organizar subcategorias por categoria
+        // Organizar subcategorias por categoria (incluindo categorias filhas)
         foreach ($categorias as $key => $categoria) {
+            // Organizar subcategorias para a categoria pai
             $categorias[$key]['subcategorias'] = array_values(array_filter($subcategorias, function($sub) use ($categoria) {
                 return $sub['categoria_id'] == $categoria['id'];
             }));
+            
+            // Organizar subcategorias para cada categoria filha
+            if (!empty($categoria['filhas'])) {
+                foreach ($categoria['filhas'] as $filhaKey => $categoriaFilha) {
+                    $categorias[$key]['filhas'][$filhaKey]['subcategorias'] = array_values(array_filter($subcategorias, function($sub) use ($categoriaFilha) {
+                        return $sub['categoria_id'] == $categoriaFilha['id'];
+                    }));
+                }
+            }
         }
         
         $this->view('locatario.solicitacao-manual', [
@@ -1312,27 +1343,38 @@ class LocatarioController extends Controller
             $dados = $_SESSION['solicitacao_manual'] ?? [];
             $tipoImovel = $dados['tipo_imovel'] ?? 'RESIDENCIAL';
             
+            // ✅ Usar getHierarquicas() para organizar categorias em hierarquia pai-filha
             // Se estiver na etapa 2 ou superior, filtrar categorias
             if ($etapa >= 2 && !empty($tipoImovel)) {
                 if ($tipoImovel === 'RESIDENCIAL') {
-                    $categorias = $categoriaModel->getByTipoImovel('RESIDENCIAL');
+                    $categorias = $categoriaModel->getHierarquicas('RESIDENCIAL');
                 } elseif ($tipoImovel === 'COMERCIAL') {
-                    $categorias = $categoriaModel->getByTipoImovel('COMERCIAL');
+                    $categorias = $categoriaModel->getHierarquicas('COMERCIAL');
                 } else {
-                    $categorias = $categoriaModel->getAtivas();
+                    $categorias = $categoriaModel->getHierarquicas();
                 }
             } else {
-                // Na etapa 1, mostrar todas
-                $categorias = $categoriaModel->getAtivas();
+                // Na etapa 1, mostrar todas em hierarquia
+                $categorias = $categoriaModel->getHierarquicas();
             }
             
             $subcategorias = $subcategoriaModel->getAtivas();
             
-            // Organizar subcategorias por categoria
+            // Organizar subcategorias por categoria (incluindo categorias filhas)
             foreach ($categorias as $key => $categoria) {
+                // Organizar subcategorias para a categoria pai
                 $categorias[$key]['subcategorias'] = array_values(array_filter($subcategorias, function($sub) use ($categoria) {
                     return $sub['categoria_id'] == $categoria['id'];
                 }));
+                
+                // Organizar subcategorias para cada categoria filha
+                if (!empty($categoria['filhas'])) {
+                    foreach ($categoria['filhas'] as $filhaKey => $categoriaFilha) {
+                        $categorias[$key]['filhas'][$filhaKey]['subcategorias'] = array_values(array_filter($subcategorias, function($sub) use ($categoriaFilha) {
+                            return $sub['categoria_id'] == $categoriaFilha['id'];
+                        }));
+                    }
+                }
             }
             
             $this->view('locatario.solicitacao-manual', [
