@@ -29,12 +29,11 @@ class SolicitacoesController extends Controller
                      strpos($requestUri, '/buscar/api') !== false;
             
             if (!$this->isAuthenticated()) {
-                if ($isAjax) {
-                    // Para requisições AJAX, não redirecionar, apenas retornar JSON
-                    // O método específico vai tratar isso
-                } else {
+                if (!$isAjax) {
+                    // Apenas redirecionar se não for AJAX
                     $this->redirect(url('login'));
                 }
+                // Se for AJAX, deixar o método específico tratar
             }
         }
         
@@ -102,13 +101,13 @@ class SolicitacoesController extends Controller
 
     public function buscarApi(): void
     {
-        error_log('DEBUG buscarApi - Método chamado');
-        error_log('DEBUG buscarApi - REQUEST_METHOD: ' . ($_SERVER['REQUEST_METHOD'] ?? 'N/A'));
-        error_log('DEBUG buscarApi - $_GET: ' . json_encode($_GET));
+        // Limpar qualquer output anterior
+        while (ob_get_level() > 0) {
+            ob_end_clean();
+        }
         
         // Verificar autenticação manualmente para retornar JSON em caso de erro
         if (!$this->isAuthenticated()) {
-            error_log('DEBUG buscarApi - Usuário não autenticado');
             $this->json([
                 'success' => false,
                 'error' => 'Não autenticado'
@@ -117,12 +116,22 @@ class SolicitacoesController extends Controller
         }
         
         try {
+            // Buscar ID do status "Serviço Agendado"
+            $statusAgendado = $this->getStatusId('Serviço Agendado');
+            
+            if (!$statusAgendado) {
+                $this->json([
+                    'success' => false,
+                    'error' => 'Status "Serviço Agendado" não encontrado'
+                ], 500);
+                return;
+            }
+            
             // Para requisições GET, usar $_GET diretamente
             $filtros = [
                 'numero_solicitacao' => $_GET['numero_solicitacao'] ?? null,
                 'numero_contrato' => $_GET['numero_contrato'] ?? null,
                 'locatario_nome' => $_GET['locatario_nome'] ?? null,
-                'status_id' => $_GET['status_id'] ?? null,
                 'imobiliaria_id' => $_GET['imobiliaria_id'] ?? null,
                 'data_inicio' => $_GET['data_inicio'] ?? null,
                 'data_fim' => $_GET['data_fim'] ?? null,
@@ -133,6 +142,7 @@ class SolicitacoesController extends Controller
             // Remover filtros vazios
             $filtros = array_filter($filtros, fn($value) => !empty($value));
 
+            // ✅ Buscar apenas solicitações com status "Serviço Agendado"
             $sql = "
                 SELECT 
                     s.id,
@@ -144,10 +154,10 @@ class SolicitacoesController extends Controller
                     l.nome as locatario_nome
                 FROM solicitacoes s
                 LEFT JOIN locatarios l ON s.locatario_id = l.id
-                WHERE 1=1
+                WHERE s.status_id = ?
             ";
 
-            $params = [];
+            $params = [$statusAgendado];
 
             if (!empty($filtros['numero_solicitacao'])) {
                 $sql .= " AND (s.numero_solicitacao LIKE ? OR CONCAT('KSS', s.id) LIKE ?)";
@@ -164,11 +174,6 @@ class SolicitacoesController extends Controller
             if (!empty($filtros['locatario_nome'])) {
                 $sql .= " AND l.nome LIKE ?";
                 $params[] = '%' . $filtros['locatario_nome'] . '%';
-            }
-
-            if (!empty($filtros['status_id'])) {
-                $sql .= " AND s.status_id = ?";
-                $params[] = $filtros['status_id'];
             }
 
             if (!empty($filtros['imobiliaria_id'])) {
@@ -196,18 +201,9 @@ class SolicitacoesController extends Controller
                 $params[] = $filtros['agendamento_fim'];
             }
 
-            $sql .= " ORDER BY s.created_at DESC LIMIT 500";
+            $sql .= " ORDER BY s.data_agendamento ASC, s.created_at DESC LIMIT 500";
 
-            error_log('DEBUG buscarApi - SQL: ' . $sql);
-            error_log('DEBUG buscarApi - Params: ' . json_encode($params));
-            
-            try {
-                $solicitacoes = \App\Core\Database::fetchAll($sql, $params);
-                error_log('DEBUG buscarApi - Solicitações encontradas: ' . count($solicitacoes));
-            } catch (\Exception $dbError) {
-                error_log('DEBUG buscarApi - Erro no banco de dados: ' . $dbError->getMessage());
-                throw $dbError;
-            }
+            $solicitacoes = \App\Core\Database::fetchAll($sql, $params);
 
             $this->json([
                 'success' => true,
@@ -216,15 +212,9 @@ class SolicitacoesController extends Controller
         } catch (\Exception $e) {
             error_log('Erro em buscarApi: ' . $e->getMessage());
             error_log('Stack trace: ' . $e->getTraceAsString());
-            error_log('File: ' . $e->getFile() . ' Line: ' . $e->getLine());
             $this->json([
                 'success' => false,
-                'error' => 'Erro ao buscar solicitações: ' . $e->getMessage(),
-                'debug' => [
-                    'message' => $e->getMessage(),
-                    'file' => $e->getFile(),
-                    'line' => $e->getLine()
-                ]
+                'error' => 'Erro ao buscar solicitações: ' . $e->getMessage()
             ], 500);
         }
     }

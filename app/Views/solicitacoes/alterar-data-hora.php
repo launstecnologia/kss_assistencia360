@@ -201,17 +201,28 @@ function buscarSolicitacoes() {
     container.innerHTML = '<div class="text-center py-8"><i class="fas fa-spinner fa-spin text-3xl text-blue-600 mb-3"></i><p class="text-gray-600">Buscando...</p></div>';
     
     fetch(`<?= url('admin/solicitacoes/buscar/api') ?>?${params.toString()}`)
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(data => {
+                    throw new Error(data.error || data.message || 'Erro ao buscar solicitações');
+                }).catch(() => {
+                    throw new Error(`Erro ${response.status}: ${response.statusText}`);
+                });
+            }
+            return response.json();
+        })
         .then(data => {
             if (data.success && data.solicitacoes) {
                 renderizarResultados(data.solicitacoes);
             } else {
-                container.innerHTML = '<div class="text-center py-8 text-red-600"><i class="fas fa-exclamation-triangle text-3xl mb-3"></i><p>Erro ao buscar solicitações</p></div>';
+                const errorMsg = data.error || data.message || 'Erro ao buscar solicitações';
+                container.innerHTML = `<div class="text-center py-8 text-red-600"><i class="fas fa-exclamation-triangle text-3xl mb-3"></i><p>${errorMsg}</p></div>`;
             }
         })
         .catch(error => {
             console.error('Erro:', error);
-            container.innerHTML = '<div class="text-center py-8 text-red-600"><i class="fas fa-exclamation-triangle text-3xl mb-3"></i><p>Erro ao buscar solicitações</p></div>';
+            const errorMsg = error.message || 'Erro ao buscar solicitações';
+            container.innerHTML = `<div class="text-center py-8 text-red-600"><i class="fas fa-exclamation-triangle text-3xl mb-3"></i><p>${errorMsg}</p></div>`;
         });
 }
 
