@@ -77,6 +77,15 @@ ob_start();
                     <span class="sm:hidden">Cancelar</span>
                 </button>
                 <?php
+                // Botão Reagendar
+                ?>
+                <button onclick="executarAcao(<?= $solicitacao['id'] ?>, 'reagendar')" 
+                        class="flex-1 sm:flex-none px-3 sm:px-4 py-2 bg-yellow-600 text-white text-sm font-medium rounded-lg hover:bg-yellow-700 transition-colors">
+                    <i class="fas fa-calendar-alt mr-2"></i>
+                    <span class="hidden sm:inline">Reagendar</span>
+                    <span class="sm:hidden">Reagendar</span>
+                </button>
+                <?php
             }
             // Status: Aguardando Prestador / Buscando Prestador
             elseif (stripos($statusNome, 'Aguardando Prestador') !== false || 
@@ -225,57 +234,91 @@ ob_start();
     </h3>
     
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <!-- Descrição do Problema -->
-        <?php if (!empty($solicitacao['descricao_problema'])): ?>
+        <!-- Informações do Serviço -->
         <div>
-            <h4 class="text-sm font-medium text-gray-700 mb-3">
-                <i class="fas fa-file-alt mr-2 text-gray-400"></i>
-                Descrição do Problema
-            </h4>
-            <div class="bg-gray-50 rounded-lg p-4">
-                <p class="text-sm text-gray-900"><?= nl2br(htmlspecialchars($solicitacao['descricao_problema'])) ?></p>
+            <div class="mb-3">
+                <h4 class="text-sm font-medium text-gray-700">
+                    <i class="fas fa-info-circle mr-2 text-blue-600"></i>
+                    Informações do Serviço
+                </h4>
             </div>
-        </div>
-        <?php endif; ?>
-        
-        <!-- Informação do Serviço -->
             <div>
-            <h4 class="text-sm font-medium text-gray-700 mb-3">Informações do Serviço</h4>
-                <div class="space-y-2">
+                <div class="space-y-3">
+                    <?php
+                    // Usar campos diretos do banco
+                    $localManutencao = $solicitacao['local_manutencao'] ?? '';
+                    $finalidade = $solicitacao['finalidade_locacao'] ?? '';
+                    $tipoImovel = $solicitacao['tipo_imovel'] ?? '';
+                    
+                    // Se não estiver nos campos diretos, tentar extrair de descricao_card (para compatibilidade com dados antigos)
+                    if (empty($localManutencao) && empty($finalidade) && empty($tipoImovel)) {
+                        $descricaoCard = $solicitacao['descricao_card'] ?? '';
+                        if (!empty($descricaoCard)) {
+                            $linhas = explode("\n", $descricaoCard);
+                            foreach ($linhas as $linha) {
+                                if (stripos($linha, 'Finalidade:') !== false) {
+                                    $finalidade = trim(str_replace('Finalidade:', '', $linha));
+                                } elseif (stripos($linha, 'Tipo:') !== false) {
+                                    $tipoImovel = trim(str_replace('Tipo:', '', $linha));
+                                } elseif (!empty(trim($linha)) && stripos($linha, 'Finalidade:') === false && stripos($linha, 'Tipo:') === false) {
+                                    $localManutencao = trim($linha);
+                                }
+                            }
+                        }
+                    }
+                    ?>
+                    
+                    <!-- 1. Local da Manutenção (PRIMEIRO) -->
                     <div>
-                        <span class="text-sm text-gray-500">Categoria:</span>
-                        <p class="text-sm font-medium text-gray-900"><?= htmlspecialchars($solicitacao['categoria_nome']) ?></p>
+                        <span class="text-sm text-gray-500">Local da Manutenção:</span>
+                        <p class="text-sm font-medium text-gray-900 mt-1"><?= !empty($localManutencao) ? htmlspecialchars($localManutencao) : '-' ?></p>
                     </div>
-                    <?php if (!empty($solicitacao['subcategoria_nome'])): ?>
+                    
+                    <!-- 2. Descrição do Problema (SEGUNDO) -->
                     <div>
-                        <span class="text-sm text-gray-500">Tipo:</span>
-                        <p class="text-sm font-medium text-gray-900"><?= htmlspecialchars($solicitacao['subcategoria_nome']) ?></p>
+                        <span class="text-sm text-gray-500">Descrição do Problema:</span>
+                        <div class="bg-gray-50 rounded-lg p-3 mt-1">
+                            <p class="text-sm text-gray-900 text-left whitespace-pre-wrap"><?= !empty($solicitacao['descricao_problema']) ? nl2br(htmlspecialchars($solicitacao['descricao_problema'])) : 'Nenhuma descrição fornecida.' ?></p>
+                        </div>
                     </div>
-                    <?php endif; ?>
+                    
+                    <!-- 3. Tipo do Imóvel (TERCEIRO) -->
                     <div>
-                        <span class="text-sm text-gray-500">Prioridade:</span>
-                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium
-                            <?= $solicitacao['prioridade'] === 'ALTA' ? 'bg-red-100 text-red-800' : 
-                               ($solicitacao['prioridade'] === 'MEDIA' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800') ?>">
-                            <?= $solicitacao['prioridade'] ?>
-                        </span>
+                        <span class="text-sm text-gray-500">Tipo do Imóvel:</span>
+                        <p class="text-sm font-medium text-gray-900 mt-1"><?= !empty($tipoImovel) ? htmlspecialchars($tipoImovel) : '-' ?></p>
+                    </div>
+                    
+                    <!-- Informações adicionais (não editáveis) -->
+                    <div class="pt-2 border-t border-gray-200">
+                        <div>
+                            <span class="text-sm text-gray-500">Categoria:</span>
+                            <p class="text-sm font-medium text-gray-900"><?= htmlspecialchars($solicitacao['categoria_nome']) ?></p>
+                        </div>
+                        <?php if (!empty($solicitacao['subcategoria_nome'])): ?>
+                        <div class="mt-2">
+                            <span class="text-sm text-gray-500">Tipo de Serviço:</span>
+                            <p class="text-sm font-medium text-gray-900"><?= htmlspecialchars($solicitacao['subcategoria_nome']) ?></p>
+                        </div>
+                        <?php endif; ?>
+                        <?php if (!empty($finalidade)): ?>
+                        <div class="mt-2">
+                            <span class="text-sm text-gray-500">Finalidade:</span>
+                            <p class="text-sm font-medium text-gray-900"><?= htmlspecialchars($finalidade) ?></p>
+                        </div>
+                        <?php endif; ?>
+                        <div class="mt-2">
+                            <span class="text-sm text-gray-500">Prioridade:</span>
+                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium
+                                <?= $solicitacao['prioridade'] === 'ALTA' ? 'bg-red-100 text-red-800' : 
+                                   ($solicitacao['prioridade'] === 'MEDIA' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800') ?>">
+                                <?= $solicitacao['prioridade'] ?>
+                            </span>
+                        </div>
                     </div>
                 </div>
             </div>
-    </div>
-    
-    <!-- Observações do Segurado -->
-    <?php if (!empty($solicitacao['observacoes'])): ?>
-    <div class="mt-6">
-        <h4 class="text-sm font-medium text-gray-700 mb-3">
-            <i class="fas fa-comment-dots mr-2 text-gray-400"></i>
-            Observações do Segurado
-        </h4>
-        <div class="bg-gray-50 rounded-lg p-4">
-            <p class="text-sm text-gray-900"><?= nl2br(htmlspecialchars($solicitacao['observacoes'])) ?></p>
         </div>
     </div>
-    <?php endif; ?>
     
     <!-- Fotos Enviadas -->
     <?php if (!empty($fotos) && count($fotos) > 0): ?>
@@ -286,11 +329,28 @@ ob_start();
         </h4>
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
             <?php foreach ($fotos as $foto): ?>
+            <?php 
+                // Usar nome_arquivo se existir, caso contrário tentar url_arquivo
+                $nomeArquivo = $foto['nome_arquivo'] ?? null;
+                if (!$nomeArquivo && !empty($foto['url_arquivo'])) {
+                    // Extrair nome do arquivo da URL se necessário
+                    $nomeArquivo = basename($foto['url_arquivo']);
+                }
+                
+                // Se ainda não tiver nome, pular esta foto
+                if (empty($nomeArquivo)) {
+                    continue;
+                }
+                
+                // Construir URL da foto
+                $urlFoto = url('Public/uploads/solicitacoes/' . htmlspecialchars($nomeArquivo));
+            ?>
             <div class="relative">
-                <img src="<?= url('Public/uploads/fotos/' . $foto['arquivo']) ?>" 
+                <img src="<?= $urlFoto ?>" 
                      alt="Foto da solicitação" 
                      class="w-full h-32 object-cover rounded-lg cursor-pointer hover:opacity-75 transition-opacity"
-                     onclick="abrirModalFoto('<?= url('Public/uploads/fotos/' . $foto['arquivo']) ?>')">
+                     onclick="abrirModalFoto('<?= $urlFoto ?>')"
+                     onerror="console.error('Erro ao carregar foto: <?= htmlspecialchars($nomeArquivo) ?>'); this.parentElement.style.display='none';">
             </div>
             <?php endforeach; ?>
         </div>
@@ -313,81 +373,81 @@ ob_start();
         Status e Agendamento
     </h3>
     
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <!-- Status da Solicitação -->
-        <div>
-            <h4 class="text-sm font-medium text-gray-700 mb-3">Status da Solicitação</h4>
-            <div class="space-y-2">
-                <div>
-                    <span class="text-sm text-gray-500">Status Atual:</span>
-                    <p class="text-sm font-medium text-gray-900">
-                        <span class="status-badge status-<?= strtolower(str_replace([' ', '(', ')'], ['-', '', ''], $solicitacao['status_nome'])) ?>">
-                            <?= htmlspecialchars($solicitacao['status_nome']) ?>
-                        </span>
-                    </p>
-                </div>
-                <?php if (!empty($solicitacao['condicao_nome'])): ?>
-                <div>
-                    <span class="text-sm text-gray-500">Condição:</span>
-                    <p class="text-sm font-medium text-gray-900">
-                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium" 
-                              style="background-color: <?= htmlspecialchars($solicitacao['condicao_cor'] ?? '#6B7280') ?>20; color: <?= htmlspecialchars($solicitacao['condicao_cor'] ?? '#6B7280') ?>;">
-                            <?= htmlspecialchars($solicitacao['condicao_nome']) ?>
-                        </span>
-                    </p>
-                </div>
-                <?php endif; ?>
-                </div>
-            </div>
-            
-        <!-- Datas -->
+    <!-- Datas -->
+    <div>
+        <h4 class="text-sm font-medium text-gray-700 mb-3">Datas</h4>
+        <div class="space-y-2">
             <div>
-            <h4 class="text-sm font-medium text-gray-700 mb-3">Datas</h4>
-                <div class="space-y-2">
-                    <div>
-                        <span class="text-sm text-gray-500">Criado em:</span>
-                        <p class="text-sm font-medium text-gray-900">
-                            <?= date('d/m/Y \à\s H:i', strtotime($solicitacao['created_at'])) ?>
-                        </p>
-                    </div>
-                    <?php if (!empty($solicitacao['data_agendamento'])): ?>
-                    <div>
-                        <span class="text-sm text-gray-500">Agendado para:</span>
-                        <p class="text-sm font-medium text-gray-900">
-                            <?= date('d/m/Y', strtotime($solicitacao['data_agendamento'])) ?>
-                        </p>
-                    </div>
-                    <?php endif; ?>
-                </div>
+                <span class="text-sm text-gray-500">Criado em:</span>
+                <p class="text-sm font-medium text-gray-900">
+                    <?= date('d/m/Y \à\s H:i', strtotime($solicitacao['created_at'])) ?>
+                </p>
             </div>
-        </div>
-        
-    <!-- Disponibilidade de Data -->
-    <?php 
-    $horariosOpcoes = [];
-    if (!empty($solicitacao['horarios_opcoes'])) {
-        $horariosOpcoes = is_string($solicitacao['horarios_opcoes']) ? json_decode($solicitacao['horarios_opcoes'], true) : $solicitacao['horarios_opcoes'];
-    }
-    if (!empty($solicitacao['datas_opcoes'])) {
-        $datasOpcoes = is_string($solicitacao['datas_opcoes']) ? json_decode($solicitacao['datas_opcoes'], true) : $solicitacao['datas_opcoes'];
-    }
-    ?>
-    <?php if (!empty($horariosOpcoes) || !empty($datasOpcoes)): ?>
-        <div class="mt-6">
-        <h4 class="text-sm font-medium text-gray-700 mb-3">Disponibilidade de Data</h4>
-            <div class="bg-gray-50 rounded-lg p-4">
-            <?php if (!empty($datasOpcoes) && is_array($datasOpcoes)): ?>
-                <?php foreach ($datasOpcoes as $data): ?>
-                <p class="text-sm text-gray-900"><?= htmlspecialchars($data) ?></p>
-                <?php endforeach; ?>
-            <?php elseif (!empty($horariosOpcoes) && is_array($horariosOpcoes)): ?>
-                <?php foreach ($horariosOpcoes as $horario): ?>
-                <p class="text-sm text-gray-900"><?= htmlspecialchars($horario) ?></p>
-                <?php endforeach; ?>
+            <?php 
+            // Formatar data agendada com horário (priorizar horário escolhido pelo locatário)
+            $dataAgendada = null;
+            if (!empty($solicitacao['horario_confirmado_raw'])) {
+                // Formato esperado: "dd/mm/yyyy - HH:MM-HH:MM"
+                if (preg_match('/(\d{2}\/\d{2}\/\d{4})\s*-\s*(\d{2}:\d{2})-(\d{2}:\d{2})/', $solicitacao['horario_confirmado_raw'], $match)) {
+                    $dataAgendada = $match[1] . ' das ' . $match[2] . ' às ' . $match[3];
+                } elseif (preg_match('/(\d{2}\/\d{2}\/\d{4})\s*-\s*(\d{2}:\d{2})/', $solicitacao['horario_confirmado_raw'], $match)) {
+                    $dataAgendada = $match[1] . ' às ' . $match[2];
+                } else {
+                    $dataAgendada = $solicitacao['horario_confirmado_raw'];
+                }
+            } elseif (!empty($solicitacao['confirmed_schedules'])) {
+                $confirmed = is_string($solicitacao['confirmed_schedules']) 
+                    ? json_decode($solicitacao['confirmed_schedules'], true) 
+                    : $solicitacao['confirmed_schedules'];
+                if (is_array($confirmed) && !empty($confirmed)) {
+                    $primeiro = $confirmed[0];
+                    if (!empty($primeiro['raw'])) {
+                        if (preg_match('/(\d{2}\/\d{2}\/\d{4})\s*-\s*(\d{2}:\d{2})-(\d{2}:\d{2})/', $primeiro['raw'], $match)) {
+                            $dataAgendada = $match[1] . ' das ' . $match[2] . ' às ' . $match[3];
+                        } elseif (preg_match('/(\d{2}\/\d{2}\/\d{4})\s*-\s*(\d{2}:\d{2})/', $primeiro['raw'], $match)) {
+                            $dataAgendada = $match[1] . ' às ' . $match[2];
+                        } else {
+                            $dataAgendada = $primeiro['raw'];
+                        }
+                    }
+                }
+            } elseif (!empty($solicitacao['data_agendamento']) && !empty($solicitacao['horario_agendamento'])) {
+                $dataAg = new \DateTime($solicitacao['data_agendamento']);
+                $dataFormatada = $dataAg->format('d/m/Y');
+                $horaFormatada = substr($solicitacao['horario_agendamento'], 0, 5); // HH:MM
+                $dataAgendada = $dataFormatada . ' às ' . $horaFormatada;
+            } elseif (!empty($solicitacao['data_agendamento'])) {
+                $dataAgendada = date('d/m/Y', strtotime($solicitacao['data_agendamento']));
+            }
+            ?>
+            <?php if ($dataAgendada): ?>
+            <div>
+                <span class="text-sm text-gray-500">Agendado:</span>
+                <p class="text-sm font-medium text-gray-900">
+                    <?= htmlspecialchars($dataAgendada) ?>
+                </p>
+            </div>
             <?php endif; ?>
+            
+            <?php 
+            // Data de conclusão (se status for Concluído)
+            $dataConcluido = null;
+            if (stripos($solicitacao['status_nome'] ?? '', 'Concluído') !== false || stripos($solicitacao['status_nome'] ?? '', 'Concluido') !== false) {
+                if (!empty($solicitacao['updated_at'])) {
+                    $dataConcluido = date('d/m/Y \à\s H:i', strtotime($solicitacao['updated_at']));
+                }
+            }
+            ?>
+            <?php if ($dataConcluido): ?>
+            <div>
+                <span class="text-sm text-gray-500">Concluído em:</span>
+                <p class="text-sm font-medium text-gray-900">
+                    <?= htmlspecialchars($dataConcluido) ?>
+                </p>
             </div>
+            <?php endif; ?>
         </div>
-        <?php endif; ?>
+    </div>
         
     <!-- Protocolo da Seguradora -->
     <?php if (!empty($solicitacao['protocolo_seguradora'])): ?>
@@ -797,9 +857,88 @@ document.addEventListener('click', function(event) {
         event.target.classList.add('hidden');
     }
 });
+
+// Funções para editar descrição do problema
+let descricaoOriginal = '';
+function toggleEditarDescricao() {
+    const view = document.getElementById('descricao-view');
+    const edit = document.getElementById('descricao-edit');
+    const btnText = document.getElementById('btn-text-descricao');
+    
+    if (edit.classList.contains('hidden')) {
+        descricaoOriginal = document.getElementById('descricao-problema-input').value;
+        view.classList.add('hidden');
+        edit.classList.remove('hidden');
+        btnText.textContent = 'Cancelar';
+    } else {
+        cancelarEditarDescricao();
+    }
+}
+
+function cancelarEditarDescricao() {
+    const view = document.getElementById('descricao-view');
+    const edit = document.getElementById('descricao-edit');
+    const btnText = document.getElementById('btn-text-descricao');
+    const input = document.getElementById('descricao-problema-input');
+    
+    input.value = descricaoOriginal;
+    view.classList.remove('hidden');
+    edit.classList.add('hidden');
+    btnText.textContent = 'Editar';
+}
+
+function salvarDescricao() {
+    const descricao = document.getElementById('descricao-problema-input').value;
+    const solicitacaoId = <?= $solicitacao['id'] ?>;
+    
+    fetch('<?= url($locatario['instancia'] . '/solicitacoes') ?>/' + solicitacaoId + '/atualizar', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            descricao_problema: descricao
+        })
+    })
+    .then(async response => {
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            const text = await response.text();
+            console.error('Resposta não é JSON:', text);
+            throw new Error('Resposta inválida do servidor');
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            // Atualizar a view
+            const view = document.getElementById('descricao-view');
+            const edit = document.getElementById('descricao-edit');
+            const btnText = document.getElementById('btn-text-descricao');
+            
+            view.innerHTML = '<p class="text-sm text-gray-900 text-left">' + (descricao ? descricao.replace(/\n/g, '<br>') : 'Nenhuma descrição fornecida.') + '</p>';
+            descricaoOriginal = descricao;
+            view.classList.remove('hidden');
+            edit.classList.add('hidden');
+            btnText.textContent = 'Editar';
+            
+            alert('Descrição atualizada com sucesso!');
+            location.reload();
+        } else {
+            alert('Erro ao atualizar: ' + (data.error || data.message || 'Erro desconhecido'));
+        }
+    })
+    .catch(error => {
+        console.error('Erro:', error);
+        alert('Erro ao salvar. Tente novamente. ' + error.message);
+    });
+}
+
+// Funções para editar observações
 </script>
 
 <?php
 $content = ob_get_clean();
 include 'app/Views/layouts/locatario.php';
 ?>
+

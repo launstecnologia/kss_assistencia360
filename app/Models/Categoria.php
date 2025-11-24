@@ -8,7 +8,7 @@ class Categoria extends Model
 {
     protected string $table = 'categorias';
     protected array $fillable = [
-        'nome', 'descricao', 'icone', 'cor', 'status', 'ordem', 'tipo_imovel', 'tipo_assistencia', 'prazo_minimo', 'limite_solicitacoes_12_meses', 'created_at', 'updated_at'
+        'nome', 'descricao', 'icone', 'cor', 'status', 'ordem', 'tipo_imovel', 'tipo_assistencia', 'prazo_minimo', 'limite_solicitacoes_12_meses', 'parent_id', 'created_at', 'updated_at'
     ];
     protected array $casts = [
         'prazo_minimo' => 'int',
@@ -36,6 +36,65 @@ class Categoria extends Model
             ORDER BY ordem ASC, nome ASC
         ";
         return Database::fetchAll($sql, [$tipoImovel]);
+    }
+
+    /**
+     * Busca categorias principais (sem parent_id) com suas categorias filhas organizadas
+     * @param string|null $tipoImovel Tipo de imóvel (RESIDENCIAL, COMERCIAL) ou null para todos
+     * @return array Categorias principais com array 'filhas' contendo categorias filhas
+     */
+    public function getHierarquicas(?string $tipoImovel = null): array
+    {
+        // Buscar categorias principais (sem parent_id)
+        $sql = "
+            SELECT DISTINCT * FROM {$this->table} 
+            WHERE status = 'ATIVA' 
+            AND (parent_id IS NULL OR parent_id = 0)
+        ";
+        
+        $params = [];
+        if ($tipoImovel) {
+            $sql .= " AND (tipo_imovel = ? OR tipo_imovel = 'AMBOS')";
+            $params[] = $tipoImovel;
+        }
+        
+        $sql .= " ORDER BY ordem ASC, nome ASC";
+        
+        $categoriasPai = Database::fetchAll($sql, $params);
+        
+        // Para cada categoria pai, buscar suas categorias filhas
+        foreach ($categoriasPai as &$categoriaPai) {
+            $filhas = $this->getFilhas($categoriaPai['id'], $tipoImovel);
+            $categoriaPai['filhas'] = !empty($filhas) ? $filhas : [];
+        }
+        
+        return $categoriasPai;
+    }
+
+    /**
+     * Busca categorias filhas de uma categoria pai
+     * @param int $parentId ID da categoria pai
+     * @param string|null $tipoImovel Tipo de imóvel (RESIDENCIAL, COMERCIAL) ou null para todos
+     * @return array Categorias filhas
+     */
+    public function getFilhas(int $parentId, ?string $tipoImovel = null): array
+    {
+        $sql = "
+            SELECT * FROM {$this->table} 
+            WHERE status = 'ATIVA' 
+            AND parent_id = ?
+        ";
+        
+        $params = [$parentId];
+        
+        if ($tipoImovel) {
+            $sql .= " AND (tipo_imovel = ? OR tipo_imovel = 'AMBOS')";
+            $params[] = $tipoImovel;
+        }
+        
+        $sql .= " ORDER BY ordem ASC, nome ASC";
+        
+        return Database::fetchAll($sql, $params);
     }
 
     public function getSubcategorias(int $categoriaId): array

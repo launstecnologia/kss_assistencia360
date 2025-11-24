@@ -42,38 +42,6 @@ ob_start();
     </div>
 <?php endif; ?>
 
-<!-- Stats Cards -->
-<div class="grid grid-cols-2 md:grid-cols-2 gap-3 md:gap-6 mb-8">
-    <!-- Solicitações Agendadas -->
-    <div class="bg-white rounded-lg shadow-sm p-4 md:p-6 card-hover">
-        <div class="flex flex-col md:flex-row items-center md:items-start text-center md:text-left">
-            <div class="flex-shrink-0 mb-2 md:mb-0">
-                <div class="w-10 h-10 md:w-12 md:h-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto md:mx-0">
-                    <i class="fas fa-calendar-check text-blue-600 text-lg md:text-xl"></i>
-                </div>
-            </div>
-            <div class="md:ml-4 flex-1">
-                <p class="hidden md:block text-sm font-medium text-gray-500">Agendadas</p>
-                <p class="text-xl md:text-2xl font-bold text-gray-900"><?= $stats['agendadas'] ?? 0 ?></p>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Solicitações Concluídas -->
-    <div class="bg-white rounded-lg shadow-sm p-4 md:p-6 card-hover">
-        <div class="flex flex-col md:flex-row items-center md:items-start text-center md:text-left">
-            <div class="flex-shrink-0 mb-2 md:mb-0">
-                <div class="w-10 h-10 md:w-12 md:h-12 bg-green-100 rounded-lg flex items-center justify-center mx-auto md:mx-0">
-                    <i class="fas fa-check-circle text-green-600 text-lg md:text-xl"></i>
-                </div>
-            </div>
-            <div class="md:ml-4 flex-1">
-                <p class="hidden md:block text-sm font-medium text-gray-500">Concluídas</p>
-                <p class="text-xl md:text-2xl font-bold text-gray-900"><?= $stats['concluidas'] ?></p>
-            </div>
-        </div>
-    </div>
-</div>
 
 <!-- Recent Solicitations -->
 <div class="bg-white rounded-lg shadow-sm">
@@ -111,41 +79,78 @@ ob_start();
                     // Formatar data criada com horário em português
                     $dataCriada = date('d/m/Y \à\s H:i', strtotime($solicitacao['created_at']));
                     
-                    // Formatar data agendada
-                    if (!empty($solicitacao['data_agendamento'])) {
-                        $dataAgendamento = $solicitacao['data_agendamento'];
-                        $timestamp = strtotime($dataAgendamento);
-                        if ($timestamp !== false) {
-                            // Sempre mostrar data e horário quando tiver agendamento
-                            $dataAgendada = date('d/m/Y \à\s H:i', $timestamp);
+                    // Formatar data de última interação (updated_at)
+                    $dataUltimaInteracao = !empty($solicitacao['updated_at']) ? date('d/m/Y \à\s H:i', strtotime($solicitacao['updated_at'])) : '-';
+                    
+                    // Formatar data agendada com horário (priorizar horário escolhido pelo locatário)
+                    $dataAgendada = 'Aguardando confirmação do prestador';
+                    $dataConcluido = '';
+                    
+                    // Prioridade 1: horario_confirmado_raw (horário escolhido pelo locatário)
+                    if (!empty($solicitacao['horario_confirmado_raw'])) {
+                        // Formato esperado: "dd/mm/yyyy - HH:MM-HH:MM"
+                        if (preg_match('/(\d{2}\/\d{2}\/\d{4})\s*-\s*(\d{2}:\d{2})-(\d{2}:\d{2})/', $solicitacao['horario_confirmado_raw'], $match)) {
+                            $dataAgendada = $match[1] . ' das ' . $match[2] . ' às ' . $match[3];
+                        } elseif (preg_match('/(\d{2}\/\d{2}\/\d{4})\s*-\s*(\d{2}:\d{2})/', $solicitacao['horario_confirmado_raw'], $match)) {
+                            $dataAgendada = $match[1] . ' às ' . $match[2];
                         } else {
-                            $dataAgendada = 'Data inválida';
+                            $dataAgendada = $solicitacao['horario_confirmado_raw'];
                         }
-                    } else {
-                        $dataAgendada = 'Aguardando confirmação do prestador';
+                    }
+                    // Prioridade 2: confirmed_schedules
+                    elseif (!empty($solicitacao['confirmed_schedules'])) {
+                        $confirmed = is_string($solicitacao['confirmed_schedules']) 
+                            ? json_decode($solicitacao['confirmed_schedules'], true) 
+                            : $solicitacao['confirmed_schedules'];
+                        if (is_array($confirmed) && !empty($confirmed)) {
+                            $primeiro = $confirmed[0];
+                            if (!empty($primeiro['raw'])) {
+                                if (preg_match('/(\d{2}\/\d{2}\/\d{4})\s*-\s*(\d{2}:\d{2})-(\d{2}:\d{2})/', $primeiro['raw'], $match)) {
+                                    $dataAgendada = $match[1] . ' das ' . $match[2] . ' às ' . $match[3];
+                                } elseif (preg_match('/(\d{2}\/\d{2}\/\d{4})\s*-\s*(\d{2}:\d{2})/', $primeiro['raw'], $match)) {
+                                    $dataAgendada = $match[1] . ' às ' . $match[2];
+                                } else {
+                                    $dataAgendada = $primeiro['raw'];
+                                }
+                            }
+                        }
+                    }
+                    // Prioridade 3: data_agendamento e horario_agendamento
+                    elseif (!empty($solicitacao['data_agendamento']) && !empty($solicitacao['horario_agendamento'])) {
+                        $dataAg = new \DateTime($solicitacao['data_agendamento']);
+                        $dataFormatada = $dataAg->format('d/m/Y');
+                        $horaFormatada = substr($solicitacao['horario_agendamento'], 0, 5); // HH:MM
+                        $dataAgendada = $dataFormatada . ' às ' . $horaFormatada;
+                    }
+                    
+                    // Data de conclusão (se status for Concluído)
+                    if (stripos($solicitacao['status_nome'] ?? '', 'Concluído') !== false || stripos($solicitacao['status_nome'] ?? '', 'Concluido') !== false) {
+                        if (!empty($solicitacao['updated_at'])) {
+                            $dataConcluido = date('d/m/Y', strtotime($solicitacao['updated_at']));
+                        }
                     }
                 ?>
                     <a href="<?= url($locatario['instancia'] . '/solicitacoes/' . $solicitacao['id']) ?>" 
                        class="block border border-gray-200 rounded-lg p-3 hover:bg-gray-50 hover:border-green-300 transition-all cursor-pointer">
-                        <div class="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs">
-                            <!-- Nº Solicitação -->
-                            <div>
-                                <span class="text-gray-500">Nº Solicitação:</span>
-                                <span class="font-semibold text-gray-900 ml-1"><?= htmlspecialchars($numeroSolicitacao) ?></span>
+                        <div class="mb-2">
+                            <!-- Nº Solicitação e Contrato -->
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="font-semibold text-gray-900 text-sm"><?= htmlspecialchars($numeroSolicitacao) ?></span>
+                                <?php if (!empty($solicitacao['numero_contrato'])): ?>
+                                    <span class="text-xs text-gray-500">Contrato: <?= htmlspecialchars($solicitacao['numero_contrato']) ?></span>
+                                <?php endif; ?>
                             </div>
-                            
+                            <!-- Datas abaixo do contrato e número -->
+                            <div class="text-xs text-gray-500 space-y-0.5">
+                                <div>Data de registro: <span class="text-gray-700"><?= $dataCriada ?></span></div>
+                                <div>Data da última interação: <span class="text-gray-700"><?= $dataUltimaInteracao ?></span></div>
+                            </div>
+                        </div>
+                        <div class="text-xs space-y-1">
                             <!-- Nº Protocolo -->
                             <div>
                                 <span class="text-gray-500">Nº Protocolo:</span>
                                 <span class="font-semibold text-gray-900 ml-1"><?= htmlspecialchars($protocolo) ?></span>
-                            </div>
-                            
-                            <!-- Status -->
-                            <div class="col-span-2 md:col-span-1">
-                                <span class="text-gray-500">Status:</span>
-                                <span class="status-badge status-<?= strtolower(str_replace([' ', '(', ')'], ['-', '', ''], $solicitacao['status_nome'])) ?> ml-1 text-xs">
-                                    <?= htmlspecialchars($solicitacao['status_nome']) ?>
-                                </span>
                             </div>
                             
                             <!-- Categoria -->
@@ -154,16 +159,25 @@ ob_start();
                                 <span class="font-medium text-gray-900 ml-1"><?= htmlspecialchars($solicitacao['categoria_nome'] ?? '-') ?></span>
                             </div>
                             
-                            <!-- Data Criada -->
-                            <div>
-                                <span class="text-gray-500">Data Criada:</span>
-                                <span class="font-medium text-gray-900 ml-1"><?= $dataCriada ?></span>
-                            </div>
-                            
                             <!-- Data Agendada -->
                             <div>
                                 <span class="text-gray-500">Data Agendada:</span>
                                 <span class="font-medium ml-1 <?= $dataAgendada === 'Aguardando confirmação do prestador' ? 'text-red-600' : 'text-gray-900' ?>"><?= $dataAgendada ?></span>
+                            </div>
+                            
+                            <!-- Status - Data Concluído -->
+                            <div class="flex items-center gap-2">
+                                <div class="flex-1">
+                                    <span class="text-gray-500">Status:</span>
+                                    <span class="status-badge status-<?= strtolower(str_replace([' ', '(', ')'], ['-', '', ''], $solicitacao['status_nome'])) ?> ml-1 text-xs">
+                                        <?= htmlspecialchars($solicitacao['status_nome']) ?>
+                                    </span>
+                                </div>
+                                <?php if (!empty($dataConcluido)): ?>
+                                <div class="flex-1">
+                                    <span class="text-gray-500">(<?= $dataConcluido ?>)</span>
+                                </div>
+                                <?php endif; ?>
                             </div>
                         </div>
                     </a>

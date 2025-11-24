@@ -52,6 +52,7 @@ class CategoriasController extends Controller
             'status' => $this->input('status', 'ATIVA'),
             'ordem' => $this->input('ordem', 0),
             'tipo_imovel' => $this->input('tipo_imovel', 'AMBOS'),
+            'parent_id' => $this->input('parent_id') ? (int)$this->input('parent_id') : null,
             'limite_solicitacoes_12_meses' => $this->input('limite_solicitacoes_12_meses') ? (int)$this->input('limite_solicitacoes_12_meses') : null
         ];
 

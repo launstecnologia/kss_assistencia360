@@ -110,8 +110,6 @@ ob_start();
                         >
                     </div>
 
-                    <div></div>
-
                     <div class="md:col-span-2">
                         <label class="block text-sm font-medium text-gray-700 mb-2">
                             Endereço <span class="text-red-500">*</span>

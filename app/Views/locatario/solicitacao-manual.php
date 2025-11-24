@@ -725,13 +725,13 @@ $steps = [
                             </div>
                             
                             <!-- Navigation -->
-                            <div class="flex justify-between pt-6">
+                            <div class="flex flex-col sm:flex-row gap-3 sm:gap-4 sm:justify-between pt-6">
                                 <a href="<?= url($instancia . '/solicitacao-manual/etapa/4') ?>" 
-                                   class="px-6 py-3 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors">
+                                   class="w-full sm:w-auto px-6 py-3 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors text-center sm:text-left">
                                     <i class="fas fa-arrow-left mr-2"></i>Voltar
                                 </a>
                                 <button type="submit" id="btn-finalizar"
-                                        class="px-6 py-3 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors">
+                                        class="w-full sm:w-auto flex-1 sm:flex-none px-6 py-3 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors">
                                     <i class="fas fa-check mr-2"></i>Finalizar Solicitação
                                 </button>
                             </div>
@@ -1130,8 +1130,9 @@ $steps = [
             const horariosFormatados = horariosEscolhidos.map(horario => {
                 const [dataStr, faixaHorario] = horario.split(' - ');
                 const [dia, mes, ano] = dataStr.split('/');
-                const horarioInicial = faixaHorario.split('-')[0];
-                return `${ano}-${mes}-${dia} ${horarioInicial}:00`;
+                const [horarioInicial, horarioFinal] = faixaHorario.split('-');
+                // Formato: "2025-10-29 08:00:00-11:00:00"
+                return `${ano}-${mes}-${dia} ${horarioInicial.trim()}:00-${horarioFinal.trim()}:00`;
             });
             
             const inputHorarios = document.createElement('input');

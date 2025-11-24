@@ -23,6 +23,75 @@ $steps = [
     4 => ['nome' => 'Agendamento', 'icone' => 'fas fa-calendar'],
     5 => ['nome' => 'Confirmação', 'icone' => 'fas fa-check']
 ];
+
+// Função para gerar resumo das etapas anteriores
+function gerarResumoEtapas($etapaAtual, $locatario) {
+    $dados = $_SESSION['nova_solicitacao'] ?? [];
+    $resumo = [];
+    
+    // Etapa 1: Endereço
+    if ($etapaAtual > 1 && isset($dados['endereco_selecionado'])) {
+        $imovel = $locatario['imoveis'][$dados['endereco_selecionado']] ?? [];
+        if (!empty($imovel)) {
+            $endereco = htmlspecialchars($imovel['endereco'] ?? '') . ', ' . htmlspecialchars($imovel['numero'] ?? '');
+            $resumo[] = [
+                'titulo' => 'Endereço',
+                'icone' => 'fas fa-map-marker-alt',
+                'conteudo' => $endereco
+            ];
+        }
+    }
+    
+    // Etapa 2: Serviço
+    if ($etapaAtual > 2 && isset($dados['subcategoria_id'])) {
+        $subcategoriaModel = new \App\Models\Subcategoria();
+        $subcategoria = $subcategoriaModel->find($dados['subcategoria_id']);
+        if ($subcategoria) {
+            $resumo[] = [
+                'titulo' => 'Serviço',
+                'icone' => 'fas fa-cog',
+                'conteudo' => htmlspecialchars($subcategoria['nome'] ?? '')
+            ];
+        }
+    }
+    
+    // Etapa 3: Descrição
+    if ($etapaAtual > 3 && !empty($dados['descricao_problema'])) {
+        $descricao = htmlspecialchars($dados['descricao_problema']);
+        if (strlen($descricao) > 100) {
+            $descricao = substr($descricao, 0, 100) . '...';
+        }
+        $resumo[] = [
+            'titulo' => 'Descrição',
+            'icone' => 'fas fa-edit',
+            'conteudo' => $descricao
+        ];
+    }
+    
+    // Etapa 4: Agendamento
+    if ($etapaAtual > 4 && !empty($dados['horarios_preferenciais'])) {
+        $horarios = $dados['horarios_preferenciais'];
+        if (is_array($horarios) && !empty($horarios)) {
+            $primeiroHorario = $horarios[0];
+            if (preg_match('/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2})/', $primeiroHorario, $matches)) {
+                $dataFormatada = $matches[3] . '/' . $matches[2] . '/' . $matches[1] . ' às ' . $matches[4] . ':' . $matches[5];
+                $totalHorarios = count($horarios);
+                $texto = $dataFormatada;
+                if ($totalHorarios > 1) {
+                    $opcoesAdicionais = $totalHorarios - 1;
+                    $texto .= ' (+' . $opcoesAdicionais . ' ' . ($opcoesAdicionais > 1 ? 'opções' : 'opção') . ')';
+                }
+                $resumo[] = [
+                    'titulo' => 'Agendamento',
+                    'icone' => 'fas fa-calendar',
+                    'conteudo' => $texto
+                ];
+            }
+        }
+    }
+    
+    return $resumo;
+}
 ?>
 
 <!-- Header -->
@@ -33,9 +102,6 @@ $steps = [
                 <i class="fas fa-plus-circle mr-2"></i>
                 Nova Solicitação
             </h1>
-            <p class="text-gray-600 mt-1">
-                Preencha os dados abaixo para criar uma nova solicitação de assistência
-            </p>
         </div>
         <a href="<?= url($locatario['instancia'] . '/dashboard') ?>" 
            class="inline-flex items-center px-4 py-2 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors">
@@ -118,6 +184,46 @@ $steps = [
 
 <!-- Step Content -->
     <div class="bg-white rounded-lg shadow-sm">
+    <?php 
+    // Exibir resumo das etapas anteriores (exceto na etapa 1 e na última etapa)
+    if ($etapaAtual > 1 && $etapaAtual < 5):
+        $resumoEtapas = gerarResumoEtapas($etapaAtual, $locatario);
+        if (!empty($resumoEtapas)):
+    ?>
+        <!-- Resumo das Etapas Anteriores - Dropdown -->
+        <div class="px-6 py-3 bg-gray-50 border-b border-gray-200">
+            <button type="button" 
+                    onclick="toggleResumoEtapas()" 
+                    class="w-full flex items-center justify-between text-left focus:outline-none focus:ring-2 focus:ring-green-500 rounded-lg p-2 -m-2">
+                <div class="flex items-center">
+                    <i class="fas fa-list-ul text-gray-600 mr-2"></i>
+                    <h3 class="text-sm font-medium text-gray-700 whitespace-nowrap">Resumo das Etapas Anteriores</h3>
+                </div>
+                <i class="fas fa-chevron-down text-gray-400 transition-transform duration-200" id="resumo-chevron"></i>
+            </button>
+            <div id="resumo-conteudo" class="hidden mt-3 pt-3 border-t border-gray-200">
+                <div class="grid grid-cols-1 md:grid-cols-<?= min(count($resumoEtapas), 4) ?> gap-3">
+                    <?php foreach ($resumoEtapas as $item): ?>
+                        <div class="bg-white rounded-lg p-3 border border-gray-200">
+                            <div class="flex items-start">
+                                <i class="<?= $item['icone'] ?> text-gray-400 mr-2 mt-0.5 text-sm"></i>
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-xs font-medium text-gray-500 mb-1"><?= $item['titulo'] ?></p>
+                                    <p class="text-sm text-gray-900 truncate" title="<?= htmlspecialchars($item['conteudo']) ?>">
+                                        <?= $item['conteudo'] ?>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+        </div>
+    <?php 
+        endif;
+    endif; 
+    ?>
+    
     <?php if ($etapaAtual == 1): ?>
         <!-- ETAPA 1: ENDEREÇO -->
         <div class="px-6 py-4 border-b border-gray-200">
@@ -171,15 +277,6 @@ $steps = [
                                                 </div>
                                                 <div style="font-weight:600;font-size:14px;color:#111827;margin-bottom:4px;">
                                                     <?= htmlspecialchars($endereco . ', ' . $numero) ?>
-                                                </div>
-                                                <div style="color:#6b7280;font-size:14px;margin-bottom:2px;">
-                                                    <?= htmlspecialchars($bairro . ', ' . $cidade . ' - ' . $uf) ?>
-                                                </div>
-                                                <div style="color:#6b7280;font-size:14px;margin-bottom:6px;">
-                                                    CEP: <?= htmlspecialchars($cep) ?>
-                                                </div>
-                                                <div style="color:#9ca3af;font-size:12px;">
-                                                    Contrato: <?= htmlspecialchars($contratoInfo) ?> | Cód: <?= htmlspecialchars($codigo) ?>
                                                 </div>
                                             </div>
                                             <div style="width:24px;height:24px;border-radius:50%;background:<?= $index == 0 ? '#10b981' : '#fff' ?>;border:2px solid <?= $index == 0 ? '#10b981' : '#d1d5db' ?>;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
@@ -307,30 +404,76 @@ $steps = [
                     </h3>
                     <div class="space-y-3">
                         <?php if (!empty($categorias)): ?>
-                            <?php foreach ($categorias as $categoria): ?>
-                                <label class="relative block categoria-label" data-categoria-label="<?= $categoria['id'] ?>" style="position: relative;">
-                                    <input type="radio" name="categoria_id" value="<?= $categoria['id'] ?>" 
-                                           class="sr-only categoria-radio" data-categoria="<?= $categoria['id'] ?>">
-                                    <div class="border-2 rounded-lg p-4 cursor-pointer transition-all hover:border-blue-300 categoria-card relative" 
-                                         data-categoria="<?= $categoria['id'] ?>" style="position: relative;">
+                            <?php foreach ($categorias as $categoriaPai): ?>
+                                <?php 
+                                // Verificar se a categoria pai tem filhas
+                                $temFilhas = !empty($categoriaPai['filhas']) && count($categoriaPai['filhas']) > 0;
+                                ?>
+                                
+                                <?php if ($temFilhas): ?>
+                                    <!-- Categoria Pai COM Filhas (Separadora Expansível) -->
+                                    <div class="categoria-pai-container" data-categoria-pai-id="<?= $categoriaPai['id'] ?>">
+                                        <!-- Botão para expandir/colapsar categoria pai -->
+                                        <button type="button" 
+                                                class="w-full flex items-center justify-between border-2 border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-all categoria-pai-toggle"
+                                                data-categoria-pai="<?= $categoriaPai['id'] ?>"
+                                                onclick="toggleCategoriaPai(<?= $categoriaPai['id'] ?>)">
+                                            <div class="flex items-center">
+                                                <i class="<?= $categoriaPai['icone'] ?? 'fas fa-cog' ?> text-xl text-gray-600 mr-3"></i>
+                                                <span class="text-sm font-medium text-gray-900"><?= htmlspecialchars($categoriaPai['nome']) ?></span>
+                                                <span class="ml-2 text-xs text-gray-500">(<?= count($categoriaPai['filhas']) ?> categorias)</span>
+                                            </div>
+                                            <div class="flex items-center">
+                                                <i class="fas fa-chevron-down text-gray-400 categoria-pai-chevron" id="chevron-<?= $categoriaPai['id'] ?>"></i>
+                                            </div>
+                                        </button>
+                                        
+                                        <!-- Descrição da categoria pai (aparece quando expandido) -->
+                                        <?php if (!empty($categoriaPai['descricao'])): ?>
+                                            <div class="px-4 pb-2 categoria-pai-descricao hidden" id="descricao-pai-<?= $categoriaPai['id'] ?>">
+                                                <p class="text-xs text-gray-600 italic">
+                                                    <i class="fas fa-info-circle mr-1"></i>
+                                                    <?= htmlspecialchars($categoriaPai['descricao']) ?>
+                                                </p>
+                                            </div>
+                                        <?php endif; ?>
+                                        
+                                        <!-- Categorias Filhas (ocultas por padrão) -->
+                                        <div class="categoria-filhas-container hidden mt-2 ml-4 space-y-2 border-l-2 border-gray-200 pl-4" id="filhas-<?= $categoriaPai['id'] ?>" style="display: none;">
+                                            <?php foreach ($categoriaPai['filhas'] as $categoriaFilha): ?>
+                                                <label class="relative block categoria-label" data-categoria-label="<?= $categoriaFilha['id'] ?>">
+                                                    <input type="radio" name="categoria_id" value="<?= $categoriaFilha['id'] ?>" 
+                                                           class="sr-only categoria-radio" data-categoria="<?= $categoriaFilha['id'] ?>">
+                                                    <div class="border-2 rounded-lg p-4 cursor-pointer transition-all hover:border-blue-300 categoria-card" 
+                                                         data-categoria="<?= $categoriaFilha['id'] ?>">
                                         <div class="flex items-center justify-between">
                                             <div class="flex items-center">
-                                                <i class="<?= $categoria['icone'] ?? 'fas fa-cog' ?> text-xl text-gray-600 mr-3"></i>
-                                                <span class="text-sm font-medium text-gray-900"><?= htmlspecialchars($categoria['nome']) ?></span>
+                                                                <i class="<?= $categoriaFilha['icone'] ?? 'fas fa-cog' ?> text-lg text-gray-600 mr-3"></i>
+                                                                <span class="text-sm font-medium text-gray-900"><?= htmlspecialchars($categoriaFilha['nome']) ?></span>
                                             </div>
                                             <div class="w-6 h-6 border-2 border-gray-300 rounded-full categoria-check"></div>
                                         </div>
+                                                        
+                                                        <!-- Descrição da categoria (aparece quando selecionado) -->
+                                                        <?php if (!empty($categoriaFilha['descricao'])): ?>
+                                                            <div class="mt-2 categoria-descricao hidden">
+                                                                <p class="text-xs text-gray-600 italic">
+                                                                    <i class="fas fa-info-circle mr-1"></i>
+                                                                    <?= htmlspecialchars($categoriaFilha['descricao']) ?>
+                                                                </p>
+                                                            </div>
+                                                        <?php endif; ?>
                                         
                                         <!-- Subcategorias (aparece quando selecionado) -->
                                         <div class="mt-3 categoria-details hidden">
                                             <div class="bg-gray-50 rounded-lg p-3">
                                                 <h4 class="text-sm font-medium text-gray-700 mb-3">
                                                     Tipo de Serviço
-                                                    <span class="text-xs text-gray-500">(<?= count($categoria['subcategorias'] ?? []) ?> opções)</span>
+                                                                    <span class="text-xs text-gray-500">(<?= count($categoriaFilha['subcategorias'] ?? []) ?> opções)</span>
                                                 </h4>
                                                 <div class="space-y-3">
-                                                    <?php if (!empty($categoria['subcategorias'])): ?>
-                                                        <?php foreach ($categoria['subcategorias'] as $subcategoria): ?>
+                                                                    <?php if (!empty($categoriaFilha['subcategorias'])): ?>
+                                                                        <?php foreach ($categoriaFilha['subcategorias'] as $subcategoria): ?>
                                                             <label class="relative block cursor-pointer">
                                                                 <input type="radio" name="subcategoria_id" value="<?= $subcategoria['id'] ?>" 
                                                                        class="sr-only subcategoria-radio">
@@ -369,6 +512,83 @@ $steps = [
                                         </div>
                                     </div>
                     </label>
+                                            <?php endforeach; ?>
+                                        </div>
+                                    </div>
+                                <?php else: ?>
+                                    <!-- Categoria SEM Filhas (Categoria Normal) -->
+                                    <label class="relative block categoria-label" data-categoria-label="<?= $categoriaPai['id'] ?>">
+                                        <input type="radio" name="categoria_id" value="<?= $categoriaPai['id'] ?>" 
+                                               class="sr-only categoria-radio" data-categoria="<?= $categoriaPai['id'] ?>">
+                                        <div class="border-2 rounded-lg p-4 cursor-pointer transition-all hover:border-blue-300 categoria-card" 
+                                             data-categoria="<?= $categoriaPai['id'] ?>">
+                                            <div class="flex items-center justify-between">
+                                                <div class="flex items-center">
+                                                    <i class="<?= $categoriaPai['icone'] ?? 'fas fa-cog' ?> text-xl text-gray-600 mr-3"></i>
+                                                    <span class="text-sm font-medium text-gray-900"><?= htmlspecialchars($categoriaPai['nome']) ?></span>
+                                                </div>
+                                                <div class="w-6 h-6 border-2 border-gray-300 rounded-full categoria-check"></div>
+                                            </div>
+                                            
+                                            <!-- Descrição da categoria (aparece quando selecionado) -->
+                                            <?php if (!empty($categoriaPai['descricao'])): ?>
+                                                <div class="mt-2 categoria-descricao hidden">
+                                                    <p class="text-xs text-gray-600 italic">
+                                                        <i class="fas fa-info-circle mr-1"></i>
+                                                        <?= htmlspecialchars($categoriaPai['descricao']) ?>
+                                                    </p>
+                                                </div>
+                                            <?php endif; ?>
+                                            
+                                            <!-- Subcategorias (aparece quando selecionado) -->
+                                            <div class="mt-3 categoria-details hidden">
+                                                <div class="bg-gray-50 rounded-lg p-3">
+                                                    <h4 class="text-sm font-medium text-gray-700 mb-3">
+                                                        Tipo de Serviço
+                                                        <span class="text-xs text-gray-500">(<?= count($categoriaPai['subcategorias'] ?? []) ?> opções)</span>
+                                                    </h4>
+                                                    <div class="space-y-3">
+                                                        <?php if (!empty($categoriaPai['subcategorias'])): ?>
+                                                            <?php foreach ($categoriaPai['subcategorias'] as $subcategoria): ?>
+                                                                <label class="relative block cursor-pointer">
+                                                                    <input type="radio" name="subcategoria_id" value="<?= $subcategoria['id'] ?>" 
+                                                                           class="sr-only subcategoria-radio">
+                                                                    <div class="border border-gray-200 rounded-lg p-3 hover:border-blue-300 transition-colors subcategoria-card <?= (!empty($subcategoria['is_emergencial']) && ($subcategoria['is_emergencial'] == 1 || $subcategoria['is_emergencial'] === true)) ? 'border-red-300 bg-red-50' : '' ?>">
+                                                                        <div class="flex items-start justify-between">
+                                                                            <div class="flex-1">
+                                                                                <div class="flex items-center gap-2 mb-1">
+                                                                                    <h5 class="text-sm font-medium text-gray-900">
+                                                                                        <?= htmlspecialchars($subcategoria['nome']) ?>
+                                                                                    </h5>
+                                                                                    <?php if (!empty($subcategoria['is_emergencial']) && ($subcategoria['is_emergencial'] == 1 || $subcategoria['is_emergencial'] === true)): ?>
+                                                                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 border border-red-200">
+                                                                                            <i class="fas fa-exclamation-triangle mr-1"></i>
+                                                                                            Emergencial
+                                                                                        </span>
+                                                                                    <?php endif; ?>
+                                                                                </div>
+                                                                                <?php if (!empty($subcategoria['descricao'])): ?>
+                                                                                    <p class="text-xs text-gray-600">
+                                                                                        <?= htmlspecialchars($subcategoria['descricao']) ?>
+                                                                                    </p>
+                                                                                <?php endif; ?>
+                                                                            </div>
+                                                                            <div class="ml-3">
+                                                                                <div class="w-5 h-5 border-2 border-gray-300 rounded-full subcategoria-check"></div>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                </label>
+                                                            <?php endforeach; ?>
+                                                        <?php else: ?>
+                                                            <p class="text-sm text-gray-500">Nenhum tipo de serviço disponível para esta categoria.</p>
+                                                        <?php endif; ?>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </label>
+                                <?php endif; ?>
                             <?php endforeach; ?>
                         <?php else: ?>
                             <div class="text-center py-8 text-gray-500">
@@ -837,12 +1057,6 @@ $steps = [
                         </p>
                     </div>
                     
-                    <!-- Imobiliária -->
-                    <div>
-                        <span class="text-sm font-medium text-gray-500">Imobiliária:</span>
-                        <p class="text-sm text-gray-900"><?= htmlspecialchars($locatario['imobiliaria_nome']) ?></p>
-                    </div>
-                    
                     <!-- Serviço -->
                     <div>
                         <span class="text-sm font-medium text-gray-500">Serviço:</span>
@@ -928,18 +1142,14 @@ $steps = [
                 </div>
                 
                 <!-- Navigation -->
-                <div class="flex justify-between pt-6">
+                <div class="flex flex-col sm:flex-row gap-3 sm:gap-4 sm:justify-between pt-6">
                     <a href="<?= url($locatario['instancia'] . '/nova-solicitacao/etapa/4') ?>" 
-                       class="px-6 py-3 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors">
-                        Voltar
+                       class="w-full sm:w-auto px-6 py-3 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors text-center sm:text-left">
+                        <i class="fas fa-arrow-left mr-2"></i>Voltar
                     </a>
                     <button type="submit" id="btn-finalizar"
-                            class="px-6 py-3 <?= ($isEmergencial && $isForaHorario) ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700' ?> text-white font-medium rounded-lg transition-colors"
-                            <?php if ($isEmergencial && $isForaHorario && $telefoneEmergencia): ?>
-                            data-emergencia-fora-horario="true"
-                            data-telefone="<?= htmlspecialchars($telefoneEmergencia['numero']) ?>"
-                            <?php endif; ?>>
-                        <?= ($isEmergencial && $isForaHorario) ? 'Solicitar Emergência' : 'Finalizar Solicitação' ?>
+                            class="w-full sm:w-auto flex-1 sm:flex-none px-6 py-3 <?= ($isEmergencial && $isForaHorario) ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700' ?> text-white font-medium rounded-lg transition-colors">
+                        <i class="fas fa-check mr-2"></i><?= ($isEmergencial && $isForaHorario) ? 'Solicitar Emergência' : 'Finalizar Solicitação' ?>
                     </button>
                 </div>
             </form>
@@ -1225,6 +1435,41 @@ document.addEventListener('DOMContentLoaded', function() {
     const categoriaRadios = document.querySelectorAll('.categoria-radio');
     const categoriaCards = document.querySelectorAll('.categoria-card');
     
+    // Função para expandir/colapsar categoria pai
+    window.toggleCategoriaPai = function(categoriaPaiId) {
+        const container = document.getElementById('filhas-' + categoriaPaiId);
+        const chevron = document.getElementById('chevron-' + categoriaPaiId);
+        const descricao = document.getElementById('descricao-pai-' + categoriaPaiId);
+        
+        if (!container) return;
+        
+        if (container.style.display === 'none' || container.classList.contains('hidden')) {
+            // Expandir
+            container.classList.remove('hidden');
+            container.style.display = 'block';
+            if (chevron) {
+                chevron.classList.remove('fa-chevron-down');
+                chevron.classList.add('fa-chevron-up');
+            }
+            // Mostrar descrição quando expandir
+            if (descricao) {
+                descricao.classList.remove('hidden');
+            }
+        } else {
+            // Colapsar
+            container.classList.add('hidden');
+            container.style.display = 'none';
+            if (chevron) {
+                chevron.classList.remove('fa-chevron-up');
+                chevron.classList.add('fa-chevron-down');
+            }
+            // Ocultar descrição quando colapsar
+            if (descricao) {
+                descricao.classList.add('hidden');
+            }
+        }
+    };
+    
     // Função para mostrar modal de limite atingido (definida aqui para estar disponível)
     window.mostrarModalLimite = function(totalAtual, limite) {
         const modal = document.getElementById('modal-limite-atingido');
@@ -1381,6 +1626,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (details) {
                     details.classList.add('hidden');
                 }
+                
+                const descricao = card.querySelector('.categoria-descricao');
+                if (descricao) {
+                    descricao.classList.add('hidden');
+                }
             });
             
             // Selecionar o card atual
@@ -1405,6 +1655,11 @@ document.addEventListener('DOMContentLoaded', function() {
         const details = cardElement.querySelector('.categoria-details');
         if (details) {
             details.classList.remove('hidden');
+        }
+        
+        const descricao = cardElement.querySelector('.categoria-descricao');
+        if (descricao) {
+            descricao.classList.remove('hidden');
         }
     }
     
@@ -1956,12 +2211,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 inputTipo.value = '120_minutos';
                 form.appendChild(inputTipo);
             } else if (tipoAtendimento === 'agendar') {
-                // Converter horários emergenciais: "29/10/2025 - 08:00-11:00" → "2025-10-29 08:00:00"
+                // Converter horários emergenciais: "29/10/2025 - 08:00-11:00" → "2025-10-29 08:00:00-11:00:00"
                 const horariosFormatados = horariosEscolhidosEmergencial.map(horario => {
                     const [dataStr, faixaHorario] = horario.split(' - ');
                     const [dia, mes, ano] = dataStr.split('/');
-                    const horarioInicial = faixaHorario.split('-')[0];
-                    return `${ano}-${mes}-${dia} ${horarioInicial}:00`;
+                    const [horarioInicial, horarioFinal] = faixaHorario.split('-');
+                    // Formato: "2025-10-29 08:00:00-11:00:00"
+                    return `${ano}-${mes}-${dia} ${horarioInicial.trim()}:00-${horarioFinal.trim()}:00`;
                 });
                 
                 // Enviar como JSON
@@ -1977,12 +2233,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 inputTipo.value = 'agendar';
                 form.appendChild(inputTipo);
             } else {
-                // Normal (não emergencial): Converter: "29/10/2025 - 08:00-11:00" → "2025-10-29 08:00:00"
+                // Normal (não emergencial): Converter: "29/10/2025 - 08:00-11:00" → "2025-10-29 08:00:00-11:00:00"
                 const horariosFormatados = horariosEscolhidos.map(horario => {
                     const [dataStr, faixaHorario] = horario.split(' - ');
                     const [dia, mes, ano] = dataStr.split('/');
-                    const horarioInicial = faixaHorario.split('-')[0];
-                    return `${ano}-${mes}-${dia} ${horarioInicial}:00`;
+                    const [horarioInicial, horarioFinal] = faixaHorario.split('-');
+                    // Formato: "2025-10-29 08:00:00-11:00:00"
+                    return `${ano}-${mes}-${dia} ${horarioInicial.trim()}:00-${horarioFinal.trim()}:00`;
                 });
                 
                 // Enviar como JSON
@@ -2151,6 +2408,17 @@ document.addEventListener('keydown', function(e) {
         }
     }
 });
+
+// === Toggle Resumo das Etapas Anteriores ===
+function toggleResumoEtapas() {
+    const conteudo = document.getElementById('resumo-conteudo');
+    const chevron = document.getElementById('resumo-chevron');
+    
+    if (conteudo && chevron) {
+        conteudo.classList.toggle('hidden');
+        chevron.classList.toggle('rotate-180');
+    }
+}
 </script>
 
 <?php

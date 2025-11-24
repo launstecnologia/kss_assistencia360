@@ -219,10 +219,33 @@ class MaintenanceController extends Controller
 
     private function getMigrationStatus(): array
     {
+        // Garantir que não há queries pendentes antes de verificar status
+        // Fazer múltiplas tentativas para garantir
+        for ($i = 0; $i < 3; $i++) {
+            $this->closeAllPendingQueries();
+            if ($i < 2) {
+                usleep(50000); // 50ms entre tentativas
+            }
+        }
+        
         $check = function(string $column): bool {
+            // Fechar queries pendentes antes de cada verificação
+            try {
+                $pdo = Database::getInstance();
+                $testStmt = $pdo->query('SELECT 1');
+                if ($testStmt) {
+                    $testStmt->fetchAll(\PDO::FETCH_ASSOC);
+                    $testStmt->closeCursor();
+                    unset($testStmt);
+                }
+            } catch (\PDOException $e) {
+                // Ignorar
+            }
+            
             $sql = "SELECT COUNT(*) AS c FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'solicitacoes' AND COLUMN_NAME = ?";
-            $row = Database::fetch($sql, [$column]);
-            return (int)($row['c'] ?? 0) > 0;
+            // Usar fetchAll para garantir que a query seja completamente processada
+            $result = Database::fetchAll($sql, [$column]);
+            return (int)($result[0]['c'] ?? 0) > 0;
         };
 
         return [
@@ -330,15 +353,75 @@ class MaintenanceController extends Controller
                 $descricaoOrigem = 'Script';
             }
 
+            // Garantir que todas as queries foram fechadas antes de verificar status
+            // Fazer múltiplas tentativas para garantir que todas as queries sejam fechadas
+            for ($i = 0; $i < 5; $i++) {
+                $this->closeAllPendingQueries();
+                if ($i < 4) {
+                    usleep(150000); // 150ms entre tentativas
+                }
+            }
+
             $this->view('admin.migracoes', $this->getMigrationViewData([
                 'success' => sprintf('%s executado com sucesso (%d instrução(ões)).', $descricaoOrigem, $executadas)
             ]));
         } catch (\Throwable $e) {
+            // Garantir que todas as queries foram fechadas mesmo em caso de erro
+            $this->closeAllPendingQueries();
+            
             $this->view('admin.migracoes', $this->getMigrationViewData([
                 'error' => 'Falha ao executar script: ' . $e->getMessage(),
                 'previous_script_file' => $scriptFile,
                 'previous_sql_text' => $sqlText,
             ]));
+        }
+    }
+
+    /**
+     * Fecha todas as queries pendentes para evitar conflitos
+     */
+    private function closeAllPendingQueries(): void
+    {
+        try {
+            $pdo = Database::getInstance();
+            
+            // Tentar fechar qualquer statement pendente
+            // Executar uma query simples e garantir que seja completamente processada
+            $stmt = $pdo->query('SELECT 1');
+            if ($stmt) {
+                // Buscar todos os resultados para garantir que a query seja completamente processada
+                $results = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+                // Fechar o cursor explicitamente
+                $stmt->closeCursor();
+                // Liberar a referência
+                unset($stmt);
+                unset($results);
+            }
+            
+            // Tentar executar outra query para forçar o fechamento de qualquer query pendente
+            try {
+                $stmt2 = $pdo->query('SELECT 1');
+                if ($stmt2) {
+                    $stmt2->fetchAll(\PDO::FETCH_ASSOC);
+                    $stmt2->closeCursor();
+                    unset($stmt2);
+                }
+            } catch (\PDOException $e) {
+                // Se der erro, significa que pode haver queries pendentes
+                // Tentar uma última vez com um comando simples
+                try {
+                    $pdo->exec('SELECT 1');
+                } catch (\PDOException $e2) {
+                    // Ignorar
+                }
+            }
+            
+            // Forçar garbage collection se possível
+            if (function_exists('gc_collect_cycles')) {
+                gc_collect_cycles();
+            }
+        } catch (\PDOException $e) {
+            // Ignorar erros na limpeza - pode não haver queries pendentes
         }
     }
 
@@ -368,20 +451,94 @@ class MaintenanceController extends Controller
     {
         $pdo = Database::getInstance();
 
-        $clean = preg_replace('/^\s*(--|#).*$\r?$/m', '', $sql);
-        $clean = preg_replace('/\/\*.*?\*\//s', '', $clean);
+        // Habilitar query buffering para evitar problemas com queries não finalizadas
+        $pdo->setAttribute(\PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, true);
 
-        $parts = preg_split('/;\s*(?:\r?\n|$)/', $clean);
+        // Garantir que não há queries pendentes antes de começar
+        $this->closeAllPendingQueries();
+
+        // Remover comentários de linha (-- e #)
+        $clean = preg_replace('/^\s*(--|#).*$/m', '', $sql);
+        // Remover comentários de bloco (/* ... */)
+        $clean = preg_replace('/\/\*.*?\*\//s', '', $clean);
+        // Normalizar quebras de linha
+        $clean = str_replace(["\r\n", "\r"], "\n", $clean);
+
+        // Dividir por ponto e vírgula (seguido de espaço/linha ou fim de string)
+        // Usar lookahead para manter o ponto e vírgula no final de cada parte
+        $parts = preg_split('/;\s*(?=\n|$)/', $clean, -1, PREG_SPLIT_NO_EMPTY);
         $executadas = 0;
 
         foreach ($parts as $statement) {
             $stmt = trim($statement);
-            if ($stmt === '') {
+            
+            // Pular se estiver vazio ou muito curto (menos de 10 caracteres)
+            if ($stmt === '' || strlen($stmt) < 10) {
                 continue;
             }
-            $pdo->exec($stmt);
-            $executadas++;
+            
+            // Normalizar espaços múltiplos, mas manter estrutura básica
+            $stmt = preg_replace('/\s+/', ' ', $stmt);
+            $stmt = trim($stmt);
+            
+            // Adicionar ponto e vírgula se não tiver (para queries que foram divididas)
+            if (!preg_match('/;\s*$/', $stmt)) {
+                $stmt .= ';';
+            }
+            
+            try {
+                // Para comandos que podem retornar resultados (SELECT, SHOW, etc)
+                if (preg_match('/^\s*(SELECT|SHOW|DESCRIBE|EXPLAIN)\s+/i', $stmt)) {
+                    $pdoStmt = $pdo->query($stmt);
+                    if ($pdoStmt) {
+                        // Buscar todos os resultados para garantir que a query seja completamente processada
+                        $pdoStmt->fetchAll(\PDO::FETCH_ASSOC);
+                        // Fechar o cursor explicitamente
+                        $pdoStmt->closeCursor();
+                        // Liberar a referência
+                        unset($pdoStmt);
+                    }
+                } else {
+                    // Para comandos DDL (ALTER, CREATE, DROP, etc) e outros, usar exec()
+                    // Isso inclui PREPARE, EXECUTE, DEALLOCATE que não retornam resultados
+                    try {
+                    $pdo->exec($stmt);
+                    } catch (\PDOException $e) {
+                        // Se for erro de coluna já existe (1060), ignorar e continuar
+                        if (strpos($e->getMessage(), 'Duplicate column name') !== false || 
+                            strpos($e->getMessage(), '1060') !== false ||
+                            strpos($e->getMessage(), 'duplicate') !== false) {
+                            // Coluna já existe, contar como executada mas não incrementar contador
+                            // (já foi incrementado antes do try)
+                            $this->closeAllPendingQueries();
+                            continue;
+                        }
+                        // Para outros erros, relançar
+                        throw $e;
+                    }
+                }
+                $executadas++;
+                
+                // Fechar qualquer cursor pendente após cada statement
+                // Isso é especialmente importante para PREPARE/EXECUTE
+                $this->closeAllPendingQueries();
+            } catch (\PDOException $e) {
+                // Se for erro de coluna já existe, ignorar e continuar
+                if (strpos($e->getMessage(), 'Duplicate column name') !== false || 
+                    strpos($e->getMessage(), '1060') !== false) {
+                    $executadas++;
+                    $this->closeAllPendingQueries();
+                    continue;
+                }
+                
+                // Fechar queries pendentes mesmo em caso de erro
+                $this->closeAllPendingQueries();
+                throw new \RuntimeException("Erro ao executar SQL: " . $e->getMessage() . " | Query: " . substr($stmt, 0, 100));
+            }
         }
+
+        // Garantir que não há queries pendentes após executar o batch
+        $this->closeAllPendingQueries();
 
         return $executadas;
     }

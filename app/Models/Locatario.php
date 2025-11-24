@@ -113,11 +113,17 @@ class Locatario extends Model
         
         $updateFields = [];
         $values = [];
+        $nomeAtualizado = null;
         
         foreach ($dados as $field => $value) {
             if (in_array($field, $allowedFields) && $value !== null) {
                 $updateFields[] = "{$field} = ?";
                 $values[] = $value;
+                
+                // Se o nome foi atualizado, guardar para atualizar nas solicitações
+                if ($field === 'nome') {
+                    $nomeAtualizado = $value;
+                }
             }
         }
         
@@ -130,10 +136,45 @@ class Locatario extends Model
         
         try {
             $stmt = Database::query($sql, $values);
-            return $stmt->rowCount() > 0;
+            $sucesso = $stmt->rowCount() > 0;
+            
+            // ✅ Se o nome foi atualizado, atualizar em TODAS as solicitações relacionadas
+            if ($sucesso && $nomeAtualizado !== null) {
+                $this->atualizarNomeNasSolicitacoes($locatarioId, $nomeAtualizado);
+            }
+            
+            return $sucesso;
         } catch (\Exception $e) {
             error_log('Erro ao atualizar dados pessoais: ' . $e->getMessage());
             return false;
+        }
+    }
+    
+    /**
+     * Atualizar nome do locatário em todas as solicitações relacionadas
+     */
+    private function atualizarNomeNasSolicitacoes(int $locatarioId, string $novoNome): void
+    {
+        try {
+            // Buscar o locatário para pegar o ksi_cliente_id se existir
+            $locatario = $this->find($locatarioId);
+            if (!$locatario) {
+                return;
+            }
+            
+            // Atualizar solicitações onde locatario_id = locatarioId
+            $sql1 = "UPDATE solicitacoes SET locatario_nome = ?, updated_at = NOW() WHERE locatario_id = ?";
+            Database::query($sql1, [$novoNome, $locatarioId]);
+            
+            // Se tiver ksi_cliente_id, também atualizar solicitações onde locatario_id = ksi_cliente_id
+            if (!empty($locatario['ksi_cliente_id'])) {
+                $sql2 = "UPDATE solicitacoes SET locatario_nome = ?, updated_at = NOW() WHERE locatario_id = ?";
+                Database::query($sql2, [$novoNome, $locatario['ksi_cliente_id']]);
+            }
+            
+            error_log("✅ Nome do locatário atualizado em todas as solicitações [Locatario ID: {$locatarioId}] -> {$novoNome}");
+        } catch (\Exception $e) {
+            error_log('Erro ao atualizar nome nas solicitações: ' . $e->getMessage());
         }
     }
 }

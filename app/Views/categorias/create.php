@@ -370,6 +370,49 @@ ob_start();
                     <p class="mt-1 text-sm text-red-600"><?= htmlspecialchars($errors['limite_solicitacoes_12_meses']) ?></p>
                 <?php endif; ?>
             </div>
+            
+            <!-- Categoria Pai (Hierarquia) -->
+            <div class="md:col-span-2">
+                <label for="parent_id" class="block text-sm font-medium text-gray-700">
+                    Categoria Pai (Separadora)
+                </label>
+                <div class="mt-1 relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fas fa-sitemap text-gray-400"></i>
+                    </div>
+                    <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                        <i class="fas fa-chevron-down text-gray-400"></i>
+                    </div>
+                    <select name="parent_id" 
+                            id="parent_id"
+                            class="block w-full pl-10 pr-10 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all sm:text-sm appearance-none bg-white <?= isset($errors['parent_id']) ? 'border-red-300 focus:ring-red-500 focus:border-red-500' : '' ?>">
+                        <option value="">Nenhuma (Categoria Principal)</option>
+                        <?php 
+                        // Buscar categorias principais (sem parent_id) usando SQL direto
+                        try {
+                            $sql = "SELECT * FROM categorias WHERE (parent_id IS NULL OR parent_id = 0) AND status = 'ATIVA' ORDER BY nome ASC";
+                            $categoriasPai = \App\Core\Database::fetchAll($sql);
+                            foreach ($categoriasPai as $catPai): 
+                        ?>
+                            <option value="<?= $catPai['id'] ?>" <?= (isset($data['parent_id']) && $data['parent_id'] == $catPai['id']) ? 'selected' : '' ?>>
+                                <?= htmlspecialchars($catPai['nome']) ?>
+                            </option>
+                        <?php 
+                            endforeach;
+                        } catch (\Exception $e) {
+                            // Se houver erro, apenas não mostra as opções
+                        }
+                        ?>
+                    </select>
+                </div>
+                <p class="mt-1 text-xs text-gray-500">
+                    <i class="fas fa-info-circle mr-1"></i>
+                    Selecione uma categoria pai para criar uma hierarquia (ex: "Limpeza" dentro de "Manutenção e Prevenção"). Deixe vazio para criar uma categoria principal.
+                </p>
+                <?php if (isset($errors['parent_id'])): ?>
+                    <p class="mt-1 text-sm text-red-600"><?= htmlspecialchars($errors['parent_id']) ?></p>
+                <?php endif; ?>
+            </div>
         </div>
         
         <!-- Preview -->
