@@ -846,16 +846,80 @@ function renderizarDetalhes(solicitacao) {
         // Buscar horários do locatário
         if (solicitacao.horarios_indisponiveis) {
             // Quando horarios_indisponiveis = 1, horários originais do locatário estão em datas_opcoes
-            horariosLocatario = solicitacao.datas_opcoes ? JSON.parse(solicitacao.datas_opcoes) : [];
+            if (solicitacao.datas_opcoes) {
+                try {
+                    horariosLocatario = typeof solicitacao.datas_opcoes === 'string' 
+                        ? JSON.parse(solicitacao.datas_opcoes) 
+                        : solicitacao.datas_opcoes;
+                    if (!Array.isArray(horariosLocatario)) {
+                        horariosLocatario = [];
+                    }
+                } catch (e) {
+                    console.error('Erro ao parsear datas_opcoes:', e);
+                    horariosLocatario = [];
+                }
+            } else {
+                // Fallback: se datas_opcoes não existir, tentar buscar de horarios_opcoes (caso antigo)
+                if (solicitacao.horarios_opcoes) {
+                    try {
+                        horariosLocatario = typeof solicitacao.horarios_opcoes === 'string' 
+                            ? JSON.parse(solicitacao.horarios_opcoes) 
+                            : solicitacao.horarios_opcoes;
+                        if (!Array.isArray(horariosLocatario)) {
+                            horariosLocatario = [];
+                        }
+                    } catch (e) {
+                        horariosLocatario = [];
+                    }
+                } else {
+                    horariosLocatario = [];
+                }
+            }
         } else {
             // Quando horarios_indisponiveis = 0, horários do locatário estão em horarios_opcoes
-            horariosLocatario = solicitacao.horarios_opcoes ? JSON.parse(solicitacao.horarios_opcoes) : [];
+            if (solicitacao.horarios_opcoes) {
+                try {
+                    horariosLocatario = typeof solicitacao.horarios_opcoes === 'string' 
+                        ? JSON.parse(solicitacao.horarios_opcoes) 
+                        : solicitacao.horarios_opcoes;
+                    if (!Array.isArray(horariosLocatario)) {
+                        horariosLocatario = [];
+                    }
+                } catch (e) {
+                    console.error('Erro ao parsear horarios_opcoes:', e);
+                    horariosLocatario = [];
+                }
+            } else {
+                horariosLocatario = [];
+            }
         }
         
         // Buscar horários do prestador (quando horarios_indisponiveis = 1)
         if (solicitacao.horarios_indisponiveis) {
-            horariosPrestador = solicitacao.horarios_opcoes ? JSON.parse(solicitacao.horarios_opcoes) : [];
+            if (solicitacao.horarios_opcoes) {
+                try {
+                    horariosPrestador = typeof solicitacao.horarios_opcoes === 'string' 
+                        ? JSON.parse(solicitacao.horarios_opcoes) 
+                        : solicitacao.horarios_opcoes;
+                    if (!Array.isArray(horariosPrestador)) {
+                        horariosPrestador = [];
+                    }
+                } catch (e) {
+                    horariosPrestador = [];
+                }
+            } else {
+                horariosPrestador = [];
+            }
         }
+        
+        // Debug: Log dos horários encontrados
+        console.log('🔍 Debug Disponibilidade Informada:', {
+            horarios_indisponiveis: solicitacao.horarios_indisponiveis,
+            datas_opcoes: solicitacao.datas_opcoes,
+            horarios_opcoes: solicitacao.horarios_opcoes,
+            horariosLocatario: horariosLocatario,
+            horariosPrestador: horariosPrestador
+        });
         
         // Verificar se condição é "Data Aceita pelo Prestador" ou "Data Aceita pelo Locatário" - mostrar apenas essa data
         const condicaoAtual = todasCondicoes.find(c => c.id === solicitacao.condicao_id);
@@ -893,9 +957,28 @@ function renderizarDetalhes(solicitacao) {
             horariosOpcoes = [...horariosLocatario, ...horariosPrestador];
             // Remover duplicatas
             horariosOpcoes = [...new Set(horariosOpcoes)];
+            
+            // ✅ Se horariosOpcoes estiver vazio mas houver horariosLocatario, usar os horários do locatário
+            if (horariosOpcoes.length === 0 && horariosLocatario.length > 0) {
+                horariosOpcoes = horariosLocatario;
+            }
         }
     } catch (e) {
+        console.error('Erro ao processar horários:', e);
         horariosOpcoes = [];
+        // ✅ Em caso de erro, tentar usar horariosLocatario como fallback
+        try {
+            if (solicitacao.horarios_opcoes) {
+                const fallback = typeof solicitacao.horarios_opcoes === 'string' 
+                    ? JSON.parse(solicitacao.horarios_opcoes) 
+                    : solicitacao.horarios_opcoes;
+                if (Array.isArray(fallback) && fallback.length > 0) {
+                    horariosOpcoes = fallback;
+                }
+            }
+        } catch (e2) {
+            console.error('Erro ao fazer fallback:', e2);
+        }
     }
     
     const escapeHtml = (texto = '') => String(texto)
