@@ -8,8 +8,20 @@ ob_start();
         <div class="bg-white rounded-lg shadow-lg p-8">
             <!-- Header -->
             <div class="text-center mb-6">
-                <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-4">
-                    <i class="fas fa-tools text-green-600 text-2xl"></i>
+                <div class="mx-auto flex items-center justify-center h-16 w-16 mb-4">
+                    <?php if (!empty($solicitacao['imobiliaria_logo'])): ?>
+                        <img src="<?= url('Public/uploads/logos/' . $solicitacao['imobiliaria_logo']) ?>" 
+                             alt="<?= htmlspecialchars($solicitacao['imobiliaria_nome'] ?? 'Imobiliária') ?>" 
+                             class="h-16 w-16 object-contain rounded-lg border border-gray-200 bg-white p-1"
+                             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <div class="h-16 w-16 rounded-full bg-blue-100 flex items-center justify-center" style="display: none;">
+                            <i class="fas fa-building text-blue-600 text-2xl"></i>
+                        </div>
+                    <?php else: ?>
+                        <div class="h-16 w-16 rounded-full bg-blue-100 flex items-center justify-center">
+                            <i class="fas fa-building text-blue-600 text-2xl"></i>
+                        </div>
+                    <?php endif; ?>
                 </div>
                 <h2 class="text-2xl font-bold text-gray-900">Como foi o serviço?</h2>
                 <p class="text-gray-600 mt-2">Selecione uma das opções abaixo</p>
@@ -20,7 +32,12 @@ ob_start();
                 <div class="text-sm space-y-1">
                     <div class="flex justify-between">
                         <span class="text-gray-600">Nº de Atendimento:</span>
-                        <span class="font-semibold text-gray-900"><?= htmlspecialchars($solicitacao['numero_solicitacao'] ?? 'N/A') ?></span>
+                        <span class="font-semibold text-gray-900">
+                            <?php 
+                            $numeroSolicitacao = $solicitacao['numero_solicitacao'] ?? ('KSS' . $solicitacao['id']);
+                            echo htmlspecialchars($numeroSolicitacao);
+                            ?>
+                        </span>
                     </div>
                     <?php if ($solicitacao['data_agendamento']): ?>
                     <div class="flex justify-between">
@@ -28,10 +45,33 @@ ob_start();
                         <span class="font-semibold text-gray-900"><?= date('d/m/Y', strtotime($solicitacao['data_agendamento'])) ?></span>
                     </div>
                     <?php endif; ?>
-                    <?php if ($solicitacao['horario_agendamento']): ?>
+                    <?php 
+                    // Formatar horário no formato "08:00 às 11:00"
+                    $horarioFormatado = '';
+                    if (!empty($solicitacao['horario_agendamento'])) {
+                        $horario = $solicitacao['horario_agendamento'];
+                        // Se já estiver no formato "08:00 às 11:00", usar direto
+                        if (strpos($horario, ' às ') !== false) {
+                            $horarioFormatado = $horario;
+                        } 
+                        // Se for formato "08:00-11:00", converter para "08:00 às 11:00"
+                        elseif (preg_match('/(\d{2}:\d{2})(?::\d{2})?-(\d{2}:\d{2})(?::\d{2})?/', $horario, $matches)) {
+                            $horarioFormatado = $matches[1] . ' às ' . $matches[2];
+                        }
+                        // Se for apenas "08:00:00" ou "08:00", assumir 3 horas de intervalo
+                        elseif (preg_match('/(\d{2}):(\d{2})(?::\d{2})?/', $horario, $matches)) {
+                            $horaInicio = $matches[1] . ':' . $matches[2];
+                            $horaFim = date('H:i', strtotime($horaInicio . ' +3 hours'));
+                            $horarioFormatado = $horaInicio . ' às ' . $horaFim;
+                        } else {
+                            $horarioFormatado = $horario;
+                        }
+                    }
+                    ?>
+                    <?php if ($horarioFormatado): ?>
                     <div class="flex justify-between">
                         <span class="text-gray-600">Horário:</span>
-                        <span class="font-semibold text-gray-900"><?= htmlspecialchars($solicitacao['horario_agendamento']) ?></span>
+                        <span class="font-semibold text-gray-900"><?= htmlspecialchars($horarioFormatado) ?></span>
                     </div>
                     <?php endif; ?>
                 </div>
@@ -103,6 +143,29 @@ ob_start();
             <div id="mensagemFeedback" class="hidden mt-6"></div>
         </div>
     </div>
+    
+    <!-- Footer com Logo KSS -->
+    <footer class="mt-12 text-center pb-8">
+        <div class="flex items-center justify-center">
+            <?php 
+            $kssLogoUrl = \App\Core\Url::kssLogo();
+            if (!empty($kssLogoUrl)): ?>
+                <img src="<?= htmlspecialchars($kssLogoUrl) ?>" 
+                     alt="KSS ASSISTÊNCIA 360°" 
+                     class="h-12 w-auto"
+                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                <div class="flex items-center space-x-2" style="display: none;">
+                    <span class="text-green-600 font-bold text-lg">KSS</span>
+                    <span class="text-gray-600 text-sm">ASSISTÊNCIA 360°</span>
+                </div>
+            <?php else: ?>
+                <div class="flex items-center space-x-2">
+                    <span class="text-green-600 font-bold text-lg">KSS</span>
+                    <span class="text-gray-600 text-sm">ASSISTÊNCIA 360°</span>
+                </div>
+            <?php endif; ?>
+        </div>
+    </footer>
 </div>
 
 <script>
