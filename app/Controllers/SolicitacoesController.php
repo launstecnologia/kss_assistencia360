@@ -1725,11 +1725,12 @@ class SolicitacoesController extends Controller
                 
                 if (!empty($telefone)) {
                     // Formatar horário completo para exibição
-                    $horarioCompleto = $horarioFormatadoNorm ?? date('d/m/Y', $timestamp) . ' - ' . date('H:i', $timestamp) . '-' . date('H:i', strtotime('+3 hours', $timestamp));
+                    $horarioIntervalo = date('H:i', $timestamp) . ' às ' . date('H:i', strtotime('+3 hours', $timestamp));
+                    $horarioCompleto = $horarioFormatadoNorm ?? date('d/m/Y', $timestamp) . ' - ' . $horarioIntervalo;
                     
                     $this->enviarNotificacaoWhatsApp($id, 'Horário Confirmado', [
                         'data_agendamento' => date('d/m/Y', $timestamp),
-                        'horario_agendamento' => date('H:i', $timestamp) . '-' . date('H:i', strtotime('+3 hours', $timestamp)),
+                        'horario_agendamento' => $horarioIntervalo, // ✅ Formato: "08:00 às 11:00"
                         'horario_servico' => $horarioCompleto,
                         'horario_confirmado_raw' => $horarioFormatadoNorm ?? $horarioFormatado
                     ]);
@@ -1815,9 +1816,16 @@ class SolicitacoesController extends Controller
             ]);
 
             // Enviar WhatsApp (opcional)
+            $solicitacaoAtual = $this->solicitacaoModel->find($id);
+            $horarioIntervalo = $this->extrairIntervaloHorario(
+                $solicitacaoAtual['horario_confirmado_raw'] ?? $horaRaw ?? null,
+                $solicitacaoAtual['horario_agendamento'] ?? $horaAg ?? null,
+                $solicitacaoAtual
+            );
+            
             $this->enviarNotificacaoWhatsApp($id, 'Horário Confirmado', [
                 'data_agendamento' => (!empty($dataAg)) ? date('d/m/Y', strtotime($dataAg)) : '',
-                'horario_agendamento' => (is_string($horaRaw) ? $horaRaw : ((!empty($horaAg)) ? date('H:i', strtotime($horaAg)) : ''))
+                'horario_agendamento' => $horarioIntervalo
             ]);
 
             $this->json(['success' => true]);
@@ -3015,21 +3023,25 @@ class SolicitacoesController extends Controller
                                 $solicitacaoAtualizada = $this->solicitacaoModel->find($id);
                                 $dataAgendamento = $solicitacaoAtualizada['data_agendamento'] ?? null;
                                 $horarioAgendamento = $solicitacaoAtualizada['horario_agendamento'] ?? null;
+                                $horarioConfirmadoRaw = $solicitacaoAtualizada['horario_confirmado_raw'] ?? null;
+                                
+                                // Extrair intervalo completo do horário (formato: "08:00 às 11:00")
+                                $horarioIntervalo = $this->extrairIntervaloHorario($horarioConfirmadoRaw, $horarioAgendamento, $solicitacaoAtualizada);
                                 
                                 // Formatar horário completo
                                 $horarioCompleto = '';
-                                if ($dataAgendamento && $horarioAgendamento) {
+                                if ($dataAgendamento && $horarioIntervalo) {
                                     $dataFormatada = date('d/m/Y', strtotime($dataAgendamento));
-                                    $horarioCompleto = $dataFormatada . ' - ' . $horarioAgendamento;
+                                    $horarioCompleto = $dataFormatada . ' - ' . $horarioIntervalo;
                                 }
                                 
                                 $this->enviarNotificacaoWhatsApp($id, 'Horário Confirmado', [
                                     'data_agendamento' => $dataAgendamento ? date('d/m/Y', strtotime($dataAgendamento)) : '',
-                                    'horario_agendamento' => $horarioAgendamento ?? '',
+                                    'horario_agendamento' => $horarioIntervalo, // ✅ Usar intervalo completo
                                     'horario_servico' => $horarioCompleto
                                 ]);
                                 
-                                error_log("WhatsApp de horário confirmado enviado [ID:{$id}] - Status: Serviço Agendado");
+                                error_log("WhatsApp de horário confirmado enviado [ID:{$id}] - Status: Serviço Agendado - Horário: {$horarioIntervalo}");
                             } else {
                                 // Para outros status, enviar "Atualização de Status"
                                 $this->enviarNotificacaoWhatsApp($id, 'Atualização de Status', [
@@ -4363,9 +4375,15 @@ class SolicitacoesController extends Controller
             $this->solicitacaoModel->update($id, $dadosUpdate);
 
             // Enviar notificação de confirmação
+            $horarioIntervalo = $this->extrairIntervaloHorario(
+                $solicitacao['horario_confirmado_raw'] ?? null,
+                $solicitacao['horario_agendamento'] ?? null,
+                $solicitacao
+            );
+            
             $this->enviarNotificacaoWhatsApp($id, 'Horário Confirmado', [
                 'data_agendamento' => $solicitacao['data_agendamento'] ? date('d/m/Y', strtotime($solicitacao['data_agendamento'])) : '',
-                'horario_agendamento' => $solicitacao['horario_confirmado_raw']
+                'horario_agendamento' => $horarioIntervalo
             ]);
 
             $this->json(['success' => true, 'message' => 'Agendamento confirmado com sucesso!']);
@@ -4478,5 +4496,78 @@ class SolicitacoesController extends Controller
         }
         
         return $links;
+    }
+    
+    /**
+     * Extrai o intervalo completo do horário no formato "08:00 às 11:00"
+     * 
+     * @param string|null $horarioConfirmadoRaw Horário no formato raw (ex: "25/11/2025 - 08:00-11:00")
+     * @param string|null $horarioAgendamento Horário simples (ex: "08:00")
+     * @param array|null $solicitacao Dados completos da solicitação
+     * @return string Horário no formato "08:00 às 11:00" ou apenas "08:00" se não houver intervalo
+     */
+    private function extrairIntervaloHorario(?string $horarioConfirmadoRaw, ?string $horarioAgendamento, ?array $solicitacao = null): string
+    {
+        // Tentar extrair de horario_confirmado_raw primeiro
+        if (!empty($horarioConfirmadoRaw)) {
+            // Formato: "25/11/2025 - 08:00-11:00" ou "08:00-11:00"
+            if (preg_match('/(\d{2}:\d{2})(?::\d{2})?-(\d{2}:\d{2})(?::\d{2})?/', $horarioConfirmadoRaw, $matches)) {
+                $horaInicio = $matches[1];
+                $horaFim = $matches[2];
+                return $horaInicio . ' às ' . $horaFim;
+            }
+        }
+        
+        // Tentar extrair de confirmed_schedules
+        if (!empty($solicitacao['confirmed_schedules'])) {
+            $confirmed = is_string($solicitacao['confirmed_schedules']) 
+                ? json_decode($solicitacao['confirmed_schedules'], true) 
+                : $solicitacao['confirmed_schedules'];
+            
+            if (is_array($confirmed) && !empty($confirmed)) {
+                // Pegar o último horário confirmado
+                $ultimo = end($confirmed);
+                if (!empty($ultimo['raw'])) {
+                    // Formato: "25/11/2025 - 08:00-11:00"
+                    if (preg_match('/(\d{2}:\d{2})(?::\d{2})?-(\d{2}:\d{2})(?::\d{2})?/', $ultimo['raw'], $matches)) {
+                        $horaInicio = $matches[1];
+                        $horaFim = $matches[2];
+                        return $horaInicio . ' às ' . $horaFim;
+                    }
+                }
+                // Tentar extrair de 'time' se existir
+                if (!empty($ultimo['time']) && preg_match('/(\d{2}:\d{2})(?::\d{2})?-(\d{2}:\d{2})(?::\d{2})?/', $ultimo['time'], $matches)) {
+                    $horaInicio = $matches[1];
+                    $horaFim = $matches[2];
+                    return $horaInicio . ' às ' . $horaFim;
+                }
+            }
+        }
+        
+        // Tentar extrair de horarios_opcoes
+        if (!empty($solicitacao['horarios_opcoes'])) {
+            $horarios = is_string($solicitacao['horarios_opcoes']) 
+                ? json_decode($solicitacao['horarios_opcoes'], true) 
+                : $solicitacao['horarios_opcoes'];
+            
+            if (is_array($horarios) && !empty($horarios)) {
+                // Pegar o primeiro horário disponível
+                $primeiro = reset($horarios);
+                if (is_string($primeiro) && preg_match('/(\d{2}:\d{2})(?::\d{2})?-(\d{2}:\d{2})(?::\d{2})?/', $primeiro, $matches)) {
+                    $horaInicio = $matches[1];
+                    $horaFim = $matches[2];
+                    return $horaInicio . ' às ' . $horaFim;
+                }
+            }
+        }
+        
+        // Fallback: retornar apenas o horário inicial se disponível
+        if (!empty($horarioAgendamento)) {
+            // Remover segundos se existirem
+            $horario = preg_replace('/:00$/', '', $horarioAgendamento);
+            return $horario;
+        }
+        
+        return '';
     }
 }
