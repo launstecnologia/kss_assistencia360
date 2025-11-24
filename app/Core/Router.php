@@ -57,18 +57,8 @@ class Router
         $method = $_SERVER['REQUEST_METHOD'];
         $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
         
-        $debugMode = defined('DEBUG') ? DEBUG : (bool)($_ENV['APP_DEBUG'] ?? true);
-        
-        if ($debugMode) {
-            error_log("Router Debug - Original path: $path");
-        }
-        
         // Remove a base path se existir (ex: /kss/confirmacao-horario -> /confirmacao-horario)
         $basePath = \App\Core\Url::path();
-        
-        if ($debugMode) {
-            error_log("Router Debug - Base path: '$basePath'");
-        }
         
         // Só remover base path se ele realmente existir no path
         if ($basePath && $basePath !== '/' && $basePath !== '') {
@@ -93,17 +83,7 @@ class Router
         
         $path = rtrim($path, '/') ?: '/';
 
-        if ($debugMode) {
-            error_log("Router Debug - Processed path: '$path', Method: $method");
-            error_log("Router Debug - Total routes: " . count($this->routes));
-        }
-
         foreach ($this->routes as $index => $route) {
-            // Log todas as rotas cron para debug
-            if ($debugMode && strpos($route['path'], 'cron') !== false) {
-                error_log("Router Debug - Route #$index: {$route['method']} {$route['path']}");
-            }
-            
             // Verificar se o método corresponde
             if ($route['method'] !== $method) {
                 continue;
@@ -112,15 +92,7 @@ class Router
             // Verificar match do path
             $matched = $this->matchPath($route['path'], $path);
             
-            if ($debugMode && strpos($route['path'], 'cron') !== false) {
-                error_log("Router Debug - Match result for {$route['path']}: " . ($matched ? 'TRUE' : 'FALSE'));
-            }
-            
             if ($matched) {
-                // Debug - remover em produção
-                if ($debugMode) {
-                    error_log("Router Debug - Route matched: {$route['method']} {$route['path']} (index: $index)");
-                }
                 
                 // Executar middlewares
                 foreach ($route['middleware'] as $middlewareName) {
@@ -139,23 +111,12 @@ class Router
         }
 
         // Rota não encontrada
-        if ($debugMode) {
-            error_log("Router Debug - No route matched for: $method $path");
-        }
-        
         http_response_code(404);
         View::render('errors.404');
     }
 
     private function matchPath(string $routePath, string $requestPath): bool
     {
-        $debugMode = defined('DEBUG') ? DEBUG : (bool)($_ENV['APP_DEBUG'] ?? true);
-
-        // Debug específico para troubleshooting
-        if ($debugMode) {
-            error_log("matchPath: '$routePath' vs '$requestPath'");
-        }
-        
         // Tratar rota raiz
         if ($routePath === '/' && $requestPath === '/') {
             return true;
@@ -170,13 +131,7 @@ class Router
         $routePattern = preg_replace('/\{([^}]+)\}/', '([^/]+)', $routePath);
         $routePattern = '#^' . $routePattern . '$#';
         
-        $result = preg_match($routePattern, $requestPath);
-        
-        if ($debugMode) {
-            error_log("matchPath result: " . ($result ? 'true' : 'false'));
-        }
-        
-        return $result;
+        return (bool) preg_match($routePattern, $requestPath);
     }
 
     private function extractParams(string $routePath, string $requestPath): array

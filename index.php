@@ -73,16 +73,10 @@ require_once __DIR__ . '/app/helpers.php';
 
 // Inicializar aplicação
 try {
-    // Log para debug
-    $requestUri = $_SERVER['REQUEST_URI'] ?? '/';
-    error_log("index.php - Starting dispatch for: $requestUri");
-    
     $router = new \App\Core\Router();
     
     // Carregar rotas
     require __DIR__ . '/app/Config/routes.php';
-    
-    error_log("index.php - Routes loaded, total: " . $router->getRoutesCount());
     
     // Processar requisição
     $router->dispatch();

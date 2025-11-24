@@ -117,15 +117,18 @@ class SolicitacoesController extends Controller
         
         try {
             // Buscar ID do status "Serviço Agendado"
-            $statusAgendado = $this->getStatusId('Serviço Agendado');
+            $sqlStatus = "SELECT id FROM status WHERE nome = 'Serviço Agendado' AND status = 'ATIVO' LIMIT 1";
+            $statusObj = \App\Core\Database::fetch($sqlStatus);
             
-            if (!$statusAgendado) {
+            if (!$statusObj || empty($statusObj['id'])) {
                 $this->json([
                     'success' => false,
-                    'error' => 'Status "Serviço Agendado" não encontrado'
+                    'error' => 'Status "Serviço Agendado" não encontrado no banco de dados'
                 ], 500);
                 return;
             }
+            
+            $statusAgendado = (int)$statusObj['id'];
             
             // Para requisições GET, usar $_GET diretamente
             $filtros = [
@@ -143,10 +146,11 @@ class SolicitacoesController extends Controller
             $filtros = array_filter($filtros, fn($value) => !empty($value));
 
             // ✅ Buscar apenas solicitações com status "Serviço Agendado"
+            // Usar CONCAT para gerar número de solicitação caso a coluna não exista
             $sql = "
                 SELECT 
                     s.id,
-                    s.numero_solicitacao,
+                    CONCAT('KSS', s.id) as numero_solicitacao,
                     s.numero_contrato,
                     s.data_agendamento,
                     s.horario_agendamento,
@@ -160,9 +164,8 @@ class SolicitacoesController extends Controller
             $params = [$statusAgendado];
 
             if (!empty($filtros['numero_solicitacao'])) {
-                $sql .= " AND (s.numero_solicitacao LIKE ? OR CONCAT('KSS', s.id) LIKE ?)";
+                $sql .= " AND CONCAT('KSS', s.id) LIKE ?";
                 $search = '%' . $filtros['numero_solicitacao'] . '%';
-                $params[] = $search;
                 $params[] = $search;
             }
 
@@ -203,7 +206,25 @@ class SolicitacoesController extends Controller
 
             $sql .= " ORDER BY s.data_agendamento ASC, s.created_at DESC LIMIT 500";
 
-            $solicitacoes = \App\Core\Database::fetchAll($sql, $params);
+            try {
+                $solicitacoes = \App\Core\Database::fetchAll($sql, $params);
+            } catch (\PDOException $pdoError) {
+                error_log('Erro PDO em buscarApi: ' . $pdoError->getMessage());
+                error_log('SQL: ' . $sql);
+                error_log('Params: ' . json_encode($params));
+                $this->json([
+                    'success' => false,
+                    'error' => 'Erro no banco de dados: ' . $pdoError->getMessage()
+                ], 500);
+                return;
+            } catch (\Exception $dbError) {
+                error_log('Erro genérico em buscarApi: ' . $dbError->getMessage());
+                $this->json([
+                    'success' => false,
+                    'error' => 'Erro ao buscar solicitações: ' . $dbError->getMessage()
+                ], 500);
+                return;
+            }
 
             $this->json([
                 'success' => true,
@@ -212,6 +233,7 @@ class SolicitacoesController extends Controller
         } catch (\Exception $e) {
             error_log('Erro em buscarApi: ' . $e->getMessage());
             error_log('Stack trace: ' . $e->getTraceAsString());
+            error_log('File: ' . $e->getFile() . ' Line: ' . $e->getLine());
             $this->json([
                 'success' => false,
                 'error' => 'Erro ao buscar solicitações: ' . $e->getMessage()
