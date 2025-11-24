@@ -2254,6 +2254,8 @@ class SolicitacoesController extends Controller
             $this->solicitacaoModel->update($id, $updateData);
 
             // Enviar notificação WhatsApp com horário sugerido
+            // ✅ Não enviar "Horário Sugerido" se o status for "Serviço Agendado"
+            if ($statusNome !== 'Serviço Agendado') {
             try {
                 // Formatar data corretamente (aceitar diferentes formatos)
                 $dataFormatada = '';
@@ -2298,6 +2300,9 @@ class SolicitacoesController extends Controller
                 ]);
             } catch (\Exception $e) {
                 error_log('Erro ao enviar WhatsApp: ' . $e->getMessage());
+            }
+            } else {
+                error_log("DEBUG adicionarHorarioSeguradora [ID:{$id}] - WhatsApp 'Horário Sugerido' NÃO enviado (status é 'Serviço Agendado')");
             }
 
             $this->json(['success' => true, 'message' => 'Horário adicionado com sucesso']);
@@ -2935,7 +2940,33 @@ class SolicitacoesController extends Controller
                                 }
                                 
                                 // Se há horários novos adicionados pelo admin, enviar notificação "Horário Sugerido"
-                                if (!empty($horariosNovos)) {
+                                // ✅ Não enviar "Horário Sugerido" se o status for ou estiver mudando para "Serviço Agendado"
+                                $statusAtualNome = '';
+                                $statusAnteriorNome = '';
+                                
+                                // Buscar status atual (novo)
+                                if (isset($dados['status_id'])) {
+                                    $sqlStatusAtual = "SELECT nome FROM status WHERE id = ?";
+                                    $statusAtual = \App\Core\Database::fetch($sqlStatusAtual, [$dados['status_id']]);
+                                    $statusAtualNome = $statusAtual['nome'] ?? '';
+                                } else {
+                                    $sqlStatusAtual = "SELECT nome FROM status WHERE id = ?";
+                                    $statusAtual = \App\Core\Database::fetch($sqlStatusAtual, [$solicitacaoAtual['status_id']]);
+                                    $statusAtualNome = $statusAtual['nome'] ?? '';
+                                }
+                                
+                                // Buscar status anterior
+                                $sqlStatusAnterior = "SELECT nome FROM status WHERE id = ?";
+                                $statusAnterior = \App\Core\Database::fetch($sqlStatusAnterior, [$solicitacaoAtual['status_id']]);
+                                $statusAnteriorNome = $statusAnterior['nome'] ?? '';
+                                
+                                // Não enviar "Horário Sugerido" se:
+                                // 1. Status atual for "Serviço Agendado"
+                                // 2. Status anterior for "Buscando Prestador" e status atual for "Serviço Agendado"
+                                $naoEnviarHorarioSugerido = ($statusAtualNome === 'Serviço Agendado') || 
+                                                             ($statusAnteriorNome === 'Buscando Prestador' && $statusAtualNome === 'Serviço Agendado');
+                                
+                                if (!empty($horariosNovos) && !$naoEnviarHorarioSugerido) {
                                     // Formatar lista de horários para a mensagem
                                     $horariosLista = [];
                                     foreach ($horariosNovos as $horarioNovo) {
