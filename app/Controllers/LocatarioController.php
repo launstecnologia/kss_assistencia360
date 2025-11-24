@@ -750,6 +750,7 @@ class LocatarioController extends Controller
             
             // Horários preferenciais
             'horarios_opcoes' => $horariosJson,
+            'datas_opcoes' => $horariosJson, // ✅ Preservar também em datas_opcoes para manter dados originais do locatário
             
             // Número do contrato
             'numero_contrato' => $numeroContrato,
@@ -945,6 +946,7 @@ class LocatarioController extends Controller
             'descricao_problema' => $this->input('descricao'),
             'tipo_atendimento' => $this->input('tipo_atendimento', 'RESIDENCIAL'),
             'horarios_opcoes' => $horarios,
+            'datas_opcoes' => $horarios, // ✅ Preservar também em datas_opcoes para manter dados originais do locatário
             'prioridade' => $this->input('prioridade', 'NORMAL')
         ];
         

@@ -648,7 +648,9 @@ class SolicitacoesController extends Controller
                 }
             }
             
+            // Salvar horários formatados em ambos os campos para preservar dados do locatário
             $data['horarios_opcoes'] = json_encode($horariosFormatados);
+            $data['datas_opcoes'] = json_encode($horariosFormatados); // ✅ Preservar também em datas_opcoes
             
             // Gerar número da solicitação
             $data['numero_solicitacao'] = $this->solicitacaoModel->gerarNumeroSolicitacao();
@@ -2229,8 +2231,14 @@ class SolicitacoesController extends Controller
                 error_log("DEBUG adicionarHorarioSeguradora [ID:{$id}] - Status atual: '{$statusNome}' (não é 'Buscando Prestador')");
             }
             
-            // Se é a primeira vez adicionando horários da seguradora, limpar confirmações anteriores
+            // Se é a primeira vez adicionando horários da seguradora, preservar dados originais do locatário
             if (empty($solicitacao['horarios_indisponiveis'])) {
+                // ✅ Preservar horários originais do locatário em datas_opcoes se ainda não estiverem lá
+                if (empty($solicitacao['datas_opcoes']) && !empty($solicitacao['horarios_opcoes'])) {
+                    $updateData['datas_opcoes'] = $solicitacao['horarios_opcoes'];
+                }
+                
+                // Limpar confirmações anteriores
                 $updateData['confirmed_schedules'] = null;
                 $updateData['horario_confirmado'] = 0;
                 $updateData['horario_confirmado_raw'] = null;
@@ -2557,6 +2565,11 @@ class SolicitacoesController extends Controller
                     $dados['horarios_indisponiveis'] = 1;
                     // Limpar confirmed_schedules e dados de agendamento quando admin substitui horários
                     if ($eraPrimeiraVez) {
+                        // ✅ Preservar horários originais do locatário em datas_opcoes se ainda não estiverem lá
+                        if (empty($solicitacaoAtual['datas_opcoes']) && !empty($solicitacaoAtual['horarios_opcoes'])) {
+                            $dados['datas_opcoes'] = $solicitacaoAtual['horarios_opcoes'];
+                        }
+                        
                         $dados['confirmed_schedules'] = null;
                         $dados['horario_confirmado'] = 0;
                         $dados['horario_confirmado_raw'] = null;
@@ -3047,11 +3060,16 @@ class SolicitacoesController extends Controller
                                 error_log("WhatsApp de horário confirmado enviado [ID:{$id}] - Status: Serviço Agendado - Horário: {$horarioIntervalo}");
                             } else {
                                 // Para outros status, enviar "Atualização de Status"
-                                $this->enviarNotificacaoWhatsApp($id, 'Atualização de Status', [
-                                    'status_atual' => $statusNome
-                                ]);
-                                
-                                error_log("WhatsApp de atualização de status enviado [ID:{$id}] - Novo status: " . $statusNome);
+                                // ✅ Não enviar WhatsApp quando mudar para "Buscando Prestador"
+                                if ($statusNome !== 'Buscando Prestador') {
+                                    $this->enviarNotificacaoWhatsApp($id, 'Atualização de Status', [
+                                        'status_atual' => $statusNome
+                                    ]);
+                                    
+                                    error_log("WhatsApp de atualização de status enviado [ID:{$id}] - Novo status: " . $statusNome);
+                                } else {
+                                    error_log("WhatsApp NÃO enviado [ID:{$id}] - Status mudou para 'Buscando Prestador' (sem notificação)");
+                                }
                             }
                         } catch (\Exception $e) {
                             error_log('Erro ao enviar WhatsApp de atualização de status [ID:' . $id . ']: ' . $e->getMessage());
