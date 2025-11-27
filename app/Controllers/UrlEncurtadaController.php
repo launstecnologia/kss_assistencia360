@@ -12,6 +12,16 @@ class UrlEncurtadaController extends Controller
     public function redirecionar(string $codigo): void
     {
         try {
+            // Validar que o código é numérico de 8 dígitos
+            if (!preg_match('/^[0-9]{8}$/', $codigo)) {
+                http_response_code(404);
+                $this->view('errors/404', [
+                    'title' => 'Link não encontrado',
+                    'message' => 'Este link não foi encontrado ou já expirou.'
+                ]);
+                return;
+            }
+            
             $urlEncurtadaModel = new UrlEncurtada();
             $urlEncurtada = $urlEncurtadaModel->findByCodigo($codigo);
             
