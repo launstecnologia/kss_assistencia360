@@ -962,13 +962,127 @@ function gerarResumoEtapasManual($etapaAtual, $dados) {
     
     <script>
     // Máscaras de input
-    document.getElementById('cpf')?.addEventListener('input', function(e) {
-        let value = e.target.value.replace(/\D/g, '');
-        value = value.replace(/(\d{3})(\d)/, '$1.$2');
-        value = value.replace(/(\d{3})(\d)/, '$1.$2');
-        value = value.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
-        e.target.value = value;
-    });
+    const cpfInput = document.getElementById('cpf');
+    if (cpfInput) {
+        cpfInput.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            value = value.replace(/(\d{3})(\d)/, '$1.$2');
+            value = value.replace(/(\d{3})(\d)/, '$1.$2');
+            value = value.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+            e.target.value = value;
+        });
+        
+        // Buscar dados automaticamente quando o CPF for preenchido
+        let timeoutBusca;
+        cpfInput.addEventListener('blur', function() {
+            const cpf = this.value.replace(/\D/g, '');
+            
+            // Validar se tem 11 ou 14 dígitos
+            if (cpf.length === 11 || cpf.length === 14) {
+                clearTimeout(timeoutBusca);
+                timeoutBusca = setTimeout(async function() {
+                    await buscarDadosPorCPF(cpf);
+                }, 500);
+            }
+        });
+    }
+    
+    // Função para buscar dados por CPF
+    async function buscarDadosPorCPF(cpf) {
+        const instancia = '<?= $instancia ?? "" ?>';
+        if (!instancia) {
+            console.error('Instância não encontrada');
+            return;
+        }
+        
+        // Mostrar indicador de carregamento
+        const cpfInput = document.getElementById('cpf');
+        const originalBorder = cpfInput.style.borderColor;
+        cpfInput.style.borderColor = '#3b82f6';
+        
+        try {
+            const formData = new FormData();
+            formData.append('cpf', cpf);
+            
+            const response = await fetch(`<?= url('{instancia}/solicitacao-manual/buscar-cpf') ?>`.replace('{instancia}', instancia), {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+            
+            const data = await response.json();
+            
+            if (data.success && data.dados) {
+                // Preencher campos automaticamente
+                const dados = data.dados;
+                
+                if (dados.nome_completo) {
+                    document.getElementById('nome_completo').value = dados.nome_completo;
+                }
+                
+                if (dados.tipo_imovel) {
+                    const selectTipo = document.getElementById('finalidade_locacao');
+                    if (selectTipo) {
+                        selectTipo.value = dados.tipo_imovel;
+                        selectTipo.dispatchEvent(new Event('change'));
+                    }
+                }
+                
+                if (dados.cep) {
+                    document.getElementById('cep').value = dados.cep;
+                }
+                
+                if (dados.endereco) {
+                    document.getElementById('endereco').value = dados.endereco;
+                }
+                
+                if (dados.numero) {
+                    document.getElementById('numero').value = dados.numero;
+                }
+                
+                if (dados.complemento) {
+                    document.getElementById('complemento').value = dados.complemento;
+                }
+                
+                if (dados.bairro) {
+                    document.getElementById('bairro').value = dados.bairro;
+                }
+                
+                if (dados.cidade) {
+                    document.getElementById('cidade').value = dados.cidade;
+                }
+                
+                if (dados.estado) {
+                    document.getElementById('estado').value = dados.estado;
+                }
+                
+                if (dados.unidade) {
+                    const unidadeInput = document.getElementById('unidade');
+                    if (unidadeInput) {
+                        unidadeInput.value = dados.unidade;
+                    }
+                }
+                
+                if (dados.numero_contrato) {
+                    document.getElementById('numero_contrato').value = dados.numero_contrato;
+                }
+                
+                // Mostrar mensagem de sucesso
+                cpfInput.style.borderColor = '#10b981';
+                setTimeout(() => {
+                    cpfInput.style.borderColor = originalBorder;
+                }, 2000);
+            } else {
+                // CPF não encontrado - não mostrar erro, apenas não preencher
+                cpfInput.style.borderColor = originalBorder;
+            }
+        } catch (error) {
+            console.error('Erro ao buscar dados por CPF:', error);
+            cpfInput.style.borderColor = originalBorder;
+        }
+    }
     
     document.getElementById('whatsapp')?.addEventListener('input', function(e) {
         let value = e.target.value.replace(/\D/g, '');

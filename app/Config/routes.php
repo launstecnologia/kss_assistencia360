@@ -186,6 +186,7 @@ $router->get('/{instancia}/solicitacao-manual/etapa/{etapa}', 'LocatarioControll
 $router->post('/{instancia}/solicitacao-manual/etapa/{etapa}', 'LocatarioController@solicitacaoManualEtapa');
 $router->get('/{instancia}/solicitacao-manual', 'LocatarioController@solicitacaoManual');
 $router->post('/{instancia}/solicitacao-manual', 'LocatarioController@solicitacaoManual');
+$router->post('/{instancia}/solicitacao-manual/buscar-cpf', 'LocatarioController@buscarDadosPorCPF');
 $router->get('/{instancia}/logout', 'LocatarioController@logout');
 $router->post('/{instancia}/logout', 'LocatarioController@logout');
 

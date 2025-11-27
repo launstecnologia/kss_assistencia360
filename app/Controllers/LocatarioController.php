@@ -1682,6 +1682,71 @@ class LocatarioController extends Controller
     }
     
     /**
+     * Buscar dados do locatário por CPF (para preenchimento automático)
+     */
+    public function buscarDadosPorCPF(string $instancia): void
+    {
+        if (!$this->isPost()) {
+            $this->json(['success' => false, 'error' => 'Método não permitido'], 405);
+            return;
+        }
+
+        $cpf = trim($this->input('cpf'));
+        
+        if (empty($cpf)) {
+            $this->json(['success' => false, 'error' => 'CPF não informado'], 400);
+            return;
+        }
+
+        // Buscar imobiliária
+        $imobiliaria = KsiApiService::getImobiliariaByInstancia($instancia);
+        
+        if (!$imobiliaria) {
+            $this->json(['success' => false, 'error' => 'Imobiliária não encontrada'], 404);
+            return;
+        }
+
+        // Limpar CPF (remover pontos, traços, espaços)
+        $cpfLimpo = preg_replace('/[^0-9]/', '', $cpf);
+        
+        // Validar CPF (11 dígitos) ou CNPJ (14 dígitos)
+        if (strlen($cpfLimpo) !== 11 && strlen($cpfLimpo) !== 14) {
+            $this->json(['success' => false, 'error' => 'CPF/CNPJ inválido'], 400);
+            return;
+        }
+
+        // Buscar na tabela locatarios_contratos
+        $sql = "SELECT * FROM locatarios_contratos 
+                WHERE imobiliaria_id = ? AND cpf = ? 
+                LIMIT 1";
+        $dados = \App\Core\Database::fetch($sql, [$imobiliaria['id'], $cpfLimpo]);
+
+        if ($dados) {
+            $this->json([
+                'success' => true,
+                'dados' => [
+                    'nome_completo' => $dados['inquilino_nome'] ?? '',
+                    'tipo_imovel' => $dados['tipo_imovel'] ?? 'RESIDENCIAL',
+                    'cep' => $dados['cep'] ?? '',
+                    'endereco' => $dados['endereco'] ?? '',
+                    'numero' => $dados['numero'] ?? '',
+                    'complemento' => $dados['complemento'] ?? '',
+                    'bairro' => $dados['bairro'] ?? '',
+                    'cidade' => $dados['cidade'] ?? '',
+                    'estado' => $dados['estado'] ?? '',
+                    'unidade' => $dados['unidade'] ?? '',
+                    'numero_contrato' => $dados['numero_contrato'] ?? ''
+                ]
+            ]);
+        } else {
+            $this->json([
+                'success' => false,
+                'error' => 'CPF não encontrado na base de dados'
+            ], 404);
+        }
+    }
+    
+    /**
      * Exibir tela de emergência com telefone 0800
      */
     public function solicitacaoEmergencial(string $instancia, int $solicitacaoId): void
