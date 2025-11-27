@@ -272,47 +272,76 @@ class UploadController extends Controller
         $palavras = explode(' ', $empresaFiscalNormalizada);
         $palavraChave = !empty($palavras) ? $palavras[0] : $empresaFiscalNormalizada;
         
+        // Se a palavra-chave for muito curta, usar o nome completo
+        if (strlen($palavraChave) < 3) {
+            $palavraChave = $empresaFiscalNormalizada;
+        }
+        
+        $melhorMatch = null;
+        $melhorScore = 0;
+        
         // Tentar match exato primeiro
         foreach ($imobiliarias as $imob) {
             $nomeNormalizado = $this->normalizarNome($imob['nome_fantasia'] ?? $imob['nome'] ?? '');
+            
+            // Match exato
             if ($nomeNormalizado === $empresaFiscalNormalizada) {
                 return $imob;
             }
             
-            // Verificar se a palavra-chave está no nome
+            // Verificar se a palavra-chave está no nome (match por palavra-chave)
             if (stripos($nomeNormalizado, $palavraChave) !== false && strlen($palavraChave) >= 3) {
-                return $imob;
+                // Calcular similaridade para priorizar
+                similar_text($empresaFiscalNormalizada, $nomeNormalizado, $percent);
+                if ($percent > $melhorScore) {
+                    $melhorScore = $percent;
+                    $melhorMatch = $imob;
+                }
             }
             
             // Verificar pela instância
             $instancia = strtolower(trim($imob['instancia'] ?? ''));
-            if (!empty($instancia) && stripos($empresaFiscalNormalizada, $instancia) !== false) {
-                return $imob;
+            if (!empty($instancia)) {
+                // Verificar se a instância está no empresa_fiscal ou vice-versa
+                if (stripos($empresaFiscalNormalizada, $instancia) !== false || 
+                    stripos($instancia, $palavraChave) !== false) {
+                    similar_text($empresaFiscalNormalizada, $nomeNormalizado, $percent);
+                    if ($percent > $melhorScore) {
+                        $melhorScore = $percent;
+                        $melhorMatch = $imob;
+                    }
+                }
+            }
+            
+            // Verificar se palavras-chave do nome estão no empresa_fiscal
+            $palavrasNome = explode(' ', $nomeNormalizado);
+            foreach ($palavrasNome as $palavraNome) {
+                if (strlen($palavraNome) >= 3 && stripos($empresaFiscalNormalizada, $palavraNome) !== false) {
+                    similar_text($empresaFiscalNormalizada, $nomeNormalizado, $percent);
+                    if ($percent > $melhorScore) {
+                        $melhorScore = $percent;
+                        $melhorMatch = $imob;
+                    }
+                }
             }
         }
 
-        // Tentar match parcial (similaridade)
-        $melhorMatch = null;
-        $melhorScore = 0;
+        // Se encontrou match por palavra-chave, retornar
+        if ($melhorMatch && $melhorScore > 30) {
+            return $melhorMatch;
+        }
 
+        // Tentar match por similaridade geral (fallback)
         foreach ($imobiliarias as $imob) {
             $nomeNormalizado = $this->normalizarNome($imob['nome_fantasia'] ?? $imob['nome'] ?? '');
             
             // Calcular similaridade
             similar_text($empresaFiscalNormalizada, $nomeNormalizado, $percent);
             
-            // Se a similaridade for maior que 50%, considerar match (reduzido de 70% para 50%)
-            if ($percent > 50 && $percent > $melhorScore) {
+            // Se a similaridade for maior que 30%, considerar match
+            if ($percent > 30 && $percent > $melhorScore) {
                 $melhorScore = $percent;
                 $melhorMatch = $imob;
-            }
-            
-            // Verificar se a palavra-chave está no nome (match parcial)
-            if (stripos($nomeNormalizado, $palavraChave) !== false && strlen($palavraChave) >= 3) {
-                if ($percent > $melhorScore) {
-                    $melhorScore = $percent;
-                    $melhorMatch = $imob;
-                }
             }
         }
 
