@@ -947,14 +947,6 @@ class ImobiliariasController extends Controller
                     'erros' => $erros,
                     'detalhes_erros' => $detalhesErros
                 ]);
-            } catch (\PhpOffice\PhpSpreadsheet\Exception $e) {
-                error_log("Erro ao carregar arquivo Excel: " . $e->getMessage());
-                $this->json([
-                    'success' => false,
-                    'error' => 'Erro ao ler arquivo Excel: ' . $e->getMessage()
-                ], 400);
-                return;
-            }
         } catch (\Exception $e) {
             error_log("Erro ao processar Excel: " . $e->getMessage());
             error_log("Stack trace: " . $e->getTraceAsString());
