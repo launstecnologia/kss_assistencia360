@@ -1556,43 +1556,128 @@ class LocatarioController extends Controller
             return;
         }
         
-        // Preparar dados para salvar
-        $dadosParaSalvar = [
-            'imobiliaria_id' => $imobiliaria['id'],
-            'nome_completo' => $dados['nome_completo'],
-            'cpf' => $dados['cpf'],
-            'whatsapp' => $dados['whatsapp'],
-            'tipo_imovel' => $dados['tipo_imovel'],
-            'subtipo_imovel' => $dados['subtipo_imovel'] ?? null,
-            'cep' => $dados['cep'],
-            'endereco' => $dados['endereco'],
-            'numero' => $dados['numero'],
-            'complemento' => $dados['complemento'] ?? null,
-            'bairro' => $dados['bairro'],
-            'cidade' => $dados['cidade'],
-            'estado' => $dados['estado'],
-            'categoria_id' => $dados['categoria_id'],
-            'subcategoria_id' => $dados['subcategoria_id'],
-            'numero_contrato' => $dados['numero_contrato'] ?? null,
-            'local_manutencao' => $dados['local_manutencao'] ?? null,
-            'descricao_problema' => $dados['descricao_problema'],
-            'horarios_preferenciais' => $dados['horarios_preferenciais'] ?? [],
-            'fotos' => $dados['fotos'] ?? [],
-            'termos_aceitos' => $dados['termos_aceitos']
-        ];
+        // Limpar CPF (remover pontos, traços, espaços)
+        $cpfLimpo = preg_replace('/[^0-9]/', '', $dados['cpf']);
         
-        // Criar solicitação manual
-        $solicitacaoManualModel = new \App\Models\SolicitacaoManual();
-        $id = $solicitacaoManualModel->create($dadosParaSalvar);
+        // Verificar se o CPF está na tabela locatarios_contratos para esta imobiliária
+        $sql = "SELECT * FROM locatarios_contratos 
+                WHERE imobiliaria_id = ? AND cpf = ?";
+        $cpfEncontrado = \App\Core\Database::fetch($sql, [$imobiliaria['id'], $cpfLimpo]);
         
-        if ($id) {
-            // Limpar sessão
-            unset($_SESSION['solicitacao_manual']);
+        // Se o CPF estiver na tabela, criar como solicitação normal (vai para kanban)
+        // Se não estiver, criar como solicitação manual (vai para admin)
+        if ($cpfEncontrado) {
+            // Criar como solicitação normal
+            $statusModel = new \App\Models\Status();
+            $statusInicial = $statusModel->findByNome('Nova Solicitação') 
+                          ?? $statusModel->findByNome('Nova') 
+                          ?? $statusModel->findByNome('NOVA')
+                          ?? ['id' => 1];
             
-            // Redirecionar com mensagem de sucesso
-            $this->redirect(url($instancia . '?success=' . urlencode('Solicitação enviada com sucesso! Em breve entraremos em contato. ID: #' . $id)));
+            // Preparar horários para salvar (converter array para JSON)
+            $horarios = $dados['horarios_preferenciais'] ?? [];
+            $horariosJson = !empty($horarios) ? json_encode($horarios) : null;
+            
+            // Preparar dados para solicitação normal
+            $dadosSolicitacao = [
+                'imobiliaria_id' => $imobiliaria['id'],
+                'categoria_id' => $dados['categoria_id'],
+                'subcategoria_id' => $dados['subcategoria_id'],
+                'status_id' => $statusInicial['id'],
+                
+                // Dados do locatário
+                'locatario_id' => 0, // ID 0 indica que veio de solicitação manual
+                'locatario_nome' => $dados['nome_completo'],
+                'locatario_cpf' => $cpfLimpo,
+                'locatario_telefone' => $dados['whatsapp'],
+                'locatario_email' => null,
+                
+                // Dados do imóvel
+                'imovel_endereco' => $dados['endereco'],
+                'imovel_numero' => $dados['numero'],
+                'imovel_complemento' => $dados['complemento'] ?? null,
+                'imovel_bairro' => $dados['bairro'],
+                'imovel_cidade' => $dados['cidade'],
+                'imovel_estado' => $dados['estado'],
+                'imovel_cep' => $dados['cep'],
+                
+                // Descrição e detalhes
+                'descricao_problema' => $dados['descricao_problema'],
+                'observacoes' => ($dados['local_manutencao'] ?? '') . "\nTipo: " . ($dados['tipo_imovel'] ?? 'RESIDENCIAL'),
+                'prioridade' => 'NORMAL',
+                'numero_contrato' => $dados['numero_contrato'] ?? $cpfEncontrado['numero_contrato'] ?? null,
+                
+                // Horários preferenciais
+                'horarios_opcoes' => $horariosJson,
+                'datas_opcoes' => $horariosJson
+            ];
+            
+            // Criar solicitação normal
+            $solicitacaoModel = new \App\Models\Solicitacao();
+            $solicitacaoId = $solicitacaoModel->create($dadosSolicitacao);
+            
+            if ($solicitacaoId) {
+                // Salvar fotos na tabela fotos se houver
+                if (!empty($dados['fotos']) && is_array($dados['fotos'])) {
+                    foreach ($dados['fotos'] as $fotoNome) {
+                        $urlArquivo = 'Public/uploads/solicitacoes/' . $fotoNome;
+                        $sqlFoto = "INSERT INTO fotos (solicitacao_id, nome_arquivo, url_arquivo, created_at) 
+                                    VALUES (?, ?, ?, NOW())";
+                        try {
+                            \App\Core\Database::query($sqlFoto, [$solicitacaoId, $fotoNome, $urlArquivo]);
+                        } catch (\Exception $e) {
+                            error_log("Erro ao salvar foto {$fotoNome} para solicitação {$solicitacaoId}: " . $e->getMessage());
+                        }
+                    }
+                }
+                
+                // Limpar sessão
+                unset($_SESSION['solicitacao_manual']);
+                
+                // Redirecionar com mensagem de sucesso
+                $this->redirect(url($instancia . '?success=' . urlencode('Solicitação enviada com sucesso! ID: #' . $solicitacaoId)));
+            } else {
+                $this->redirect(url($instancia . '/solicitacao-manual/etapa/5?error=' . urlencode('Erro ao salvar solicitação. Tente novamente.')));
+            }
         } else {
-            $this->redirect(url($instancia . '/solicitacao-manual/etapa/5?error=' . urlencode('Erro ao salvar solicitação. Tente novamente.')));
+            // Criar como solicitação manual (vai para admin)
+            $dadosParaSalvar = [
+                'imobiliaria_id' => $imobiliaria['id'],
+                'nome_completo' => $dados['nome_completo'],
+                'cpf' => $cpfLimpo,
+                'whatsapp' => $dados['whatsapp'],
+                'tipo_imovel' => $dados['tipo_imovel'],
+                'subtipo_imovel' => $dados['subtipo_imovel'] ?? null,
+                'cep' => $dados['cep'],
+                'endereco' => $dados['endereco'],
+                'numero' => $dados['numero'],
+                'complemento' => $dados['complemento'] ?? null,
+                'bairro' => $dados['bairro'],
+                'cidade' => $dados['cidade'],
+                'estado' => $dados['estado'],
+                'categoria_id' => $dados['categoria_id'],
+                'subcategoria_id' => $dados['subcategoria_id'],
+                'numero_contrato' => $dados['numero_contrato'] ?? null,
+                'local_manutencao' => $dados['local_manutencao'] ?? null,
+                'descricao_problema' => $dados['descricao_problema'],
+                'horarios_preferenciais' => $dados['horarios_preferenciais'] ?? [],
+                'fotos' => $dados['fotos'] ?? [],
+                'termos_aceitos' => $dados['termos_aceitos']
+            ];
+            
+            // Criar solicitação manual
+            $solicitacaoManualModel = new \App\Models\SolicitacaoManual();
+            $id = $solicitacaoManualModel->create($dadosParaSalvar);
+            
+            if ($id) {
+                // Limpar sessão
+                unset($_SESSION['solicitacao_manual']);
+                
+                // Redirecionar com mensagem de sucesso
+                $this->redirect(url($instancia . '?success=' . urlencode('Solicitação enviada com sucesso! Em breve entraremos em contato. ID: #' . $id)));
+            } else {
+                $this->redirect(url($instancia . '/solicitacao-manual/etapa/5?error=' . urlencode('Erro ao salvar solicitação. Tente novamente.')));
+            }
         }
     }
     

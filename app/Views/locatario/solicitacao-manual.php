@@ -24,25 +24,49 @@ $steps = [
 function gerarResumoEtapasManual($etapaAtual, $dados) {
     $resumo = [];
     
+    // Garantir que $dados é um array
+    if (!is_array($dados)) {
+        $dados = [];
+    }
+    
     // Etapa 1: Dados
     if ($etapaAtual > 1 && !empty($dados['nome_completo'])) {
         $resumo[] = [
             'titulo' => 'Dados',
             'icone' => 'fas fa-user',
-            'conteudo' => htmlspecialchars($dados['nome_completo'] ?? '')
+            'conteudo' => htmlspecialchars($dados['nome_completo'])
         ];
     }
     
     // Etapa 2: Serviço
-    if ($etapaAtual > 2 && isset($dados['subcategoria_id'])) {
-        $subcategoriaModel = new \App\Models\Subcategoria();
-        $subcategoria = $subcategoriaModel->find($dados['subcategoria_id']);
-        if ($subcategoria) {
-            $resumo[] = [
-                'titulo' => 'Serviço',
-                'icone' => 'fas fa-cog',
-                'conteudo' => htmlspecialchars($subcategoria['nome'] ?? '')
-            ];
+    if ($etapaAtual > 2 && !empty($dados['subcategoria_id'])) {
+        try {
+            $subcategoriaModel = new \App\Models\Subcategoria();
+            $subcategoria = $subcategoriaModel->find($dados['subcategoria_id']);
+            if ($subcategoria && !empty($subcategoria['nome'])) {
+                $resumo[] = [
+                    'titulo' => 'Serviço',
+                    'icone' => 'fas fa-cog',
+                    'conteudo' => htmlspecialchars($subcategoria['nome'])
+                ];
+            }
+        } catch (\Exception $e) {
+            // Se não conseguir buscar, usar categoria_id como fallback
+            if (!empty($dados['categoria_id'])) {
+                try {
+                    $categoriaModel = new \App\Models\Categoria();
+                    $categoria = $categoriaModel->find($dados['categoria_id']);
+                    if ($categoria && !empty($categoria['nome'])) {
+                        $resumo[] = [
+                            'titulo' => 'Serviço',
+                            'icone' => 'fas fa-cog',
+                            'conteudo' => htmlspecialchars($categoria['nome'])
+                        ];
+                    }
+                } catch (\Exception $e2) {
+                    // Ignorar erro
+                }
+            }
         }
     }
     
@@ -64,6 +88,7 @@ function gerarResumoEtapasManual($etapaAtual, $dados) {
         $horarios = $dados['horarios_preferenciais'];
         if (is_array($horarios) && !empty($horarios)) {
             $primeiroHorario = $horarios[0];
+            // Tentar diferentes formatos de data/hora
             if (preg_match('/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2})/', $primeiroHorario, $matches)) {
                 $dataFormatada = $matches[3] . '/' . $matches[2] . '/' . $matches[1] . ' às ' . $matches[4] . ':' . $matches[5];
                 $totalHorarios = count($horarios);
@@ -76,6 +101,13 @@ function gerarResumoEtapasManual($etapaAtual, $dados) {
                     'titulo' => 'Agendamento',
                     'icone' => 'fas fa-calendar-alt',
                     'conteudo' => $texto
+                ];
+            } elseif (is_string($primeiroHorario)) {
+                // Se for string, tentar formatar
+                $resumo[] = [
+                    'titulo' => 'Agendamento',
+                    'icone' => 'fas fa-calendar-alt',
+                    'conteudo' => htmlspecialchars($primeiroHorario)
                 ];
             }
         }
@@ -157,15 +189,21 @@ function gerarResumoEtapasManual($etapaAtual, $dados) {
                 <?php 
                 // Exibir resumo das etapas anteriores (exceto na etapa 1 e na última etapa)
                 if ($etapaAtual > 1 && $etapaAtual < 5):
-                    $resumoEtapas = gerarResumoEtapasManual($etapaAtual, $dados ?? []);
+                    // Garantir que $dados existe e é um array
+                    $dadosResumo = is_array($dados ?? null) ? $dados : [];
+                    // Se não tiver dados na variável, tentar pegar da sessão diretamente
+                    if (empty($dadosResumo) && isset($_SESSION['solicitacao_manual'])) {
+                        $dadosResumo = $_SESSION['solicitacao_manual'];
+                    }
+                    $resumoEtapas = gerarResumoEtapasManual($etapaAtual, $dadosResumo);
                     if (!empty($resumoEtapas)):
                 ?>
                     <!-- Resumo das Etapas Anteriores - Dropdown -->
-                    <div class="px-6 py-3 bg-gray-50 border-b border-gray-200">
+                    <div class="px-6 py-3 bg-gray-50 border-b border-gray-200" style="position: relative; z-index: 1;">
                         <button type="button" 
-                                onclick="toggleResumoEtapas(event)" 
+                                id="btn-resumo-etapas"
                                 class="w-full flex items-center justify-between text-left focus:outline-none focus:ring-2 focus:ring-green-500 rounded-lg p-2 -m-2 cursor-pointer"
-                                style="cursor: pointer; pointer-events: auto;">
+                                style="cursor: pointer; pointer-events: auto; position: relative; z-index: 2;">
                             <div class="flex items-center">
                                 <i class="fas fa-list-ul text-gray-600 mr-2"></i>
                                 <h3 class="text-sm font-medium text-gray-700 whitespace-nowrap">Resumo das Etapas Anteriores</h3>
@@ -433,13 +471,12 @@ function gerarResumoEtapasManual($etapaAtual, $dados) {
                                 <div class="space-y-3">
                                     <?php if (!empty($categorias)): ?>
                                         <?php foreach ($categorias as $categoria): ?>
-                                            <label class="relative block cursor-pointer" style="cursor: pointer; pointer-events: auto;">
+                                            <label class="relative block categoria-label" data-categoria-label="<?= $categoria['id'] ?>">
                                                 <input type="radio" name="categoria_id" value="<?= $categoria['id'] ?>" 
                                                        class="sr-only categoria-radio" data-categoria="<?= $categoria['id'] ?>"
                                                        <?= ($dados['categoria_id'] ?? '') == $categoria['id'] ? 'checked' : '' ?>>
-                                                <div class="border-2 rounded-lg p-4 transition-all categoria-card" 
-                                                     data-categoria="<?= $categoria['id'] ?>"
-                                                     style="cursor: pointer; pointer-events: auto;">
+                                                <div class="border-2 rounded-lg p-4 cursor-pointer transition-all hover:border-blue-300 categoria-card" 
+                                                     data-categoria="<?= $categoria['id'] ?>">
                                                     <div class="flex items-center justify-between">
                                                         <div class="flex items-center">
                                                             <i class="<?= $categoria['icone'] ?? 'fas fa-cog' ?> text-xl text-gray-600 mr-3"></i>
@@ -451,8 +488,11 @@ function gerarResumoEtapasManual($etapaAtual, $dados) {
                                                     <!-- Subcategorias -->
                                                     <div class="mt-3 categoria-details hidden">
                                                         <div class="bg-gray-50 rounded-lg p-3">
-                                                            <h4 class="text-sm font-medium text-gray-700 mb-2">Tipo de Serviço</h4>
-                                                            <div class="space-y-2">
+                                                            <h4 class="text-sm font-medium text-gray-700 mb-3">
+                                                                Tipo de Serviço
+                                                                <span class="text-xs text-gray-500">(<?= count($categoria['subcategorias'] ?? []) ?> opções)</span>
+                                                            </h4>
+                                                            <div class="space-y-3">
                                                                 <?php if (!empty($categoria['subcategorias'])): ?>
                                                                     <?php foreach ($categoria['subcategorias'] as $subcategoria): ?>
                                                                         <label class="relative block cursor-pointer">
@@ -462,8 +502,10 @@ function gerarResumoEtapasManual($etapaAtual, $dados) {
                                                                             <div class="border border-gray-200 rounded-lg p-3 hover:border-blue-300 transition-colors subcategoria-card <?= (!empty($subcategoria['is_emergencial']) && ($subcategoria['is_emergencial'] == 1 || $subcategoria['is_emergencial'] === true)) ? 'border-red-300 bg-red-50' : '' ?>">
                                                                                 <div class="flex items-start justify-between">
                                                                                     <div class="flex-1">
-                                                                                        <div class="flex items-center gap-2">
-                                                                                            <h5 class="text-sm font-medium text-gray-900"><?= htmlspecialchars($subcategoria['nome']) ?></h5>
+                                                                                        <div class="flex items-center gap-2 mb-1">
+                                                                                            <h5 class="text-sm font-medium text-gray-900">
+                                                                                                <?= htmlspecialchars($subcategoria['nome']) ?>
+                                                                                            </h5>
                                                                                             <?php if (!empty($subcategoria['is_emergencial']) && ($subcategoria['is_emergencial'] == 1 || $subcategoria['is_emergencial'] === true)): ?>
                                                                                                 <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 border border-red-200">
                                                                                                     <i class="fas fa-exclamation-triangle mr-1"></i>
@@ -472,7 +514,9 @@ function gerarResumoEtapasManual($etapaAtual, $dados) {
                                                                                             <?php endif; ?>
                                                                                         </div>
                                                                                         <?php if (!empty($subcategoria['descricao'])): ?>
-                                                                                            <p class="text-xs text-gray-600 mt-1"><?= htmlspecialchars($subcategoria['descricao']) ?></p>
+                                                                                            <p class="text-xs text-gray-600">
+                                                                                                <?= htmlspecialchars($subcategoria['descricao']) ?>
+                                                                                            </p>
                                                                                         <?php endif; ?>
                                                                                     </div>
                                                                                     <div class="ml-3">
@@ -998,84 +1042,90 @@ function gerarResumoEtapasManual($etapaAtual, $dados) {
         }
     });
     
-    // Categorias e Subcategorias (igual à solicitação normal)
-    function inicializarCategorias() {
-        // Inicializar categorias quando a página carregar
-        document.querySelectorAll('.categoria-radio').forEach(radio => {
-            radio.addEventListener('change', function() {
-                const categoriaId = this.value;
+    // === ETAPA 2: Seleção de Categoria (igual à nova solicitação) ===
+    const categoriaRadios = document.querySelectorAll('.categoria-radio');
+    const categoriaCards = document.querySelectorAll('.categoria-card');
+    
+    categoriaRadios.forEach(radio => {
+        radio.addEventListener('change', function() {
+            const categoriaId = this.value;
+            
+            // Remover seleção de todos os cards
+            categoriaCards.forEach(card => {
+                card.classList.remove('border-blue-500', 'bg-blue-50');
+                card.classList.add('border-gray-200');
                 
-                document.querySelectorAll('.categoria-card').forEach(card => {
-                    card.classList.remove('border-blue-500', 'bg-blue-50');
-                    card.classList.add('border-gray-200');
-                    
-                    const check = card.querySelector('.categoria-check');
-                    if (check) {
-                        check.classList.remove('bg-blue-500', 'border-blue-500');
-                        check.classList.add('border-gray-300');
-                    }
-                    
-                    const details = card.querySelector('.categoria-details');
-                    if (details) details.classList.add('hidden');
-                });
+                const check = card.querySelector('.categoria-check');
+                if (check) {
+                    check.classList.remove('bg-blue-500', 'border-blue-500');
+                    check.classList.add('border-gray-300');
+                }
                 
-                const currentCard = document.querySelector(`.categoria-card[data-categoria="${categoriaId}"]`);
-                if (currentCard) {
-                    currentCard.classList.remove('border-gray-200');
-                    currentCard.classList.add('border-blue-500', 'bg-blue-50');
-                    
-                    const check = currentCard.querySelector('.categoria-check');
-                    if (check) {
-                        check.classList.remove('border-gray-300');
-                        check.classList.add('bg-blue-500', 'border-blue-500');
-                    }
-                    
-                    const details = currentCard.querySelector('.categoria-details');
-                    if (details) details.classList.remove('hidden');
+                const details = card.querySelector('.categoria-details');
+                if (details) {
+                    details.classList.add('hidden');
                 }
             });
             
-            // Se já estiver selecionado, disparar o evento para mostrar as subcategorias
-            if (radio.checked) {
-                radio.dispatchEvent(new Event('change'));
+            // Selecionar o card atual
+            const currentCard = document.querySelector(`.categoria-card[data-categoria="${categoriaId}"]`);
+            if (currentCard) {
+                currentCard.classList.remove('border-gray-200');
+                currentCard.classList.add('border-blue-500', 'bg-blue-50');
+                
+                const check = currentCard.querySelector('.categoria-check');
+                if (check) {
+                    check.classList.remove('border-gray-300');
+                    check.classList.add('bg-blue-500', 'border-blue-500');
+                }
+                
+                const details = currentCard.querySelector('.categoria-details');
+                if (details) {
+                    details.classList.remove('hidden');
+                }
             }
         });
         
-        document.querySelectorAll('.categoria-card').forEach(card => {
-            card.style.cursor = 'pointer';
-            card.addEventListener('click', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                if (!e.target.closest('.categoria-details') && !e.target.closest('.subcategoria-card')) {
-                    const categoriaId = this.getAttribute('data-categoria');
-                    const radio = document.querySelector(`.categoria-radio[value="${categoriaId}"]`);
-                    if (radio) {
-                        radio.checked = true;
-                        radio.dispatchEvent(new Event('change'));
-                    }
-                }
-            });
+        // Se já estiver selecionado, disparar o evento para mostrar as subcategorias
+        if (radio.checked) {
+            radio.dispatchEvent(new Event('change'));
+        }
+    });
+    
+    // Click no card também seleciona o radio
+    categoriaCards.forEach(card => {
+        card.addEventListener('click', function(e) {
+            // Não processar se clicar dentro das subcategorias
+            if (e.target.closest('.categoria-details')) {
+                return;
+            }
+            
+            const categoriaId = this.getAttribute('data-categoria');
+            const radio = document.querySelector(`.categoria-radio[value="${categoriaId}"]`);
+            if (radio) {
+                radio.checked = true;
+                radio.dispatchEvent(new Event('change'));
+            }
         });
-    }
+    });
     
-    // Inicializar quando o DOM estiver pronto
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', inicializarCategorias);
-    } else {
-        inicializarCategorias();
-    }
-    
+    // === SUBCATEGORIAS: Seleção visual ===
     document.addEventListener('change', function(e) {
         if (e.target.classList.contains('subcategoria-radio')) {
-            document.querySelectorAll('.subcategoria-card').forEach(card => {
+            const allSubCards = document.querySelectorAll('.subcategoria-card');
+            const allSubChecks = document.querySelectorAll('.subcategoria-check');
+            
+            // Remover seleção de todos
+            allSubCards.forEach(card => {
                 card.classList.remove('border-blue-500', 'bg-blue-50');
                 card.classList.add('border-gray-200');
             });
-            document.querySelectorAll('.subcategoria-check').forEach(check => {
+            allSubChecks.forEach(check => {
                 check.classList.remove('bg-blue-500', 'border-blue-500');
                 check.classList.add('border-gray-300');
             });
             
+            // Adicionar seleção ao card pai do radio selecionado
             const selectedCard = e.target.closest('label').querySelector('.subcategoria-card');
             const selectedCheck = e.target.closest('label').querySelector('.subcategoria-check');
             
@@ -1089,6 +1139,24 @@ function gerarResumoEtapasManual($etapaAtual, $dados) {
             }
         }
     });
+    
+    // Click no card da subcategoria seleciona o radio (COM stopPropagation para não conflitar)
+    document.addEventListener('click', function(e) {
+        const subCard = e.target.closest('.subcategoria-card');
+        if (subCard) {
+            // Garantir que não é um clique no card de categoria
+            const isCategoriaCard = e.target.closest('.categoria-card');
+            if (!isCategoriaCard) {
+                e.stopPropagation();
+                const label = subCard.closest('label');
+                const radio = label ? label.querySelector('.subcategoria-radio') : null;
+                if (radio) {
+                    radio.checked = true;
+                    radio.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+            }
+        }
+    }, true); // Captura na fase de captura
     
     // Funções para modal de foto
     window.abrirModalFoto = function() {
@@ -1161,11 +1229,7 @@ function gerarResumoEtapasManual($etapaAtual, $dados) {
     });
     
     // Função para toggle do resumo das etapas
-    window.toggleResumoEtapas = function(e) {
-        if (e) {
-            e.preventDefault();
-            e.stopPropagation();
-        }
+    function toggleResumoEtapas() {
         const conteudo = document.getElementById('resumo-conteudo');
         const chevron = document.getElementById('resumo-chevron');
         
@@ -1179,20 +1243,44 @@ function gerarResumoEtapasManual($etapaAtual, $dados) {
                 chevron.classList.remove('rotate-180');
             }
         }
-        return false;
-    };
+    }
     
-    // Adicionar event listener ao botão do resumo também
-    document.addEventListener('DOMContentLoaded', function() {
-        const btnResumo = document.querySelector('button[onclick="toggleResumoEtapas()"]');
+    // Adicionar event listener ao botão do resumo
+    function inicializarResumoEtapas() {
+        const btnResumo = document.getElementById('btn-resumo-etapas');
         if (btnResumo) {
-            btnResumo.addEventListener('click', function(e) {
+            // Remover event listeners anteriores se existirem
+            const novoBtn = btnResumo.cloneNode(true);
+            btnResumo.parentNode.replaceChild(novoBtn, btnResumo);
+            
+            // Adicionar novo event listener
+            novoBtn.addEventListener('click', function(e) {
                 e.preventDefault();
                 e.stopPropagation();
-                toggleResumoEtapas(e);
+                e.stopImmediatePropagation();
+                toggleResumoEtapas();
+                return false;
             });
+            
+            // Também adicionar via onclick como fallback
+            novoBtn.onclick = function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                toggleResumoEtapas();
+                return false;
+            };
         }
-    });
+    }
+    
+    // Inicializar quando o DOM estiver pronto
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', inicializarResumoEtapas);
+    } else {
+        inicializarResumoEtapas();
+    }
+    
+    // Também disponibilizar globalmente para compatibilidade
+    window.toggleResumoEtapas = toggleResumoEtapas;
     
     window.previewPhotos = function(input) {
         const preview = document.getElementById('fotos-preview');
@@ -1208,11 +1296,10 @@ function gerarResumoEtapasManual($etapaAtual, $dados) {
             allFiles = allFiles.concat(Array.from(inputCamera.files));
         }
         
-        if (allFiles.length > 0) {
-        const preview = document.getElementById('fotos-preview');
-        const files = Array.from(input.files).slice(0, 5); // Máximo 5 fotos
+        // Usar os arquivos do input que foi alterado, limitando a 5
+        const files = input && input.files ? Array.from(input.files).slice(0, 5) : allFiles.slice(0, 5);
         
-        if (files.length > 0) {
+        if (files.length > 0 && preview) {
             preview.classList.remove('hidden');
             preview.innerHTML = '';
             
@@ -1234,7 +1321,7 @@ function gerarResumoEtapasManual($etapaAtual, $dados) {
                     reader.readAsDataURL(file);
                 }
             });
-        } else {
+        } else if (preview) {
             preview.classList.add('hidden');
         }
     };

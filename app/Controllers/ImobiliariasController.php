@@ -783,9 +783,9 @@ class ImobiliariasController extends Controller
             foreach ($rows as $index => $row) {
                 $linha = $index + 2; // +2 porque removemos o cabeçalho e arrays começam em 0
                 
-                // Extrair CPF e número do imóvel
+                // Extrair CPF e número do contrato
                 $cpf = isset($row[0]) ? trim($row[0]) : '';
-                $numeroImovel = isset($row[1]) ? trim($row[1]) : '';
+                $numeroContrato = isset($row[1]) ? trim($row[1]) : '';
 
                 // Validar dados
                 if (empty($cpf)) {
@@ -794,9 +794,9 @@ class ImobiliariasController extends Controller
                     continue;
                 }
 
-                if (empty($numeroImovel)) {
+                if (empty($numeroContrato)) {
                     $erros++;
-                    $detalhesErros[] = "Linha {$linha}: Número do imóvel não informado";
+                    $detalhesErros[] = "Linha {$linha}: Número do contrato não informado";
                     continue;
                 }
 
@@ -810,39 +810,24 @@ class ImobiliariasController extends Controller
                 }
 
                 try {
-                    // Buscar locatário por CPF e imobiliária
-                    $locatario = $locatarioModel->findByCpfAndImobiliaria($cpf, $id);
+                    // Verificar se já existe na tabela locatarios_contratos
+                    $sql = "SELECT * FROM locatarios_contratos 
+                            WHERE imobiliaria_id = ? AND cpf = ? AND numero_contrato = ?";
+                    $existente = \App\Core\Database::fetch($sql, [$id, $cpf, $numeroContrato]);
 
-                    if (!$locatario) {
-                        $erros++;
-                        $detalhesErros[] = "Linha {$linha}: Locatário com CPF {$cpf} não encontrado para esta imobiliária";
-                        continue;
-                    }
-
-                    // Verificar se o imóvel já existe
-                    $sql = "SELECT * FROM imoveis_locatarios 
-                            WHERE locatario_id = ? AND ksi_imovel_cod = ? AND status = 'ATIVO'";
-                    $imovelExistente = \App\Core\Database::fetch($sql, [$locatario['id'], $numeroImovel]);
-
-                    if ($imovelExistente) {
-                        // Atualizar imóvel existente
-                        $updateSql = "UPDATE imoveis_locatarios 
+                    if ($existente) {
+                        // Atualizar registro existente
+                        $updateSql = "UPDATE locatarios_contratos 
                                      SET updated_at = NOW() 
                                      WHERE id = ?";
-                        \App\Core\Database::query($updateSql, [$imovelExistente['id']]);
+                        \App\Core\Database::query($updateSql, [$existente['id']]);
                         $sucessos++;
                     } else {
-                        // Criar novo imóvel
-                        $imovelData = [
-                            'locatario_id' => $locatario['id'],
-                            'ksi_imovel_cod' => $numeroImovel,
-                            'endereco_logradouro' => 'Importado via Excel',
-                            'status' => 'ATIVO',
-                            'created_at' => date('Y-m-d H:i:s'),
-                            'updated_at' => date('Y-m-d H:i:s')
-                        ];
-
-                        $locatarioModel->addImovel($locatario['id'], $imovelData);
+                        // Criar novo registro
+                        $insertSql = "INSERT INTO locatarios_contratos 
+                                     (imobiliaria_id, cpf, numero_contrato, created_at, updated_at) 
+                                     VALUES (?, ?, ?, NOW(), NOW())";
+                        \App\Core\Database::query($insertSql, [$id, $cpf, $numeroContrato]);
                         $sucessos++;
                     }
                 } catch (\Exception $e) {
