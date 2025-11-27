@@ -783,11 +783,20 @@ class ImobiliariasController extends Controller
                         throw new \Exception('Não foi possível abrir o arquivo CSV');
                     }
                     
+                    // Detectar separador (vírgula ou ponto e vírgula)
+                    $primeiraLinha = fgets($handle);
+                    rewind($handle); // Voltar ao início do arquivo
+                    
+                    $separador = ',';
+                    if (strpos($primeiraLinha, ';') !== false && substr_count($primeiraLinha, ';') >= substr_count($primeiraLinha, ',')) {
+                        $separador = ';';
+                    }
+                    
                     // Ler cabeçalho (primeira linha) e descartar
-                    $header = fgetcsv($handle, 1000, ',');
+                    $header = fgetcsv($handle, 1000, $separador);
                     
                     // Ler todas as linhas
-                    while (($row = fgetcsv($handle, 1000, ',')) !== false) {
+                    while (($row = fgetcsv($handle, 1000, $separador)) !== false) {
                         $rows[] = $row;
                     }
                     

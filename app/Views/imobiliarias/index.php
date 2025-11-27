@@ -108,16 +108,10 @@ ob_start();
                         
                         <!-- Ações -->
                         <div class="flex items-center space-x-2">
-                            <button onclick="abrirModalUploadExcel(<?= $imobiliaria['id'] ?>)" 
-                                    class="inline-flex items-center px-3 py-1 border border-blue-300 rounded-md text-sm font-medium text-blue-700 bg-white hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                                <i class="fas fa-file-excel mr-1"></i>
-                                Upload Excel
-                            </button>
-                            
                             <button onclick="abrirModalListagemContratos(<?= $imobiliaria['id'] ?>)" 
                                     class="inline-flex items-center px-3 py-1 border border-purple-300 rounded-md text-sm font-medium text-purple-700 bg-white hover:bg-purple-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500">
                                 <i class="fas fa-list mr-1"></i>
-                                Ver Listagem
+                                Listagem
                             </button>
                             
                             <button onclick="abrirOffcanvasVer(<?= $imobiliaria['id'] ?>)" 
@@ -200,7 +194,7 @@ ob_start();
                 <form id="form-upload-excel" enctype="multipart/form-data">
                     <input type="file" name="excel_file" id="excel_file" accept=".xlsx,.xls,.csv" 
                            class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 focus:ring-2 focus:ring-blue-500 focus:outline-none" required>
-                    <p class="mt-2 text-xs text-gray-500">Primeira linha deve conter os cabeçalhos (CPF, Número do Contrato). CSV deve usar vírgula como separador.</p>
+                    <p class="mt-2 text-xs text-gray-500">Primeira linha deve conter os cabeçalhos (CPF, Número do Contrato). CSV pode usar vírgula (,) ou ponto e vírgula (;) como separador.</p>
                 </form>
             </div>
             <div class="items-center px-4 py-3 mt-4">

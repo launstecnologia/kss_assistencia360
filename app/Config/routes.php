@@ -208,6 +208,10 @@ $router->post('/admin/imobiliarias/{id}/upload-excel', 'ImobiliariasController@u
 $router->get('/admin/imobiliarias/{id}/listagem-contratos', 'ImobiliariasController@listagemContratos', ['auth', 'admin']);
 $router->get('/admin/imobiliarias/{id}/exportar-contratos', 'ImobiliariasController@exportarContratos', ['auth', 'admin']);
 
+// Upload de CSV
+$router->get('/admin/upload', 'UploadController@index', ['auth', 'admin']);
+$router->post('/admin/upload/processar', 'UploadController@processar', ['auth', 'admin']);
+
 // Gerenciamento de Usuários
 $router->get('/admin/usuarios', 'UsuariosController@index', ['auth', 'admin']);
 $router->get('/admin/usuarios/create', 'UsuariosController@create', ['auth', 'admin']);
