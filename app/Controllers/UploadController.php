@@ -26,7 +26,7 @@ class UploadController extends Controller
     }
 
     /**
-     * Processar upload de CSV
+     * Processar upload de CSV (múltiplos arquivos)
      */
     public function processar(): void
     {
@@ -35,40 +35,139 @@ class UploadController extends Controller
             return;
         }
 
-        // Verificar se arquivo foi enviado
-        if (empty($_FILES['csv_file']['name']) || $_FILES['csv_file']['error'] !== UPLOAD_ERR_OK) {
-            $this->json(['success' => false, 'error' => 'Nenhum arquivo foi enviado ou ocorreu um erro no upload'], 400);
-            return;
-        }
-
-        $file = $_FILES['csv_file'];
-        $fileName = $file['name'];
-        $fileTmpName = $file['tmp_name'];
-        $fileSize = $file['size'];
-
-        // Validar tamanho (máximo 10MB)
-        $maxSize = 10 * 1024 * 1024; // 10MB
-        if ($fileSize > $maxSize) {
-            $this->json(['success' => false, 'error' => 'Arquivo muito grande. Tamanho máximo: 10MB'], 400);
-            return;
-        }
-
-        // Validar extensão
-        $extension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
-        if ($extension !== 'csv') {
-            $this->json(['success' => false, 'error' => 'Formato de arquivo não permitido. Use .csv'], 400);
+        // Verificar se arquivos foram enviados
+        if (empty($_FILES['csv_file']['name'])) {
+            $this->json(['success' => false, 'error' => 'Nenhum arquivo foi enviado'], 400);
             return;
         }
 
         // Verificar se a tabela locatarios_contratos existe
         $this->garantirTabelaLocatariosContratos();
 
-        try {
-            // Processar CSV
-            $handle = fopen($fileTmpName, 'r');
-            if ($handle === false) {
-                throw new \Exception('Não foi possível abrir o arquivo CSV');
+        // Processar múltiplos arquivos
+        $files = $_FILES['csv_file'];
+        $totalArquivos = is_array($files['name']) ? count($files['name']) : 1;
+        
+        // Normalizar para array se for apenas um arquivo
+        if (!is_array($files['name'])) {
+            $files = [
+                'name' => [$files['name']],
+                'tmp_name' => [$files['tmp_name']],
+                'size' => [$files['size']],
+                'error' => [$files['error']]
+            ];
+        }
+
+        $totalSucessos = 0;
+        $totalErros = 0;
+        $detalhesErrosGeral = [];
+        $resultadosArquivos = [];
+
+        // Validar e processar cada arquivo
+        for ($i = 0; $i < $totalArquivos; $i++) {
+            $fileName = $files['name'][$i];
+            $fileTmpName = $files['tmp_name'][$i];
+            $fileSize = $files['size'][$i];
+            $fileError = $files['error'][$i];
+
+            // Validar erro de upload
+            if ($fileError !== UPLOAD_ERR_OK) {
+                $totalErros++;
+                $detalhesErrosGeral[] = "Arquivo '{$fileName}': Erro no upload (código {$fileError})";
+                $resultadosArquivos[] = [
+                    'nome' => $fileName,
+                    'sucessos' => 0,
+                    'erros' => 1
+                ];
+                continue;
             }
+
+            // Validar tamanho (máximo 10MB)
+            $maxSize = 10 * 1024 * 1024; // 10MB
+            if ($fileSize > $maxSize) {
+                $totalErros++;
+                $detalhesErrosGeral[] = "Arquivo '{$fileName}': Arquivo muito grande. Tamanho máximo: 10MB";
+                $resultadosArquivos[] = [
+                    'nome' => $fileName,
+                    'sucessos' => 0,
+                    'erros' => 1
+                ];
+                continue;
+            }
+
+            // Validar extensão
+            $extension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+            if ($extension !== 'csv') {
+                $totalErros++;
+                $detalhesErrosGeral[] = "Arquivo '{$fileName}': Formato não permitido. Use .csv";
+                $resultadosArquivos[] = [
+                    'nome' => $fileName,
+                    'sucessos' => 0,
+                    'erros' => 1
+                ];
+                continue;
+            }
+
+            // Processar arquivo
+            try {
+                $resultado = $this->processarArquivoCSV($fileTmpName, $fileName);
+                $totalSucessos += $resultado['sucessos'];
+                $totalErros += $resultado['erros'];
+                $detalhesErrosGeral = array_merge($detalhesErrosGeral, $resultado['detalhes_erros']);
+                $resultadosArquivos[] = [
+                    'nome' => $fileName,
+                    'sucessos' => $resultado['sucessos'],
+                    'erros' => $resultado['erros']
+                ];
+            } catch (\Exception $e) {
+                $totalErros++;
+                $detalhesErrosGeral[] = "Arquivo '{$fileName}': " . $e->getMessage();
+                $resultadosArquivos[] = [
+                    'nome' => $fileName,
+                    'sucessos' => 0,
+                    'erros' => 1
+                ];
+                error_log("Erro ao processar arquivo {$fileName}: " . $e->getMessage());
+            }
+        }
+
+        $mensagem = "Processamento concluído: {$totalSucessos} registro(s) processado(s) com sucesso em {$totalArquivos} arquivo(s)";
+        if ($totalErros > 0) {
+            $mensagem .= ", {$totalErros} erro(s) encontrado(s)";
+        }
+
+        // Limitar e sanitizar detalhes de erros
+        $detalhesErrosLimitados = array_slice($detalhesErrosGeral, 0, 200);
+        $detalhesErrosSanitizados = array_map(function($erro) {
+            return mb_convert_encoding($erro, 'UTF-8', 'UTF-8');
+        }, $detalhesErrosLimitados);
+
+        // Limpar qualquer output anterior
+        if (ob_get_level()) {
+            ob_clean();
+        }
+        
+        $this->json([
+            'success' => true,
+            'message' => $mensagem,
+            'sucessos' => $totalSucessos,
+            'erros' => $totalErros,
+            'detalhes_erros' => $detalhesErrosSanitizados,
+            'arquivos' => $resultadosArquivos
+        ]);
+    }
+
+    /**
+     * Processar um único arquivo CSV
+     */
+    private function processarArquivoCSV(string $fileTmpName, string $fileName): array
+    {
+
+        // Processar CSV
+        $handle = fopen($fileTmpName, 'r');
+        if ($handle === false) {
+            throw new \Exception('Não foi possível abrir o arquivo CSV');
+        }
 
             // Detectar separador (vírgula ou ponto e vírgula)
             $primeiraLinha = fgets($handle);
@@ -117,11 +216,7 @@ class UploadController extends Controller
 
             if (!empty($colunasFaltando)) {
                 fclose($handle);
-                $this->json([
-                    'success' => false,
-                    'error' => 'Colunas obrigatórias não encontradas: ' . implode(', ', $colunasFaltando)
-                ], 400);
-                return;
+                throw new \Exception('Colunas obrigatórias não encontradas: ' . implode(', ', $colunasFaltando));
             }
 
             // Buscar todas as imobiliárias para matching
@@ -246,35 +341,20 @@ class UploadController extends Controller
                 }
             }
 
-            fclose($handle);
+        fclose($handle);
 
-            $mensagem = "Processamento concluído: {$sucessos} registro(s) processado(s) com sucesso";
-            if ($erros > 0) {
-                $mensagem .= ", {$erros} erro(s) encontrado(s)";
-            }
+        // Adicionar prefixo do nome do arquivo aos erros
+        $detalhesErrosComArquivo = array_map(function($erro) use ($fileName) {
+            return "[{$fileName}] {$erro}";
+        }, $detalhesErros);
 
-            // Limitar e sanitizar detalhes de erros
-            $detalhesErrosLimitados = array_slice($detalhesErros, 0, 100);
-            $detalhesErrosSanitizados = array_map(function($erro) {
-                return mb_convert_encoding($erro, 'UTF-8', 'UTF-8');
-            }, $detalhesErrosLimitados);
+        return [
+            'sucessos' => $sucessos,
+            'erros' => $erros,
+            'detalhes_erros' => $detalhesErrosComArquivo
+        ];
+    }
 
-            // Limpar qualquer output anterior
-            if (ob_get_level()) {
-                ob_clean();
-            }
-            
-            $this->json([
-                'success' => true,
-                'message' => $mensagem,
-                'sucessos' => $sucessos,
-                'erros' => $erros,
-                'detalhes_erros' => $detalhesErrosSanitizados
-            ]);
-
-        } catch (\Exception $e) {
-            error_log("Erro ao processar CSV: " . $e->getMessage());
-            error_log("Stack trace: " . $e->getTraceAsString());
             
             // Garantir que sempre retornamos JSON válido
             header('Content-Type: application/json; charset=utf-8');
