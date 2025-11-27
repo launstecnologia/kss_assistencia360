@@ -760,60 +760,106 @@ class ImobiliariasController extends Controller
 
             // Validar extensão
             $extension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
-            $allowedExtensions = ['xlsx', 'xls'];
+            $allowedExtensions = ['xlsx', 'xls', 'csv'];
             
             if (!in_array($extension, $allowedExtensions)) {
-                $this->json(['success' => false, 'error' => 'Formato de arquivo não permitido. Use .xlsx ou .xls'], 400);
+                $this->json(['success' => false, 'error' => 'Formato de arquivo não permitido. Use .xlsx, .xls ou .csv'], 400);
                 return;
             }
+            
+            $isCsv = ($extension === 'csv');
 
             // Verificar se a tabela locatarios_contratos existe, se não existir, criar
             $this->garantirTabelaLocatariosContratos();
             
-            // Verificar se PhpSpreadsheet está disponível
-            // O autoloader já deve estar carregado pelo index.php, mas verificamos mesmo assim
-            if (!class_exists('\PhpOffice\PhpSpreadsheet\IOFactory')) {
-                // Verificar se o vendor existe
-                $vendorPath = dirname(__DIR__, 2) . '/vendor';
-                $spreadsheetPath = $vendorPath . '/phpoffice/phpspreadsheet';
-                
-                if (!is_dir($spreadsheetPath)) {
-                    error_log("PhpSpreadsheet não instalado. Caminho esperado: {$spreadsheetPath}");
+            $rows = [];
+            
+            // Processar CSV ou Excel
+            if ($isCsv) {
+                // Processar CSV usando funções nativas do PHP
+                try {
+                    $handle = fopen($fileTmpName, 'r');
+                    if ($handle === false) {
+                        throw new \Exception('Não foi possível abrir o arquivo CSV');
+                    }
+                    
+                    // Ler cabeçalho (primeira linha) e descartar
+                    $header = fgetcsv($handle, 1000, ',');
+                    
+                    // Ler todas as linhas
+                    while (($row = fgetcsv($handle, 1000, ',')) !== false) {
+                        $rows[] = $row;
+                    }
+                    
+                    fclose($handle);
+                    
+                    if (empty($rows)) {
+                        $this->json(['success' => false, 'error' => 'O arquivo CSV está vazio ou não possui dados'], 400);
+                        return;
+                    }
+                } catch (\Exception $e) {
+                    error_log("Erro ao processar CSV: " . $e->getMessage());
                     $this->json([
                         'success' => false,
-                        'error' => 'Biblioteca PhpSpreadsheet não está instalada. Execute no servidor: composer install'
+                        'error' => 'Erro ao ler arquivo CSV: ' . $e->getMessage()
+                    ], 400);
+                    return;
+                }
+            } else {
+                // Processar Excel usando PhpSpreadsheet
+                // Verificar se PhpSpreadsheet está disponível
+                if (!class_exists('\PhpOffice\PhpSpreadsheet\IOFactory')) {
+                    // Verificar se o vendor existe
+                    $vendorPath = dirname(__DIR__, 2) . '/vendor';
+                    $spreadsheetPath = $vendorPath . '/phpoffice/phpspreadsheet';
+                    
+                    if (!is_dir($spreadsheetPath)) {
+                        error_log("PhpSpreadsheet não instalado. Caminho esperado: {$spreadsheetPath}");
+                        $this->json([
+                            'success' => false,
+                            'error' => 'Biblioteca PhpSpreadsheet não está instalada. Use arquivo CSV (.csv) como alternativa ou execute: composer install'
+                        ], 500);
+                        return;
+                    }
+                    
+                    // Se o vendor existe mas a classe não está disponível, pode ser problema de autoloader
+                    error_log("PhpSpreadsheet encontrado em {$spreadsheetPath} mas classe não carregada. Verifique o autoloader.");
+                    $this->json([
+                        'success' => false,
+                        'error' => 'Erro ao carregar PhpSpreadsheet. Use arquivo CSV (.csv) como alternativa ou verifique o autoloader.'
                     ], 500);
                     return;
                 }
                 
-                // Se o vendor existe mas a classe não está disponível, pode ser problema de autoloader
-                error_log("PhpSpreadsheet encontrado em {$spreadsheetPath} mas classe não carregada. Verifique o autoloader.");
-                $this->json([
-                    'success' => false,
-                    'error' => 'Erro ao carregar PhpSpreadsheet. Verifique se o autoloader está funcionando corretamente.'
-                ], 500);
-                return;
-            }
-            
-            // Carregar arquivo Excel usando PhpSpreadsheet
-            try {
-                $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($fileTmpName);
-                $worksheet = $spreadsheet->getActiveSheet();
-                $rows = $worksheet->toArray();
+                // Carregar arquivo Excel usando PhpSpreadsheet
+                try {
+                    $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($fileTmpName);
+                    $worksheet = $spreadsheet->getActiveSheet();
+                    $rows = $worksheet->toArray();
 
-                if (empty($rows) || count($rows) < 2) {
-                    $this->json(['success' => false, 'error' => 'O arquivo Excel está vazio ou não possui dados'], 400);
+                    if (empty($rows) || count($rows) < 2) {
+                        $this->json(['success' => false, 'error' => 'O arquivo Excel está vazio ou não possui dados'], 400);
+                        return;
+                    }
+
+                    // Remover cabeçalho (primeira linha)
+                    array_shift($rows);
+                } catch (\PhpOffice\PhpSpreadsheet\Exception $e) {
+                    error_log("Erro ao carregar arquivo Excel: " . $e->getMessage());
+                    $this->json([
+                        'success' => false,
+                        'error' => 'Erro ao ler arquivo Excel: ' . $e->getMessage()
+                    ], 400);
                     return;
                 }
+            }
+            
+            // Processar linhas (tanto CSV quanto Excel)
+            $sucessos = 0;
+            $erros = 0;
+            $detalhesErros = [];
 
-                // Remover cabeçalho (primeira linha)
-                array_shift($rows);
-
-                $sucessos = 0;
-                $erros = 0;
-                $detalhesErros = [];
-
-                foreach ($rows as $index => $row) {
+            foreach ($rows as $index => $row) {
                     $linha = $index + 2; // +2 porque removemos o cabeçalho e arrays começam em 0
                     
                     // Extrair CPF e número do contrato
@@ -907,6 +953,7 @@ class ImobiliariasController extends Controller
                     'success' => false,
                     'error' => 'Erro ao ler arquivo Excel: ' . $e->getMessage()
                 ], 400);
+                return;
             }
         } catch (\Exception $e) {
             error_log("Erro ao processar Excel: " . $e->getMessage());
