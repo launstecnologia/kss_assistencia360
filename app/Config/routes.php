@@ -37,8 +37,8 @@ $router->get('/api/imobiliarias', 'PwaController@getImobiliarias');
 // Webhook para receber mensagens da Evolution API (sem autenticação)
 $router->post('/webhook/whatsapp', 'ChatController@webhook');
 
-// Rota pública para URLs encurtadas (redirecionamento)
-$router->get('/{codigo:[0-9]{8}}', 'UrlEncurtadaController@redirecionar');
+// Rota pública para URLs encurtadas (redirecionamento) - DEVE estar antes de /{instancia}
+$router->get('/{codigo}', 'UrlEncurtadaController@redirecionar');
 
 // Rotas públicas para tokens de confirmação/cancelamento (sem autenticação)
 $router->get('/confirmacao-horario', 'TokenController@confirmacaoHorario');

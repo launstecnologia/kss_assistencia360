@@ -127,18 +127,8 @@ class Router
             return true;
         }
         
-        // Tratar rotas com parâmetros (suporta regex: {param:regex})
-        $routePattern = preg_replace_callback('/\{([^}]+)\}/', function($matches) {
-            $param = $matches[1];
-            // Verificar se tem regex (formato: param:regex)
-            if (strpos($param, ':') !== false) {
-                [$paramName, $regex] = explode(':', $param, 2);
-                // Usar o regex fornecido
-                return '(' . $regex . ')';
-            }
-            // Padrão: qualquer coisa exceto /
-            return '([^/]+)';
-        }, $routePath);
+        // Tratar rotas com parâmetros
+        $routePattern = preg_replace('/\{([^}]+)\}/', '([^/]+)', $routePath);
         $routePattern = '#^' . $routePattern . '$#';
         
         return (bool) preg_match($routePattern, $requestPath);
@@ -152,9 +142,7 @@ class Router
 
         foreach ($routeSegments as $index => $segment) {
             if (preg_match('/\{([^}]+)\}/', $segment, $matches)) {
-                $param = $matches[1];
-                // Extrair apenas o nome do parâmetro (remover regex se existir)
-                $paramName = strpos($param, ':') !== false ? explode(':', $param, 2)[0] : $param;
+                $paramName = $matches[1];
                 $params[$paramName] = $requestSegments[$index] ?? null;
             }
         }
