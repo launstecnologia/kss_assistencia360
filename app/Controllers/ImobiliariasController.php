@@ -717,145 +717,236 @@ class ImobiliariasController extends Controller
     }
 
     /**
-     * Processar upload de Excel com CPF e número do imóvel
+     * Processar upload de Excel com CPF e número do contrato
      */
     public function uploadExcel(int $id): void
     {
-        if (!$this->isPost()) {
-            $this->json(['success' => false, 'error' => 'Método não permitido'], 405);
-            return;
-        }
-
-        $imobiliaria = $this->imobiliariaModel->find($id);
+        // Garantir que sempre retornamos JSON, mesmo em caso de erro
+        set_error_handler(function($severity, $message, $file, $line) {
+            throw new \ErrorException($message, 0, $severity, $file, $line);
+        });
         
-        if (!$imobiliaria) {
-            $this->json(['success' => false, 'error' => 'Imobiliária não encontrada'], 404);
-            return;
-        }
-
-        // Verificar se arquivo foi enviado
-        if (empty($_FILES['excel_file']['name']) || $_FILES['excel_file']['error'] !== UPLOAD_ERR_OK) {
-            $this->json(['success' => false, 'error' => 'Nenhum arquivo foi enviado ou ocorreu um erro no upload'], 400);
-            return;
-        }
-
-        $file = $_FILES['excel_file'];
-        $fileName = $file['name'];
-        $fileTmpName = $file['tmp_name'];
-        $fileSize = $file['size'];
-        $fileError = $file['error'];
-
-        // Validar tamanho (máximo 10MB)
-        $maxSize = 10 * 1024 * 1024; // 10MB
-        if ($fileSize > $maxSize) {
-            $this->json(['success' => false, 'error' => 'Arquivo muito grande. Tamanho máximo: 10MB'], 400);
-            return;
-        }
-
-        // Validar extensão
-        $extension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
-        $allowedExtensions = ['xlsx', 'xls'];
-        
-        if (!in_array($extension, $allowedExtensions)) {
-            $this->json(['success' => false, 'error' => 'Formato de arquivo não permitido. Use .xlsx ou .xls'], 400);
-            return;
-        }
-
         try {
-            // Carregar arquivo Excel usando PhpSpreadsheet
-            $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($fileTmpName);
-            $worksheet = $spreadsheet->getActiveSheet();
-            $rows = $worksheet->toArray();
-
-            if (empty($rows) || count($rows) < 2) {
-                $this->json(['success' => false, 'error' => 'O arquivo Excel está vazio ou não possui dados'], 400);
+            if (!$this->isPost()) {
+                $this->json(['success' => false, 'error' => 'Método não permitido'], 405);
                 return;
             }
 
-            // Remover cabeçalho (primeira linha)
-            array_shift($rows);
+            $imobiliaria = $this->imobiliariaModel->find($id);
+            
+            if (!$imobiliaria) {
+                $this->json(['success' => false, 'error' => 'Imobiliária não encontrada'], 404);
+                return;
+            }
 
-            $locatarioModel = new \App\Models\Locatario();
-            $sucessos = 0;
-            $erros = 0;
-            $detalhesErros = [];
+            // Verificar se arquivo foi enviado
+            if (empty($_FILES['excel_file']['name']) || $_FILES['excel_file']['error'] !== UPLOAD_ERR_OK) {
+                $this->json(['success' => false, 'error' => 'Nenhum arquivo foi enviado ou ocorreu um erro no upload'], 400);
+                return;
+            }
 
-            foreach ($rows as $index => $row) {
-                $linha = $index + 2; // +2 porque removemos o cabeçalho e arrays começam em 0
-                
-                // Extrair CPF e número do contrato
-                $cpf = isset($row[0]) ? trim($row[0]) : '';
-                $numeroContrato = isset($row[1]) ? trim($row[1]) : '';
+            $file = $_FILES['excel_file'];
+            $fileName = $file['name'];
+            $fileTmpName = $file['tmp_name'];
+            $fileSize = $file['size'];
+            $fileError = $file['error'];
 
-                // Validar dados
-                if (empty($cpf)) {
-                    $erros++;
-                    $detalhesErros[] = "Linha {$linha}: CPF não informado";
-                    continue;
+            // Validar tamanho (máximo 10MB)
+            $maxSize = 10 * 1024 * 1024; // 10MB
+            if ($fileSize > $maxSize) {
+                $this->json(['success' => false, 'error' => 'Arquivo muito grande. Tamanho máximo: 10MB'], 400);
+                return;
+            }
+
+            // Validar extensão
+            $extension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+            $allowedExtensions = ['xlsx', 'xls'];
+            
+            if (!in_array($extension, $allowedExtensions)) {
+                $this->json(['success' => false, 'error' => 'Formato de arquivo não permitido. Use .xlsx ou .xls'], 400);
+                return;
+            }
+
+            // Verificar se a tabela locatarios_contratos existe, se não existir, criar
+            $this->garantirTabelaLocatariosContratos();
+            
+            // Carregar arquivo Excel usando PhpSpreadsheet
+            try {
+                $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($fileTmpName);
+                $worksheet = $spreadsheet->getActiveSheet();
+                $rows = $worksheet->toArray();
+
+                if (empty($rows) || count($rows) < 2) {
+                    $this->json(['success' => false, 'error' => 'O arquivo Excel está vazio ou não possui dados'], 400);
+                    return;
                 }
 
-                if (empty($numeroContrato)) {
-                    $erros++;
-                    $detalhesErros[] = "Linha {$linha}: Número do contrato não informado";
-                    continue;
-                }
+                // Remover cabeçalho (primeira linha)
+                array_shift($rows);
 
-                // Limpar CPF (remover pontos, traços, espaços)
-                $cpf = preg_replace('/[^0-9]/', '', $cpf);
+                $sucessos = 0;
+                $erros = 0;
+                $detalhesErros = [];
 
-                if (strlen($cpf) !== 11) {
-                    $erros++;
-                    $detalhesErros[] = "Linha {$linha}: CPF inválido (deve ter 11 dígitos)";
-                    continue;
-                }
+                foreach ($rows as $index => $row) {
+                    $linha = $index + 2; // +2 porque removemos o cabeçalho e arrays começam em 0
+                    
+                    // Extrair CPF e número do contrato
+                    $cpf = isset($row[0]) ? trim($row[0]) : '';
+                    $numeroContrato = isset($row[1]) ? trim($row[1]) : '';
 
-                try {
-                    // Verificar se já existe na tabela locatarios_contratos
-                    $sql = "SELECT * FROM locatarios_contratos 
-                            WHERE imobiliaria_id = ? AND cpf = ? AND numero_contrato = ?";
-                    $existente = \App\Core\Database::fetch($sql, [$id, $cpf, $numeroContrato]);
-
-                    if ($existente) {
-                        // Atualizar registro existente
-                        $updateSql = "UPDATE locatarios_contratos 
-                                     SET updated_at = NOW() 
-                                     WHERE id = ?";
-                        \App\Core\Database::query($updateSql, [$existente['id']]);
-                        $sucessos++;
-                    } else {
-                        // Criar novo registro
-                        $insertSql = "INSERT INTO locatarios_contratos 
-                                     (imobiliaria_id, cpf, numero_contrato, created_at, updated_at) 
-                                     VALUES (?, ?, ?, NOW(), NOW())";
-                        \App\Core\Database::query($insertSql, [$id, $cpf, $numeroContrato]);
-                        $sucessos++;
+                    // Validar dados
+                    if (empty($cpf)) {
+                        $erros++;
+                        $detalhesErros[] = "Linha {$linha}: CPF não informado";
+                        continue;
                     }
-                } catch (\Exception $e) {
-                    $erros++;
-                    $detalhesErros[] = "Linha {$linha}: Erro ao processar - " . $e->getMessage();
-                    error_log("Erro ao processar linha {$linha} do Excel: " . $e->getMessage());
+
+                    if (empty($numeroContrato)) {
+                        $erros++;
+                        $detalhesErros[] = "Linha {$linha}: Número do contrato não informado";
+                        continue;
+                    }
+
+                    // Limpar CPF (remover pontos, traços, espaços)
+                    $cpf = preg_replace('/[^0-9]/', '', $cpf);
+
+                    if (strlen($cpf) !== 11) {
+                        $erros++;
+                        $detalhesErros[] = "Linha {$linha}: CPF inválido (deve ter 11 dígitos)";
+                        continue;
+                    }
+
+                    try {
+                        // Verificar se já existe na tabela locatarios_contratos
+                        $sql = "SELECT * FROM locatarios_contratos 
+                                WHERE imobiliaria_id = ? AND cpf = ? AND numero_contrato = ?";
+                        $existente = \App\Core\Database::fetch($sql, [$id, $cpf, $numeroContrato]);
+
+                        if ($existente) {
+                            // Atualizar registro existente
+                            $updateSql = "UPDATE locatarios_contratos 
+                                         SET updated_at = NOW() 
+                                         WHERE id = ?";
+                            \App\Core\Database::query($updateSql, [$existente['id']]);
+                            $sucessos++;
+                        } else {
+                            // Criar novo registro
+                            $insertSql = "INSERT INTO locatarios_contratos 
+                                         (imobiliaria_id, cpf, numero_contrato, created_at, updated_at) 
+                                         VALUES (?, ?, ?, NOW(), NOW())";
+                            \App\Core\Database::query($insertSql, [$id, $cpf, $numeroContrato]);
+                            $sucessos++;
+                        }
+                    } catch (\Exception $e) {
+                        $erros++;
+                        $mensagemErro = $e->getMessage();
+                        // Se for erro de tabela não existe, tentar criar novamente
+                        if (strpos($mensagemErro, "doesn't exist") !== false || 
+                            strpos($mensagemErro, "Table") !== false) {
+                            try {
+                                $this->garantirTabelaLocatariosContratos();
+                                // Tentar novamente
+                                $insertSql = "INSERT INTO locatarios_contratos 
+                                             (imobiliaria_id, cpf, numero_contrato, created_at, updated_at) 
+                                             VALUES (?, ?, ?, NOW(), NOW())";
+                                \App\Core\Database::query($insertSql, [$id, $cpf, $numeroContrato]);
+                                $sucessos++;
+                                $erros--; // Descontar o erro já que conseguiu processar
+                            } catch (\Exception $e2) {
+                                $detalhesErros[] = "Linha {$linha}: Erro ao processar - " . $e2->getMessage();
+                                error_log("Erro ao processar linha {$linha} do Excel (tentativa 2): " . $e2->getMessage());
+                            }
+                        } else {
+                            $detalhesErros[] = "Linha {$linha}: Erro ao processar - " . $mensagemErro;
+                            error_log("Erro ao processar linha {$linha} do Excel: " . $mensagemErro);
+                        }
+                    }
                 }
+
+                $mensagem = "Processamento concluído: {$sucessos} registro(s) processado(s) com sucesso";
+                if ($erros > 0) {
+                    $mensagem .= ", {$erros} erro(s) encontrado(s)";
+                }
+
+                $this->json([
+                    'success' => true,
+                    'message' => $mensagem,
+                    'sucessos' => $sucessos,
+                    'erros' => $erros,
+                    'detalhes_erros' => $detalhesErros
+                ]);
+            } catch (\PhpOffice\PhpSpreadsheet\Exception $e) {
+                error_log("Erro ao carregar arquivo Excel: " . $e->getMessage());
+                $this->json([
+                    'success' => false,
+                    'error' => 'Erro ao ler arquivo Excel: ' . $e->getMessage()
+                ], 400);
             }
-
-            $mensagem = "Processamento concluído: {$sucessos} registro(s) processado(s) com sucesso";
-            if ($erros > 0) {
-                $mensagem .= ", {$erros} erro(s) encontrado(s)";
-            }
-
-            $this->json([
-                'success' => true,
-                'message' => $mensagem,
-                'sucessos' => $sucessos,
-                'erros' => $erros,
-                'detalhes_erros' => $detalhesErros
-            ]);
-
         } catch (\Exception $e) {
             error_log("Erro ao processar Excel: " . $e->getMessage());
-            $this->json([
+            error_log("Stack trace: " . $e->getTraceAsString());
+            
+            // Garantir que sempre retornamos JSON
+            header('Content-Type: application/json');
+            http_response_code(500);
+            echo json_encode([
                 'success' => false,
                 'error' => 'Erro ao processar arquivo Excel: ' . $e->getMessage()
-            ], 500);
+            ]);
+            exit;
+        } catch (\Error $e) {
+            error_log("Erro fatal ao processar Excel: " . $e->getMessage());
+            error_log("Stack trace: " . $e->getTraceAsString());
+            
+            // Garantir que sempre retornamos JSON
+            header('Content-Type: application/json');
+            http_response_code(500);
+            echo json_encode([
+                'success' => false,
+                'error' => 'Erro ao processar arquivo Excel: ' . $e->getMessage()
+            ]);
+            exit;
+        } finally {
+            restore_error_handler();
+        }
+    }
+    
+    /**
+     * Garantir que a tabela locatarios_contratos existe
+     */
+    private function garantirTabelaLocatariosContratos(): void
+    {
+        try {
+            // Verificar se a tabela existe
+            $sql = "SELECT COUNT(*) as count FROM information_schema.tables 
+                    WHERE table_schema = DATABASE() 
+                    AND table_name = 'locatarios_contratos'";
+            $result = \App\Core\Database::fetch($sql);
+            
+            if (empty($result) || ($result['count'] ?? 0) == 0) {
+                // Criar a tabela se não existir
+                $createTableSql = "CREATE TABLE locatarios_contratos (
+                    id INT PRIMARY KEY AUTO_INCREMENT,
+                    imobiliaria_id INT NOT NULL,
+                    cpf VARCHAR(14) NOT NULL,
+                    numero_contrato VARCHAR(50) NOT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                    FOREIGN KEY (imobiliaria_id) REFERENCES imobiliarias(id) ON DELETE CASCADE,
+                    UNIQUE KEY unique_cpf_contrato_imobiliaria (imobiliaria_id, cpf, numero_contrato),
+                    INDEX idx_cpf_imobiliaria (imobiliaria_id, cpf)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
+                
+                \App\Core\Database::query($createTableSql);
+                error_log("Tabela locatarios_contratos criada automaticamente");
+            }
+        } catch (\Exception $e) {
+            // Se der erro de tabela já existe, ignorar
+            if (strpos($e->getMessage(), 'already exists') === false && 
+                strpos($e->getMessage(), 'Duplicate table') === false) {
+                error_log("Erro ao verificar/criar tabela locatarios_contratos: " . $e->getMessage());
+            }
         }
     }
 }
