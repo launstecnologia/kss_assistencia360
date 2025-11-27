@@ -163,31 +163,50 @@ class UploadController extends Controller
     private function processarArquivoCSV(string $fileTmpName, string $fileName): array
     {
 
+        // Detectar encoding do arquivo
+        $conteudo = file_get_contents($fileTmpName);
+        $encoding = mb_detect_encoding($conteudo, ['UTF-8', 'ISO-8859-1', 'Windows-1252', 'ASCII'], true);
+        
+        // Se não for UTF-8, converter
+        if ($encoding && $encoding !== 'UTF-8') {
+            $conteudo = mb_convert_encoding($conteudo, 'UTF-8', $encoding);
+            // Salvar temporariamente o conteúdo convertido
+            $tempFile = tempnam(sys_get_temp_dir(), 'csv_utf8_');
+            file_put_contents($tempFile, $conteudo);
+            $fileTmpName = $tempFile;
+        }
+
         // Processar CSV
         $handle = fopen($fileTmpName, 'r');
         if ($handle === false) {
             throw new \Exception('Não foi possível abrir o arquivo CSV');
         }
 
-            // Detectar separador (vírgula ou ponto e vírgula)
-            $primeiraLinha = fgets($handle);
-            rewind($handle);
-            
-            $separador = ',';
-            if (strpos($primeiraLinha, ';') !== false && substr_count($primeiraLinha, ';') >= substr_count($primeiraLinha, ',')) {
-                $separador = ';';
-            }
+        // Detectar separador (vírgula ou ponto e vírgula)
+        $primeiraLinha = fgets($handle);
+        rewind($handle);
+        
+        $separador = ',';
+        if (strpos($primeiraLinha, ';') !== false && substr_count($primeiraLinha, ';') >= substr_count($primeiraLinha, ',')) {
+            $separador = ';';
+        }
 
-            // Ler cabeçalho
-            $header = fgetcsv($handle, 0, $separador);
-            if (!$header) {
-                throw new \Exception('Não foi possível ler o cabeçalho do arquivo');
-            }
+        // Ler cabeçalho
+        $header = fgetcsv($handle, 0, $separador);
+        if (!$header) {
+            fclose($handle);
+            throw new \Exception('Não foi possível ler o cabeçalho do arquivo');
+        }
 
-            // Normalizar nomes das colunas (remover espaços, converter para minúsculas)
-            $headerNormalizado = array_map(function($col) {
-                return strtolower(trim($col));
-            }, $header);
+        // Normalizar nomes das colunas (remover espaços, converter para minúsculas) e garantir UTF-8
+        $headerNormalizado = array_map(function($col) {
+            $col = trim($col);
+            // Garantir que está em UTF-8
+            if (!mb_check_encoding($col, 'UTF-8')) {
+                $col = mb_convert_encoding($col, 'UTF-8', 'auto');
+            }
+            return mb_strtolower($col, 'UTF-8');
+        }, $header);
 
             // Mapear índices das colunas
             $indices = [
@@ -237,10 +256,20 @@ class UploadController extends Controller
                 $linha++;
                 
                 try {
-                    // Extrair dados
-                    $cpf = isset($row[$indices['cpf']]) ? trim($row[$indices['cpf']]) : '';
-                    $contrato = isset($row[$indices['contrato']]) ? trim($row[$indices['contrato']]) : '';
-                    $empresaFiscal = isset($row[$indices['empresa_fiscal']]) ? trim($row[$indices['empresa_fiscal']]) : '';
+                    // Função auxiliar para garantir UTF-8
+                    $converterParaUTF8 = function($valor) {
+                        if (empty($valor)) return $valor;
+                        $valor = trim($valor);
+                        if (!mb_check_encoding($valor, 'UTF-8')) {
+                            $valor = mb_convert_encoding($valor, 'UTF-8', 'auto');
+                        }
+                        return $valor;
+                    };
+                    
+                    // Extrair dados e garantir UTF-8
+                    $cpf = isset($row[$indices['cpf']]) ? $converterParaUTF8($row[$indices['cpf']]) : '';
+                    $contrato = isset($row[$indices['contrato']]) ? $converterParaUTF8($row[$indices['contrato']]) : '';
+                    $empresaFiscal = isset($row[$indices['empresa_fiscal']]) ? $converterParaUTF8($row[$indices['empresa_fiscal']]) : '';
 
                     // Validar dados obrigatórios
                     if (empty($cpf)) {
@@ -280,17 +309,17 @@ class UploadController extends Controller
                         continue;
                     }
 
-                    // Extrair dados opcionais
-                    $nome = isset($row[$indices['nome']]) ? trim($row[$indices['nome']]) : null;
-                    $tipoImovel = isset($row[$indices['tipo_imovel']]) ? trim($row[$indices['tipo_imovel']]) : null;
-                    $cidade = isset($row[$indices['cidade']]) ? trim($row[$indices['cidade']]) : null;
-                    $estado = isset($row[$indices['estado']]) ? trim($row[$indices['estado']]) : null;
-                    $bairro = isset($row[$indices['bairro']]) ? trim($row[$indices['bairro']]) : null;
-                    $cep = isset($row[$indices['cep']]) ? trim($row[$indices['cep']]) : null;
-                    $endereco = isset($row[$indices['endereco']]) ? trim($row[$indices['endereco']]) : null;
-                    $numero = isset($row[$indices['numero']]) ? trim($row[$indices['numero']]) : null;
-                    $complemento = isset($row[$indices['complemento']]) ? trim($row[$indices['complemento']]) : null;
-                    $unidade = isset($row[$indices['unidade']]) ? trim($row[$indices['unidade']]) : null;
+                    // Extrair dados opcionais e garantir UTF-8
+                    $nome = isset($row[$indices['nome']]) ? $converterParaUTF8($row[$indices['nome']]) : null;
+                    $tipoImovel = isset($row[$indices['tipo_imovel']]) ? $converterParaUTF8($row[$indices['tipo_imovel']]) : null;
+                    $cidade = isset($row[$indices['cidade']]) ? $converterParaUTF8($row[$indices['cidade']]) : null;
+                    $estado = isset($row[$indices['estado']]) ? $converterParaUTF8($row[$indices['estado']]) : null;
+                    $bairro = isset($row[$indices['bairro']]) ? $converterParaUTF8($row[$indices['bairro']]) : null;
+                    $cep = isset($row[$indices['cep']]) ? $converterParaUTF8($row[$indices['cep']]) : null;
+                    $endereco = isset($row[$indices['endereco']]) ? $converterParaUTF8($row[$indices['endereco']]) : null;
+                    $numero = isset($row[$indices['numero']]) ? $converterParaUTF8($row[$indices['numero']]) : null;
+                    $complemento = isset($row[$indices['complemento']]) ? $converterParaUTF8($row[$indices['complemento']]) : null;
+                    $unidade = isset($row[$indices['unidade']]) ? $converterParaUTF8($row[$indices['unidade']]) : null;
                     
                     // Verificar se já existe
                     $sql = "SELECT * FROM locatarios_contratos 
@@ -353,25 +382,6 @@ class UploadController extends Controller
             'erros' => $erros,
             'detalhes_erros' => $detalhesErrosComArquivo
         ];
-    }
-
-            
-            // Garantir que sempre retornamos JSON válido
-            header('Content-Type: application/json; charset=utf-8');
-            http_response_code(500);
-            
-            $errorMessage = 'Erro ao processar arquivo CSV: ' . $e->getMessage();
-            // Limpar qualquer output anterior
-            if (ob_get_level()) {
-                ob_clean();
-            }
-            
-            echo json_encode([
-                'success' => false,
-                'error' => $errorMessage
-            ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-            exit;
-        }
     }
 
     /**

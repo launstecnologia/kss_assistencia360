@@ -4556,3 +4556,4 @@ Stack trace:
 #2 C:\Projetos\kss\index.php(82): App\Core\Router->dispatch()
 #3 {main}
   thrown in C:\Projetos\kss\app\Controllers\UploadController.php on line 14
+[27-Nov-2025 16:10:27 America/Sao_Paulo] PHP Parse error:  syntax error, unexpected identifier "header", expecting "function" or "const" in C:\Projetos\kss\app\Controllers\UploadController.php on line 360

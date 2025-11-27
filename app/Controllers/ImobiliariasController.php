@@ -1091,6 +1091,15 @@ class ImobiliariasController extends Controller
             // Adicionar BOM para UTF-8 (para Excel reconhecer corretamente)
             fprintf($output, chr(0xEF).chr(0xBB).chr(0xBF));
             
+            // Função para garantir UTF-8 nos dados
+            $garantirUTF8 = function($valor) {
+                if ($valor === null || $valor === '') return $valor;
+                if (!mb_check_encoding($valor, 'UTF-8')) {
+                    return mb_convert_encoding($valor, 'UTF-8', 'auto');
+                }
+                return $valor;
+            };
+            
             // Escrever cabeçalho
             fputcsv($output, [
                 'CPF', 'Nome', 'Número do Contrato', 'Tipo Imóvel', 'Cidade', 'Estado', 'Bairro',
@@ -1100,24 +1109,24 @@ class ImobiliariasController extends Controller
             
             // Escrever dados
             foreach ($contratos as $contrato) {
-                $cpfFormatado = $contrato['cpf'];
+                $cpfFormatado = $garantirUTF8($contrato['cpf']);
                 $dataCadastro = date('d/m/Y H:i:s', strtotime($contrato['created_at']));
                 $dataAtualizacao = date('d/m/Y H:i:s', strtotime($contrato['updated_at']));
                 
                 fputcsv($output, [
                     $cpfFormatado,
-                    $contrato['inquilino_nome'] ?? '',
-                    $contrato['numero_contrato'],
-                    $contrato['tipo_imovel'] ?? '',
-                    $contrato['cidade'] ?? '',
-                    $contrato['estado'] ?? '',
-                    $contrato['bairro'] ?? '',
-                    $contrato['cep'] ?? '',
-                    $contrato['endereco'] ?? '',
-                    $contrato['numero'] ?? '',
-                    $contrato['complemento'] ?? '',
-                    $contrato['unidade'] ?? '',
-                    $contrato['empresa_fiscal'] ?? '',
+                    $garantirUTF8($contrato['inquilino_nome'] ?? ''),
+                    $garantirUTF8($contrato['numero_contrato']),
+                    $garantirUTF8($contrato['tipo_imovel'] ?? ''),
+                    $garantirUTF8($contrato['cidade'] ?? ''),
+                    $garantirUTF8($contrato['estado'] ?? ''),
+                    $garantirUTF8($contrato['bairro'] ?? ''),
+                    $garantirUTF8($contrato['cep'] ?? ''),
+                    $garantirUTF8($contrato['endereco'] ?? ''),
+                    $garantirUTF8($contrato['numero'] ?? ''),
+                    $garantirUTF8($contrato['complemento'] ?? ''),
+                    $garantirUTF8($contrato['unidade'] ?? ''),
+                    $garantirUTF8($contrato['empresa_fiscal'] ?? ''),
                     $dataCadastro,
                     $dataAtualizacao
                 ], ',');
