@@ -19,6 +19,70 @@ $steps = [
     4 => ['nome' => 'Agendamento', 'icone' => 'fas fa-calendar-alt'],
     5 => ['nome' => 'Confirmação', 'icone' => 'fas fa-check']
 ];
+
+// Função para gerar resumo das etapas anteriores
+function gerarResumoEtapasManual($etapaAtual, $dados) {
+    $resumo = [];
+    
+    // Etapa 1: Dados
+    if ($etapaAtual > 1 && !empty($dados['nome_completo'])) {
+        $resumo[] = [
+            'titulo' => 'Dados',
+            'icone' => 'fas fa-user',
+            'conteudo' => htmlspecialchars($dados['nome_completo'] ?? '')
+        ];
+    }
+    
+    // Etapa 2: Serviço
+    if ($etapaAtual > 2 && isset($dados['subcategoria_id'])) {
+        $subcategoriaModel = new \App\Models\Subcategoria();
+        $subcategoria = $subcategoriaModel->find($dados['subcategoria_id']);
+        if ($subcategoria) {
+            $resumo[] = [
+                'titulo' => 'Serviço',
+                'icone' => 'fas fa-cog',
+                'conteudo' => htmlspecialchars($subcategoria['nome'] ?? '')
+            ];
+        }
+    }
+    
+    // Etapa 3: Descrição
+    if ($etapaAtual > 3 && !empty($dados['descricao_problema'])) {
+        $descricao = htmlspecialchars($dados['descricao_problema']);
+        if (strlen($descricao) > 100) {
+            $descricao = substr($descricao, 0, 100) . '...';
+        }
+        $resumo[] = [
+            'titulo' => 'Descrição',
+            'icone' => 'fas fa-file-alt',
+            'conteudo' => $descricao
+        ];
+    }
+    
+    // Etapa 4: Agendamento
+    if ($etapaAtual > 4 && !empty($dados['horarios_preferenciais'])) {
+        $horarios = $dados['horarios_preferenciais'];
+        if (is_array($horarios) && !empty($horarios)) {
+            $primeiroHorario = $horarios[0];
+            if (preg_match('/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2})/', $primeiroHorario, $matches)) {
+                $dataFormatada = $matches[3] . '/' . $matches[2] . '/' . $matches[1] . ' às ' . $matches[4] . ':' . $matches[5];
+                $totalHorarios = count($horarios);
+                $texto = $dataFormatada;
+                if ($totalHorarios > 1) {
+                    $opcoesAdicionais = $totalHorarios - 1;
+                    $texto .= ' (+' . $opcoesAdicionais . ' ' . ($opcoesAdicionais > 1 ? 'opções' : 'opção') . ')';
+                }
+                $resumo[] = [
+                    'titulo' => 'Agendamento',
+                    'icone' => 'fas fa-calendar-alt',
+                    'conteudo' => $texto
+                ];
+            }
+        }
+    }
+    
+    return $resumo;
+}
 ?>
 
 <!DOCTYPE html>
@@ -90,6 +154,45 @@ $steps = [
             
             <!-- Step Content -->
             <div class="bg-white rounded-lg shadow-md">
+                <?php 
+                // Exibir resumo das etapas anteriores (exceto na etapa 1 e na última etapa)
+                if ($etapaAtual > 1 && $etapaAtual < 5):
+                    $resumoEtapas = gerarResumoEtapasManual($etapaAtual, $dados ?? []);
+                    if (!empty($resumoEtapas)):
+                ?>
+                    <!-- Resumo das Etapas Anteriores - Dropdown -->
+                    <div class="px-6 py-3 bg-gray-50 border-b border-gray-200">
+                        <button type="button" 
+                                onclick="toggleResumoEtapas()" 
+                                class="w-full flex items-center justify-between text-left focus:outline-none focus:ring-2 focus:ring-green-500 rounded-lg p-2 -m-2">
+                            <div class="flex items-center">
+                                <i class="fas fa-list-ul text-gray-600 mr-2"></i>
+                                <h3 class="text-sm font-medium text-gray-700 whitespace-nowrap">Resumo das Etapas Anteriores</h3>
+                            </div>
+                            <i class="fas fa-chevron-down text-gray-400 transition-transform duration-200" id="resumo-chevron"></i>
+                        </button>
+                        <div id="resumo-conteudo" class="hidden mt-3 pt-3 border-t border-gray-200">
+                            <div class="grid grid-cols-1 md:grid-cols-<?= min(count($resumoEtapas), 4) ?> gap-3">
+                                <?php foreach ($resumoEtapas as $item): ?>
+                                    <div class="bg-white rounded-lg p-3 border border-gray-200">
+                                        <div class="flex items-start">
+                                            <i class="<?= $item['icone'] ?> text-gray-400 mr-2 mt-0.5 text-sm"></i>
+                                            <div class="flex-1 min-w-0">
+                                                <p class="text-xs font-medium text-gray-500 mb-1"><?= $item['titulo'] ?></p>
+                                                <p class="text-sm text-gray-900 truncate" title="<?= htmlspecialchars($item['conteudo']) ?>">
+                                                    <?= $item['conteudo'] ?>
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
+                        </div>
+                    </div>
+                <?php 
+                    endif;
+                endif; 
+                ?>
                 
                 <?php if ($etapaAtual == 1): ?>
                     <!-- ETAPA 1: DADOS PESSOAIS -->
@@ -894,51 +997,59 @@ $steps = [
     });
     
     // Categorias e Subcategorias (igual à solicitação normal)
-    document.querySelectorAll('.categoria-radio').forEach(radio => {
-        radio.addEventListener('change', function() {
-            const categoriaId = this.value;
-            
-            document.querySelectorAll('.categoria-card').forEach(card => {
-                card.classList.remove('border-blue-500', 'bg-blue-50');
-                card.classList.add('border-gray-200');
+    document.addEventListener('DOMContentLoaded', function() {
+        // Inicializar categorias quando a página carregar
+        document.querySelectorAll('.categoria-radio').forEach(radio => {
+            radio.addEventListener('change', function() {
+                const categoriaId = this.value;
                 
-                const check = card.querySelector('.categoria-check');
-                if (check) {
-                    check.classList.remove('bg-blue-500', 'border-blue-500');
-                    check.classList.add('border-gray-300');
+                document.querySelectorAll('.categoria-card').forEach(card => {
+                    card.classList.remove('border-blue-500', 'bg-blue-50');
+                    card.classList.add('border-gray-200');
+                    
+                    const check = card.querySelector('.categoria-check');
+                    if (check) {
+                        check.classList.remove('bg-blue-500', 'border-blue-500');
+                        check.classList.add('border-gray-300');
+                    }
+                    
+                    const details = card.querySelector('.categoria-details');
+                    if (details) details.classList.add('hidden');
+                });
+                
+                const currentCard = document.querySelector(`.categoria-card[data-categoria="${categoriaId}"]`);
+                if (currentCard) {
+                    currentCard.classList.remove('border-gray-200');
+                    currentCard.classList.add('border-blue-500', 'bg-blue-50');
+                    
+                    const check = currentCard.querySelector('.categoria-check');
+                    if (check) {
+                        check.classList.remove('border-gray-300');
+                        check.classList.add('bg-blue-500', 'border-blue-500');
+                    }
+                    
+                    const details = currentCard.querySelector('.categoria-details');
+                    if (details) details.classList.remove('hidden');
                 }
-                
-                const details = card.querySelector('.categoria-details');
-                if (details) details.classList.add('hidden');
             });
             
-            const currentCard = document.querySelector(`.categoria-card[data-categoria="${categoriaId}"]`);
-            if (currentCard) {
-                currentCard.classList.remove('border-gray-200');
-                currentCard.classList.add('border-blue-500', 'bg-blue-50');
-                
-                const check = currentCard.querySelector('.categoria-check');
-                if (check) {
-                    check.classList.remove('border-gray-300');
-                    check.classList.add('bg-blue-500', 'border-blue-500');
-                }
-                
-                const details = currentCard.querySelector('.categoria-details');
-                if (details) details.classList.remove('hidden');
+            // Se já estiver selecionado, disparar o evento para mostrar as subcategorias
+            if (radio.checked) {
+                radio.dispatchEvent(new Event('change'));
             }
         });
-    });
-    
-    document.querySelectorAll('.categoria-card').forEach(card => {
-        card.addEventListener('click', function(e) {
-            if (!e.target.closest('.categoria-details')) {
-                const categoriaId = this.getAttribute('data-categoria');
-                const radio = document.querySelector(`.categoria-radio[value="${categoriaId}"]`);
-                if (radio) {
-                    radio.checked = true;
-                    radio.dispatchEvent(new Event('change'));
+        
+        document.querySelectorAll('.categoria-card').forEach(card => {
+            card.addEventListener('click', function(e) {
+                if (!e.target.closest('.categoria-details')) {
+                    const categoriaId = this.getAttribute('data-categoria');
+                    const radio = document.querySelector(`.categoria-radio[value="${categoriaId}"]`);
+                    if (radio) {
+                        radio.checked = true;
+                        radio.dispatchEvent(new Event('change'));
+                    }
                 }
-            }
+            });
         });
     });
     
@@ -1036,6 +1147,23 @@ $steps = [
             });
         }
     });
+    
+    // Função para toggle do resumo das etapas
+    window.toggleResumoEtapas = function() {
+        const conteudo = document.getElementById('resumo-conteudo');
+        const chevron = document.getElementById('resumo-chevron');
+        
+        if (conteudo && chevron) {
+            const isHidden = conteudo.classList.contains('hidden');
+            if (isHidden) {
+                conteudo.classList.remove('hidden');
+                chevron.classList.add('rotate-180');
+            } else {
+                conteudo.classList.add('hidden');
+                chevron.classList.remove('rotate-180');
+            }
+        }
+    };
     
     window.previewPhotos = function(input) {
         const preview = document.getElementById('fotos-preview');
