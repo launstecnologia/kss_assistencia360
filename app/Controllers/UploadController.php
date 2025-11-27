@@ -262,16 +262,31 @@ class UploadController extends Controller
     }
 
     /**
-     * Identificar imobiliária por nome similar
+     * Identificar imobiliária por nome similar ou instância
      */
     private function identificarImobiliaria(string $empresaFiscal, array $imobiliarias): ?array
     {
         $empresaFiscalNormalizada = $this->normalizarNome($empresaFiscal);
         
+        // Extrair palavra-chave principal (ex: "Lago" de "Lago - Administrativo")
+        $palavras = explode(' ', $empresaFiscalNormalizada);
+        $palavraChave = !empty($palavras) ? $palavras[0] : $empresaFiscalNormalizada;
+        
         // Tentar match exato primeiro
         foreach ($imobiliarias as $imob) {
             $nomeNormalizado = $this->normalizarNome($imob['nome_fantasia'] ?? $imob['nome'] ?? '');
             if ($nomeNormalizado === $empresaFiscalNormalizada) {
+                return $imob;
+            }
+            
+            // Verificar se a palavra-chave está no nome
+            if (stripos($nomeNormalizado, $palavraChave) !== false && strlen($palavraChave) >= 3) {
+                return $imob;
+            }
+            
+            // Verificar pela instância
+            $instancia = strtolower(trim($imob['instancia'] ?? ''));
+            if (!empty($instancia) && stripos($empresaFiscalNormalizada, $instancia) !== false) {
                 return $imob;
             }
         }
@@ -286,10 +301,18 @@ class UploadController extends Controller
             // Calcular similaridade
             similar_text($empresaFiscalNormalizada, $nomeNormalizado, $percent);
             
-            // Se a similaridade for maior que 70%, considerar match
-            if ($percent > 70 && $percent > $melhorScore) {
+            // Se a similaridade for maior que 50%, considerar match (reduzido de 70% para 50%)
+            if ($percent > 50 && $percent > $melhorScore) {
                 $melhorScore = $percent;
                 $melhorMatch = $imob;
+            }
+            
+            // Verificar se a palavra-chave está no nome (match parcial)
+            if (stripos($nomeNormalizado, $palavraChave) !== false && strlen($palavraChave) >= 3) {
+                if ($percent > $melhorScore) {
+                    $melhorScore = $percent;
+                    $melhorMatch = $imob;
+                }
             }
         }
 
@@ -305,8 +328,11 @@ class UploadController extends Controller
         $nome = mb_strtolower($nome, 'UTF-8');
         $nome = preg_replace('/\s+/', ' ', trim($nome));
         
+        // Remover sufixos comuns como " - Administrativo", " - Locação", etc.
+        $nome = preg_replace('/\s*-\s*(administrativo|administração|locacao|locação|sumaré|sumare).*$/i', '', $nome);
+        
         // Remover palavras comuns
-        $palavrasRemover = ['ltda', 'me', 'eireli', 'administração', 'de', 'da', 'do', 'dos', 'das'];
+        $palavrasRemover = ['ltda', 'me', 'eireli', 'administração', 'administrativo', 'de', 'da', 'do', 'dos', 'das', 'imoveis', 'imóveis'];
         foreach ($palavrasRemover as $palavra) {
             $nome = preg_replace('/\b' . preg_quote($palavra, '/') . '\b/i', '', $nome);
         }
