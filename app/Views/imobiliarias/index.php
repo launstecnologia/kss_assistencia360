@@ -1642,30 +1642,49 @@ function renderizarListagemContratos(contratos, total) {
                 Exportar CSV
             </button>
         </div>
-        <div class="overflow-x-auto">
+        <div class="overflow-x-auto max-h-96 overflow-y-auto">
             <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
+                <thead class="bg-gray-50 sticky top-0">
                     <tr>
                         <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">CPF</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Número do Contrato</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data de Cadastro</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Última Atualização</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nome</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contrato</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo Imóvel</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cidade</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Bairro</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Endereço</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Número</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Complemento</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Unidade</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">CEP</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Empresa Fiscal</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data Cadastro</th>
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
     `;
     
     contratos.forEach(contrato => {
-        const cpfFormatado = contrato.cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
-        const dataCadastro = new Date(contrato.created_at).toLocaleString('pt-BR');
-        const dataAtualizacao = new Date(contrato.updated_at).toLocaleString('pt-BR');
+        const cpfFormatado = contrato.cpf ? contrato.cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4') : '';
+        const dataCadastro = contrato.created_at ? new Date(contrato.created_at).toLocaleString('pt-BR') : '';
         
         html += `
                     <tr class="hover:bg-gray-50">
-                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">${cpfFormatado}</td>
-                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">${contrato.numero_contrato}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">${cpfFormatado || '-'}</td>
+                        <td class="px-4 py-3 text-sm text-gray-900">${contrato.inquilino_nome || '-'}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">${contrato.numero_contrato || '-'}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">${contrato.tipo_imovel || '-'}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">${contrato.cidade || '-'}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">${contrato.estado || '-'}</td>
+                        <td class="px-4 py-3 text-sm text-gray-500">${contrato.bairro || '-'}</td>
+                        <td class="px-4 py-3 text-sm text-gray-500">${contrato.endereco || '-'}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">${contrato.numero || '-'}</td>
+                        <td class="px-4 py-3 text-sm text-gray-500">${contrato.complemento || '-'}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">${contrato.unidade || '-'}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">${contrato.cep || '-'}</td>
+                        <td class="px-4 py-3 text-sm text-gray-500">${contrato.empresa_fiscal || '-'}</td>
                         <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">${dataCadastro}</td>
-                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">${dataAtualizacao}</td>
                     </tr>
         `;
     });

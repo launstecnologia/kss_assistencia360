@@ -1073,7 +1073,9 @@ class ImobiliariasController extends Controller
         }
         
         try {
-            $sql = "SELECT cpf, numero_contrato, created_at, updated_at 
+            $sql = "SELECT cpf, inquilino_nome, numero_contrato, tipo_imovel, cidade, estado, bairro, 
+                           cep, endereco, numero, complemento, unidade, empresa_fiscal, 
+                           created_at, updated_at 
                     FROM locatarios_contratos 
                     WHERE imobiliaria_id = ? 
                     ORDER BY created_at DESC";
@@ -1090,7 +1092,11 @@ class ImobiliariasController extends Controller
             fprintf($output, chr(0xEF).chr(0xBB).chr(0xBF));
             
             // Escrever cabeçalho
-            fputcsv($output, ['CPF', 'Número do Contrato', 'Data de Cadastro', 'Última Atualização'], ',');
+            fputcsv($output, [
+                'CPF', 'Nome', 'Número do Contrato', 'Tipo Imóvel', 'Cidade', 'Estado', 'Bairro',
+                'CEP', 'Endereço', 'Número', 'Complemento', 'Unidade', 'Empresa Fiscal',
+                'Data de Cadastro', 'Última Atualização'
+            ], ',');
             
             // Escrever dados
             foreach ($contratos as $contrato) {
@@ -1100,7 +1106,18 @@ class ImobiliariasController extends Controller
                 
                 fputcsv($output, [
                     $cpfFormatado,
+                    $contrato['inquilino_nome'] ?? '',
                     $contrato['numero_contrato'],
+                    $contrato['tipo_imovel'] ?? '',
+                    $contrato['cidade'] ?? '',
+                    $contrato['estado'] ?? '',
+                    $contrato['bairro'] ?? '',
+                    $contrato['cep'] ?? '',
+                    $contrato['endereco'] ?? '',
+                    $contrato['numero'] ?? '',
+                    $contrato['complemento'] ?? '',
+                    $contrato['unidade'] ?? '',
+                    $contrato['empresa_fiscal'] ?? '',
                     $dataCadastro,
                     $dataAtualizacao
                 ], ',');

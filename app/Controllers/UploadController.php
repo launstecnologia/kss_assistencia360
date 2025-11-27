@@ -185,24 +185,57 @@ class UploadController extends Controller
                         continue;
                     }
 
+                    // Extrair dados opcionais
+                    $nome = isset($row[$indices['nome']]) ? trim($row[$indices['nome']]) : null;
+                    $tipoImovel = isset($row[$indices['tipo_imovel']]) ? trim($row[$indices['tipo_imovel']]) : null;
+                    $cidade = isset($row[$indices['cidade']]) ? trim($row[$indices['cidade']]) : null;
+                    $estado = isset($row[$indices['estado']]) ? trim($row[$indices['estado']]) : null;
+                    $bairro = isset($row[$indices['bairro']]) ? trim($row[$indices['bairro']]) : null;
+                    $cep = isset($row[$indices['cep']]) ? trim($row[$indices['cep']]) : null;
+                    $endereco = isset($row[$indices['endereco']]) ? trim($row[$indices['endereco']]) : null;
+                    $numero = isset($row[$indices['numero']]) ? trim($row[$indices['numero']]) : null;
+                    $complemento = isset($row[$indices['complemento']]) ? trim($row[$indices['complemento']]) : null;
+                    $unidade = isset($row[$indices['unidade']]) ? trim($row[$indices['unidade']]) : null;
+                    
                     // Verificar se já existe
                     $sql = "SELECT * FROM locatarios_contratos 
                             WHERE imobiliaria_id = ? AND cpf = ? AND numero_contrato = ?";
                     $existente = \App\Core\Database::fetch($sql, [$imobiliaria['id'], $cpfLimpo, $contrato]);
 
                     if ($existente) {
-                        // Atualizar registro existente
+                        // Atualizar registro existente com todos os dados
                         $updateSql = "UPDATE locatarios_contratos 
-                                     SET updated_at = NOW() 
+                                     SET inquilino_nome = ?,
+                                         tipo_imovel = ?,
+                                         cidade = ?,
+                                         estado = ?,
+                                         bairro = ?,
+                                         cep = ?,
+                                         endereco = ?,
+                                         numero = ?,
+                                         complemento = ?,
+                                         unidade = ?,
+                                         empresa_fiscal = ?,
+                                         updated_at = NOW() 
                                      WHERE id = ?";
-                        \App\Core\Database::query($updateSql, [$existente['id']]);
+                        \App\Core\Database::query($updateSql, [
+                            $nome, $tipoImovel, $cidade, $estado, $bairro, $cep,
+                            $endereco, $numero, $complemento, $unidade, $empresaFiscal,
+                            $existente['id']
+                        ]);
                         $sucessos++;
                     } else {
-                        // Criar novo registro
+                        // Criar novo registro com todos os dados
                         $insertSql = "INSERT INTO locatarios_contratos 
-                                     (imobiliaria_id, cpf, numero_contrato, created_at, updated_at) 
-                                     VALUES (?, ?, ?, NOW(), NOW())";
-                        \App\Core\Database::query($insertSql, [$imobiliaria['id'], $cpfLimpo, $contrato]);
+                                     (imobiliaria_id, cpf, inquilino_nome, numero_contrato, tipo_imovel,
+                                      cidade, estado, bairro, cep, endereco, numero, complemento, unidade,
+                                      empresa_fiscal, created_at, updated_at) 
+                                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())";
+                        \App\Core\Database::query($insertSql, [
+                            $imobiliaria['id'], $cpfLimpo, $nome, $contrato, $tipoImovel,
+                            $cidade, $estado, $bairro, $cep, $endereco, $numero, $complemento, $unidade,
+                            $empresaFiscal
+                        ]);
                         $sucessos++;
                     }
                 } catch (\Exception $e) {
@@ -387,7 +420,18 @@ class UploadController extends Controller
                     id INT PRIMARY KEY AUTO_INCREMENT,
                     imobiliaria_id INT NOT NULL,
                     cpf VARCHAR(14) NOT NULL,
+                    inquilino_nome VARCHAR(255) NULL,
                     numero_contrato VARCHAR(50) NOT NULL,
+                    tipo_imovel VARCHAR(50) NULL,
+                    cidade VARCHAR(100) NULL,
+                    estado VARCHAR(2) NULL,
+                    bairro VARCHAR(100) NULL,
+                    cep VARCHAR(10) NULL,
+                    endereco VARCHAR(255) NULL,
+                    numero VARCHAR(20) NULL,
+                    complemento VARCHAR(100) NULL,
+                    unidade VARCHAR(50) NULL,
+                    empresa_fiscal VARCHAR(255) NULL,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                     FOREIGN KEY (imobiliaria_id) REFERENCES imobiliarias(id) ON DELETE CASCADE,
