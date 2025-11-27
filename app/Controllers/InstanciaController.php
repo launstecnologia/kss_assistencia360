@@ -28,10 +28,8 @@ class InstanciaController extends Controller
     public function index(string $instancia = null): void
     {
         if (!$this->imobiliaria) {
-            $this->view('errors.404', [
-                'message' => 'Instância não encontrada ou inativa'
-            ]);
-            return;
+            // Lançar exceção para permitir que o router continue para outras rotas (ex: URLs encurtadas)
+            throw new \App\Core\RouteContinueException();
         }
 
         // Redirecionar para login se não estiver autenticado

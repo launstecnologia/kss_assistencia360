@@ -36,10 +36,8 @@ class LocatarioController extends Controller
         $imobiliaria = KsiApiService::getImobiliariaByInstancia($instancia);
         
         if (!$imobiliaria) {
-            $this->view('errors.404', [
-                'message' => 'Imobiliária não encontrada'
-            ]);
-            return;
+            // Lançar exceção para permitir que o router continue para outras rotas (ex: URLs encurtadas)
+            throw new \App\Core\RouteContinueException();
         }
         
         $this->view('locatario.login', [

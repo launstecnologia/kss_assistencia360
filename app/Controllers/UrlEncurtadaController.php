@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Core\Controller;
+use App\Core\RouteContinueException;
 use App\Models\UrlEncurtada;
 
 class UrlEncurtadaController extends Controller
@@ -14,26 +15,18 @@ class UrlEncurtadaController extends Controller
     {
         try {
             // Validar que o código é numérico de 8 dígitos
+            // Se não for, lançar exceção especial para permitir que o router continue
             if (!preg_match('/^[0-9]{8}$/', $codigo)) {
-                http_response_code(404);
-                $this->view('errors/404', [
-                    'title' => 'Link não encontrado',
-                    'message' => 'Este link não foi encontrado ou já expirou.'
-                ]);
-                return;
+                // Lançar exceção especial que o router pode capturar para continuar
+                throw new \App\Core\RouteContinueException();
             }
             
             $urlEncurtadaModel = new UrlEncurtada();
             $urlEncurtada = $urlEncurtadaModel->findByCodigo($codigo);
             
             if (!$urlEncurtada) {
-                // URL não encontrada
-                http_response_code(404);
-                $this->view('errors/404', [
-                    'title' => 'Link não encontrado',
-                    'message' => 'Este link não foi encontrado ou já expirou.'
-                ]);
-                return;
+                // URL não encontrada - também lançar exceção para continuar
+                throw new \App\Core\RouteContinueException();
             }
             
             // Incrementar contador de acessos

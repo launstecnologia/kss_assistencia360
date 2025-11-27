@@ -37,9 +37,6 @@ $router->get('/api/imobiliarias', 'PwaController@getImobiliarias');
 // Webhook para receber mensagens da Evolution API (sem autenticação)
 $router->post('/webhook/whatsapp', 'ChatController@webhook');
 
-// Rota pública para URLs encurtadas (redirecionamento) - DEVE estar antes de /{instancia}
-$router->get('/{codigo}', 'UrlEncurtadaController@redirecionar');
-
 // Rotas públicas para tokens de confirmação/cancelamento (sem autenticação)
 $router->get('/confirmacao-horario', 'TokenController@confirmacaoHorario');
 $router->post('/confirmacao-horario', 'TokenController@confirmacaoHorario');
@@ -312,5 +309,9 @@ $router->get('/api/solicitacoes/{id}', 'ApiController@solicitacao', ['auth']);
 $router->post('/api/solicitacoes/{id}/status', 'ApiController@updateStatus', ['auth']);
 $router->get('/api/categorias', 'ApiController@categorias');
 $router->get('/api/imobiliarias/{id}/locatarios', 'ApiController@locatarios', ['auth']);
+
+// Rota pública para URLs encurtadas (redirecionamento) - DEVE estar DEPOIS das rotas de instância
+// Isso garante que instâncias como "demo" sejam processadas antes de tentar como código
+$router->get('/{codigo}', 'UrlEncurtadaController@redirecionar');
 
 return $router;

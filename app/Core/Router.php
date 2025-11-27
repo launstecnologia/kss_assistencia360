@@ -104,9 +104,14 @@ class Router
                     }
                 }
 
-                // Executar handler
-                $this->executeHandler($route['handler'], $this->extractParams($route['path'], $path));
-                return;
+                // Executar handler - capturar RouteContinueException para continuar para próxima rota
+                try {
+                    $this->executeHandler($route['handler'], $this->extractParams($route['path'], $path));
+                    return;
+                } catch (\App\Core\RouteContinueException $e) {
+                    // Continuar para próxima rota sem retornar erro
+                    continue;
+                }
             }
         }
 
