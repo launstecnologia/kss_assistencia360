@@ -770,6 +770,24 @@ class ImobiliariasController extends Controller
             // Verificar se a tabela locatarios_contratos existe, se não existir, criar
             $this->garantirTabelaLocatariosContratos();
             
+            // Verificar se PhpSpreadsheet está disponível
+            if (!class_exists('\PhpOffice\PhpSpreadsheet\IOFactory')) {
+                // Tentar carregar o autoloader se não estiver carregado
+                $autoloadPath = __DIR__ . '/../../vendor/autoload.php';
+                if (file_exists($autoloadPath)) {
+                    require_once $autoloadPath;
+                }
+                
+                // Se ainda não existir, retornar erro
+                if (!class_exists('\PhpOffice\PhpSpreadsheet\IOFactory')) {
+                    $this->json([
+                        'success' => false,
+                        'error' => 'Biblioteca PhpSpreadsheet não encontrada. Execute: composer install'
+                    ], 500);
+                    return;
+                }
+            }
+            
             // Carregar arquivo Excel usando PhpSpreadsheet
             try {
                 $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($fileTmpName);
