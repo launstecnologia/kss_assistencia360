@@ -771,21 +771,28 @@ class ImobiliariasController extends Controller
             $this->garantirTabelaLocatariosContratos();
             
             // Verificar se PhpSpreadsheet está disponível
+            // O autoloader já deve estar carregado pelo index.php, mas verificamos mesmo assim
             if (!class_exists('\PhpOffice\PhpSpreadsheet\IOFactory')) {
-                // Tentar carregar o autoloader se não estiver carregado
-                $autoloadPath = __DIR__ . '/../../vendor/autoload.php';
-                if (file_exists($autoloadPath)) {
-                    require_once $autoloadPath;
-                }
+                // Verificar se o vendor existe
+                $vendorPath = dirname(__DIR__, 2) . '/vendor';
+                $spreadsheetPath = $vendorPath . '/phpoffice/phpspreadsheet';
                 
-                // Se ainda não existir, retornar erro
-                if (!class_exists('\PhpOffice\PhpSpreadsheet\IOFactory')) {
+                if (!is_dir($spreadsheetPath)) {
+                    error_log("PhpSpreadsheet não instalado. Caminho esperado: {$spreadsheetPath}");
                     $this->json([
                         'success' => false,
-                        'error' => 'Biblioteca PhpSpreadsheet não encontrada. Execute: composer install'
+                        'error' => 'Biblioteca PhpSpreadsheet não está instalada. Execute no servidor: composer install'
                     ], 500);
                     return;
                 }
+                
+                // Se o vendor existe mas a classe não está disponível, pode ser problema de autoloader
+                error_log("PhpSpreadsheet encontrado em {$spreadsheetPath} mas classe não carregada. Verifique o autoloader.");
+                $this->json([
+                    'success' => false,
+                    'error' => 'Erro ao carregar PhpSpreadsheet. Verifique se o autoloader está funcionando corretamente.'
+                ], 500);
+                return;
             }
             
             // Carregar arquivo Excel usando PhpSpreadsheet
