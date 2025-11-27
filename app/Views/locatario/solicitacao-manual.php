@@ -163,8 +163,9 @@ function gerarResumoEtapasManual($etapaAtual, $dados) {
                     <!-- Resumo das Etapas Anteriores - Dropdown -->
                     <div class="px-6 py-3 bg-gray-50 border-b border-gray-200">
                         <button type="button" 
-                                onclick="toggleResumoEtapas()" 
-                                class="w-full flex items-center justify-between text-left focus:outline-none focus:ring-2 focus:ring-green-500 rounded-lg p-2 -m-2">
+                                onclick="toggleResumoEtapas(event)" 
+                                class="w-full flex items-center justify-between text-left focus:outline-none focus:ring-2 focus:ring-green-500 rounded-lg p-2 -m-2 cursor-pointer"
+                                style="cursor: pointer; pointer-events: auto;">
                             <div class="flex items-center">
                                 <i class="fas fa-list-ul text-gray-600 mr-2"></i>
                                 <h3 class="text-sm font-medium text-gray-700 whitespace-nowrap">Resumo das Etapas Anteriores</h3>
@@ -432,12 +433,13 @@ function gerarResumoEtapasManual($etapaAtual, $dados) {
                                 <div class="space-y-3">
                                     <?php if (!empty($categorias)): ?>
                                         <?php foreach ($categorias as $categoria): ?>
-                                            <label class="relative block">
+                                            <label class="relative block cursor-pointer" style="cursor: pointer; pointer-events: auto;">
                                                 <input type="radio" name="categoria_id" value="<?= $categoria['id'] ?>" 
                                                        class="sr-only categoria-radio" data-categoria="<?= $categoria['id'] ?>"
                                                        <?= ($dados['categoria_id'] ?? '') == $categoria['id'] ? 'checked' : '' ?>>
-                                                <div class="border-2 rounded-lg p-4 cursor-pointer transition-all categoria-card" 
-                                                     data-categoria="<?= $categoria['id'] ?>">
+                                                <div class="border-2 rounded-lg p-4 transition-all categoria-card" 
+                                                     data-categoria="<?= $categoria['id'] ?>"
+                                                     style="cursor: pointer; pointer-events: auto;">
                                                     <div class="flex items-center justify-between">
                                                         <div class="flex items-center">
                                                             <i class="<?= $categoria['icone'] ?? 'fas fa-cog' ?> text-xl text-gray-600 mr-3"></i>
@@ -997,7 +999,7 @@ function gerarResumoEtapasManual($etapaAtual, $dados) {
     });
     
     // Categorias e Subcategorias (igual à solicitação normal)
-    document.addEventListener('DOMContentLoaded', function() {
+    function inicializarCategorias() {
         // Inicializar categorias quando a página carregar
         document.querySelectorAll('.categoria-radio').forEach(radio => {
             radio.addEventListener('change', function() {
@@ -1040,8 +1042,11 @@ function gerarResumoEtapasManual($etapaAtual, $dados) {
         });
         
         document.querySelectorAll('.categoria-card').forEach(card => {
+            card.style.cursor = 'pointer';
             card.addEventListener('click', function(e) {
-                if (!e.target.closest('.categoria-details')) {
+                e.preventDefault();
+                e.stopPropagation();
+                if (!e.target.closest('.categoria-details') && !e.target.closest('.subcategoria-card')) {
                     const categoriaId = this.getAttribute('data-categoria');
                     const radio = document.querySelector(`.categoria-radio[value="${categoriaId}"]`);
                     if (radio) {
@@ -1051,7 +1056,14 @@ function gerarResumoEtapasManual($etapaAtual, $dados) {
                 }
             });
         });
-    });
+    }
+    
+    // Inicializar quando o DOM estiver pronto
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', inicializarCategorias);
+    } else {
+        inicializarCategorias();
+    }
     
     document.addEventListener('change', function(e) {
         if (e.target.classList.contains('subcategoria-radio')) {
@@ -1149,7 +1161,11 @@ function gerarResumoEtapasManual($etapaAtual, $dados) {
     });
     
     // Função para toggle do resumo das etapas
-    window.toggleResumoEtapas = function() {
+    window.toggleResumoEtapas = function(e) {
+        if (e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
         const conteudo = document.getElementById('resumo-conteudo');
         const chevron = document.getElementById('resumo-chevron');
         
@@ -1163,7 +1179,20 @@ function gerarResumoEtapasManual($etapaAtual, $dados) {
                 chevron.classList.remove('rotate-180');
             }
         }
+        return false;
     };
+    
+    // Adicionar event listener ao botão do resumo também
+    document.addEventListener('DOMContentLoaded', function() {
+        const btnResumo = document.querySelector('button[onclick="toggleResumoEtapas()"]');
+        if (btnResumo) {
+            btnResumo.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                toggleResumoEtapas(e);
+            });
+        }
+    });
     
     window.previewPhotos = function(input) {
         const preview = document.getElementById('fotos-preview');
