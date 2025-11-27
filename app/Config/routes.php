@@ -205,6 +205,8 @@ $router->post('/admin/imobiliarias/{id}/delete', 'ImobiliariasController@destroy
 $router->post('/admin/imobiliarias/{id}/toggle-status', 'ImobiliariasController@toggleStatus', ['auth', 'admin']);
 $router->post('/admin/imobiliarias/{id}/test-connection', 'ImobiliariasController@testConnection', ['auth', 'admin']);
 $router->post('/admin/imobiliarias/{id}/upload-excel', 'ImobiliariasController@uploadExcel', ['auth', 'admin']);
+$router->get('/admin/imobiliarias/{id}/listagem-contratos', 'ImobiliariasController@listagemContratos', ['auth', 'admin']);
+$router->get('/admin/imobiliarias/{id}/exportar-contratos', 'ImobiliariasController@exportarContratos', ['auth', 'admin']);
 
 // Gerenciamento de Usuários
 $router->get('/admin/usuarios', 'UsuariosController@index', ['auth', 'admin']);

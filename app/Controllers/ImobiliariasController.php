@@ -1013,4 +1013,98 @@ class ImobiliariasController extends Controller
             }
         }
     }
+    
+    /**
+     * Listar CPFs e contratos de uma imobiliária
+     */
+    public function listagemContratos(int $id): void
+    {
+        $imobiliaria = $this->imobiliariaModel->find($id);
+        
+        if (!$imobiliaria) {
+            $this->json(['success' => false, 'error' => 'Imobiliária não encontrada'], 404);
+            return;
+        }
+        
+        try {
+            $sql = "SELECT * FROM locatarios_contratos 
+                    WHERE imobiliaria_id = ? 
+                    ORDER BY created_at DESC 
+                    LIMIT 1000";
+            $contratos = \App\Core\Database::fetchAll($sql, [$id]);
+            
+            $sqlTotal = "SELECT COUNT(*) as total FROM locatarios_contratos WHERE imobiliaria_id = ?";
+            $resultTotal = \App\Core\Database::fetch($sqlTotal, [$id]);
+            $total = $resultTotal['total'] ?? 0;
+            
+            $this->json([
+                'success' => true,
+                'contratos' => $contratos,
+                'total' => $total
+            ]);
+        } catch (\Exception $e) {
+            error_log("Erro ao listar contratos: " . $e->getMessage());
+            $this->json([
+                'success' => false,
+                'error' => 'Erro ao carregar listagem: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+    
+    /**
+     * Exportar CPFs e contratos como CSV
+     */
+    public function exportarContratos(int $id): void
+    {
+        $imobiliaria = $this->imobiliariaModel->find($id);
+        
+        if (!$imobiliaria) {
+            $this->json(['success' => false, 'error' => 'Imobiliária não encontrada'], 404);
+            return;
+        }
+        
+        try {
+            $sql = "SELECT cpf, numero_contrato, created_at, updated_at 
+                    FROM locatarios_contratos 
+                    WHERE imobiliaria_id = ? 
+                    ORDER BY created_at DESC";
+            $contratos = \App\Core\Database::fetchAll($sql, [$id]);
+            
+            // Configurar headers para download CSV
+            header('Content-Type: text/csv; charset=utf-8');
+            header('Content-Disposition: attachment; filename="cpf_contratos_' . $imobiliaria['id'] . '_' . date('Y-m-d') . '.csv"');
+            
+            // Abrir output stream
+            $output = fopen('php://output', 'w');
+            
+            // Adicionar BOM para UTF-8 (para Excel reconhecer corretamente)
+            fprintf($output, chr(0xEF).chr(0xBB).chr(0xBF));
+            
+            // Escrever cabeçalho
+            fputcsv($output, ['CPF', 'Número do Contrato', 'Data de Cadastro', 'Última Atualização'], ',');
+            
+            // Escrever dados
+            foreach ($contratos as $contrato) {
+                $cpfFormatado = $contrato['cpf'];
+                $dataCadastro = date('d/m/Y H:i:s', strtotime($contrato['created_at']));
+                $dataAtualizacao = date('d/m/Y H:i:s', strtotime($contrato['updated_at']));
+                
+                fputcsv($output, [
+                    $cpfFormatado,
+                    $contrato['numero_contrato'],
+                    $dataCadastro,
+                    $dataAtualizacao
+                ], ',');
+            }
+            
+            fclose($output);
+            exit;
+        } catch (\Exception $e) {
+            error_log("Erro ao exportar contratos: " . $e->getMessage());
+            $this->json([
+                'success' => false,
+                'error' => 'Erro ao exportar: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }

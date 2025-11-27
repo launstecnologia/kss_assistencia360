@@ -114,6 +114,12 @@ ob_start();
                                 Upload Excel
                             </button>
                             
+                            <button onclick="abrirModalListagemContratos(<?= $imobiliaria['id'] ?>)" 
+                                    class="inline-flex items-center px-3 py-1 border border-purple-300 rounded-md text-sm font-medium text-purple-700 bg-white hover:bg-purple-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500">
+                                <i class="fas fa-list mr-1"></i>
+                                Ver Listagem
+                            </button>
+                            
                             <button onclick="abrirOffcanvasVer(<?= $imobiliaria['id'] ?>)" 
                                     class="inline-flex items-center px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                                 <i class="fas fa-eye mr-1"></i>
@@ -209,6 +215,33 @@ ob_start();
                 </button>
             </div>
             <div id="upload-excel-result" class="mt-4 hidden"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Listagem de Contratos -->
+<div id="listagem-contratos-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+    <div class="relative top-10 mx-auto p-5 border w-full max-w-4xl shadow-lg rounded-md bg-white my-10">
+        <div class="mt-3">
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center">
+                    <div class="mx-auto flex items-center justify-center h-10 w-10 rounded-full bg-purple-100 mr-3">
+                        <i class="fas fa-list text-purple-600"></i>
+                    </div>
+                    <h3 class="text-lg font-medium text-gray-900">Listagem de CPFs e Contratos</h3>
+                </div>
+                <button onclick="fecharModalListagemContratos()" 
+                        class="text-gray-400 hover:text-gray-500">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <div id="listagem-contratos-content" class="mt-4">
+                <div class="text-center py-8">
+                    <i class="fas fa-spinner fa-spin text-2xl text-gray-400"></i>
+                    <p class="text-gray-500 mt-2">Carregando...</p>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -1539,6 +1572,123 @@ function fecharModalUploadExcel() {
     const modal = document.getElementById('upload-excel-modal');
     modal.classList.add('hidden');
     imobiliariaUploadId = null;
+}
+
+let imobiliariaListagemId = null;
+
+function abrirModalListagemContratos(id) {
+    imobiliariaListagemId = id;
+    const modal = document.getElementById('listagem-contratos-modal');
+    const content = document.getElementById('listagem-contratos-content');
+    
+    // Mostrar loading
+    content.innerHTML = `
+        <div class="text-center py-8">
+            <i class="fas fa-spinner fa-spin text-2xl text-gray-400"></i>
+            <p class="text-gray-500 mt-2">Carregando...</p>
+        </div>
+    `;
+    
+    modal.classList.remove('hidden');
+    
+    // Carregar dados
+    fetch(`<?= url('admin/imobiliarias') ?>/${id}/listagem-contratos`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                renderizarListagemContratos(data.contratos, data.total);
+            } else {
+                content.innerHTML = `
+                    <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+                        <i class="fas fa-exclamation-circle mr-2"></i>
+                        ${data.error || 'Erro ao carregar listagem'}
+                    </div>
+                `;
+            }
+        })
+        .catch(error => {
+            console.error('Erro:', error);
+            content.innerHTML = `
+                <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+                    <i class="fas fa-exclamation-circle mr-2"></i>
+                    Erro ao carregar listagem. Tente novamente.
+                </div>
+            `;
+        });
+}
+
+function fecharModalListagemContratos() {
+    const modal = document.getElementById('listagem-contratos-modal');
+    modal.classList.add('hidden');
+    imobiliariaListagemId = null;
+}
+
+function renderizarListagemContratos(contratos, total) {
+    const content = document.getElementById('listagem-contratos-content');
+    
+    if (!contratos || contratos.length === 0) {
+        content.innerHTML = `
+            <div class="text-center py-8">
+                <i class="fas fa-inbox text-4xl text-gray-400 mb-4"></i>
+                <p class="text-gray-500">Nenhum registro encontrado.</p>
+                <p class="text-sm text-gray-400 mt-2">Faça upload de um arquivo Excel/CSV para começar.</p>
+            </div>
+        `;
+        return;
+    }
+    
+    let html = `
+        <div class="mb-4 flex items-center justify-between">
+            <p class="text-sm text-gray-600">
+                <strong>Total:</strong> ${total} registro(s)
+            </p>
+            <button onclick="exportarListagemContratos()" 
+                    class="inline-flex items-center px-3 py-1 border border-green-300 rounded-md text-sm font-medium text-green-700 bg-white hover:bg-green-50">
+                <i class="fas fa-download mr-1"></i>
+                Exportar CSV
+            </button>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">CPF</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Número do Contrato</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data de Cadastro</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Última Atualização</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+    `;
+    
+    contratos.forEach(contrato => {
+        const cpfFormatado = contrato.cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+        const dataCadastro = new Date(contrato.created_at).toLocaleString('pt-BR');
+        const dataAtualizacao = new Date(contrato.updated_at).toLocaleString('pt-BR');
+        
+        html += `
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">${cpfFormatado}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">${contrato.numero_contrato}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">${dataCadastro}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">${dataAtualizacao}</td>
+                    </tr>
+        `;
+    });
+    
+    html += `
+                </tbody>
+            </table>
+        </div>
+    `;
+    
+    content.innerHTML = html;
+}
+
+function exportarListagemContratos() {
+    if (!imobiliariaListagemId) return;
+    
+    window.location.href = `<?= url('admin/imobiliarias') ?>/${imobiliariaListagemId}/exportar-contratos`;
 }
 
 document.getElementById('upload-excel-button').addEventListener('click', function() {
