@@ -207,7 +207,8 @@ class UploadController extends Controller
                     }
                 } catch (\Exception $e) {
                     $erros++;
-                    $detalhesErros[] = "Linha {$linha}: Erro ao processar - " . $e->getMessage();
+                    $mensagemErro = mb_convert_encoding($e->getMessage(), 'UTF-8', 'UTF-8');
+                    $detalhesErros[] = "Linha {$linha}: Erro ao processar - " . $mensagemErro;
                     error_log("Erro ao processar linha {$linha} do CSV: " . $e->getMessage());
                 }
             }
@@ -219,21 +220,44 @@ class UploadController extends Controller
                 $mensagem .= ", {$erros} erro(s) encontrado(s)";
             }
 
+            // Limitar e sanitizar detalhes de erros
+            $detalhesErrosLimitados = array_slice($detalhesErros, 0, 100);
+            $detalhesErrosSanitizados = array_map(function($erro) {
+                return mb_convert_encoding($erro, 'UTF-8', 'UTF-8');
+            }, $detalhesErrosLimitados);
+
+            // Limpar qualquer output anterior
+            if (ob_get_level()) {
+                ob_clean();
+            }
+            
             $this->json([
                 'success' => true,
                 'message' => $mensagem,
                 'sucessos' => $sucessos,
                 'erros' => $erros,
-                'detalhes_erros' => $detalhesErros
+                'detalhes_erros' => $detalhesErrosSanitizados
             ]);
 
         } catch (\Exception $e) {
             error_log("Erro ao processar CSV: " . $e->getMessage());
             error_log("Stack trace: " . $e->getTraceAsString());
-            $this->json([
+            
+            // Garantir que sempre retornamos JSON válido
+            header('Content-Type: application/json; charset=utf-8');
+            http_response_code(500);
+            
+            $errorMessage = 'Erro ao processar arquivo CSV: ' . $e->getMessage();
+            // Limpar qualquer output anterior
+            if (ob_get_level()) {
+                ob_clean();
+            }
+            
+            echo json_encode([
                 'success' => false,
-                'error' => 'Erro ao processar arquivo CSV: ' . $e->getMessage()
-            ], 500);
+                'error' => $errorMessage
+            ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            exit;
         }
     }
 
