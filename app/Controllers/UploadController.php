@@ -11,7 +11,8 @@ class UploadController extends Controller
 
     public function __construct()
     {
-        parent::__construct();
+        $this->requireAuth();
+        $this->requireAdmin();
         $this->imobiliariaModel = new Imobiliaria();
     }
 
